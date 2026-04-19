@@ -96,7 +96,7 @@ export const getBenefits = async (params: BenefitApiParams): Promise<BenefitResp
     ...(params.keyword && { keyword: params.keyword }),
   };
 
-  const response = await axiosInstance.get('/api/v1/benefit', { params: queryParams });
+  const response = await axiosInstance.get('/api/v1/benefits', { params: queryParams });
   return response.data.data;
 };
 
@@ -119,18 +119,18 @@ export const removeFavorite = async (benefitId: number): Promise<void> => {
 
 // 혜택 상세 조회 API
 export const getBenefitDetail = async (benefitId: number): Promise<BenefitDetailResponse> => {
-  const response = await axiosInstance.get(`/api/v1/benefit/${benefitId}`);
+  const response = await axiosInstance.get(`/api/v1/benefits/${benefitId}`);
   return response.data.data;
 };
 
 // 제휴처 검색 순위 조회 API
 export const getPartnersSearchRanking = async (
-  recentperiod: number = 2,
-  prevperiod: number = 3
+  recentDay: number = 2,
+  prevDay: number = 3
 ): Promise<ApiResponse<PartnerSearchRankingItem[]>> => {
   const params = new URLSearchParams({
-    recentperiod: recentperiod.toString(),
-    prevperiod: prevperiod.toString(),
+    recentDay: recentDay.toString(),
+    prevDay: prevDay.toString(),
   });
 
   const response = await axiosInstance.get(`/api/v1/partners/search-ranking?${params}`);

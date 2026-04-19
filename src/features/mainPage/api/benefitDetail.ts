@@ -15,7 +15,7 @@ export const getBenefitDetail = async (
   isGlobalBenefitDetailLoading = true;
 
   try {
-    const response = await api.get('/api/v1/benefit/map-detail', {
+    const response = await api.get('/api/v1/benefits/map-detail', {
       params: {
         storeId: params.storeId,
         partnerId: params.partnerId,
