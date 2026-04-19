@@ -5,6 +5,8 @@ interface BenefitFilterToggleProps {
   onChange: (val: FilterType) => void;
   width?: string; // w-[300px] 같은 tailwind 클래스
   fontSize?: string; // text-title-7 등
+  className?: string;
+  heightClass?: string;
 }
 
 export default function BenefitFilterToggle({
@@ -12,9 +14,13 @@ export default function BenefitFilterToggle({
   onChange,
   width = 'w-[300px]',
   fontSize = 'text-title-7',
+  className = '',
+  heightClass = 'h-[50px] max-xl:h-[44px]',
 }: BenefitFilterToggleProps) {
   return (
-    <div className={`flex ${width} h-[50px] mb-6 bg-grey01 rounded-[10px] p-[4px] max-xl:h-[44px]`}>
+    <div
+      className={`flex ${width} ${heightClass} mb-6 bg-grey01 rounded-[10px] p-[4px] ${className}`}
+    >
       <button
         onClick={() => onChange('default')}
         className={`flex-1 rounded-[8px] ${fontSize} transition-colors ${
