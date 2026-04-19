@@ -1,14 +1,14 @@
 import React from 'react';
 import EventBanner from './components/EventBanner';
 import SimpleRanking from './components/SimpleRanking';
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
 import BenefitFilterToggle from '../../components/BenefitFilterToggle';
 import SearchBar from '../../components/SearchBar';
 import Pagination from '../../components/Pagination';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import NoResult from '../../components/NoResult';
-import { TbChevronDown, TbStar, TbStarFilled } from 'react-icons/tb';
+import { TbStar, TbStarFilled } from 'react-icons/tb';
 import { showToast } from '../../utils/toast';
 import {
   getBenefits,
@@ -26,8 +26,6 @@ const AllBenefitsLayout: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortFilter, setSortFilter] = useState('전체');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('전체');
   const [isLoading, setIsLoading] = useState(false);
   const [benefits, setBenefits] = useState<BenefitItem[]>([]);
@@ -35,11 +33,10 @@ const AllBenefitsLayout: React.FC = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [selectedBenefit, setSelectedBenefit] = useState<BenefitItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // API 호출 함수
   const fetchBenefits = useCallback(
-    async (page: number = 0, keyword?: string, category?: string, filterType?: string) => {
+    async (page: number = 0, keyword?: string, category?: string) => {
       setIsLoading(true);
       // 로딩 시작 시 기존 결과를 유지하지 않고 초기화
       setBenefits([]);
@@ -58,9 +55,6 @@ const AllBenefitsLayout: React.FC = () => {
           let apiCategory = category;
           if (category === '액티비티') apiCategory = '엑티비티';
           params.category = apiCategory;
-        }
-        if (filterType && filterType !== '전체') {
-          params.filter = filterType === '온라인' ? 'ONLINE' : 'OFFLINE';
         }
 
         const data = await getBenefits(params);
@@ -129,19 +123,6 @@ const AllBenefitsLayout: React.FC = () => {
     setSelectedBenefit(null);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   // 모달이 열릴 때 뒷배경 스크롤 방지
   useEffect(() => {
     if (isModalOpen) {
@@ -180,17 +161,11 @@ const AllBenefitsLayout: React.FC = () => {
 
   // 초기 데이터 로드
   useEffect(() => {
-    fetchBenefits(0, debouncedSearchTerm, selectedCategory, sortFilter);
-  }, [fetchBenefits, debouncedSearchTerm, selectedCategory, sortFilter]);
+    fetchBenefits(0, debouncedSearchTerm, selectedCategory);
+  }, [fetchBenefits, debouncedSearchTerm, selectedCategory]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const handleSortFilterChange = (value: string) => {
-    setSortFilter(value);
-    setIsDropdownOpen(false);
     setCurrentPage(1);
   };
 
@@ -213,7 +188,6 @@ const AllBenefitsLayout: React.FC = () => {
     };
   }, [searchTerm, debouncedSearch]);
 
-  const sortOptions = ['전체', '오프라인', '온라인'];
   const categories = [
     '전체',
     '액티비티',
@@ -237,7 +211,7 @@ const AllBenefitsLayout: React.FC = () => {
   // 페이지 변경 핸들러
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-    fetchBenefits(pageNumber - 1, debouncedSearchTerm, selectedCategory, sortFilter);
+    fetchBenefits(pageNumber - 1, debouncedSearchTerm, selectedCategory);
   };
 
   // 혜택 설명 표시를 위한 헬퍼 함수
@@ -247,161 +221,159 @@ const AllBenefitsLayout: React.FC = () => {
     return basicBenefit ? basicBenefit.context : tierBenefits[0]?.context || '';
   };
 
+  const activeFilterCount = (selectedCategory !== '전체' ? 1 : 0) + (filter !== 'default' ? 1 : 0);
+
   return (
-    <div className="overflow-x-hidden">
+    <div className="overflow-x-hidden bg-white pt-[54px] md:pt-0">
       {/* 모바일 헤더 */}
       <div className="fixed top-0 left-0 w-full z-[9999] max-md:block hidden">
         <MobileHeader title="전체 혜택" />
       </div>
 
-      {/* 모바일 이벤트 배너 */}
-      <div className="max-md:block hidden w-full mb-4">
-        <EventBanner />
-      </div>
-
       {/* 전체 레이아웃 컨테이너 */}
-      <div className="px-2 max-w-[1783px] w-full mx-auto max-xl:max-w-[1440px] max-xl:px-7 max-xlg:w-[calc(100vw-81px)] max-md:w-auto max-md:px-0 max-md:mx-0 max-md:max-w-none">
-        {/* 이벤트 배너 + 랭킹 */}
-        <div className="pt-7 flex gap-7 items-start max-xl:gap-0 max-xl:pt-5 max-xlg:gap-7 max-xlg:flex-col max-md:gap-0 max-md:pt-0 max-md:px-5">
-          <div className="w-full max-md:hidden">
-            <EventBanner />
-          </div>
-          <SimpleRanking />
-        </div>
+      <div className="mx-auto w-full max-w-[1280px] px-5 pb-10 pt-6 md:px-7 md:pb-14 md:pt-10">
+        <section className="mb-8 md:mb-10">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
+            <div className="hidden md:block">
+              <p className="text-body-3 font-medium text-purple04">혜택 탐색</p>
+              <div className="mt-2 flex items-center gap-4">
+                <h1 className="text-title-2 text-black">전체 혜택</h1>
+              </div>
+              <p className="mt-3 max-w-[520px] text-body-2 text-grey05">
+                가장 중요한 혜택 목록을 먼저 보고, 필요한 조건만 빠르게 좁혀볼 수 있도록 구성을
+                정리했어요.
+              </p>
+            </div>
 
-        {/* 토글 / 검색 / 정렬 */}
-        <div className="pt-16 flex flex-wrap justify-between gap-4 max-md:pt-14 max-md:px-5 max-xlg:gap-0 max-md:mb-4">
-          <BenefitFilterToggle
-            value={filter}
-            onChange={setFilter}
-            width="w-[300px] max-xl:w-[220px] max-md:w-full max-md:mb-3"
-          />
-          <div className="flex gap-2 max-xlg:mb-5 max-md:mb-0 max-md:w-full">
-            <SearchBar
-              placeholder="제휴처 검색"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onClear={() => setSearchTerm('')}
-              className="w-[350px] h-[50px] max-md:w-full max-xl:h-[44px]"
-              backgroundColor="bg-grey01"
-            />
-            <div className="relative max-md:hidden" ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className={`flex items-center gap-2 px-4 py-3 border border-grey02 rounded-[10px] hover:bg-grey01 transition-colors min-w-[120px] max-xl:max-h-[44px] justify-between ${
-                  sortFilter !== '전체' ? 'bg-purple01' : 'bg-white'
-                }`}
-              >
-                <span className={`${sortFilter !== '전체' ? 'text-purple04' : 'text-black'}`}>
-                  {sortFilter}
+            <div className="w-full md:mt-2 md:flex md:max-w-[380px] md:flex-shrink-0 md:items-center md:justify-end">
+              <SearchBar
+                placeholder="제휴처 검색"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onClear={() => setSearchTerm('')}
+                className="h-[44px] w-full md:w-[380px]"
+                backgroundColor="bg-grey01"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-grey01 pb-6 md:pb-7">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <p className="text-body-4 font-medium text-grey04">카테고리 필터</p>
+              {activeFilterCount > 0 && (
+                <span className="rounded-full bg-purple01 px-2.5 py-1 text-[12px] font-medium leading-none text-purple04">
+                  {activeFilterCount}개 적용
                 </span>
-                <TbChevronDown
-                  className={`w-4 h-4 text-grey03 transition-transform ${
-                    isDropdownOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-              {isDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-grey03 rounded-[10px] z-50 min-w-[120px] max-h-60 overflow-hidden">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => handleSortFilterChange(option)}
-                      className={`w-full px-4 py-2 text-left hover:bg-grey01 transition-colors text-black ${
-                        option === sortOptions[0] ? 'rounded-t-[10px]' : ''
-                      } ${
-                        option === sortOptions[sortOptions.length - 1] ? 'rounded-b-[10px]' : ''
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* 카테고리 필터 */}
-        <div className="mt-1">
-          <div className="bg-grey01 px-6 rounded-[10px] w-full max-w-[1783px] mx-auto h-[70px] flex items-center gap-[60px] max-xl:h-[60px] max-xl:gap-[32px] max-md:rounded-none max-md:mx-0 max-md:max-w-none max-md:h-[55px] overflow-x-auto">
-            <div className="flex gap-10 whitespace-nowrap">
-              {categories.map((category) => (
-                <span
-                  key={category}
-                  onClick={() => handleCategoryChange(category)}
-                  className={`cursor-pointer transition-colors text-body-1 max-xl:text-body-2 whitespace-nowrap ${
-                    selectedCategory === category
-                      ? 'text-purple04'
-                      : 'text-grey04 hover:text-purple04'
-                  }`}
-                >
-                  {category}
-                </span>
-              ))}
+            <div className="pt-1">
+              <div className="flex flex-wrap items-center gap-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => handleCategoryChange(category)}
+                    className={`rounded-full border px-3.5 py-1.5 text-body-4 transition-colors md:px-4 ${
+                      selectedCategory === category
+                        ? 'border-purple04 bg-purple01 text-purple04'
+                        : 'border-grey02 bg-white text-grey04 hover:border-purple02 hover:text-purple04'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* 카드 그리드 */}
-        <div className="mt-7 max-md:px-5">
-          <div className="grid grid-cols-3 gap-4 max-xlg:grid-cols-2 max-md:grid-cols-1 w-full max-w-[1783px] mx-auto max-md:mx-0 max-md:max-w-none">
+        <section className="mt-8 md:mt-10">
+          <div className="mb-4">
+            <BenefitFilterToggle
+              value={filter}
+              onChange={setFilter}
+              width="w-full md:w-[190px]"
+              className="mb-0"
+              fontSize="text-body-4"
+              heightClass="h-[34px]"
+            />
+          </div>
+
+          <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-2">
+              <p className="text-body-4 font-medium text-purple04">혜택 목록</p>
+              <h2 className="text-title-5 text-black">한눈에 확인하고 자세히 비교해보세요.</h2>
+            </div>
+
+            <p className="text-body-3 text-grey04 lg:self-center">
+              총 {totalElements.toLocaleString()}개 혜택
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
             {isLoading ? (
-              <div className="col-span-3 flex justify-center items-center h-[400px]">
+              <div className="col-span-1 flex h-[320px] items-center justify-center md:col-span-2 xl:col-span-3">
                 <LoadingSpinner />
               </div>
             ) : benefits.length > 0 ? (
               benefits.map((benefit) => (
                 <div
                   key={benefit.benefitId}
-                  className="w-full max-w-[583px] h-[227px] max-xl:h-[168px] bg-white rounded-[18px] max-xl:rounded-[13px] drop-shadow-basic p-8 max-xl:p-5 flex justify-between relative cursor-pointer hover:drop-shadow-hover transition-shadow max-md:w-full max-md:h-[180px]"
+                  className="group relative flex min-h-[188px] cursor-pointer flex-col justify-between rounded-[24px] border border-grey01 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(15,23,42,0.1)] md:min-h-[200px]"
                   onClick={() => handleCardClick(benefit)}
                 >
-                  {/* 왼쪽 콘텐츠 */}
-                  <div className="flex flex-col flex-1 mr-4 max-xl:mr-2 overflow-hidden">
-                    <h3 className="text-title-4 max-xl:text-title-6 text-black mb-2 max-xl:mb-1 truncate max-md:text-title-6">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(benefit.benefitId);
+                    }}
+                    className="absolute right-5 top-5 text-orange03 transition-transform hover:scale-110"
+                  >
+                    {benefit.isFavorite || favorites.includes(benefit.benefitId) ? (
+                      <TbStarFilled className="h-6 w-6" />
+                    ) : (
+                      <TbStar className="h-6 w-6" />
+                    )}
+                  </button>
+
+                  <div className="pr-10">
+                    <p className="text-body-4 text-grey04">
+                      {benefit.usageType === 'ONLINE' ? '온라인' : '오프라인'} · {benefit.category}
+                    </p>
+                    <h3 className="mt-3 line-clamp-2 text-title-5 text-black md:text-title-6">
                       {benefit.benefitName}
                     </h3>
-                    <div className="text-body-0 max-xl:mt-2 max-xl:text-body-3 text-grey05 overflow-hidden max-md:text-body-2">
-                      <div
-                        className="line-clamp-4 max-xl:line-clamp-3"
-                        style={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 4,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {getBenefitDescription(benefit.tierBenefits)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(benefit.benefitId);
+                    <p
+                      className="mt-3 overflow-hidden text-body-3 text-grey05 md:text-body-4"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
                       }}
-                      className="mb-4 max-xl:mb-2 text-orange03 hover:scale-110 transition-transform"
                     >
-                      {benefit.isFavorite || favorites.includes(benefit.benefitId) ? (
-                        <TbStarFilled className="w-6 h-6 max-xl:w-5 max-xl:h-5" />
-                      ) : (
-                        <TbStar className="w-6 h-6 max-xl:w-5 max-xl:h-5" />
-                      )}
-                    </button>
-                    <div className="w-[80px] max-xl:w-[64px] h-[80px] max-xl:h-[64px] flex items-center justify-center max-md:w-[56px] max-md:h-[56px]">
+                      {getBenefitDescription(benefit.tierBenefits)}
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex items-end justify-between gap-4">
+                    <p className="line-clamp-1 text-body-4 text-grey03">
+                      상세 조건은 카드 클릭 후 확인할 수 있어요
+                    </p>
+                    <div className="flex h-[64px] w-[64px] flex-shrink-0 items-center justify-center md:h-[72px] md:w-[72px]">
                       <img
                         src={benefit.image || '/images/admin/CGV.png'}
                         alt={`${benefit.benefitName} 로고`}
-                        className="max-w-full max-h-full object-contain"
+                        className="max-h-full max-w-full object-contain"
                       />
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="col-span-3 flex justify-center items-center h-[400px] max-xl:h-[300px]">
+              <div className="col-span-1 flex h-[320px] items-center justify-center md:col-span-2 xl:col-span-3">
                 <NoResult
                   message1="앗! 일치하는 결과를 찾을 수 없어요!"
                   message2="다른 키워드나 혜택으로 다시 찾아보세요."
@@ -411,18 +383,36 @@ const AllBenefitsLayout: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* 페이지네이션 */}
-        <div className="flex justify-center mt-8 max-xl:mt-6 mb-6">
-          <Pagination
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            totalItems={totalElements}
-            onPageChange={handlePageChange}
-            width={window.innerWidth <= 1536 ? 1426 : 1783}
-          />
-        </div>
+          <div className="mt-8 flex justify-center md:mt-10">
+            <Pagination
+              currentPage={currentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={totalElements}
+              onPageChange={handlePageChange}
+              width={window.innerWidth <= 768 ? window.innerWidth - 40 : 1280}
+            />
+          </div>
+        </section>
+
+        <section className="mt-12 space-y-5 border-t border-grey01 pt-8 md:mt-16 md:space-y-6 md:pt-10">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-body-4 font-medium text-purple04">추가 탐색</p>
+              <h2 className="mt-1 text-title-5 text-black">
+                이벤트와 인기 혜택은 아래에서 살펴보세요.
+              </h2>
+            </div>
+            <p className="text-body-3 text-grey04">
+              메인 목록 확인 후 참고할 수 있는 보조 콘텐츠예요.
+            </p>
+          </div>
+
+          <div className="space-y-5 md:space-y-6">
+            <EventBanner />
+            <SimpleRanking />
+          </div>
+        </section>
       </div>
 
       {/* 상세 모달 */}

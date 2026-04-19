@@ -6,7 +6,11 @@ import 'swiper/swiper-bundle.css';
 const images = ['/images/allBenefits/event1.png', '/images/allBenefits/event2.png'];
 const images2 = ['/images/allBenefits/event1-1.png', '/images/allBenefits/event2-2.png'];
 
-const EventBanner: React.FC = () => {
+interface EventBannerProps {
+  className?: string;
+}
+
+const EventBanner: React.FC<EventBannerProps> = ({ className = '' }) => {
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 767);
 
   useEffect(() => {
@@ -20,7 +24,9 @@ const EventBanner: React.FC = () => {
   const renderImages = isMobile ? images2 : images;
 
   return (
-    <div className="rounded-[18px] max-xl:rounded-[14px] drop-shadow-basic flex items-center justify-center w-[1190px] max-xl:w-[950px] h-[250px] max-xl:h-[200px] max-xlg:w-full max-md:w-full max-md:h-[100px] max-md:rounded-none max-md:drop-shadow-none">
+    <div
+      className={`w-full overflow-hidden rounded-[28px] shadow-[0_20px_50px_rgba(17,24,39,0.08)] md:h-[220px] xl:h-[250px] max-md:h-[110px] max-md:rounded-none max-md:shadow-none ${className}`}
+    >
       <Swiper
         modules={[Navigation, Pagination, Autoplay]}
         spaceBetween={30}
@@ -34,7 +40,7 @@ const EventBanner: React.FC = () => {
           delay: 5000,
           disableOnInteraction: false,
         }}
-        className="rounded-[12px] max-xl:rounded-[10px] w-full h-full max-md:rounded-none"
+        className="w-full h-full rounded-[28px] max-md:rounded-none"
       >
         {renderImages.map((src, idx) => (
           <SwiperSlide key={idx}>
@@ -49,14 +55,14 @@ const EventBanner: React.FC = () => {
               <img
                 src={src}
                 alt={`benefit-${idx + 1}`}
-                className="object-fill rounded-[12px] max-xl:rounded-[10px] w-full h-full max-md:rounded-none max-md:object-cover"
+                className="h-full w-full object-cover md:object-fill"
               />
             </a>
           </SwiperSlide>
         ))}
 
         {/* 페이지네이션 */}
-        <div className="swiper-pagination !bottom-2 max-md:hidden"></div>
+        <div className="swiper-pagination !bottom-3 max-md:hidden"></div>
       </Swiper>
     </div>
   );

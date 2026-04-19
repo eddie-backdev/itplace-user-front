@@ -49,10 +49,15 @@ const SimpleRanking: React.FC<SimpleRankingProps> = ({ className = '' }) => {
 
   useEffect(() => {
     const fetchRankingData = async () => {
-      // 제휴처 검색 순위 데이터 조회 (최근 2일, 이전 3일 기준으로 상위 3개)
-      const searchRankingResponse = await getPartnersSearchRanking(2, 3);
-      const searchRankingItems = convertToRankingItem(searchRankingResponse.data.slice(0, 3));
-      setData(searchRankingItems);
+      try {
+        // 제휴처 검색 순위 데이터 조회 (최근 2일, 이전 3일 기준으로 상위 3개)
+        const searchRankingResponse = await getPartnersSearchRanking(2, 3);
+        const searchRankingItems = convertToRankingItem(searchRankingResponse.data.slice(0, 3));
+        setData(searchRankingItems);
+      } catch (error) {
+        console.error('제휴처 검색 순위 조회 실패', error);
+        setData([]);
+      }
     };
 
     fetchRankingData();
@@ -72,87 +77,94 @@ const SimpleRanking: React.FC<SimpleRankingProps> = ({ className = '' }) => {
 
   return (
     <div
-      className={`bg-orange01 rounded-[18px] max-xl:rounded-[14px] drop-shadow-basic p-6 max-xl:p-6 max-xlg:pt-4 w-[760px] max-xl:w-[550px] h-[250px] max-xl:h-[200px] max-xlg:drop-shadow-none max-xlg:w-full max-xlg:h-[100px] pr-8 max-xl:pr-6 max-md:px-0 max-xlg:-mt-2 max-xlg:-mb-5 max-xlg:bg-white ${className}`}
+      className={`w-full rounded-[24px] bg-orange01 px-5 py-5 shadow-[0_18px_40px_rgba(251,146,60,0.18)] md:px-6 md:py-6 max-md:rounded-[20px] max-md:shadow-none ${className}`}
     >
-      {/* PC: 전체 리스트, 모바일: 슬라이드 */}
-      <h3 className="text-title-3 max-xl:text-title-5 max-xl:font-semibold text-black mb-6 max-xl:mb-4 max-md:text-title-6 max-md:mb-4">
-        {title}
-      </h3>
-      {/* PC (md 이상) */}
-      <div className="space-y-6 max-xl:space-y-4 max-xlg:hidden">
-        {data.map((item, index) => (
-          <div key={index} className="flex items-center justify-between ">
-            <div className="flex items-center gap-4 max-xl:gap-2">
-              <span className="text-title-5 max-xl:text-title-6 text-orange04">{index + 1}</span>
-              <span className="text-body-0 max-xl:text-body-1 text-black">{item.partnerName}</span>
+      <div className="hidden md:grid md:grid-cols-[minmax(180px,220px)_repeat(3,minmax(0,1fr))] md:items-stretch md:gap-3">
+        <div className="flex flex-col justify-center">
+          <p className="text-body-4 font-medium text-orange04">검색 랭킹</p>
+          <h3 className="mt-1 text-title-5 font-semibold text-black">{title}</h3>
+          <p className="mt-2 text-body-4 text-grey05">상위 제휴처만 빠르게 확인해보세요.</p>
+        </div>
+
+        {data.length > 0 ? (
+          data.map((item, index) => (
+            <div
+              key={index}
+              className="flex min-h-[116px] flex-col justify-between rounded-[20px] bg-white/75 px-4 py-4"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-title-7 font-semibold text-orange04">{index + 1}</span>
+                <div className="flex items-center gap-1 text-body-4 text-grey04">
+                  <span
+                    className={
+                      item.trend === 'up'
+                        ? 'text-orange04'
+                        : item.trend === 'down'
+                          ? 'text-grey03'
+                          : 'text-grey03'
+                    }
+                  >
+                    {item.trend === 'up' ? '▲' : item.trend === 'down' ? '▼' : '-'}
+                  </span>
+                  <span>{Math.abs(item.rankChange)}</span>
+                </div>
+              </div>
+              <div>
+                <p className="line-clamp-2 text-body-2 font-medium text-black">
+                  {item.partnerName}
+                </p>
+                <p className="mt-2 text-body-4 text-grey05">
+                  검색 {item.searchCount.toLocaleString()}회
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 max-xl:gap-1">
-              <span
-                className={`text-body-2 max-xl:text-body-3 w-4 max-xl:w-3 text-center transition-all duration-200 ${
-                  item.trend === 'up'
-                    ? 'text-orange04'
-                    : item.trend === 'down'
-                      ? 'text-grey03'
-                      : 'text-grey03'
-                }`}
-              >
-                {item.trend === 'up' ? '▲' : item.trend === 'down' ? '▼' : '-'}
-              </span>
-              <span
-                className={`text-body-2 max-xl:text-body-3 w-8 max-xl:w-6 text-right  transition-all duration-200 ${
-                  item.trend === 'up'
-                    ? 'text-orange04'
-                    : item.trend === 'down'
-                      ? 'text-grey03'
-                      : 'text-grey03'
-                }`}
-              >
-                {Math.abs(item.rankChange)}
-              </span>
-            </div>
+          ))
+        ) : (
+          <div className="col-span-3 flex min-h-[116px] items-center justify-center rounded-[20px] bg-white/60 px-4 text-body-3 text-grey05">
+            아직 집계된 검색 랭킹이 없어요.
           </div>
-        ))}
+        )}
       </div>
-      {/* 모바일 (md 이하) */}
-      <div className="hidden max-xlg:block">
+
+      <div className="md:hidden">
+        <div className="mb-4">
+          <p className="text-body-4 font-medium text-orange04">검색 랭킹</p>
+          <h3 className="mt-1 text-title-6 font-semibold text-black">{title}</h3>
+        </div>
+
         {data.length > 0 && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 max-xl:gap-2">
-              <span className="text-title-8 max-xl:text-title-9 text-orange04">
-                {currentIndex + 1}
-              </span>
-              <span className="text-body-2 max-xl:text-body-3 text-black">
-                {data[currentIndex].partnerName}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 max-xl:gap-1">
-              <span
-                className={`text-body-2 max-xl:text-body-3 w-4 max-xl:w-3 text-center transition-all duration-200 ${
-                  data[currentIndex].trend === 'up'
-                    ? 'text-orange04'
+          <div className="rounded-[18px] bg-white/70 px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-title-8 text-orange04">{currentIndex + 1}</span>
+                <span className="text-body-2 text-black">{data[currentIndex].partnerName}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-body-3 ${
+                    data[currentIndex].trend === 'up' ? 'text-orange04' : 'text-grey03'
+                  }`}
+                >
+                  {data[currentIndex].trend === 'up'
+                    ? '▲'
                     : data[currentIndex].trend === 'down'
-                      ? 'text-grey03'
-                      : 'text-grey03'
-                }`}
-              >
-                {data[currentIndex].trend === 'up'
-                  ? '▲'
-                  : data[currentIndex].trend === 'down'
-                    ? '▼'
-                    : '-'}
-              </span>
-              <span
-                className={`text-body-2 max-xl:text-body-3 w-8 max-xl:w-6 text-right transition-all duration-200 ${
-                  data[currentIndex].trend === 'up'
-                    ? 'text-orange04'
-                    : data[currentIndex].trend === 'down'
-                      ? 'text-grey03'
-                      : 'text-grey03'
-                }`}
-              >
-                {Math.abs(data[currentIndex].rankChange)}
-              </span>
+                      ? '▼'
+                      : '-'}
+                </span>
+                <span className="text-body-3 text-grey04">
+                  {Math.abs(data[currentIndex].rankChange)}
+                </span>
+              </div>
             </div>
+            <p className="mt-2 text-body-4 text-grey05">
+              검색 {data[currentIndex].searchCount.toLocaleString()}회
+            </p>
+          </div>
+        )}
+
+        {data.length === 0 && (
+          <div className="rounded-[18px] bg-white/60 px-4 py-4 text-body-3 text-grey05">
+            아직 집계된 검색 랭킹이 없어요.
           </div>
         )}
       </div>
