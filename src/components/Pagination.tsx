@@ -7,7 +7,7 @@ interface PaginationProps {
   totalItems: number;
   onPageChange: (pageNumber: number) => void;
   pageRangeDisplayed?: number;
-  width?: number;
+  width?: number | string;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -16,14 +16,17 @@ const Pagination: React.FC<PaginationProps> = ({
   totalItems,
   onPageChange,
   pageRangeDisplayed = 5,
-  width = 1410,
+  width,
 }) => {
   if (totalItems === 0) {
     return null;
   }
 
   return (
-    <div className="flex items-center justify-center mt-[20px]" style={{ width }}>
+    <div
+      className="flex w-full items-center justify-center mt-[20px]"
+      style={width ? { width } : undefined}
+    >
       <ReactPagination
         activePage={currentPage}
         itemsCountPerPage={itemsPerPage}

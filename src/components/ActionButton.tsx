@@ -24,7 +24,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`${baseClasses} ${variantClasses[variant]}`}
+      className={`${baseClasses} ${variantClasses[variant]} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02`}
       style={{ width: size, height: size }}
     >
       {icon}

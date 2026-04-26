@@ -1,9 +1,10 @@
 import api from '../../../apis/axiosInstance';
 import axios from 'axios';
+import { USER_API_BASE_URL } from '../../../apis/apiConfig';
 
 // refresh API용 별도 axios 인스턴스 (interceptor 없음)
 const refreshApi = axios.create({
-  baseURL: import.meta.env.VITE_APP_BASE_URL,
+  baseURL: USER_API_BASE_URL,
   withCredentials: true,
 });
 

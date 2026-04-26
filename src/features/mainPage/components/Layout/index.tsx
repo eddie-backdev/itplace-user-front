@@ -12,6 +12,7 @@ import { useStoreData } from '../../hooks/useStoreData';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import { useLocation } from 'react-router-dom';
 import { useLayoutEffect } from 'react';
+import { useResponsive } from '../../../../hooks/useResponsive';
 
 /**
  * 메인페이지 레이아웃 컴포넌트
@@ -33,8 +34,16 @@ const MainPageLayout: React.FC = () => {
   const [startY, setStartY] = useState<number>(0); // 드래그 시작 Y 좌표
   const [startHeight, setStartHeight] = useState<number>(0); // 드래그 시작 시 높이
   const [isAnimating, setIsAnimating] = useState(false);
+  const { isMobile } = useResponsive();
 
   const location = useLocation();
+
+  const mobileGuideMessage =
+    activeTab === 'ai'
+      ? '아래 시트를 올려 AI 추천과 대화를 확인해보세요.'
+      : activeTab === 'favorites'
+        ? '아래 시트를 올려 저장한 혜택을 빠르게 확인해보세요.'
+        : '아래 시트를 올려 주변 혜택과 검색 결과를 확인해보세요.';
 
   const getMaxHeight = useCallback(() => {
     return window.innerHeight - 105;
@@ -441,7 +450,6 @@ const MainPageLayout: React.FC = () => {
 
   // 모바일에서 body 스크롤 방지
   useEffect(() => {
-    const isMobile = window.innerWidth < 768;
     if (isMobile) {
       document.body.style.overflow = 'hidden';
       document.documentElement.style.overflow = 'hidden';
@@ -451,7 +459,7 @@ const MainPageLayout: React.FC = () => {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
-  }, []);
+  }, [isMobile]);
 
   return (
     <>
@@ -672,6 +680,14 @@ const MainPageLayout: React.FC = () => {
             >
               <div className="w-8 h-1 bg-grey03 rounded-full" />
             </div>
+
+            {isMobile && (
+              <div className="px-5 pb-2 text-body-4 text-grey04">
+                {bottomSheetHeight <= MIN_HEIGHT + 24
+                  ? mobileGuideMessage
+                  : '탭을 바꿔 주변 혜택, 관심 혜택, AI 추천을 살펴보세요.'}
+              </div>
+            )}
 
             {/* 사이드바 콘텐츠 */}
             <div

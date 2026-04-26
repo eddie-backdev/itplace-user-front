@@ -1,17 +1,17 @@
 import { Outlet } from 'react-router-dom';
 import SideMenu from '../features/myPage/components/SideMenu';
-import { useState } from 'react';
-import LoginRequiredModal from '../features/myPage/components/MyInfo/LoginRequiredModal';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import MobileHeader from '../components/MobileHeader';
-import { useLocation } from 'react-router-dom';
-import { useMediaQuery } from 'react-responsive';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useResponsive } from '../hooks/useResponsive';
+import NoResult from '../components/NoResult';
 
 export default function MyPageLayout() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
-  const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
+  const { isMobile } = useResponsive();
   const isHistory = pathname.startsWith('/mypage/history');
 
   // ✅ 모바일 레이아웃을 위한 조건분기
@@ -20,25 +20,38 @@ export default function MyPageLayout() {
 
   // ✅ Redux에서 로그인 상태 가져오기
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
-  const [showLoginModal, setShowLoginModal] = useState(true);
 
   // ✅ Redux에서 이번 달 혜택 금액 상태 가져오기
   const totalAmount = useSelector((state: RootState) => state.history.totalAmount);
 
   if (!isLoggedIn) {
-    // ✅ 로그인 안된 경우, 뒤쪽 컨텐츠를 전혀 렌더하지 않고 모달만 반환
     return (
-      <>
+      <div className="min-h-screen bg-grey01">
         <div className="hidden fixed top-0 left-0 w-full z-[9999] max-md:block">
           <MobileHeader title="마이잇플" />
         </div>
-        <LoginRequiredModal
-          isOpen={showLoginModal}
-          onClose={() => {
-            setShowLoginModal(false);
-          }}
-        />
-      </>
+        <div className="mx-auto flex min-h-screen max-w-[920px] items-center justify-center px-5 py-16 max-md:pt-[96px]">
+          <div className="w-full rounded-[24px] bg-white px-6 py-10 text-center shadow-[0_18px_40px_rgba(15,23,42,0.08)] max-md:rounded-[20px]">
+            <NoResult
+              variant="blocked"
+              isLoginRequired
+              message1="로그인 후 마이페이지를 이용할 수 있어요"
+              message2="회원 정보, 관심 혜택, 사용 이력은 로그인 후 안전하게 확인할 수 있습니다."
+              buttonText="로그인하기"
+              onButtonClick={() =>
+                navigate('/login', {
+                  state: { resetToLogin: true },
+                  replace: true,
+                })
+              }
+              secondaryButtonText="메인으로 가기"
+              onSecondaryButtonClick={() => navigate('/main')}
+              message1FontSize="text-title-4 max-md:text-title-6"
+              message2FontSize="text-body-1 max-md:text-body-3"
+            />
+          </div>
+        </div>
+      </div>
     );
   }
 

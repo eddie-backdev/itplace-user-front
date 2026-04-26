@@ -14,9 +14,14 @@ type NoResultProps = {
   message2?: string;
   buttonText?: string;
   buttonRoute?: string;
-  isLoginRequired?: boolean; // 로그인용 이미지 분기 추가
-  message1FontSize?: string; // 폰트 사이즈 커스터마이징
-  message2FontSize?: string; // 폰트 사이즈 커스터마이징
+  onButtonClick?: () => void;
+  secondaryButtonText?: string;
+  secondaryButtonRoute?: string;
+  onSecondaryButtonClick?: () => void;
+  isLoginRequired?: boolean;
+  variant?: 'empty' | 'error' | 'blocked';
+  message1FontSize?: string;
+  message2FontSize?: string;
 };
 
 const NoResult: React.FC<NoResultProps> = ({
@@ -24,41 +29,81 @@ const NoResult: React.FC<NoResultProps> = ({
   message2 = '다른 키워드나 조건으로 다시 찾아보세요.',
   buttonText,
   buttonRoute,
+  onButtonClick,
+  secondaryButtonText,
+  secondaryButtonRoute,
+  onSecondaryButtonClick,
   isLoginRequired = false,
+  variant = 'empty',
   message1FontSize = 'text-title-4',
   message2FontSize = 'text-body-1',
 }) => {
   const navigate = useNavigate();
 
-  const handleClick = () => {
-    if (buttonRoute) navigate(buttonRoute);
+  const handlePrimaryClick = () => {
+    if (onButtonClick) {
+      onButtonClick();
+      return;
+    }
+
+    if (buttonRoute) {
+      navigate(buttonRoute);
+    }
   };
 
-  // 이미지 경로를 로그인 여부에 따라 분기
-  const imageWebp = isLoginRequired
-    ? '/images/bunny-login-require.webp'
-    : '/images/bunny-no-result.webp';
-  const imagePng = isLoginRequired
-    ? '/images/bunny-login-require.png'
-    : '/images/bunny-no-result.png';
+  const handleSecondaryClick = () => {
+    if (onSecondaryButtonClick) {
+      onSecondaryButtonClick();
+      return;
+    }
+
+    if (secondaryButtonRoute) {
+      navigate(secondaryButtonRoute);
+    }
+  };
+
+  const isBlocked = variant === 'blocked' || isLoginRequired;
+  const imageWebp = isBlocked ? '/images/bunny-login-require.webp' : '/images/bunny-no-result.webp';
+  const imagePng = isBlocked ? '/images/bunny-login-require.png' : '/images/bunny-no-result.png';
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 text-center">
+    <div
+      className="flex flex-col items-center justify-center p-6 text-center"
+      role={variant === 'error' ? 'alert' : 'status'}
+    >
       <picture>
         <source srcSet={imageWebp} type="image/webp" />
-        <img src={imagePng} alt="no-result" className="w-36 h-auto mb-4 max-xl:w-28" />
+        <img
+          src={imagePng}
+          alt={isBlocked ? 'login-required' : variant}
+          className="w-36 h-auto mb-4 max-xl:w-28"
+        />
       </picture>
 
-      <h2 className={`${message1FontSize}  text-grey05 mb-2`}>{message1}</h2>
-      <p className={`${message2FontSize}  text-grey04 mb-4`}>{message2}</p>
+      <h2 className={`${message1FontSize} text-grey06 mb-2`}>{message1}</h2>
+      <p className={`${message2FontSize} text-grey05 mb-4 whitespace-pre-line`}>{message2}</p>
 
-      {buttonText && buttonRoute && (
-        <button
-          onClick={handleClick}
-          className="px-9 py-2 rounded-full bg-purple04 text-white text-body-3  hover:bg-purple05 max-xl:text-body-4 max-md:text-body-5"
-        >
-          {buttonText}
-        </button>
+      {(buttonText || secondaryButtonText) && (
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {secondaryButtonText && (
+            <button
+              type="button"
+              onClick={handleSecondaryClick}
+              className="px-7 py-2.5 rounded-full border border-grey02 bg-white text-grey05 text-body-3 transition-colors hover:bg-grey01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-xl:text-body-4 max-md:text-body-5"
+            >
+              {secondaryButtonText}
+            </button>
+          )}
+          {buttonText && (
+            <button
+              type="button"
+              onClick={handlePrimaryClick}
+              className="px-9 py-2.5 rounded-full bg-purple04 text-white text-body-3 transition-colors hover:bg-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-xl:text-body-4 max-md:text-body-5"
+            >
+              {buttonText}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

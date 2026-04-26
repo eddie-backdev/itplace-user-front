@@ -11,7 +11,10 @@ const Button = ({ children, variant = 'primary', onClick }: ButtonProps) => {
   };
 
   return (
-    <button className={`${baseClass} ${variants[variant]}`} onClick={onClick}>
+    <button
+      className={`${baseClass} ${variants[variant]} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02`}
+      onClick={onClick}
+    >
       {children}
     </button>
   );

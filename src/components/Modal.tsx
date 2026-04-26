@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { TbX } from 'react-icons/tb';
 import { entranceAnimation } from '../utils/Animation';
@@ -47,6 +47,10 @@ const Modal: React.FC<ModalProps> = ({
   shadowStyle,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const descriptionId = useId();
 
   useEffect(() => {
     if (isOpen && animateOnOpen && modalRef.current) {
@@ -54,8 +58,37 @@ const Modal: React.FC<ModalProps> = ({
     }
   }, [isOpen, animateOnOpen]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const timer = window.setTimeout(() => {
+      closeButtonRef.current?.focus();
+    }, 0);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocusRef.current?.focus?.();
+    };
+  }, [isOpen, onClose]);
+
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+    if (e.target === e.currentTarget) {
       onClose();
     }
   };
@@ -69,24 +102,39 @@ const Modal: React.FC<ModalProps> = ({
     >
       <div
         ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-describedby={message || subMessage ? descriptionId : undefined}
         className={`relative ${widthClass ?? 'w-full max-w-[500px]'} bg-white rounded-[20px] shadow-xl p-10 flex flex-col items-center max-sm:p-5 max-sm:w-[90%]`}
         style={shadowStyle}
       >
         {/* 닫기 버튼 */}
-        <button onClick={onClose} className="absolute top-5 right-5 text-grey03 hover:text-grey04">
+        <button
+          ref={closeButtonRef}
+          onClick={onClose}
+          aria-label="모달 닫기"
+          className="absolute top-5 right-5 rounded-full text-grey04 hover:text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+        >
           <TbX size={24} className="max-sm:w-5 max-sm:h-5" />
         </button>
 
         {/* 제목 */}
         {title && (
-          <h2 className="text-title-4 font-bold text-black text-center w-full max-sm:text-title-6 max-sm:font-bold">
+          <h2
+            id={titleId}
+            className="text-title-4 font-bold text-black text-center w-full max-sm:text-title-6 max-sm:font-bold"
+          >
             {title}
           </h2>
         )}
 
         {/* 메시지 */}
         {message && (
-          <p className="text-body-0 text-black whitespace-pre-line text-center mt-[16px] w-full max-sm:text-body-2">
+          <p
+            id={descriptionId}
+            className="text-body-0 text-black whitespace-pre-line text-center mt-[16px] w-full max-sm:text-body-2"
+          >
             {message}
           </p>
         )}
@@ -94,6 +142,7 @@ const Modal: React.FC<ModalProps> = ({
         {/* 서브 메시지 */}
         {subMessage && (
           <p
+            id={!message ? descriptionId : undefined}
             className={`text-center text-black w-full mt-[8px] text-body-0 whitespace-pre-line max-sm:text-body-2 ${subMessageClass}`}
           >
             {subMessage}
@@ -126,7 +175,7 @@ const Modal: React.FC<ModalProps> = ({
               return (
                 <button
                   key={idx}
-                  className={`flex-1 h-[56px] rounded-[10px] text-title-6 transition duration-200 ${typeClass} max-xl:h-[52px] max-sm:h-[46px] max-sm:text-title-7`}
+                  className={`flex-1 h-[56px] rounded-[10px] text-title-6 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${typeClass} max-xl:h-[52px] max-sm:h-[46px] max-sm:text-title-7`}
                   onClick={btn.onClick}
                 >
                   {btn.label}

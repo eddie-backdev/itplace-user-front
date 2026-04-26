@@ -1,9 +1,9 @@
 import React from 'react';
 import { BiSolidMegaphone } from 'react-icons/bi';
-import { useMediaQuery } from 'react-responsive';
+import { useResponsive } from '../../../hooks/useResponsive';
 
 const TipBanner: React.FC = () => {
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const { isMobile } = useResponsive();
 
   return (
     <section

@@ -42,11 +42,24 @@ export default function BenefitCardList({
       {items.map((item) => (
         <div
           key={item.benefitId}
+          role="button"
+          tabIndex={0}
+          aria-label={`${item.benefitName} 상세 보기`}
           onClick={() => {
             if (isEditing) {
               toggleSelect(item.benefitId);
             } else {
               setSelectedId(item.benefitId); // 상세보기
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              if (isEditing) {
+                toggleSelect(item.benefitId);
+              } else {
+                setSelectedId(item.benefitId);
+              }
             }
           }}
           className={`relative p-4 border flex flex-col items-center rounded-[18px] aspect-[12/13] w-full max-xl:aspect-[1/1] max-xlg:max-h-[150px] max-md:max-h-none max-md:aspect-[4/3] max-sm:aspect-[12/13] cursor-pointer border-none shadow-[0px_3px_12px_rgba(0,0,0,0.15)] ${
@@ -57,7 +70,7 @@ export default function BenefitCardList({
               : selectedId === item.benefitId
                 ? 'ring-2 ring-purple04'
                 : ''
-          }`}
+          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02`}
         >
           {/* 편집 모드일 때 체크박스 표시 */}
           {isEditing && (
@@ -82,7 +95,7 @@ export default function BenefitCardList({
                 e.stopPropagation();
                 onRequestDelete(item.benefitId); // 모달 열기
               }}
-              className="absolute top-5 right-5 max-xl:top-4 max-xl:right-4 text-orange03 hover:scale-110 transition-transform"
+              className="absolute top-5 right-5 max-xl:top-4 max-xl:right-4 text-orange03 hover:scale-110 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 rounded-full"
               title="즐겨찾기 해제"
             >
               <TbStarFilled size={22} />

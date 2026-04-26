@@ -70,8 +70,17 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
 
   return (
     <div
-      className="group cursor-pointer transition-colors duration-200 w-full px-5 bg-white hover:bg-grey01 max-md:px-4 max-sm:px-3"
+      role="button"
+      tabIndex={0}
+      aria-label={`${platform.name} 상세 보기`}
+      className="group cursor-pointer transition-colors duration-200 w-full px-5 bg-white hover:bg-grey01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-md:px-4 max-sm:px-3"
       onClick={() => onSelect(platform)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onSelect(platform);
+        }
+      }}
     >
       <div className="py-4 max-md:py-3 w-[330px] max-md:w-full">
         {/* 상단부: 가맹점 정보 + 로고 */}
@@ -100,7 +109,8 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
                   e.stopPropagation();
                   setShowAddressTooltip(!showAddressTooltip);
                 }}
-                className="hover:text-grey05 transition-colors"
+                aria-label={showAddressTooltip ? '주소 접기' : '주소 펼치기'}
+                className="rounded-full hover:text-grey05 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
               >
                 {showAddressTooltip ? (
                   <TbChevronUp size={16} className="text-grey04 max-md:w-4 max-md:h-4" />

@@ -25,6 +25,7 @@ import { useDispatch } from 'react-redux';
 import { setLoginSuccess } from '../../../store/authSlice';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import Modal from '../../../components/Modal';
+import { useResponsive } from '../../../hooks/useResponsive';
 
 const AuthLayout = () => {
   const dispatch = useDispatch();
@@ -66,6 +67,7 @@ const AuthLayout = () => {
   });
 
   const [showOAuthModal, setShowOAuthModal] = useState(false);
+  const { isMobile } = useResponsive();
 
   const hasInitialized = useRef(false);
 
@@ -236,8 +238,6 @@ const AuthLayout = () => {
       showToast(msg, 'error');
     }
   };
-  const isMobile = window.innerWidth <= 768; // 또는 useMediaQuery
-
   useEffect(() => {
     if (isMobile) {
       const originalOverflow = document.body.style.overflow;

@@ -3,6 +3,7 @@ import { Platform } from '../../../types';
 import StoreCard from './StoreCard';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
 import NoResult from '../../../../../components/NoResult';
+import { useResponsive } from '../../../../../hooks/useResponsive';
 
 interface StoreCardsSectionProps {
   platforms: Platform[];
@@ -26,6 +27,8 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   error,
   backButton,
 }) => {
+  const { isMobile } = useResponsive();
+
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col">
@@ -48,6 +51,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
     return (
       <div className="flex-1 flex flex-col items-center justify-center max-md:mt-12">
         <NoResult
+          variant="error"
           message1="오류가 발생했어요!"
           message2="잠시 후 다시 시도해 주세요"
           message1FontSize="text-title-6"
@@ -134,8 +138,8 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
       <div
         className="-mx-5 overflow-y-auto overflow-x-hidden max-md:overflow-y-scroll max-md:mx-0"
         style={{
-          height: window.innerWidth >= 768 ? 'calc(100vh - 360px)' : 'calc(100vh - 200px)',
-          maxHeight: window.innerWidth < 768 ? 'calc(100vh - 200px)' : undefined,
+          height: isMobile ? 'calc(100vh - 200px)' : 'calc(100vh - 360px)',
+          maxHeight: isMobile ? 'calc(100vh - 200px)' : undefined,
         }}
       >
         {platforms.map((platform, index) => (

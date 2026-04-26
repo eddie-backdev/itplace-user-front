@@ -73,7 +73,7 @@ const NavigationTabsSection: React.FC<NavigationTabsSectionProps> = ({
           onClick={() => handleTabClick(tab.id)}
           onMouseEnter={() => handleMouseEnter(tab.id)}
           onMouseLeave={() => handleMouseLeave(tab.id)}
-          className={`text-title-7 text-center h-9 pt-1 w-[105px] rounded-[10px] mt-5 max-md:text-body-2 max-md:h-10 max-md:flex-1 max-md:mt-3 max-sm:text-body-3 max-sm:h-8 max-sm:mt-2 ${
+          className={`relative text-title-7 text-center h-9 pt-1 w-[105px] rounded-[10px] mt-5 max-md:text-body-2 max-md:h-10 max-md:flex-1 max-md:mt-3 max-sm:text-body-3 max-sm:h-8 max-sm:mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
             activeTab === tab.id
               ? 'bg-purple04 text-white'
               : 'bg-grey01 text-grey05 hover:bg-grey02'

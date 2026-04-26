@@ -84,8 +84,10 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
               <Link
                 to={m.path}
                 key={m.id}
+                aria-current={isActive ? 'page' : undefined}
                 className={clsx(
-                  'relative flex flex-col items-center justify-center text-white text-title-8 group w-[72px] h-[76px] hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.6)]'
+                  'relative flex flex-col items-center justify-center text-white text-title-8 group w-[72px] h-[76px] rounded-xl hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
+                  isActive && 'drop-shadow-[0_0_5px_rgba(255,255,255,0.6)]'
                 )}
               >
                 {/* 선택된 메뉴 하이라이트 */}
@@ -103,8 +105,9 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
         <div className="mb-1 mt-9">
           {isLoggedIn ? (
             <button
-              className="flex flex-col items-center text-white text-sm hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.6)]"
+              className="flex flex-col items-center rounded-xl text-white text-sm hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
               onClick={handleLogout}
+              aria-label="로그아웃"
             >
               <TbLogout className="text-3xl" strokeWidth={1.3} />
               <span className="mt-1 text-title-8">로그아웃</span>
@@ -117,7 +120,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
                   replace: true,
                 });
               }}
-              className="flex flex-col items-center text-white text-title-8 hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.6)]"
+              className="flex flex-col items-center rounded-xl text-white text-title-8 hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             >
               <TbLogin className="text-3xl" strokeWidth={1.3} />
               <span className="mt-1">로그인</span>
