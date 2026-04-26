@@ -1,5 +1,5 @@
 // src/pages/myPage/MyInfoPage.tsx
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import MyPageContentLayout from '../../features/myPage/layout/MyPageContentLayout';
 import UserInfoForm from '../../features/myPage/components/MyInfo/UserInfoForm';
 import MembershipInfo from '../../features/myPage/components/MyInfo/MembershipInfo';
@@ -9,6 +9,7 @@ import UserDeleteModal from '../../features/myPage/components/MyInfo/UserDeleteM
 import UplusLinkModal from '../../features/myPage/components/MyInfo/UplusLinkModal';
 import api from '../../apis/axiosInstance';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import NoResult from '../../components/NoResult';
 import { showToast } from '../../utils/toast';
 import { AxiosError } from 'axios';
 import { useDispatch } from 'react-redux';
@@ -29,6 +30,7 @@ interface UserInfo {
 export default function MyInfoPage() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const [isPwModalOpen, setIsPwModalOpen] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -44,21 +46,24 @@ export default function MyInfoPage() {
   const navigate = useNavigate();
 
   // ✅ 사용자 정보 조회
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const res = await api.get<{ data: UserInfo }>('api/v1/users');
       setUser(res.data.data);
     } catch {
+      setUser(null);
+      setLoadError(true);
       showToast('사용자 정보 조회에 실패했습니다.', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   // ✅ 로딩중일 경우
   if (loading) {
@@ -85,8 +90,20 @@ export default function MyInfoPage() {
       <div className="flex flex-row gap-[28px] w-full h-full max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
         <MyPageContentLayout
           main={
-            <div className="text-center mt-10 text-lg text-grey05 max-md:mt-0">
-              사용자 정보를 불러올 수 없습니다.
+            <div className="flex h-full items-center justify-center">
+              <NoResult
+                variant="error"
+                message1="회원 정보를 불러오지 못했어요"
+                message2={
+                  loadError
+                    ? '네트워크 상태를 확인한 뒤 다시 시도해 주세요.'
+                    : '잠시 후 다시 확인해 주세요.'
+                }
+                buttonText="다시 시도"
+                onButtonClick={fetchUser}
+                message1FontSize="text-title-5 max-xl:text-title-6"
+                message2FontSize="text-body-2 max-xl:text-body-3"
+              />
             </div>
           }
           aside={<></>}

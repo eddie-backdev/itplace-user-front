@@ -19,8 +19,8 @@ import { ko } from 'date-fns/locale/ko';
 import { RiResetRightFill } from 'react-icons/ri';
 import FadeWrapper from '../../features/myPage/components/FadeWrapper';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { useMediaQuery } from 'react-responsive';
 import BenefitInfoCard from '../../components/BenefitInfoCard';
+import { useResponsive } from '../../hooks/useResponsive';
 
 import { useDispatch } from 'react-redux';
 import { setTotalAmount as setTotalAmountAction } from '../../store/historySlice';
@@ -53,8 +53,10 @@ export default function MyHistoryPage() {
 
   // 로딩 상태
   const [loading, setLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
+  const [reloadSeed, setReloadSeed] = useState(0);
 
-  const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
+  const { isMobile } = useResponsive();
 
   // ✅ 혜택 사용 이력 API 호출 (페이지/필터 변화 시 재호출)
   useEffect(() => {
@@ -63,6 +65,7 @@ export default function MyHistoryPage() {
     const fetchHistory = async () => {
       setLoading(true);
       try {
+        setHistoryError(false);
         let startParam: string | undefined;
         let endParam: string | undefined;
 
@@ -81,7 +84,6 @@ export default function MyHistoryPage() {
             .utc()
             .format('YYYY-MM-DDTHH:mm:ss');
         }
-        console.log('시간 포함 날짜 파라미터:', { startParam, endParam });
         const res = await api.get('/api/v1/membership-history', {
           params: {
             keyword: keyword || undefined,
@@ -94,7 +96,6 @@ export default function MyHistoryPage() {
 
         const data = res.data?.data;
         if (data && Array.isArray(data.content)) {
-          console.log('멤버십 이력 데이터', data);
           setHistory(data.content);
           setCurrentPage(data.currentPage ?? 0);
           setTotalElements(data.totalElements ?? 0);
@@ -104,6 +105,7 @@ export default function MyHistoryPage() {
           setTotalElements(0);
         }
       } catch {
+        setHistoryError(true);
         setHistory([]);
         setCurrentPage(0);
         setTotalElements(0);
@@ -113,7 +115,7 @@ export default function MyHistoryPage() {
     };
 
     fetchHistory();
-  }, [keyword, startDate, endDate, page, size, membershipGrade]);
+  }, [keyword, startDate, endDate, page, size, membershipGrade, reloadSeed]);
 
   // ✅ 이번 달 총 할인 금액 API 호출 (mount 시 1회)
   useEffect(() => {
@@ -176,10 +178,7 @@ export default function MyHistoryPage() {
                   locale={ko}
                   showPopperArrow={false}
                   selected={startDate}
-                  onChange={(date) => {
-                    console.log('📅 시작 날짜 선택됨:', date);
-                    setStartDate(date);
-                  }}
+                  onChange={(date) => setStartDate(date)}
                   dateFormat="yyyy-MM-dd"
                   maxDate={endDate ?? undefined}
                   placeholderText="시작 날짜"
@@ -190,10 +189,7 @@ export default function MyHistoryPage() {
                   locale={ko}
                   showPopperArrow={false}
                   selected={endDate}
-                  onChange={(date) => {
-                    console.log('📅 종료 날짜 선택됨:', date);
-                    setEndDate(date);
-                  }}
+                  onChange={(date) => setEndDate(date)}
                   dateFormat="yyyy-MM-dd"
                   minDate={startDate ?? undefined}
                   placeholderText="종료 날짜"
@@ -212,12 +208,31 @@ export default function MyHistoryPage() {
               ) : membershipGrade == null ? (
                 <div className="mt-28 max-xl:mt-20">
                   <NoResult
+                    variant="blocked"
                     message1="앗! 멤버십 등급이 없어 결과를 조회할 수 없어요"
                     message2="유플러스 회원이시라면 회원 정보 연동 후 이용할 수 있어요."
                     message1FontSize="max-xl:text-title-6"
                     message2FontSize="max-xl:text-body-3"
                     buttonText="회원 정보 연동하러가기"
-                    buttonRoute="/myPage/info"
+                    buttonRoute="/mypage/info"
+                  />
+                </div>
+              ) : historyError ? (
+                <div className="mt-28 max-xl:mt-20">
+                  <NoResult
+                    variant="error"
+                    message1="이용 이력을 불러오지 못했어요"
+                    message2="잠시 후 다시 시도하거나 필터를 초기화한 뒤 확인해 주세요."
+                    message1FontSize="max-xl:text-title-6"
+                    message2FontSize="max-xl:text-body-3"
+                    buttonText="다시 시도"
+                    onButtonClick={() => setReloadSeed((prev) => prev + 1)}
+                    secondaryButtonText="필터 초기화"
+                    onSecondaryButtonClick={() => {
+                      setKeyword('');
+                      setStartDate(null);
+                      setEndDate(null);
+                    }}
                   />
                 </div>
               ) : history.length === 0 ? (

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
+import { useResponsive } from '../../../hooks/useResponsive';
 
 const images = ['/images/allBenefits/event1.png', '/images/allBenefits/event2.png'];
 const images2 = ['/images/allBenefits/event1-1.png', '/images/allBenefits/event2-2.png'];
@@ -11,15 +12,7 @@ interface EventBannerProps {
 }
 
 const EventBanner: React.FC<EventBannerProps> = ({ className = '' }) => {
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 767);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 767); // max-md 기준
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const { isMobile } = useResponsive();
 
   const renderImages = isMobile ? images2 : images;
 

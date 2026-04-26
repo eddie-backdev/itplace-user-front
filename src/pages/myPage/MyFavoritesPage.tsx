@@ -10,13 +10,14 @@ import FavoritesDeleteModal from '../../features/myPage/components/Favorites/Fav
 import FavoritesAside from '../../features/myPage/components/Favorites/FavoritesAside';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { useMediaQuery } from 'react-responsive';
 import BenefitDetailTabs from '../../features/myPage/components/Favorites/BenefitDetailTabs';
 import { IoCloseOutline } from 'react-icons/io5';
+import { useResponsive } from '../../hooks/useResponsive';
 
 export default function MyFavoritesPage() {
   const {
     loading,
+    loadError,
     allFavorites,
     totalElements,
     currentItems,
@@ -39,10 +40,11 @@ export default function MyFavoritesPage() {
     handlePageChange,
     itemsPerPage,
     currentPage,
+    reloadFavorites,
   } = useFavorites(6);
 
   const userGrade = useSelector((state: RootState) => state.auth.user?.membershipGrade);
-  const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
+  const { isMobile } = useResponsive();
 
   return (
     <div className="flex flex-row gap-[28px] w-full h-full max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-[20px]">
@@ -109,6 +111,18 @@ export default function MyFavoritesPage() {
               <div className="flex justify-center items-center h-full">
                 <LoadingSpinner />
               </div>
+            ) : loadError ? (
+              <div className="mt-28 max-xl:mt-20">
+                <NoResult
+                  variant="error"
+                  message1="관심 혜택을 불러오지 못했어요"
+                  message2="네트워크 상태를 확인한 뒤 다시 시도해 주세요."
+                  buttonText="다시 시도"
+                  onButtonClick={reloadFavorites}
+                  message1FontSize="max-xl:text-title-6"
+                  message2FontSize="max-xl:text-body-3"
+                />
+              </div>
             ) : keyword.trim() ? (
               currentItems.length === 0 ? (
                 <div className="mt-28 max-xl:mt-20">
@@ -172,7 +186,6 @@ export default function MyFavoritesPage() {
                   itemsPerPage={itemsPerPage}
                   totalItems={totalElements}
                   onPageChange={handlePageChange}
-                  width={37}
                 />
                 {!isMobile && isEditing && (
                   <div className="absolute right-[8px] top-[20px] flex gap-3 max-xl:gap-1 max-xl:top-[18px]">

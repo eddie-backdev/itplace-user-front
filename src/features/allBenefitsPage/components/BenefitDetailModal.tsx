@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../../components/AllBenefitsModal';
 import {
@@ -8,6 +8,7 @@ import {
   TierBenefit,
 } from '../apis/allBenefitsApi';
 import { showToast } from '../../../utils/toast';
+import NoResult from '../../../components/NoResult';
 
 interface InfoSectionProps {
   label: string;
@@ -42,41 +43,30 @@ const BenefitDetailModal: React.FC<BenefitDetailModalProps> = ({ isOpen, benefit
   const navigate = useNavigate();
   const [benefitDetail, setBenefitDetail] = useState<BenefitDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+
+  const loadBenefitDetail = useCallback(async () => {
+    if (!benefit) return;
+
+    setIsLoading(true);
+    try {
+      setLoadError(false);
+      const detail = await getBenefitDetail(benefit.benefitId);
+      setBenefitDetail(detail);
+    } catch {
+      setLoadError(true);
+      showToast('혜택 상세 정보를 불러오는 중 오류가 발생했습니다', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [benefit]);
 
   // 혜택 상세 정보 로드
   useEffect(() => {
     if (isOpen && benefit) {
-      const fetchBenefitDetail = async () => {
-        setIsLoading(true);
-        try {
-          const detail = await getBenefitDetail(benefit.benefitId);
-          setBenefitDetail(detail);
-        } catch {
-          showToast('혜택 상세 정보를 불러오는 중 오류가 발생했습니다', 'error');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchBenefitDetail();
+      loadBenefitDetail();
     }
-  }, [isOpen, benefit]);
-
-  // 모달이 열릴 때 배경 스크롤 방지
-  useEffect(() => {
-    if (isOpen) {
-      // 모달이 열릴 때 body 스크롤 막기
-      document.body.style.overflow = 'hidden';
-    } else {
-      // 모달이 닫힐 때 body 스크롤 복원
-      document.body.style.overflow = 'unset';
-    }
-
-    // 컴포넌트 언마운트 시 스크롤 복원
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
+  }, [benefit, isOpen, loadBenefitDetail]);
 
   if (!benefit) return null;
 
@@ -137,6 +127,18 @@ const BenefitDetailModal: React.FC<BenefitDetailModalProps> = ({ isOpen, benefit
           {isLoading ? (
             <div className="flex items-center justify-center h-[400px] max-md:h-[300px]">
               <div className="text-grey03 max-md:text-sm">상세 정보를 불러오는 중...</div>
+            </div>
+          ) : loadError ? (
+            <div className="flex h-[400px] items-center justify-center max-md:h-[300px]">
+              <NoResult
+                variant="error"
+                message1="상세 정보를 불러오지 못했어요"
+                message2="잠시 후 다시 시도해 주세요."
+                buttonText="다시 시도"
+                onButtonClick={loadBenefitDetail}
+                message1FontSize="text-title-6 max-md:text-title-7"
+                message2FontSize="text-body-3 max-md:text-body-4"
+              />
             </div>
           ) : (
             <>

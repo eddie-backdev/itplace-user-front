@@ -20,6 +20,7 @@ import {
 } from './apis/allBenefitsApi';
 import BenefitDetailModal from './components/BenefitDetailModal';
 import MobileHeader from '../../components/MobileHeader';
+import { useResponsive } from '../../hooks/useResponsive';
 
 const AllBenefitsLayout: React.FC = () => {
   const [filter, setFilter] = useState<'default' | 'vipkok'>('default');
@@ -33,11 +34,14 @@ const AllBenefitsLayout: React.FC = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [selectedBenefit, setSelectedBenefit] = useState<BenefitItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const { isMobile } = useResponsive();
 
   // API 호출 함수
   const fetchBenefits = useCallback(
     async (page: number = 0, keyword?: string, category?: string) => {
       setIsLoading(true);
+      setLoadError(false);
       // 로딩 시작 시 기존 결과를 유지하지 않고 초기화
       setBenefits([]);
       setTotalElements(0);
@@ -70,6 +74,7 @@ const AllBenefitsLayout: React.FC = () => {
         setFavorites(favoriteIds);
       } catch {
         showToast('혜택 데이터를 불러오는 중 오류가 발생했습니다', 'error');
+        setLoadError(true);
         setBenefits([]);
         setTotalElements(0);
       } finally {
@@ -205,6 +210,13 @@ const AllBenefitsLayout: React.FC = () => {
     setCurrentPage(1);
   };
 
+  const handleCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, benefit: BenefitItem) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleCardClick(benefit);
+    }
+  };
+
   // 페이지네이션 로직
   const itemsPerPage = 9;
 
@@ -322,15 +334,24 @@ const AllBenefitsLayout: React.FC = () => {
               benefits.map((benefit) => (
                 <div
                   key={benefit.benefitId}
-                  className="group relative flex min-h-[188px] cursor-pointer flex-col justify-between rounded-[24px] border border-grey01 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(15,23,42,0.1)] md:min-h-[200px]"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${benefit.benefitName} 혜택 상세 보기`}
+                  className="group relative flex min-h-[188px] cursor-pointer flex-col justify-between rounded-[24px] border border-grey01 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 md:min-h-[200px]"
                   onClick={() => handleCardClick(benefit)}
+                  onKeyDown={(event) => handleCardKeyDown(event, benefit)}
                 >
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleFavorite(benefit.benefitId);
                     }}
-                    className="absolute right-5 top-5 text-orange03 transition-transform hover:scale-110"
+                    aria-label={
+                      benefit.isFavorite || favorites.includes(benefit.benefitId)
+                        ? '관심 혜택에서 제거'
+                        : '관심 혜택에 추가'
+                    }
+                    className="absolute right-5 top-5 text-orange03 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
                   >
                     {benefit.isFavorite || favorites.includes(benefit.benefitId) ? (
                       <TbStarFilled className="h-6 w-6" />
@@ -372,6 +393,28 @@ const AllBenefitsLayout: React.FC = () => {
                   </div>
                 </div>
               ))
+            ) : loadError ? (
+              <div className="col-span-1 flex h-[320px] items-center justify-center md:col-span-2 xl:col-span-3">
+                <NoResult
+                  variant="error"
+                  message1="혜택 목록을 불러오지 못했어요"
+                  message2="잠시 후 다시 시도하거나 필터를 초기화한 뒤 확인해 주세요."
+                  buttonText="다시 시도"
+                  onButtonClick={() =>
+                    fetchBenefits(currentPage - 1, debouncedSearchTerm, selectedCategory)
+                  }
+                  secondaryButtonText="필터 초기화"
+                  onSecondaryButtonClick={() => {
+                    setSelectedCategory('전체');
+                    setFilter('default');
+                    setSearchTerm('');
+                    setDebouncedSearchTerm('');
+                    setCurrentPage(1);
+                  }}
+                  message1FontSize="text-title-4 max-xl:text-title-6"
+                  message2FontSize="text-body-1 max-xl:text-body-3"
+                />
+              </div>
             ) : (
               <div className="col-span-1 flex h-[320px] items-center justify-center md:col-span-2 xl:col-span-3">
                 <NoResult
@@ -390,7 +433,7 @@ const AllBenefitsLayout: React.FC = () => {
               itemsPerPage={itemsPerPage}
               totalItems={totalElements}
               onPageChange={handlePageChange}
-              width={window.innerWidth <= 768 ? window.innerWidth - 40 : 1280}
+              width={isMobile ? 'calc(100vw - 40px)' : '100%'}
             />
           </div>
         </section>

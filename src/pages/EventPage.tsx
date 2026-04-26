@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { useMediaQuery } from 'react-responsive';
 import ScratchCouponCanvas from '../features/eventPage/components/ScratchCouponCanvas';
 import OwnedCouponCountInfo from '../features/eventPage/components/OwnedCouponCountInfo';
 import GiftListInfo from '../features/eventPage/components/GiftListInfo';
@@ -20,6 +19,7 @@ import { showToast } from '../utils/toast';
 import { AxiosError } from 'axios';
 import { CouponHistory } from '../types/event';
 import NoResult from '../components/NoResult';
+import { useResponsive } from '../hooks/useResponsive';
 
 export default function EventPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,17 +35,32 @@ export default function EventPage() {
   const [historyList, setHistoryList] = useState<CouponHistory[]>([]);
   const [onlySuccess, setOnlySuccess] = useState(false);
   const [showNoCouponModal, setShowNoCouponModal] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
 
-  const isMobile = useMediaQuery({ query: '(max-width: 768px)' });
+  const { isMobile } = useResponsive();
 
-  const getCouponCount = async () => {
+  const getCouponCount = useCallback(async () => {
     try {
       const count = await fetchCouponCount();
       setCouponCount(count);
     } catch {
       setCouponCount(null);
     }
-  };
+  }, []);
+
+  const loadHistory = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      setHistoryError(false);
+      const data = await fetchCouponHistory(onlySuccess ? 'SUCCESS' : undefined);
+      setHistoryList(data);
+    } catch (err) {
+      console.error('사용 내역 조회 실패:', err);
+      setHistoryError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [onlySuccess]);
 
   const handleScratchComplete = async () => {
     if (!isLoggedIn) {
@@ -71,8 +86,7 @@ export default function EventPage() {
       }
       setShowResult(true);
       await getCouponCount();
-      const data = await fetchCouponHistory(onlySuccess ? 'SUCCESS' : undefined);
-      setHistoryList(data);
+      await loadHistory();
     } catch (err) {
       const axiosError = err as AxiosError<{ message: string }>;
       const message = axiosError?.response?.data?.message ?? '쿠폰 긁기에 실패했습니다.';
@@ -82,22 +96,14 @@ export default function EventPage() {
 
   // ✅ 전체 사용내역 불러오기
   useEffect(() => {
-    const fetchAll = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchCouponHistory(onlySuccess ? 'SUCCESS' : undefined);
-        setHistoryList(data);
-      } catch (err) {
-        console.error('사용 내역 조회 실패:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     if (isLoggedIn) {
       getCouponCount();
-      fetchAll();
+      loadHistory();
+    } else {
+      setHistoryError(false);
+      setHistoryList([]);
     }
-  }, [isLoggedIn, onlySuccess]);
+  }, [getCouponCount, isLoggedIn, loadHistory]);
 
   return (
     <>
@@ -112,6 +118,24 @@ export default function EventPage() {
       <main className="flex justify-center items-center min-h-screen bg-white px-[28px] py-7 max-md:px-5">
         <div className="w-full max-w-[1783px] flex flex-col justify-center h-full">
           {!isMobile && <TipBanner />}
+
+          <section className="mb-8 rounded-[22px] border border-grey01 bg-white px-6 py-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)] max-md:mb-6 max-md:px-5 max-md:py-4">
+            <p className="text-body-4 font-medium text-purple04">행운 스크래치</p>
+            <div className="mt-2 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h1 className="text-title-4 text-black max-md:text-title-6">
+                  혜택 기록 후 쿠폰을 모아 스크래치를 열어보세요.
+                </h1>
+                <p className="mt-2 text-body-3 text-grey05 max-md:text-body-4">
+                  쿠폰 수량을 확인하고, 당첨 내역만 따로 모아보며 이벤트 참여 흐름을 한 번에 관리할
+                  수 있어요.
+                </p>
+              </div>
+              <div className="rounded-full bg-purple01 px-4 py-2 text-body-4 text-purple04">
+                보유 쿠폰 {couponCount ?? 0}장
+              </div>
+            </div>
+          </section>
 
           <div className="flex gap-11 max-xl:gap-6 max-xlg:flex-col max-md:gap-8">
             <div className="flex-1 flex flex-col gap-8 max-xl:gap-6 max-w-[1080px]">
@@ -158,6 +182,7 @@ export default function EventPage() {
                 <div className="flex-1 mt-12 overflow-hidden">
                   {!isLoggedIn ? (
                     <NoResult
+                      variant="blocked"
                       message1="로그인 후 확인할 수 있어요!"
                       message2="로그인하고 행운의 스크래치 쿠폰을 긁어보세요."
                       message1FontSize="max-xl:text-title-6"
@@ -165,6 +190,16 @@ export default function EventPage() {
                       buttonText="로그인하기"
                       buttonRoute="/login"
                       isLoginRequired
+                    />
+                  ) : historyError ? (
+                    <NoResult
+                      variant="error"
+                      message1="쿠폰 사용 내역을 불러오지 못했어요"
+                      message2="잠시 후 다시 시도하거나 필터를 바꿔서 확인해 주세요."
+                      message1FontSize="max-xl:text-title-6"
+                      message2FontSize="max-xl:text-body-3"
+                      buttonText="다시 시도"
+                      onButtonClick={loadHistory}
                     />
                   ) : historyList.length === 0 ? (
                     <NoResult

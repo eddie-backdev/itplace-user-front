@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { fetchFavorites, deleteFavorites } from '../apis/favorites';
 import { FavoriteItem } from '../../../types/favorites';
 import { showToast } from '../../../utils/toast';
-import { useMediaQuery } from 'react-responsive';
+import { useResponsive } from '../../../hooks/useResponsive';
 
 export function useFavorites(itemsPerPageInit = 6) {
   const [allFavorites, setAllFavorites] = useState<FavoriteItem[]>([]);
@@ -13,7 +13,8 @@ export function useFavorites(itemsPerPageInit = 6) {
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
+  const [loadError, setLoadError] = useState(false);
+  const { isMobile } = useResponsive();
 
   // 페이지네이션
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,12 +30,14 @@ export function useFavorites(itemsPerPageInit = 6) {
   const loadFavorites = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(false);
       const category = benefitFilter === 'vipkok' ? 'VIP 콕' : '기본 혜택';
       // size를 충분히 크게 해서 전체 데이터를 한 번에 불러옴
       const res = await fetchFavorites(category, 0, 9999);
       setAllFavorites(res.data.content); // 전체 데이터를 저장
     } catch (err) {
       console.error('즐겨찾기 목록 불러오기 실패', err);
+      setLoadError(true);
       setAllFavorites([]);
     } finally {
       setLoading(false);
@@ -118,6 +121,7 @@ export function useFavorites(itemsPerPageInit = 6) {
 
   return {
     loading,
+    loadError,
     allFavorites,
     currentItems,
     totalElements,
@@ -140,5 +144,6 @@ export function useFavorites(itemsPerPageInit = 6) {
     handleRemoveFavorite,
     handleDeleteSelected,
     setSelectedId,
+    reloadFavorites: loadFavorites,
   };
 }
