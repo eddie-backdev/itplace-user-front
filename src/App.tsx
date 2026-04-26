@@ -9,6 +9,7 @@ import { RootState } from './store';
 import { logout } from './store/authSlice';
 import { persistor } from './store';
 import { refreshToken } from './features/loginPage/apis/auth';
+import ChatWidget from './features/chat/components/ChatWidget';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -38,6 +39,7 @@ const App = () => {
     <>
       <RouterProvider router={router} />
       <ToastProvider />
+      <ChatWidget />
     </>
   );
 };
