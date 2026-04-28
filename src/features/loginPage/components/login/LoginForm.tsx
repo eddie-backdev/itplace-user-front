@@ -11,11 +11,11 @@ import KakaoLoginButton from './KakaoLoginButton';
 import { useNavigate } from 'react-router-dom';
 
 type Props = {
-  onGoToPhoneAuth: () => void;
-  onGoToFindEmail: () => void;
+  onGoToSignUp: () => void;
+  onGoToFindPassword: () => void;
 };
 
-const LoginForm = ({ onGoToPhoneAuth, onGoToFindEmail }: Props) => {
+const LoginForm = ({ onGoToSignUp, onGoToFindPassword }: Props) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -61,7 +61,6 @@ const LoginForm = ({ onGoToPhoneAuth, onGoToFindEmail }: Props) => {
       </h2>
 
       <div className="flex flex-col gap-0 w-full items-center">
-        {/* 이메일 입력 */}
         <div className="mb-[20px] max-md:mb-[16px] max-sm:mb-[16px] w-full">
           <AuthInput
             name="email"
@@ -72,7 +71,6 @@ const LoginForm = ({ onGoToPhoneAuth, onGoToFindEmail }: Props) => {
           />
         </div>
 
-        {/* 비밀번호 입력 */}
         <div className="mb-[40px] max-md:mb-[32px] max-sm:mb-[32px] w-full">
           <AuthInput
             name="password"
@@ -84,10 +82,9 @@ const LoginForm = ({ onGoToPhoneAuth, onGoToFindEmail }: Props) => {
           />
         </div>
 
-        {/* 로그인 버튼 */}
         <AuthButton label="로그인" onClick={handleLogin} />
 
-        <AuthLinkRow onGoToPhoneAuth={onGoToPhoneAuth} onGoToFindEmail={onGoToFindEmail} />
+        <AuthLinkRow onGoToSignUp={onGoToSignUp} onGoToFindPassword={onGoToFindPassword} />
         <AuthDivider />
         <KakaoLoginButton onClick={handleKakaoLogin} />
       </div>

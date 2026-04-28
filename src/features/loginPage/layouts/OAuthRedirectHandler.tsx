@@ -31,7 +31,7 @@ const OAuthRedirectHandler = () => {
 
         if (responseCode === 'PRE_AUTHENTICATION_SUCCESS') {
           // PRE_AUTHENTICATION_SUCCESS에서도 기본 사용자 정보가 있는지 확인
-          navigate('/login?step=phoneAuth&verifiedType=oauth');
+          navigate('/login?step=oauthIntegration&verifiedType=oauth');
         } else if (responseCode === 'LOGIN_SUCCESS') {
           // Redux에 로그인 정보 저장
           const userData = response.data?.data;

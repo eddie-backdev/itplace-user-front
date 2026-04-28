@@ -4,10 +4,9 @@ import FindPasswordStep2 from './FindPasswordStep2';
 
 type Props = {
   onGoToLogin: () => void;
-  onClickTabEmail: () => void;
 };
 
-const FindPasswordForm = ({ onGoToLogin, onClickTabEmail }: Props) => {
+const FindPasswordForm = ({ onGoToLogin }: Props) => {
   const [step, setStep] = useState<'verify' | 'reset'>('verify');
   const [email, setEmail] = useState('');
   const [resetToken, setResetToken] = useState('');
@@ -16,7 +15,6 @@ const FindPasswordForm = ({ onGoToLogin, onClickTabEmail }: Props) => {
     <FindPasswordStep1
       email={email}
       onChangeEmail={setEmail}
-      onClickTabEmail={onClickTabEmail}
       onGoToLogin={onGoToLogin}
       onGoNextStep={(token) => {
         setResetToken(token);

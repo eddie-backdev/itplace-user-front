@@ -8,27 +8,22 @@ import EmailVerificationBox from '../verification/EmailVerificationBox';
 import AuthFooter from '../common/AuthFooter';
 import useValidation from '../../hooks/useValidation';
 import { signUpFinal } from '../../apis/user';
-import { signUpWithOAuthLink } from '../../apis/auth';
 import PasswordInputForm from '../common/PasswordInputForm';
 
 type SignUpFinalFormProps = {
   onGoToLogin: () => void;
   name: string;
-  phoneNumber: string;
   birthday: string;
   gender: string;
   membershipId: string;
-  verifiedType?: 'new' | 'uplus' | 'oauth-to-local-merge' | 'local-to-oauth-merge';
 };
 
 const SignUpFinalForm = ({
   onGoToLogin,
   name,
-  phoneNumber,
   birthday,
   gender,
   membershipId,
-  verifiedType = 'new',
 }: SignUpFinalFormProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -51,56 +46,50 @@ const SignUpFinalForm = ({
 
   const { errors, validateAll, validateField } = useValidation();
 
-  const handleChange = (name: 'email' | 'password' | 'passwordConfirm', value: string) => {
-    const updated = { ...formData, [name]: value };
+  const handleChange = (field: 'email' | 'password' | 'passwordConfirm', value: string) => {
+    const updated = { ...formData, [field]: value };
     setFormData(updated);
-    validateField(name, value, updated);
+    validateField(field, value, updated);
   };
 
   const handleNext = async () => {
     const valid = validateAll(formData);
-    if (valid && emailVerified) {
-      try {
-        const payload = {
-          name,
-          email: formData.email,
-          phoneNumber,
-          password: formData.password,
-          passwordConfirm: formData.passwordConfirm,
-          gender,
-          birthday,
-          membershipId,
-        };
+    if (!valid || !emailVerified) {
+      return;
+    }
 
-        // API 분기 처리
-        if (verifiedType === 'local-to-oauth-merge') {
-          const response = await signUpWithOAuthLink(payload);
-          const message = response.data?.message || '계정 통합 회원가입이 완료되었습니다.';
-          showToast(message, 'success');
-        } else {
-          await signUpFinal(payload);
-          showToast('회원가입이 완료되었습니다. 로그인 해주세요.', 'success');
-        }
-        setTimeout(() => onGoToLogin(), 0);
-      } catch (error) {
-        const axiosError = error as AxiosError<{ code: string; message: string }>;
-        const res = axiosError.response?.data;
-        let message = '회원가입에 실패했습니다. 다시 시도해주세요.';
+    try {
+      await signUpFinal({
+        name,
+        email: formData.email,
+        password: formData.password,
+        passwordConfirm: formData.passwordConfirm,
+        gender,
+        birthday,
+        membershipId,
+      });
 
-        if (res) {
-          switch (res.code) {
-            case 'PASSWORD_MISMATCH':
-              message = '비밀번호가 일치하지 않습니다.';
-              break;
-            case 'DUPLICATE_EMAIL':
-              message = '이미 사용 중인 이메일입니다.';
-              break;
-            default:
-              message = res.message || message;
-          }
+      showToast('회원가입이 완료되었습니다. 로그인 해주세요.', 'success');
+      setTimeout(() => onGoToLogin(), 0);
+    } catch (error) {
+      const axiosError = error as AxiosError<{ code: string; message: string }>;
+      const res = axiosError.response?.data;
+      let message = '회원가입에 실패했습니다. 다시 시도해주세요.';
+
+      if (res) {
+        switch (res.code) {
+          case 'PASSWORD_MISMATCH':
+            message = '비밀번호가 일치하지 않습니다.';
+            break;
+          case 'DUPLICATE_EMAIL':
+            message = '이미 사용 중인 이메일입니다.';
+            break;
+          default:
+            message = res.message || message;
         }
-        showToast(message, 'error');
       }
+
+      showToast(message, 'error');
     }
   };
 
@@ -118,7 +107,7 @@ const SignUpFinalForm = ({
     <div ref={wrapperRef} className="w-full flex flex-col">
       <div className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full text-left mx-auto">
         <p className="text-title-4 max-xl:text-title-5 max-lg:text-title-6 max-md:text-title-5 max-sm:text-title-5">
-          개인정보를 입력해주세요
+          계정 정보를 입력해주세요
         </p>
       </div>
 

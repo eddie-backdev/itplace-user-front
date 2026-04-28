@@ -3,24 +3,16 @@ import gsap from 'gsap';
 import EmailVerificationBox from '../verification/EmailVerificationBox';
 import AuthButton from '../common/AuthButton';
 import AuthFooter from '../common/AuthFooter';
-import ToggleTab from '../common/FindToggleTab';
 import { showToast } from '../../../../utils/toast';
 
 type Props = {
   email: string;
   onChangeEmail: (val: string) => void;
-  onClickTabEmail: () => void;
   onGoToLogin: () => void;
   onGoNextStep: (resetToken: string) => void;
 };
 
-const FindPasswordStep1 = ({
-  email,
-  onChangeEmail,
-  onClickTabEmail,
-  onGoToLogin,
-  onGoNextStep,
-}: Props) => {
+const FindPasswordStep1 = ({ email, onChangeEmail, onGoToLogin, onGoNextStep }: Props) => {
   const [emailVerified, setEmailVerified] = useState(false);
   const [resetToken, setResetToken] = useState('');
 
@@ -49,13 +41,9 @@ const FindPasswordStep1 = ({
 
   return (
     <div ref={wrapperRef} className="w-full flex flex-col">
-      <div className="flex justify-center">
-        <ToggleTab active="password" onClickEmail={onClickTabEmail} onClickPassword={() => {}} />
-      </div>
-
       <div className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full mx-auto">
-        <p className="text-title-6 max-xl:text-title-7 max-lg:text-title-8 max-md:text-body-2 max-sm:text-body-3 text-grey05 mt-[40px] max-xl:mt-[34px] max-lg:mt-[27px] max-md:mt-[24px] max-sm:mt-[24px]">
-          인증을 위해 <strong>가입된 이메일을</strong> 입력해주세요.
+        <p className="text-title-5 max-xl:text-title-6 max-lg:text-title-7 max-md:text-title-6 max-sm:text-title-6 text-grey05 mt-[16px] max-md:mt-[12px] max-sm:mt-[12px]">
+          비밀번호를 재설정할 <strong>가입 이메일</strong>을 입력해주세요.
         </p>
       </div>
 
@@ -82,7 +70,7 @@ const FindPasswordStep1 = ({
         <AuthFooter
           leftText="이미 회원이신가요?"
           rightText="로그인 하러 가기"
-          onRightClick={onGoToLogin} // 로그인 페이지로 이동하도록 수정
+          onRightClick={onGoToLogin}
         />
       </div>
     </div>
