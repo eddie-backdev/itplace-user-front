@@ -30,6 +30,9 @@ export default {
         'body-3-bold': ['0.875rem', { lineHeight: '150%', fontWeight: '600' }],
         'body-4-bold': ['0.75rem', { lineHeight: '150%', fontWeight: '600' }],
         'body-5-bold': ['0.625rem', { lineHeight: '150%', fontWeight: '600' }],
+        caption: ['0.75rem', { lineHeight: '140%' }],
+        'caption-1': ['0.75rem', { lineHeight: '140%' }],
+        'caption-2': ['0.625rem', { lineHeight: '140%' }],
       },
       // 컬러
       // bg-[지정명]
@@ -57,6 +60,8 @@ export default {
         grey03: '#BCBCBD',
         grey04: '#7A7A7C',
         grey05: '#38383B',
+        grey06: '#17171B',
+        grey07: '#111827',
         // Pink Color
         pink01: '#FFECEF',
         pink02: '#FFBDC8',
