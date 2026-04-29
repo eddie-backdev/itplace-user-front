@@ -1,25 +1,96 @@
 <!doctype html>
-<html lang="kr">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/itPlace.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0 maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>잇플레이스</title>
+    <meta name="theme-color" content="#7c3aed" />
+    <meta name="application-name" content="ITPLACE" />
+    <meta name="apple-mobile-web-app-title" content="ITPLACE" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>잇플레이스 | LG U+ 멤버십 혜택 지도 검색</title>
+    <meta
+      name="description"
+      content="잇플레이스에서 LG U+ 멤버십 제휴처와 혜택을 지도 기반으로 검색하세요. 주변 혜택, 전체 혜택, 맞춤 추천, 이벤트를 한 번에 확인할 수 있습니다."
+    />
+    <meta
+      name="keywords"
+      content="잇플레이스, ITPLACE, LG U+ 멤버십, 유플러스 멤버십, 멤버십 혜택, 제휴처 검색, 주변 혜택, 혜택 지도, VIP콕"
+    />
+    <link rel="canonical" href="https://itplace.click/" />
     <script
       type="text/javascript"
       src="//dapi.kakao.com/v2/maps/sdk.js?appkey=%VITE_KAKAO_JDK_API_KEY%&libraries=clusterer"
     ></script>
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="IT: PLACE - 혜택을 지도에서, 빠르고 간편하게" />
+    <meta property="og:site_name" content="ITPLACE" />
+    <meta property="og:title" content="ITPLACE - LG U+ 멤버십 혜택 지도 검색" />
     <meta
       property="og:description"
-      content="유플러스 고객을 위한 다양한 멤버십 혜택을 지도로 한눈에 확인하세요!"
+      content="유플러스 멤버십 제휴처와 주변 혜택을 지도에서 빠르게 찾고, 맞춤 추천과 이벤트까지 확인하세요."
     />
     <meta property="og:image" content="https://itplace.click/images/thumbnail.png" />
     <meta property="og:url" content="https://itplace.click/" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ITPLACE - LG U+ 멤버십 혜택 지도 검색" />
+    <meta
+      name="twitter:description"
+      content="유플러스 멤버십 제휴처와 주변 혜택을 지도에서 빠르게 찾고, 맞춤 추천과 이벤트까지 확인하세요."
+    />
+    <meta name="twitter:image" content="https://itplace.click/images/thumbnail.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://itplace.click/#organization",
+            "name": "ITPLACE",
+            "alternateName": "잇플레이스",
+            "url": "https://itplace.click/",
+            "logo": "https://itplace.click/itPlace.svg"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://itplace.click/#website",
+            "url": "https://itplace.click/",
+            "name": "ITPLACE",
+            "alternateName": "잇플레이스",
+            "description": "LG U+ 멤버십 혜택과 제휴처를 지도 기반으로 검색하는 웹 서비스",
+            "publisher": {
+              "@id": "https://itplace.click/#organization"
+            },
+            "inLanguage": "ko-KR",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://itplace.click/main?search={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://itplace.click/#webapp",
+            "name": "ITPLACE",
+            "alternateName": "잇플레이스",
+            "url": "https://itplace.click/",
+            "image": "https://itplace.click/images/thumbnail.png",
+            "applicationCategory": "LifestyleApplication",
+            "operatingSystem": "Web",
+            "description": "LG U+ 멤버십 제휴처, 주변 혜택, 전체 혜택, 맞춤 추천과 이벤트를 제공하는 지도 기반 혜택 검색 서비스",
+            "isAccessibleForFree": true,
+            "inLanguage": "ko-KR",
+            "publisher": {
+              "@id": "https://itplace.click/#organization"
+            }
+          }
+        ]
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />

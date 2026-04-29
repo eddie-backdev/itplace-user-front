@@ -1,0 +1,25 @@
+{
+  "name": "ITPLACE - LG U+ 멤버십 혜택 지도 검색",
+  "short_name": "ITPLACE",
+  "description": "LG U+ 멤버십 제휴처와 주변 혜택을 지도에서 검색하는 웹 서비스",
+  "lang": "ko-KR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7c3aed",
+  "icons": [
+    {
+      "src": "/itPlace.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/thumbnail.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

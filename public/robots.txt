@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /mypage/
+Disallow: /oauth/
+
+Sitemap: https://itplace.click/sitemap.xml
