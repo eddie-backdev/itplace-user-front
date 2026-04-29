@@ -88,8 +88,15 @@ src/
 
 ## 배포
 
-GitHub Actions 기반 배포 워크플로우가 포함되어 있습니다.
-배포 환경 변수와 대상 인프라는 `.github/workflows/deploy.yml`과 GitHub repository secrets 기준으로 관리합니다.
+프로덕션 배포는 Cloudflare Pages의 Git 연동으로 진행합니다.
+GitHub Actions 워크플로우는 배포가 아니라 `npm run build` 검증만 수행합니다.
+
+Cloudflare Pages 권장 설정:
+
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Root directory: repository root
+- Production branch: `main`
 
 ## 연관 레포지토리
 

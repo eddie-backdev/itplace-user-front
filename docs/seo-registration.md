@@ -1,6 +1,6 @@
 # 검색엔진 등록 가이드
 
-ITPLACE 사용자 서비스(`https://itplace.click`)의 검색 노출을 위해 배포 후 아래 항목을 확인하고 검색엔진에 제출합니다.
+ITPLACE 사용자 서비스(`https://itplace.click`)의 검색 노출을 위해 Cloudflare Pages 배포 후 아래 항목을 확인하고 검색엔진에 제출합니다.
 
 ## 배포 후 확인 URL
 
