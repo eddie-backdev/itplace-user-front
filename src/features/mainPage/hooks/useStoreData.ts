@@ -104,7 +104,16 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   useEffect(() => {
     const initializeData = async () => {
       // 1. 현재 위치 가져오기
-      const coords = await getCurrentLocation();
+      let coords: { lat: number; lng: number };
+
+      try {
+        coords = await getCurrentLocation();
+      } catch {
+        // 위치 권한 거부/미지원 환경에서도 지도를 사용할 수 있도록 서울시청을 기본 위치로 사용
+        coords = { lat: 37.5665, lng: 126.978 };
+        setCurrentLocation('기본 위치: 서울 중구 태평로1가');
+      }
+
       await updateLocationInfoRef.current(coords.lat, coords.lng);
 
       // 2. 근처 제휴처 데이터 로드 (초기에는 전체 카테고리)

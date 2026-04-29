@@ -13,6 +13,11 @@ import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 import { useLocation } from 'react-router-dom';
 import { useLayoutEffect } from 'react';
 import { useResponsive } from '../../../../hooks/useResponsive';
+import { disableScroll, enableScroll } from '../../../../utils/scrollLock';
+
+const BOTTOM_SHEET_MIN_HEIGHT = 150;
+const BOTTOM_SHEET_MID_HEIGHT = 300;
+const BOTTOM_SHEET_VIEWPORT_OFFSET = 105;
 
 /**
  * 메인페이지 레이아웃 컴포넌트
@@ -28,8 +33,12 @@ const MainPageLayout: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false); // 사이드바 접힘 상태
 
   // 바텀시트 상태 관리
-  const MIN_HEIGHT = 150;
-  const [bottomSheetHeight, setBottomSheetHeight] = useState<number>(MIN_HEIGHT); // 바텀시트 높이
+  const [bottomSheetHeight, setBottomSheetHeight] = useState<number>(BOTTOM_SHEET_MIN_HEIGHT); // 바텀시트 높이
+  const [maxBottomSheetHeight, setMaxBottomSheetHeight] = useState<number>(() =>
+    typeof window === 'undefined'
+      ? BOTTOM_SHEET_MID_HEIGHT
+      : Math.max(BOTTOM_SHEET_MIN_HEIGHT, window.innerHeight - BOTTOM_SHEET_VIEWPORT_OFFSET)
+  );
   const [isDragging, setIsDragging] = useState<boolean>(false); // 드래그 상태
   const [startY, setStartY] = useState<number>(0); // 드래그 시작 Y 좌표
   const [startHeight, setStartHeight] = useState<number>(0); // 드래그 시작 시 높이
@@ -45,27 +54,30 @@ const MainPageLayout: React.FC = () => {
         ? '아래 시트를 올려 저장한 혜택을 빠르게 확인해보세요.'
         : '아래 시트를 올려 주변 혜택과 검색 결과를 확인해보세요.';
 
-  const getMaxHeight = useCallback(() => {
-    return window.innerHeight - 105;
-  }, []);
+  const getMaxHeight = useCallback(() => maxBottomSheetHeight, [maxBottomSheetHeight]);
+
+  const clampBottomSheetHeight = useCallback(
+    (height: number) => Math.max(BOTTOM_SHEET_MIN_HEIGHT, Math.min(maxBottomSheetHeight, height)),
+    [maxBottomSheetHeight]
+  );
 
   // 스냅 포인트로 이동할 때 부드럽게 애니메이션
   const animateTo = useCallback(
     (target: number) => {
-      const clampedTarget = Math.min(target, getMaxHeight());
+      const clampedTarget = clampBottomSheetHeight(target);
       setIsAnimating(true);
       setBottomSheetHeight(clampedTarget);
       setTimeout(() => {
         setIsAnimating(false);
       }, 300);
     },
-    [getMaxHeight]
+    [clampBottomSheetHeight]
   );
 
   // 바텀시트를 초기 상태로 리셋하는 함수
   const resetBottomSheet = useCallback(() => {
-    animateTo(MIN_HEIGHT);
-  }, [animateTo, MIN_HEIGHT]);
+    animateTo(BOTTOM_SHEET_MIN_HEIGHT);
+  }, [animateTo]);
 
   // 말풍선 상태
   const [speechBubble, setSpeechBubble] = useState<{
@@ -309,8 +321,7 @@ const MainPageLayout: React.FC = () => {
     if (!isMobile) return;
 
     // 1. 즉시 overflow 설정하여 스크롤 차단
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
+    disableScroll();
 
     // 2. 스크롤 위치 강제 초기화 (브라우저 스크롤 복원 비활성화로 이제 확실히 작동)
     const resetScroll = () => {
@@ -329,15 +340,38 @@ const MainPageLayout: React.FC = () => {
     // 4. DOM 업데이트 후 재실행 및 바텀시트 초기화
     const timeoutId = requestAnimationFrame(() => {
       resetScroll();
-      setBottomSheetHeight(MIN_HEIGHT);
+      setBottomSheetHeight(BOTTOM_SHEET_MIN_HEIGHT);
     });
 
     return () => {
       cancelAnimationFrame(timeoutId);
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
+      enableScroll();
     };
-  }, [location.pathname, MIN_HEIGHT]);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const updateSheetBounds = () => {
+      const nextMaxHeight = Math.max(
+        BOTTOM_SHEET_MIN_HEIGHT,
+        window.innerHeight - BOTTOM_SHEET_VIEWPORT_OFFSET
+      );
+      setMaxBottomSheetHeight(nextMaxHeight);
+      setBottomSheetHeight((height) =>
+        Math.max(BOTTOM_SHEET_MIN_HEIGHT, Math.min(nextMaxHeight, height))
+      );
+    };
+
+    updateSheetBounds();
+    window.addEventListener('resize', updateSheetBounds);
+    window.addEventListener('orientationchange', updateSheetBounds);
+
+    return () => {
+      window.removeEventListener('resize', updateSheetBounds);
+      window.removeEventListener('orientationchange', updateSheetBounds);
+    };
+  }, [isMobile]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
@@ -348,13 +382,16 @@ const MainPageLayout: React.FC = () => {
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
     const deltaY = startY - e.touches[0].clientY;
-    const newHeight = Math.max(MIN_HEIGHT, Math.min(getMaxHeight(), startHeight + deltaY));
-    setBottomSheetHeight(newHeight);
+    setBottomSheetHeight(clampBottomSheetHeight(startHeight + deltaY));
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
-    const snapPoints = [MIN_HEIGHT, 300, getMaxHeight()];
+    const snapPoints = [
+      BOTTOM_SHEET_MIN_HEIGHT,
+      Math.min(BOTTOM_SHEET_MID_HEIGHT, getMaxHeight()),
+      getMaxHeight(),
+    ];
     const closest = snapPoints.reduce((a, b) =>
       Math.abs(b - bottomSheetHeight) < Math.abs(a - bottomSheetHeight) ? b : a
     );
@@ -376,25 +413,26 @@ const MainPageLayout: React.FC = () => {
 
       const currentY = e.clientY;
       const deltaY = startY - currentY;
-      const newHeight = Math.max(20, Math.min(window.innerHeight - 120, startHeight + deltaY));
-
-      setBottomSheetHeight(newHeight);
+      setBottomSheetHeight(clampBottomSheetHeight(startHeight + deltaY));
     },
-    [isDragging, startY, startHeight]
+    [isDragging, startY, startHeight, clampBottomSheetHeight]
   );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
 
-    const windowHeight = window.innerHeight;
-    const snapPoints = [90, 300, windowHeight - 120];
+    const snapPoints = [
+      BOTTOM_SHEET_MIN_HEIGHT,
+      Math.min(BOTTOM_SHEET_MID_HEIGHT, getMaxHeight()),
+      getMaxHeight(),
+    ];
 
     const closestSnapPoint = snapPoints.reduce((prev, curr) =>
       Math.abs(curr - bottomSheetHeight) < Math.abs(prev - bottomSheetHeight) ? curr : prev
     );
 
     animateTo(closestSnapPoint);
-  }, [bottomSheetHeight, animateTo]);
+  }, [bottomSheetHeight, animateTo, getMaxHeight]);
 
   // ItPlace AI 추천 결과 핸들러
   const handleItplaceAiResults = useCallback((results: Platform[], isShowing: boolean) => {
@@ -451,13 +489,13 @@ const MainPageLayout: React.FC = () => {
   // 모바일에서 body 스크롤 방지
   useEffect(() => {
     if (isMobile) {
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
+      disableScroll();
     }
 
     return () => {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
+      if (isMobile) {
+        enableScroll();
+      }
     };
   }, [isMobile]);
 
@@ -661,7 +699,7 @@ const MainPageLayout: React.FC = () => {
             style={{
               height: `${bottomSheetHeight}px`,
               bottom: 0,
-              minHeight: `${MIN_HEIGHT}px`,
+              minHeight: `${BOTTOM_SHEET_MIN_HEIGHT}px`,
               maxHeight: `${getMaxHeight()}px`,
               overflow: 'hidden',
               transition: isAnimating ? 'all 0.3s ease-out' : 'none',
@@ -683,7 +721,7 @@ const MainPageLayout: React.FC = () => {
 
             {isMobile && (
               <div className="px-5 pb-2 text-body-4 text-grey04">
-                {bottomSheetHeight <= MIN_HEIGHT + 24
+                {bottomSheetHeight <= BOTTOM_SHEET_MIN_HEIGHT + 24
                   ? mobileGuideMessage
                   : '탭을 바꿔 주변 혜택, 관심 혜택, AI 추천을 살펴보세요.'}
               </div>
@@ -693,7 +731,7 @@ const MainPageLayout: React.FC = () => {
             <div
               className="flex-1 min-h-0 max-h-full"
               style={{
-                overflowY: bottomSheetHeight > MIN_HEIGHT ? 'auto' : 'hidden',
+                overflowY: bottomSheetHeight > BOTTOM_SHEET_MIN_HEIGHT ? 'auto' : 'hidden',
               }}
             >
               <SidebarSection
