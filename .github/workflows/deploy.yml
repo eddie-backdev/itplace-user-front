@@ -13,6 +13,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_AWS_DEPLOY_SECRETS: ${{ secrets.AWS_ACCESS_KEY != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' }}
+      HAS_CLOUDFRONT_SECRET: ${{ secrets.AWS_DISTRIBUTION_ID != '' }}
 
     steps:
       - name: Checkout source code
@@ -38,8 +41,14 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Explain skipped deploy
+        if: github.event_name == 'push' && env.HAS_AWS_DEPLOY_SECRETS != 'true'
+        run: |
+          echo "AWS deployment secrets are not configured, so S3 deploy was skipped."
+          echo "Required secrets: AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, AWS_REGION."
+
       - name: S3 Deploy
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && env.HAS_AWS_DEPLOY_SECRETS == 'true'
         run: aws s3 sync ./dist s3://front-cicd/ --acl bucket-owner-full-control
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
@@ -47,7 +56,7 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
       - name: Invalidate CloudFront Cache
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && env.HAS_AWS_DEPLOY_SECRETS == 'true' && env.HAS_CLOUDFRONT_SECRET == 'true'
         uses: chetan/invalidate-cloudfront-action@master
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
