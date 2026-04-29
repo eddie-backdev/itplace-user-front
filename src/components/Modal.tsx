@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { TbX } from 'react-icons/tb';
 import { entranceAnimation } from '../utils/Animation';
+import { disableScroll, enableScroll } from '../utils/scrollLock';
 
 interface ButtonType {
   label: string;
@@ -64,8 +65,7 @@ const Modal: React.FC<ModalProps> = ({
     }
 
     previousFocusRef.current = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    disableScroll();
 
     const timer = window.setTimeout(() => {
       closeButtonRef.current?.focus();
@@ -82,7 +82,7 @@ const Modal: React.FC<ModalProps> = ({
     return () => {
       window.clearTimeout(timer);
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
+      enableScroll();
       previousFocusRef.current?.focus?.();
     };
   }, [isOpen, onClose]);

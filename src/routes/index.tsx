@@ -12,24 +12,14 @@ import LoginPage from '../pages/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import OAuthRedirectHandler from '../features/loginPage/layouts/OAuthRedirectHandler';
 import PublicRoute from '../features/loginPage/layouts/PublicRoute'; // PublicRoute import
-import ScrollToTopHandler from '../pages/ScrollToTopHandler';
 import EventPage from '../pages/EventPage';
 
 const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> }, // 기본 라우터
   { path: '/oauth/callback/kakao', element: <OAuthRedirectHandler /> }, // 카카오 콜백 (독립 라우트)
   {
-    path: '*',
-    element: <NotFoundPage />,
-  },
-  {
     element: <ResponsiveLayout />, // DefaultLayout 대신 ResponsiveLayout 사용
     children: [
-      {
-        path: '*', // 모든 경로 변화에서 스크롤 초기화 작동
-        element: <ScrollToTopHandler />,
-      },
-      { path: '/', element: <LandingPage /> }, // 기본 라우터
       {
         // 로그인된 사용자는 접근 불가
         path: '/login',
@@ -52,6 +42,10 @@ const router = createBrowserRouter([
       { path: '/benefits', element: <AllBenefitsPage /> },
       { path: '/event', element: <EventPage /> },
     ],
+  },
+  {
+    path: '*',
+    element: <NotFoundPage />,
   },
 ]);
 

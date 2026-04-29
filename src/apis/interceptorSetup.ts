@@ -31,7 +31,8 @@ const handleLogout = () => {
   store.dispatch(logout());
   // redux-persist 초기화
   persistor.purge();
-  window.location.href = '/login';
+  window.history.replaceState({ resetToLogin: true }, '', '/login');
+  window.dispatchEvent(new PopStateEvent('popstate'));
 };
 
 // Interceptor 설정 함수

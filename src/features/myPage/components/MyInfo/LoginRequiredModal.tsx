@@ -1,4 +1,5 @@
 import Modal from '../../../../components/Modal';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginRequiredModalProps {
   isOpen: boolean;
@@ -6,6 +7,8 @@ interface LoginRequiredModalProps {
 }
 
 export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredModalProps) {
+  const navigate = useNavigate();
+
   return (
     <Modal
       isOpen={isOpen}
@@ -17,7 +20,8 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
           label: '로그인하기',
           type: 'primary',
           onClick: () => {
-            window.location.href = '/login';
+            onClose();
+            navigate('/login', { replace: true, state: { resetToLogin: true } });
           },
         },
       ]}
