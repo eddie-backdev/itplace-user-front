@@ -26,6 +26,65 @@
   </a>
 </p>
 
+## 개발자 온보딩
+
+### 1. 의존성 설치
+
+```bash
+npm install
+```
+
+### 2. 환경 변수 설정
+
+루트에 `.env` 파일을 만들고 아래 값을 설정합니다. 값은 로컬/배포 환경에 맞게 조정합니다.
+
+```env
+VITE_APP_BASE_URL=http://localhost:8080/
+VITE_CHAT_WS_URL=http://localhost:8080/ws-chat
+VITE_KAKAO_REST_API_KEY=
+VITE_KAKAO_JDK_API_KEY=
+VITE_KAKAO_REDIRECT_URI=http://localhost:8080/oauth/kakao
+VITE_KAKAO_CLIENT_ID=
+```
+
+### 3. 개발 서버 실행
+
+```bash
+npm run dev
+```
+
+기본 개발 서버 포트는 `5173`입니다.
+
+### 4. 검증 명령
+
+```bash
+npx eslint . --config eslint.config.js
+npm run build
+```
+
+> `npm run lint`는 `--fix`를 포함하므로 읽기 전용 검증이 필요할 때는 위 eslint 명령을 사용합니다.
+
+### 프로젝트 구조
+
+```text
+src/
+  apis/               API 클라이언트 및 인터셉터
+  components/         공통 UI 컴포넌트
+  features/           도메인별 화면/상태/API 모듈
+  hooks/              반응형 등 공통 훅
+  layouts/            데스크톱/모바일 레이아웃
+  pages/              라우트 엔트리 페이지
+  routes/             React Router 설정
+  store/              Redux 상태 관리
+  utils/              애니메이션, 토스트, 스크롤 유틸
+```
+
+### 연관 레포지토리
+
+- User API: `itplace-user-api`
+- Admin Front: `itplace-admin-front`
+- Admin API: `itplace-admin-api`
+
 - **📒 팀 Notion**: 프로젝트 기획안, 회의, 일정 등 모든 협업 기록 문서가 정리되어 있는 공간입니다.
 - **🎨 팀 Figma**: It Place의 와이어프레임, 디자인 시안, 프로토타입이 정리되어 있습니다.
 - **🚀 메인 서비스**: 실제 사용자들이 이용할 수 있는 It Place의 배포된 웹사이트입니다.
@@ -97,7 +156,7 @@
 - 제휴처 정보 조회 및 수정 기능
 - 회원 정보 조회 기능 지원
 
-### 5️⃣ 이벤트 페이지 & 프로모션 기능
+### 6️⃣ 이벤트 페이지 & 프로모션 기능
 
 - 지도 내 이벤트 지점을 통한 혜택 사용 유도
 - 스크래치 카드 기반 이벤트 기능 제공
