@@ -64,7 +64,7 @@ const RecommendStoreList: React.FC<RecommendStoreListProps> = ({
       errorMessage.includes('멤버십 회원이 아닙니다') ||
       errorMessage.includes('RECOMMENDATION_USER_NOT_MEMBERSHIP')
     ) {
-      return '유플러스 멤버십 회원만 이용 가능해요!';
+      return '멤버십 프로필을 설정하면 이용할 수 있어요!';
     }
     if (
       errorMessage.includes('사용자를 찾을 수 없습니다') ||

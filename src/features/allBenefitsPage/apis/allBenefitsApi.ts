@@ -2,7 +2,8 @@ import axiosInstance from '../../../apis/axiosInstance';
 
 // API 응답 타입 정의
 export interface TierBenefit {
-  grade: 'BASIC' | 'VIP' | 'VVIP';
+  carrier?: string | null;
+  grade: string;
   context: string;
   isAll: boolean;
 }
@@ -14,6 +15,7 @@ export interface BenefitItem {
   usageType: 'ONLINE' | 'OFFLINE';
   category: string;
   image: string;
+  carrier?: string | null;
   tierBenefits: TierBenefit[];
   isFavorite: boolean;
   favoriteCount: number;
@@ -35,6 +37,7 @@ export interface BenefitApiParams {
   category?: string;
   filter?: 'ONLINE' | 'OFFLINE';
   sort?: string;
+  carrier?: string;
 }
 
 // 즐겨찾기 요청 타입
@@ -56,6 +59,7 @@ export interface BenefitDetailResponse {
   manual: string;
   url: string;
   partnerName: string;
+  carrier?: string | null;
   image: string;
   tierBenefits: TierBenefit[];
 }
@@ -94,6 +98,7 @@ export const getBenefits = async (params: BenefitApiParams): Promise<BenefitResp
     ...(params.category && { category: params.category }),
     ...(params.filter && { filter: params.filter }),
     ...(params.keyword && { keyword: params.keyword }),
+    ...(params.carrier && { carrier: params.carrier }),
   };
 
   const response = await axiosInstance.get('/api/v1/benefits', { params: queryParams });

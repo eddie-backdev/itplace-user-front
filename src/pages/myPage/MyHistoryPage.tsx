@@ -36,7 +36,7 @@ export default function MyHistoryPage() {
   const dispatch = useDispatch();
   // Redux 상태에서 사용자 정보 가져오기
   const user = useSelector((state: RootState) => state.auth.user);
-  const membershipGrade = user?.membershipGrade ?? null;
+  const membershipGrade = user?.membershipGradeCode ?? user?.membershipGrade ?? null;
 
   // 검색/필터/페이지네이션 상태
   const [keyword, setKeyword] = useState('');
@@ -210,10 +210,10 @@ export default function MyHistoryPage() {
                   <NoResult
                     variant="blocked"
                     message1="앗! 멤버십 등급이 없어 결과를 조회할 수 없어요"
-                    message2="유플러스 회원이시라면 회원 정보 연동 후 이용할 수 있어요."
+                    message2="회원 정보에서 통신사와 멤버십 등급을 선택한 뒤 이용할 수 있어요."
                     message1FontSize="max-xl:text-title-6"
                     message2FontSize="max-xl:text-body-3"
-                    buttonText="회원 정보 연동하러가기"
+                    buttonText="멤버십 프로필 설정하기"
                     buttonRoute="/mypage/info"
                   />
                 </div>

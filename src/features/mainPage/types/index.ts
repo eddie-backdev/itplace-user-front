@@ -14,6 +14,7 @@ export interface Platform {
   postCode: string;
   latitude: number;
   longitude: number;
+  carrier?: string | null;
   benefits: string[];
   rating: number;
   distance: number;

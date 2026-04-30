@@ -5,6 +5,10 @@ import { TbChevronDown, TbCheck, TbChevronUp } from 'react-icons/tb';
 import { RootState } from '../../../../../store';
 import AddressTooltip from './AddressTooltip';
 import { showToast } from '../../../../../utils/toast';
+import {
+  getMembershipGradeLabel,
+  isGradeApplicableToProfile,
+} from '../../../../../utils/membership';
 
 interface StoreCardProps {
   platform: Platform;
@@ -14,28 +18,19 @@ interface StoreCardProps {
 
 const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
   // Redux에서 사용자 등급 가져오기
-  const membershipGrade = useSelector((state: RootState) => state.auth.user?.membershipGrade);
+  const user = useSelector((state: RootState) => state.auth.user);
 
   // 사용자 등급 확인 헬퍼 함수
-  const isUserGrade = (grade: string) => {
-    if (!membershipGrade) return false;
-
-    const userGrade = membershipGrade.toUpperCase();
-    const benefitGrade = grade.toUpperCase();
-
-    // 기본 매칭
-    if (userGrade === benefitGrade) return true;
-
-    // VIP/VVIP → "VIP 콕" 혜택도 포함
-    if ((userGrade === 'VIP' || userGrade === 'VVIP') && benefitGrade === 'VIP콕') return true;
-
-    return false;
-  };
+  const isUserGrade = (grade: string) =>
+    isGradeApplicableToProfile({
+      benefitCarrier: platform.carrier,
+      benefitGrade: grade,
+      userCarrier: user?.carrier,
+      userGrade: user?.membershipGradeCode ?? user?.membershipGrade,
+    });
 
   // 등급 표시명 변환 헬퍼 함수
-  const getGradeDisplayName = (grade: string) => {
-    return grade === 'BASIC' ? '우수' : grade;
-  };
+  const getGradeDisplayName = (grade: string) => getMembershipGradeLabel(grade);
 
   // 주소 툴팁 상태 관리
   const [showAddressTooltip, setShowAddressTooltip] = useState(false);
@@ -156,14 +151,10 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
           </div>
 
           <div className="space-y-1 max-md:space-y-0.5">
-            {['VIP콕', 'BASIC', 'VIP', 'VVIP'].map((fixedGrade) => {
+            {platform.benefits.map((benefitText) => {
+              const [fixedGrade] = benefitText.split(': ');
               // 해당 등급의 혜택 찾기
-              const matchingBenefit = platform.benefits.find((benefit) => {
-                const [grade] = benefit.split(': ');
-                return grade.toUpperCase() === fixedGrade.toUpperCase();
-              });
-
-              const content = matchingBenefit ? matchingBenefit.split(': ')[1] : '-';
+              const content = benefitText.split(': ')[1] ?? '-';
               const displayGrade = getGradeDisplayName(fixedGrade);
 
               return (

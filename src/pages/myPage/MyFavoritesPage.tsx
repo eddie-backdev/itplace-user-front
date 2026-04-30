@@ -43,7 +43,9 @@ export default function MyFavoritesPage() {
     reloadFavorites,
   } = useFavorites(6);
 
-  const userGrade = useSelector((state: RootState) => state.auth.user?.membershipGrade);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const userCarrier = user?.carrier;
+  const userGrade = user?.membershipGradeCode ?? user?.membershipGrade;
   const { isMobile } = useResponsive();
 
   return (
@@ -221,6 +223,7 @@ export default function MyFavoritesPage() {
               isEditing={isEditing}
               selectedItems={selectedItems}
               selectedId={selectedId}
+              userCarrier={userCarrier}
               userGrade={userGrade}
               loading={loading}
             />
@@ -283,6 +286,7 @@ export default function MyFavoritesPage() {
               benefitId={selectedId}
               image={allFavorites.find((f) => f.benefitId === selectedId)?.partnerImage ?? ''}
               name={allFavorites.find((f) => f.benefitId === selectedId)?.benefitName ?? ''}
+              userCarrier={userCarrier}
               userGrade={userGrade}
             />
           </div>

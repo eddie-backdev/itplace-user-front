@@ -21,6 +21,9 @@ import {
 import BenefitDetailModal from './components/BenefitDetailModal';
 import MobileHeader from '../../components/MobileHeader';
 import { useResponsive } from '../../hooks/useResponsive';
+import { CARRIER_OPTIONS, CarrierCode, getCarrierLabel } from '../../utils/membership';
+
+type CarrierFilter = 'ALL' | CarrierCode;
 
 const AllBenefitsLayout: React.FC = () => {
   const [filter, setFilter] = useState<'default' | 'vipkok'>('default');
@@ -28,6 +31,7 @@ const AllBenefitsLayout: React.FC = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('전체');
+  const [selectedCarrier, setSelectedCarrier] = useState<CarrierFilter>('ALL');
   const [isLoading, setIsLoading] = useState(false);
   const [benefits, setBenefits] = useState<BenefitItem[]>([]);
   const [totalElements, setTotalElements] = useState(0);
@@ -54,6 +58,7 @@ const AllBenefitsLayout: React.FC = () => {
         };
 
         if (keyword) params.keyword = keyword;
+        if (selectedCarrier !== 'ALL') params.carrier = selectedCarrier;
         if (category && category !== '전체') {
           // 카테고리명 매핑
           let apiCategory = category;
@@ -81,7 +86,7 @@ const AllBenefitsLayout: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [filter]
+    [filter, selectedCarrier]
   );
 
   // 즐겨찾기 토글 함수
@@ -210,6 +215,11 @@ const AllBenefitsLayout: React.FC = () => {
     setCurrentPage(1);
   };
 
+  const handleCarrierChange = (carrier: CarrierFilter) => {
+    setSelectedCarrier(carrier);
+    setCurrentPage(1);
+  };
+
   const handleCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, benefit: BenefitItem) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -233,7 +243,15 @@ const AllBenefitsLayout: React.FC = () => {
     return basicBenefit ? basicBenefit.context : tierBenefits[0]?.context || '';
   };
 
-  const activeFilterCount = (selectedCategory !== '전체' ? 1 : 0) + (filter !== 'default' ? 1 : 0);
+  const carrierFilters: Array<{ code: CarrierFilter; label: string }> = [
+    { code: 'ALL', label: '통신 3사 전체' },
+    ...CARRIER_OPTIONS,
+  ];
+
+  const activeFilterCount =
+    (selectedCategory !== '전체' ? 1 : 0) +
+    (filter !== 'default' ? 1 : 0) +
+    (selectedCarrier !== 'ALL' ? 1 : 0);
 
   return (
     <div className="overflow-x-hidden bg-white pt-[54px] md:pt-0">
@@ -271,7 +289,33 @@ const AllBenefitsLayout: React.FC = () => {
         </section>
 
         <section className="border-b border-grey01 pb-6 md:pb-7">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <p className="text-body-4 font-medium text-grey04">통신사 필터</p>
+                <span className="rounded-full bg-grey01 px-2.5 py-1 text-[12px] font-medium leading-none text-grey04">
+                  LG U+ · SKT · KT
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {carrierFilters.map((carrier) => (
+                  <button
+                    key={carrier.code}
+                    type="button"
+                    onClick={() => handleCarrierChange(carrier.code)}
+                    className={`rounded-full border px-3.5 py-1.5 text-body-4 transition-colors md:px-4 ${
+                      selectedCarrier === carrier.code
+                        ? 'border-purple04 bg-purple01 text-purple04'
+                        : 'border-grey02 bg-white text-grey04 hover:border-purple02 hover:text-purple04'
+                    }`}
+                  >
+                    {carrier.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="flex items-center gap-2">
               <p className="text-body-4 font-medium text-grey04">카테고리 필터</p>
               {activeFilterCount > 0 && (
@@ -361,9 +405,15 @@ const AllBenefitsLayout: React.FC = () => {
                   </button>
 
                   <div className="pr-10">
-                    <p className="text-body-4 text-grey04">
-                      {benefit.usageType === 'ONLINE' ? '온라인' : '오프라인'} · {benefit.category}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-purple01 px-2.5 py-1 text-[12px] font-medium leading-none text-purple04">
+                        {getCarrierLabel(benefit.carrier)}
+                      </span>
+                      <span className="text-body-4 text-grey04">
+                        {benefit.usageType === 'ONLINE' ? '온라인' : '오프라인'} ·{' '}
+                        {benefit.category}
+                      </span>
+                    </div>
                     <h3 className="mt-3 line-clamp-2 text-title-5 text-black md:text-title-6">
                       {benefit.benefitName}
                     </h3>
@@ -406,6 +456,7 @@ const AllBenefitsLayout: React.FC = () => {
                   secondaryButtonText="필터 초기화"
                   onSecondaryButtonClick={() => {
                     setSelectedCategory('전체');
+                    setSelectedCarrier('ALL');
                     setFilter('default');
                     setSearchTerm('');
                     setDebouncedSearchTerm('');

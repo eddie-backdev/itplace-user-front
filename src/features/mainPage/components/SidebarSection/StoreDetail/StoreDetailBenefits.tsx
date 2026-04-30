@@ -5,6 +5,10 @@ import BenefitFilterToggle from '../../../../../components/BenefitFilterToggle';
 import NoResult from '../../../../../components/NoResult';
 import { RootState } from '../../../../../store';
 import { BenefitDetailResponse } from '../../../types/api';
+import {
+  getMembershipGradeLabel,
+  isGradeApplicableToProfile,
+} from '../../../../../utils/membership';
 
 interface StoreDetailBenefitsProps {
   activeTab: 'default' | 'vipkok';
@@ -18,29 +22,17 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
   setActiveTab,
   detailData,
 }) => {
-  const membershipGrade = useSelector((state: RootState) => state.auth.user?.membershipGrade);
+  const user = useSelector((state: RootState) => state.auth.user);
 
-  const isUserGrade = (grade: string) => {
-    if (!membershipGrade) return false;
+  const isUserGrade = (grade: string, tierCarrier?: string | null) =>
+    isGradeApplicableToProfile({
+      benefitCarrier: tierCarrier ?? detailData?.data?.carrier,
+      benefitGrade: grade,
+      userCarrier: user?.carrier,
+      userGrade: user?.membershipGradeCode ?? user?.membershipGrade,
+    });
 
-    const userGrade = membershipGrade.toLowerCase();
-    const benefitGrade = grade.toLowerCase();
-
-    // VIP콕 탭에서는 VIP 이상 등급(VIP, VVIP)에 대해 하이라이트
-    if (activeTab === 'vipkok') {
-      const shouldHighlight =
-        (userGrade === 'vip' || userGrade === 'vvip') && benefitGrade === 'vip콕';
-      return shouldHighlight;
-    }
-
-    // 기본 탭에서는 완전 일치
-    const shouldHighlight = benefitGrade === userGrade;
-    return shouldHighlight;
-  };
-
-  const getGradeDisplayName = (grade: string) => {
-    return grade === 'BASIC' ? '우수' : grade;
-  };
+  const getGradeDisplayName = (grade: string) => getMembershipGradeLabel(grade);
 
   return (
     <>
@@ -68,14 +60,14 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
                 <TbCheck size={20} className="text-grey04 max-md:w-4 max-md:h-4" />
                 <span
                   className={`text-body-3 max-xl:text-body-4 ${
-                    isUserGrade(b.grade) ? 'text-orange04 font-bold' : 'text-grey05'
+                    isUserGrade(b.grade, b.carrier) ? 'text-orange04 font-bold' : 'text-grey05'
                   }`}
                 >
                   {getGradeDisplayName(b.grade)}
                 </span>
                 <span
                   className={`text-body-3 max-xl:text-body-4 ${
-                    isUserGrade(b.grade) ? 'text-orange04 font-bold' : 'text-grey05'
+                    isUserGrade(b.grade, b.carrier) ? 'text-orange04 font-bold' : 'text-grey05'
                   }`}
                 >
                   {b.context?.split('\n')[0]}

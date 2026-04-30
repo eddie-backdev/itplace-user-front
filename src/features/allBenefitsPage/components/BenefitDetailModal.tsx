@@ -9,6 +9,7 @@ import {
 } from '../apis/allBenefitsApi';
 import { showToast } from '../../../utils/toast';
 import NoResult from '../../../components/NoResult';
+import { getCarrierGradeOrder, getMembershipGradeLabel } from '../../../utils/membership';
 
 interface InfoSectionProps {
   label: string;
@@ -76,20 +77,17 @@ const BenefitDetailModal: React.FC<BenefitDetailModalProps> = ({ isOpen, benefit
       return '혜택 정보가 없습니다.';
     }
 
-    // 등급별로 모든 혜택을 표시
-    return tierBenefits
-      .map((benefit) => {
-        const gradeText =
-          benefit.grade === 'BASIC'
-            ? '우수'
-            : benefit.grade === 'VIP'
-              ? 'VIP'
-              : benefit.grade === 'VVIP'
-                ? 'VVIP'
-                : benefit.grade;
+    const carrier = benefitDetail?.carrier ?? benefit.carrier;
+    const availableGrades = tierBenefits.map((tierBenefit) => tierBenefit.grade);
+    const orderedGrades = getCarrierGradeOrder(carrier, availableGrades);
 
-        return `[${gradeText}]\n${benefit.context}`;
-      })
+    // 등급별로 모든 혜택을 표시
+    return orderedGrades
+      .map((grade) => tierBenefits.find((tierBenefit) => tierBenefit.grade === grade))
+      .filter((tierBenefit): tierBenefit is TierBenefit => Boolean(tierBenefit))
+      .map(
+        (tierBenefit) => `[${getMembershipGradeLabel(tierBenefit.grade)}]\n${tierBenefit.context}`
+      )
       .join('\n\n');
   }; // 혜택 정보 표시 (API 데이터 우선, 없으면 기본 데이터)
   const displayName = benefitDetail?.benefitName || benefit.benefitName;
@@ -113,9 +111,9 @@ const BenefitDetailModal: React.FC<BenefitDetailModalProps> = ({ isOpen, benefit
     }
     // 기본 이용 방법 (API 데이터가 없을 경우)
     if (benefit.usageType === 'ONLINE') {
-      return `온라인 이용 방법:\n1. VIP콕 앱 또는 웹사이트 접속\n2. 해당 제휴처 혜택 선택\n3. 본인 인증 후 혜택 적용\n4. 온라인에서 바로 이용 가능\n\n*주의사항:\n- 다른 할인과 중복 적용 불가\n- 일부 상품 제외될 수 있음`;
+      return `온라인 이용 방법:\n1. 통신사 멤버십 앱 또는 웹사이트 접속\n2. 해당 제휴처 혜택 선택\n3. 통신사 안내에 따라 혜택 적용\n4. 온라인에서 바로 이용 가능\n\n*주의사항:\n- 다른 할인과 중복 적용 불가\n- 일부 상품 제외될 수 있음`;
     } else {
-      return `오프라인 이용 방법:\n1. VIP콕 앱에서 쿠폰 발급\n2. 매장 방문 시 쿠폰 제시\n3. 직원에게 VIP콕 혜택 이용 의사 전달\n4. 본인 인증 후 혜택 적용\n\n*주의사항:\n- 매장 방문 시에만 이용 가능\n- 다른 할인과 중복 적용 불가\n- 일부 메뉴 제외될 수 있음`;
+      return `오프라인 이용 방법:\n1. 통신사 멤버십 앱에서 혜택 확인\n2. 매장 방문 시 멤버십 혜택 제시\n3. 직원에게 해당 통신사 혜택 이용 의사 전달\n4. 통신사 안내에 따라 혜택 적용\n\n*주의사항:\n- 매장 방문 시에만 이용 가능\n- 다른 할인과 중복 적용 불가\n- 일부 메뉴 제외될 수 있음`;
     }
   };
 

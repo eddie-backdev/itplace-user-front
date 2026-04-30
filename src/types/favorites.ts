@@ -23,6 +23,7 @@ export interface FavoritesListResponse {
 
 // 상세 조회 응답
 export interface TierInfo {
+  carrier?: string | null;
   grade: string;
   isAll: boolean;
   context: string;

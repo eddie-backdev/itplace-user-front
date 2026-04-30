@@ -8,6 +8,7 @@ export interface StoreApiResponse {
 }
 
 export interface StoreData {
+  carrier?: string | null;
   store: Store;
   partner: Partner;
   tierBenefit: TierBenefit[];
@@ -38,6 +39,7 @@ export interface Partner {
 }
 
 export interface TierBenefit {
+  carrier?: string | null;
   grade: string;
   context: string;
 }
@@ -63,11 +65,13 @@ export interface BenefitDetailData {
   mainCategory: string;
   manual: string;
   url: string;
+  carrier?: string | null;
   tierBenefits: DetailTierBenefit[];
   isFavorite: boolean;
 }
 
 export interface DetailTierBenefit {
+  carrier?: string | null;
   grade: string;
   context: string;
   isAll: boolean;

@@ -8,7 +8,8 @@ interface FavoritesAsideProps {
   isEditing: boolean;
   selectedItems: number[];
   selectedId: number | null;
-  userGrade?: string;
+  userCarrier?: string | null;
+  userGrade?: string | null;
   loading: boolean;
 }
 
@@ -17,6 +18,7 @@ export default function FavoritesAside({
   isEditing,
   selectedItems,
   selectedId,
+  userCarrier,
   userGrade,
   loading,
 }: FavoritesAsideProps) {
@@ -94,6 +96,7 @@ export default function FavoritesAside({
             benefitId={selectedId}
             image={favorites.find((f) => f.benefitId === selectedId)?.partnerImage ?? ''}
             name={favorites.find((f) => f.benefitId === selectedId)?.benefitName ?? ''}
+            userCarrier={userCarrier}
             userGrade={userGrade}
           />
         </>

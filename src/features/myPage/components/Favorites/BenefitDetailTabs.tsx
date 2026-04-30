@@ -3,14 +3,26 @@ import { useEffect, useState } from 'react';
 import { fetchFavoriteDetail } from '../../apis/favorites';
 import { FavoriteDetail } from './../../../../types/favorites';
 import LoadingSpinner from '../../../../components/LoadingSpinner';
+import {
+  getCarrierGradeOrder,
+  getMembershipGradeLabel,
+  isGradeApplicableToProfile,
+} from '../../../../utils/membership';
 interface Props {
   benefitId: number;
   image: string;
   name: string;
-  userGrade?: string; // 현재 로그인한 유저 등급
+  userCarrier?: string | null; // 현재 로그인한 유저 통신사
+  userGrade?: string | null; // 현재 로그인한 유저 등급
 }
 
-export default function BenefitDetailTabs({ benefitId, image, name, userGrade = 'BASIC' }: Props) {
+export default function BenefitDetailTabs({
+  benefitId,
+  image,
+  name,
+  userCarrier,
+  userGrade,
+}: Props) {
   const [detail, setDetail] = useState<FavoriteDetail | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
 
@@ -31,16 +43,15 @@ export default function BenefitDetailTabs({ benefitId, image, name, userGrade = 
 
         const tiers = res.data.tiers;
         const allBenefit = tiers.find((t) => t.isAll);
-        const isVipKok = tiers.every((t) => t.grade === 'VIP콕');
+        const availableGrades = tiers.map((tier) => tier.grade);
+        const orderedGrades = getCarrierGradeOrder(userCarrier, availableGrades);
 
         if (allBenefit) {
           setSelectedGrade(null);
-        } else if (isVipKok) {
-          setSelectedGrade('VIP콕');
-        } else if (userGrade) {
+        } else if (userGrade && availableGrades.includes(userGrade)) {
           setSelectedGrade(userGrade);
         } else {
-          setSelectedGrade('BASIC');
+          setSelectedGrade(orderedGrades[0] ?? availableGrades[0] ?? null);
         }
       } catch (e) {
         if (isMounted) {
@@ -57,7 +68,7 @@ export default function BenefitDetailTabs({ benefitId, image, name, userGrade = 
     return () => {
       isMounted = false;
     };
-  }, [benefitId, userGrade]);
+  }, [benefitId, userCarrier, userGrade]);
 
   if (loading) {
     return (
@@ -76,8 +87,6 @@ export default function BenefitDetailTabs({ benefitId, image, name, userGrade = 
   }
 
   const allBenefit = detail.tiers.find((t) => t.isAll);
-  const isVipKok = detail.tiers.every((t) => t.grade === 'VIP콕');
-
   const LogoBox = ({ image, alt }: { image: string; alt: string }) => (
     <div className="w-full h-[142px] flex items-center justify-center border border-grey02 rounded-[10px] mb-5 max-xl:h-[112px] max-xl:mb-3">
       <img src={image} alt={alt} className="h-[108px] object-contain max-xl:h-[98px]" />
@@ -101,32 +110,15 @@ export default function BenefitDetailTabs({ benefitId, image, name, userGrade = 
     );
   }
 
-  // 🔹 VIP콕
-  if (isVipKok) {
-    const active = userGrade === 'VVIP' || userGrade === 'VIP';
-    const vipContent = detail.tiers.find((b) => b.grade === 'VIP콕');
-    return (
-      <div className="w-full flex flex-col max-lg:flex-row max-md:flex-col">
-        <div className="max-lg:min-w-[210px] max-md:w-full">
-          <LogoBox image={image} alt={name} />
-          <div
-            className={`flex items-center justify-center h-[50px] rounded-[12px] text-body-0 text-center font-medium mb-4 w-full max-xl:h-[44px] max-xl:text-body-2 ${
-              active ? 'bg-gradient-myPage text-white' : 'bg-grey01 text-grey03'
-            }`}
-          >
-            VIP콕
-          </div>
-        </div>
-        <p className="mt-4 whitespace-pre-line text-body-0 text-grey05 max-xl:text-body-2 max-lg:ml-3 max-lg:mt-0 max-md:ml-0 max-md:mt-4">
-          {vipContent?.context}
-        </p>
-      </div>
-    );
-  }
-
-  // 🔹 VVIP/VIP/BASIC
-  const gradeTabs = ['VVIP', 'VIP', 'BASIC'];
+  const availableGrades = detail.tiers.map((tier) => tier.grade);
+  const gradeTabs = getCarrierGradeOrder(userCarrier, availableGrades);
   const content = detail.tiers.find((b) => b.grade === selectedGrade);
+  const isSelectedApplicable = isGradeApplicableToProfile({
+    benefitCarrier: content?.carrier,
+    benefitGrade: content?.grade,
+    userCarrier,
+    userGrade,
+  });
 
   return (
     <div className="w-full flex flex-col max-lg:flex-row max-md:flex-col">
@@ -143,13 +135,23 @@ export default function BenefitDetailTabs({ benefitId, image, name, userGrade = 
                   : 'bg-transparent text-grey03'
               }`}
             >
-              {g === 'BASIC' ? '우수' : g}
+              {getMembershipGradeLabel(g)}
             </button>
           ))}
         </div>
       </div>
       <p className="mt-4 whitespace-pre-line text-body-0 text-grey05 max-xl:text-body-2 max-lg:ml-3 max-lg:mt-0 max-md:ml-0 max-md:mt-4">
         {content?.context}
+        {!userGrade && (
+          <span className="mt-3 block text-body-4 text-grey04">
+            회원 정보에서 통신사와 등급을 선택하면 내 등급 혜택을 바로 강조해드려요.
+          </span>
+        )}
+        {userGrade && content && !isSelectedApplicable && (
+          <span className="mt-3 block text-body-4 text-grey04">
+            선택한 멤버십 프로필과 다른 등급의 혜택입니다.
+          </span>
+        )}
       </p>
     </div>
   );
