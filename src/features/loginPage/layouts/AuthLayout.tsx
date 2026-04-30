@@ -23,14 +23,16 @@ const emptyLocalSignupData = {
   name: '',
   birthday: '',
   gender: '',
-  membershipId: '',
+  carrier: '',
+  membershipGradeCode: '',
 };
 
 const emptyOAuthUserData = {
   name: '',
   birthday: '',
   gender: '',
-  membershipId: '',
+  carrier: '',
+  membershipGradeCode: '',
 };
 
 const AuthLayout = () => {
@@ -68,7 +70,10 @@ const AuthLayout = () => {
           dispatch(
             setLoginSuccess({
               name: data.name,
-              membershipGrade: data.membershipGrade || 'NORMAL',
+              carrier: data.carrier ?? null,
+              membershipGrade: data.membershipGradeCode || data.membershipGrade || 'NORMAL',
+              membershipGradeCode: data.membershipGradeCode || data.membershipGrade || null,
+              membershipVerified: data.membershipVerified ?? false,
             })
           );
         }
@@ -110,7 +115,8 @@ const AuthLayout = () => {
         name: params.get('name') || '',
         birthday: params.get('birthday') || '',
         gender: params.get('gender') || '',
-        membershipId: params.get('membershipId') || '',
+        carrier: params.get('carrier') || '',
+        membershipGradeCode: params.get('membershipGradeCode') || '',
       });
       setFormStep('oauthIntegration');
       hasInitialized.current = true;
@@ -128,12 +134,14 @@ const AuthLayout = () => {
     email,
     birthday,
     gender,
-    membershipId,
+    carrier,
+    membershipGradeCode,
   }: {
     email: string;
     birthday: string;
     gender: string;
-    membershipId: string;
+    carrier: string;
+    membershipGradeCode: string;
   }) => {
     try {
       await oauthSignUp({
@@ -141,7 +149,8 @@ const AuthLayout = () => {
         email,
         gender,
         birthday,
-        membershipId,
+        carrier,
+        membershipGradeCode,
       });
 
       showToast('회원가입이 완료되었습니다.', 'success');
@@ -187,7 +196,8 @@ const AuthLayout = () => {
           initialName={signUpData.name}
           initialBirthday={signUpData.birthday}
           initialGender={signUpData.gender}
-          initialMembershipId={signUpData.membershipId}
+          initialCarrier={signUpData.carrier}
+          initialMembershipGradeCode={signUpData.membershipGradeCode}
           onGoToLogin={goToLogin}
           onNext={(data) => {
             setSignUpData(data);
@@ -202,7 +212,8 @@ const AuthLayout = () => {
           name={signUpData.name}
           birthday={signUpData.birthday}
           gender={signUpData.gender}
-          membershipId={signUpData.membershipId}
+          carrier={signUpData.carrier}
+          membershipGradeCode={signUpData.membershipGradeCode}
         />
       )}
 
@@ -211,7 +222,8 @@ const AuthLayout = () => {
           name={oauthUserData.name}
           birthday={oauthUserData.birthday}
           gender={oauthUserData.gender}
-          membershipId={oauthUserData.membershipId}
+          carrier={oauthUserData.carrier}
+          membershipGradeCode={oauthUserData.membershipGradeCode}
           onGoToLogin={goToLogin}
           onNext={handleOAuthSignup}
         />

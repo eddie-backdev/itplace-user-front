@@ -15,7 +15,8 @@ type SignUpFinalFormProps = {
   name: string;
   birthday: string;
   gender: string;
-  membershipId: string;
+  carrier: string;
+  membershipGradeCode: string;
 };
 
 const SignUpFinalForm = ({
@@ -23,7 +24,8 @@ const SignUpFinalForm = ({
   name,
   birthday,
   gender,
-  membershipId,
+  carrier,
+  membershipGradeCode,
 }: SignUpFinalFormProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -66,7 +68,8 @@ const SignUpFinalForm = ({
         passwordConfirm: formData.passwordConfirm,
         gender,
         birthday,
-        membershipId,
+        carrier,
+        membershipGradeCode,
       });
 
       showToast('회원가입이 완료되었습니다. 로그인 해주세요.', 'success');

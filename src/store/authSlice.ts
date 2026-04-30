@@ -3,7 +3,10 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 type UserInfo = {
   name: string;
-  membershipGrade: string;
+  carrier?: string | null;
+  membershipGrade?: string | null;
+  membershipGradeCode?: string | null;
+  membershipVerified?: boolean;
 };
 
 type AuthState = {

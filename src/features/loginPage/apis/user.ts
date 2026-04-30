@@ -7,7 +7,8 @@ export const signUpFinal = async (payload: {
   passwordConfirm: string;
   gender: string;
   birthday: string;
-  membershipId: string;
+  carrier: string;
+  membershipGradeCode: string;
 }) => {
   return await api.post('/api/v1/auth/signUp', payload);
 };
@@ -47,7 +48,8 @@ export const oauthSignUp = (data: {
   email: string;
   birthday: string;
   gender: string;
-  membershipId: string;
+  carrier: string;
+  membershipGradeCode: string;
 }) => {
   return api.post('/api/v1/auth/oauth/signUp', data);
 };

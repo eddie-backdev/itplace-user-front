@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import AuthInput from '../common/AuthInput';
+import MembershipProfileSelector from '../../../../components/membership/MembershipProfileSelector';
 import AuthButton from '../common/AuthButton';
 import AuthFooter from '../common/AuthFooter';
 import EmailVerificationBox from '../verification/EmailVerificationBox';
@@ -8,16 +9,24 @@ type OAuthIntegrationFormProps = {
   name: string;
   birthday: string;
   gender: string;
-  membershipId: string;
+  carrier: string;
+  membershipGradeCode: string;
   onGoToLogin: () => void;
-  onNext: (data: { email: string; birthday: string; gender: string; membershipId: string }) => void;
+  onNext: (data: {
+    email: string;
+    birthday: string;
+    gender: string;
+    carrier: string;
+    membershipGradeCode: string;
+  }) => void;
 };
 
 const OAuthIntegrationForm = ({
   name,
   birthday: initialBirthday,
   gender: initialGender,
-  membershipId: initialMembershipId,
+  carrier: initialCarrier,
+  membershipGradeCode: initialMembershipGradeCode,
   onGoToLogin,
   onNext,
 }: OAuthIntegrationFormProps) => {
@@ -25,9 +34,15 @@ const OAuthIntegrationForm = ({
   const [emailVerified, setEmailVerified] = useState(false);
   const [birthday, setBirthday] = useState(initialBirthday);
   const [gender, setGender] = useState(initialGender);
-  const [membershipId, setMembershipId] = useState(initialMembershipId);
+  const [carrier, setCarrier] = useState(initialCarrier);
+  const [membershipGradeCode, setMembershipGradeCode] = useState(initialMembershipGradeCode);
 
-  const isValid = emailVerified && !!birthday && (gender === 'MALE' || gender === 'FEMALE');
+  const isValid =
+    emailVerified &&
+    !!birthday &&
+    (gender === 'MALE' || gender === 'FEMALE') &&
+    !!carrier &&
+    !!membershipGradeCode;
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -85,13 +100,16 @@ const OAuthIntegrationForm = ({
         </button>
       </div>
 
-      <div className="mb-[20px] max-md:mb-[16px] max-sm:mb-[16px] w-full flex justify-center">
-        <AuthInput
-          name="membershipNumber"
-          placeholder="U+ 멤버십 번호 (선택)"
-          value={membershipId}
-          onChange={(e) => setMembershipId(e.target.value)}
+      <div className="mb-[20px] max-md:mb-[16px] max-sm:mb-[16px] w-full flex flex-col items-center gap-2">
+        <MembershipProfileSelector
+          carrier={carrier}
+          membershipGradeCode={membershipGradeCode}
+          onCarrierChange={setCarrier}
+          onGradeChange={setMembershipGradeCode}
         />
+        <p className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full text-body-5 text-grey04">
+          멤버십 번호 없이 선택한 통신사와 등급으로 가입합니다.
+        </p>
       </div>
 
       <AuthButton
@@ -101,7 +119,8 @@ const OAuthIntegrationForm = ({
             email,
             birthday,
             gender,
-            membershipId: membershipId.trim(),
+            carrier,
+            membershipGradeCode,
           })
         }
         variant={isValid ? 'default' : 'disabled'}

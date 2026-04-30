@@ -6,15 +6,15 @@ import MembershipInfo from '../../features/myPage/components/MyInfo/MembershipIn
 import FadeWrapper from '../../features/myPage/components/FadeWrapper';
 import PasswordChangeModal from '../../features/myPage/components/MyInfo/PasswordChangeModal';
 import UserDeleteModal from '../../features/myPage/components/MyInfo/UserDeleteModal';
-import UplusLinkModal from '../../features/myPage/components/MyInfo/UplusLinkModal';
 import api from '../../apis/axiosInstance';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import NoResult from '../../components/NoResult';
 import { showToast } from '../../utils/toast';
 import { AxiosError } from 'axios';
 import { useDispatch } from 'react-redux';
-import { logout } from '../../store/authSlice';
+import { logout, setLoginSuccess } from '../../store/authSlice';
 import { useNavigate } from 'react-router-dom';
+import { isValidCarrierGradePair } from '../../utils/membership';
 
 interface UserInfo {
   id: number;
@@ -23,8 +23,10 @@ interface UserInfo {
   phoneNumber: string;
   gender: string;
   birthday: string;
-  membershipId: string;
-  membershipGrade: string;
+  carrier: string | null;
+  membershipGrade: string | null;
+  membershipGradeCode: string | null;
+  membershipVerified?: boolean;
 }
 
 export default function MyInfoPage() {
@@ -40,7 +42,7 @@ export default function MyInfoPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [password, setPassword] = useState('');
 
-  const [showUplusModal, setShowUplusModal] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -115,35 +117,44 @@ export default function MyInfoPage() {
     );
   }
 
-  const handleUplusLink = async () => {
-    if (!user?.name || !user?.phoneNumber) {
-      showToast('유저 정보가 올바르지 않습니다.', 'error');
+  const handleMembershipProfileSave = async (carrier: string, membershipGradeCode: string) => {
+    if (!isValidCarrierGradePair(carrier, membershipGradeCode)) {
+      showToast('통신사에 맞는 멤버십 등급을 선택해 주세요.', 'error');
       return;
     }
 
     try {
-      await api.get('/api/v1/users/checkUplusData', {
-        params: {
-          name: user.name,
-          phoneNumber: user.phoneNumber,
-        },
+      setProfileSaving(true);
+      await api.patch('api/v1/users/membership-profile', {
+        carrier,
+        membershipGradeCode,
       });
-
-      // ✅ 유플러스 회원인 경우
-      showToast('유플러스 회원 정보를 불러왔습니다!', 'success');
-      setShowUplusModal(true);
-    } catch (err) {
-      // 타입 단언
-      const axiosError = err as AxiosError;
-
-      const status = axiosError.response?.status;
-
-      if (status === 400) {
-        // ✅ 유플러스 회원 아님 (정상적인 흐름)
-        showToast('유플러스 회원이 아니신가요? 정보를 불러오지 못했습니다.', 'error');
-      } else {
-        showToast('회원 확인 중 오류가 발생했습니다.', 'error');
-      }
+      showToast('멤버십 프로필이 저장되었습니다.', 'success');
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              carrier,
+              membershipGrade: membershipGradeCode,
+              membershipGradeCode,
+              membershipVerified: false,
+            }
+          : prev
+      );
+      dispatch(
+        setLoginSuccess({
+          name: user.name,
+          carrier,
+          membershipGrade: membershipGradeCode,
+          membershipGradeCode,
+          membershipVerified: false,
+        })
+      );
+      fetchUser();
+    } catch {
+      showToast('멤버십 프로필 저장에 실패했습니다.', 'error');
+    } finally {
+      setProfileSaving(false);
     }
   };
 
@@ -162,30 +173,29 @@ export default function MyInfoPage() {
               phoneNumber={user.phoneNumber}
               email={user.email}
               onChangePasswordClick={() => setIsPwModalOpen(true)}
+              carrier={user.carrier}
+              membershipGradeCode={user.membershipGradeCode ?? user.membershipGrade}
+              membershipProfileSaving={profileSaving}
+              onSaveMembershipProfile={handleMembershipProfileSave}
               onDeleteClick={() => setDeleteModalOpen(true)}
             />
           </div>
         }
         aside={
-          <FadeWrapper changeKey={user.membershipGrade}>
+          <FadeWrapper
+            changeKey={`${user.carrier ?? 'none'}-${user.membershipGradeCode ?? user.membershipGrade ?? 'none'}`}
+          >
             <MembershipInfo
               name={user.name}
-              grade={user.membershipGrade}
-              onClickLink={handleUplusLink}
+              carrier={user.carrier}
+              grade={user.membershipGradeCode ?? user.membershipGrade}
+              verified={user.membershipVerified}
             />
           </FadeWrapper>
         }
         bottomImage="/images/myPage/bunny-info.webp"
         bottomImageFallback="/images/myPage/bunny-info.png"
         bottomImageAlt="회원 정보 토끼"
-      />
-      {/* 유플러스 연동 모달 */}
-      <UplusLinkModal
-        isOpen={showUplusModal}
-        phone={user.phoneNumber}
-        name={user.name}
-        onClose={() => setShowUplusModal(false)}
-        onVerified={fetchUser} // 성공 후 사용자 정보 다시 조회
       />
       {/* 비밀번호 변경 */}
       <PasswordChangeModal

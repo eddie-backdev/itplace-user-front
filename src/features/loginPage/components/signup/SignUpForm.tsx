@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import AuthInput from '../common/AuthInput';
+import MembershipProfileSelector from '../../../../components/membership/MembershipProfileSelector';
 import AuthButton from '../common/AuthButton';
 import AuthFooter from '../common/AuthFooter';
 import useValidation from '../../hooks/useValidation';
@@ -9,16 +10,24 @@ type SignUpFormProps = {
   initialName?: string;
   initialBirthday?: string;
   initialGender?: string;
-  initialMembershipId?: string;
+  initialCarrier?: string;
+  initialMembershipGradeCode?: string;
   onGoToLogin: () => void;
-  onNext: (data: { name: string; birthday: string; gender: string; membershipId: string }) => void;
+  onNext: (data: {
+    name: string;
+    birthday: string;
+    gender: string;
+    carrier: string;
+    membershipGradeCode: string;
+  }) => void;
 };
 
 const SignUpForm = ({
   initialName = '',
   initialBirthday = '',
   initialGender = '',
-  initialMembershipId = '',
+  initialCarrier = '',
+  initialMembershipGradeCode = '',
   onGoToLogin,
   onNext,
 }: SignUpFormProps) => {
@@ -26,7 +35,8 @@ const SignUpForm = ({
     name: initialName,
     birth: initialBirthday,
     gender: initialGender,
-    membershipNumber: initialMembershipId,
+    carrier: initialCarrier,
+    membershipGradeCode: initialMembershipGradeCode,
   });
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -61,6 +71,8 @@ const SignUpForm = ({
     formData.name.trim() &&
     formData.birth.trim() &&
     (formData.gender === 'MALE' || formData.gender === 'FEMALE') &&
+    formData.carrier &&
+    formData.membershipGradeCode &&
     !errors.birth;
 
   return (
@@ -115,13 +127,16 @@ const SignUpForm = ({
         </button>
       </div>
 
-      <div className="mb-[20px] max-md:mb-[16px] max-sm:mb-[16px] w-full flex justify-center">
-        <AuthInput
-          name="membershipNumber"
-          placeholder="U+ 멤버십 번호 (선택)"
-          value={formData.membershipNumber}
-          onChange={(e) => handleChange('membershipNumber', e.target.value)}
+      <div className="mb-[20px] max-md:mb-[16px] max-sm:mb-[16px] w-full flex flex-col items-center gap-2">
+        <MembershipProfileSelector
+          carrier={formData.carrier}
+          membershipGradeCode={formData.membershipGradeCode}
+          onCarrierChange={(carrier) => handleChange('carrier', carrier)}
+          onGradeChange={(grade) => handleChange('membershipGradeCode', grade)}
         />
+        <p className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full text-body-5 text-grey04">
+          멤버십 번호는 수집하지 않고 선택한 통신사와 등급으로 혜택을 맞춰드려요.
+        </p>
       </div>
 
       <AuthButton
@@ -131,7 +146,8 @@ const SignUpForm = ({
             name: formData.name.trim(),
             birthday: formData.birth,
             gender: formData.gender,
-            membershipId: formData.membershipNumber.trim(),
+            carrier: formData.carrier,
+            membershipGradeCode: formData.membershipGradeCode,
           })
         }
         variant={isValid ? 'default' : 'disabled'}

@@ -39,7 +39,11 @@ const OAuthRedirectHandler = () => {
             dispatch(
               setLoginSuccess({
                 name: userData.name,
-                membershipGrade: userData.membershipGrade || 'NORMAL',
+                carrier: userData.carrier ?? null,
+                membershipGrade: userData.membershipGradeCode || userData.membershipGrade || null,
+                membershipGradeCode:
+                  userData.membershipGradeCode || userData.membershipGrade || null,
+                membershipVerified: userData.membershipVerified ?? false,
               })
             );
           }
