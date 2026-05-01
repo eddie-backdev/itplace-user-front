@@ -167,7 +167,6 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({
           onFavoriteChange={handleFavoriteChange}
           partnerName={detailData?.data?.benefitName}
           distance={platform.distance}
-          hasCoupon={platform.hasCoupon}
           onBottomSheetReset={onBottomSheetReset}
         />
       </div>

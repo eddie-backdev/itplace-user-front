@@ -5,15 +5,9 @@ interface CustomMarkerProps {
   name?: string;
   isSelected?: boolean;
   distance?: number; // 거리 추가 (미터 단위)
-  hasCoupon?: boolean; // 쿠폰 보유 여부
 }
 
-const CustomMarker: React.FC<CustomMarkerProps> = ({
-  imageUrl,
-  name,
-  isSelected = false,
-  hasCoupon = false,
-}) => {
+const CustomMarker: React.FC<CustomMarkerProps> = ({ imageUrl, name, isSelected = false }) => {
   return (
     <div
       className="relative cursor-pointer w-[68px] h-[84px]"
@@ -41,9 +35,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
         style={{
           filter: isSelected
             ? 'drop-shadow(0px 0px 12px rgba(255, 160, 35, 0.9))'
-            : hasCoupon
-              ? 'drop-shadow(0px 0px 8px #7638FA)'
-              : 'drop-shadow(2px 2px 8px rgba(0, 0, 0, 0.35))',
+            : 'drop-shadow(2px 2px 8px rgba(0, 0, 0, 0.35))',
         }}
       >
         {/* 말풍선 SVG */}
@@ -74,16 +66,6 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
           src="/images/star.png"
           alt="맵 마커"
           className="absolute -left-2 -top-1 -translate-y-1/2 w-14"
-        />
-      )}
-
-      {/* 쿠폰 보유 시 event-star 이미지 */}
-      {hasCoupon && !isSelected && (
-        <img
-          src="/images/event/event-star.webp"
-          alt="쿠폰 이벤트"
-          className="absolute -left-6 top-0 w-14"
-          style={{ transform: 'translateY(-50%) rotate(-30deg)' }}
         />
       )}
     </div>

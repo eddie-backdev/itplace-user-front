@@ -6,7 +6,6 @@ import {
   TbLogin,
   TbMapPin,
   TbLayoutList,
-  TbConfetti,
 } from 'react-icons/tb';
 import clsx from 'clsx';
 import { useLocation, Link } from 'react-router-dom';
@@ -23,7 +22,6 @@ const menus = [
   { id: 'map', label: '잇플 맵', icon: TbMap2, path: '/main' },
   { id: 'benefits', label: '전체 혜택', icon: TbLayoutList, path: '/benefits' },
   { id: 'mypage', label: '마이페이지', icon: TbUser, path: '/mypage/info' },
-  { id: 'event', label: '이벤트', icon: TbConfetti, path: '/event' },
 ];
 
 export default function Header({ variant = 'default' }: { variant?: 'default' | 'glass' }) {

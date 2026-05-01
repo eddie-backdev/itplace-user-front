@@ -22,7 +22,6 @@ const menus = [
   { label: '잇플 맵', path: '/main' },
   { label: '전체 혜택', path: '/benefits' },
   { label: '마이페이지', path: '/mypage/info', match: '/mypage' },
-  { label: '이벤트', path: '/event' },
 ];
 
 const MobileHeader = ({

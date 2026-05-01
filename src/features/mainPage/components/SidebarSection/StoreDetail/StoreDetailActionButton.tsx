@@ -9,7 +9,6 @@ import { submitUsageAmount } from '../../../api/benefitDetail';
 import { showToast } from '../../../../../utils/toast';
 import { formatNumberWithCommas, removeCommas } from '../../../utils/numberFormat';
 import Modal from '../../../../../components/Modal';
-import CouponModal from '../../../../eventPage/components/Modal/CouponModal';
 import { actionAnimations } from '../../../../../utils/Animation';
 
 interface StoreDetailActionButtonProps {
@@ -19,7 +18,6 @@ interface StoreDetailActionButtonProps {
   onFavoriteChange: (newIsFavorite: boolean) => void;
   partnerName?: string;
   distance: number;
-  hasCoupon?: boolean;
   onBottomSheetReset?: () => void;
 }
 
@@ -30,13 +28,11 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
   onFavoriteChange,
   partnerName,
   distance,
-  hasCoupon = false,
   onBottomSheetReset,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [usageAmount, setUsageAmount] = useState('');
-  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
 
   const heartButtonRef = React.useRef<HTMLButtonElement | null>(null);
 
@@ -187,11 +183,6 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
       // 입력값 초기화 & 모달 닫기
       setUsageAmount('');
       setIsModalOpen(false);
-
-      // hasCoupon이 true인 경우에만 CouponModal 표시
-      if (hasCoupon) {
-        setIsCouponModalOpen(true);
-      }
     } catch (error) {
       const errorMessage =
         (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
@@ -309,9 +300,6 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
           </div>
         </div>
       </Modal>
-
-      {/* CouponModal - 사용 내역 등록 성공 시 표시 */}
-      <CouponModal isOpen={isCouponModalOpen} onClose={() => setIsCouponModalOpen(false)} />
     </>
   );
 };

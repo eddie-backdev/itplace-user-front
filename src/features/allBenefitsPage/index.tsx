@@ -1,5 +1,4 @@
 import React from 'react';
-import EventBanner from './components/EventBanner';
 import SimpleRanking from './components/SimpleRanking';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
@@ -22,6 +21,7 @@ import BenefitDetailModal from './components/BenefitDetailModal';
 import MobileHeader from '../../components/MobileHeader';
 import { useResponsive } from '../../hooks/useResponsive';
 import { CARRIER_OPTIONS, CarrierCode, getCarrierLabel } from '../../utils/membership';
+import { CATEGORIES } from '../mainPage/constants';
 
 type CarrierFilter = 'ALL' | CarrierCode;
 
@@ -60,10 +60,7 @@ const AllBenefitsLayout: React.FC = () => {
         if (keyword) params.keyword = keyword;
         if (selectedCarrier !== 'ALL') params.carrier = selectedCarrier;
         if (category && category !== '전체') {
-          // 카테고리명 매핑
-          let apiCategory = category;
-          if (category === '액티비티') apiCategory = '엑티비티';
-          params.category = apiCategory;
+          params.category = category;
         }
 
         const data = await getBenefits(params);
@@ -198,17 +195,7 @@ const AllBenefitsLayout: React.FC = () => {
     };
   }, [searchTerm, debouncedSearch]);
 
-  const categories = [
-    '전체',
-    '액티비티',
-    '뷰티/건강',
-    '쇼핑',
-    '생활/편의',
-    '푸드',
-    '문화/여가',
-    '교육',
-    '여행/교통',
-  ];
+  const categories = CATEGORIES;
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -329,16 +316,16 @@ const AllBenefitsLayout: React.FC = () => {
               <div className="flex flex-wrap items-center gap-2">
                 {categories.map((category) => (
                   <button
-                    key={category}
+                    key={category.id}
                     type="button"
-                    onClick={() => handleCategoryChange(category)}
+                    onClick={() => handleCategoryChange(category.id)}
                     className={`rounded-full border px-3.5 py-1.5 text-body-4 transition-colors md:px-4 ${
-                      selectedCategory === category
+                      selectedCategory === category.id
                         ? 'border-purple04 bg-purple01 text-purple04'
                         : 'border-grey02 bg-white text-grey04 hover:border-purple02 hover:text-purple04'
                     }`}
                   >
-                    {category}
+                    {category.name}
                   </button>
                 ))}
               </div>
@@ -493,19 +480,14 @@ const AllBenefitsLayout: React.FC = () => {
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-body-4 font-medium text-purple04">추가 탐색</p>
-              <h2 className="mt-1 text-title-5 text-black">
-                이벤트와 인기 혜택은 아래에서 살펴보세요.
-              </h2>
+              <h2 className="mt-1 text-title-5 text-black">인기 혜택을 함께 살펴보세요.</h2>
             </div>
             <p className="text-body-3 text-grey04">
               메인 목록 확인 후 참고할 수 있는 보조 콘텐츠예요.
             </p>
           </div>
 
-          <div className="space-y-5 md:space-y-6">
-            <EventBanner />
-            <SimpleRanking />
-          </div>
+          <SimpleRanking />
         </section>
       </div>
 

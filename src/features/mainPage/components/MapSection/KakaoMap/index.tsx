@@ -365,12 +365,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
         // React 컴포넌트를 HTML로 렌더링
         const markerHTML = renderToString(
-          <CustomMarker
-            imageUrl={platform.imageUrl}
-            name={platform.name}
-            isSelected={isSelected}
-            hasCoupon={platform.hasCoupon}
-          />
+          <CustomMarker imageUrl={platform.imageUrl} name={platform.name} isSelected={isSelected} />
         );
 
         // 개별 커스텀 마커 표시
