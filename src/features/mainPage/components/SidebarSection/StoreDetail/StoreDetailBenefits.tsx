@@ -9,6 +9,7 @@ import {
   getMembershipGradeLabel,
   isGradeApplicableToProfile,
 } from '../../../../../utils/membership';
+import { groupDetailBenefitsByCarrier } from '../../../utils/benefitGrouping';
 
 interface StoreDetailBenefitsProps {
   activeTab: 'default' | 'vipkok';
@@ -34,6 +35,11 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
 
   const getGradeDisplayName = (grade: string) => getMembershipGradeLabel(grade);
 
+  const benefitGroups = groupDetailBenefitsByCarrier(
+    detailData?.data?.tierBenefits ?? [],
+    detailData?.data?.carrier
+  );
+
   return (
     <>
       <BenefitFilterToggle
@@ -50,29 +56,58 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
           상세 혜택
         </h3>
 
-        {detailData?.data?.tierBenefits && detailData.data.tierBenefits.length > 0 ? (
-          <div className="space-y-1 max-xl:space-y-0.5">
-            {detailData.data.tierBenefits.map((b, i) => (
-              <div
-                key={i}
-                className="grid grid-cols-[20px_60px_1fr] gap-2 items-center max-md:grid-cols-[16px_50px_1fr] max-md:gap-1.5"
+        {benefitGroups.length > 0 ? (
+          <div className="space-y-3 max-xl:space-y-2">
+            {benefitGroups.map((group) => (
+              <section
+                key={group.key}
+                className="rounded-2xl border border-grey02 bg-grey01/40 px-3.5 py-3 max-md:rounded-xl max-md:px-3 max-md:py-2.5"
               >
-                <TbCheck size={20} className="text-grey04 max-md:w-4 max-md:h-4" />
-                <span
-                  className={`text-body-3 max-xl:text-body-4 ${
-                    isUserGrade(b.grade, b.carrier) ? 'text-orange04 font-bold' : 'text-grey05'
-                  }`}
-                >
-                  {getGradeDisplayName(b.grade)}
-                </span>
-                <span
-                  className={`text-body-3 max-xl:text-body-4 ${
-                    isUserGrade(b.grade, b.carrier) ? 'text-orange04 font-bold' : 'text-grey05'
-                  }`}
-                >
-                  {b.context?.split('\n')[0]}
-                </span>
-              </div>
+                <div className="mb-2 flex items-center gap-2 max-md:mb-1.5">
+                  <span className="rounded-full bg-white px-2.5 py-1 text-body-4 font-bold text-purple04 shadow-sm max-md:text-body-5">
+                    {group.label}
+                  </span>
+                  <span className="text-body-5 text-grey04">{group.benefits.length}개 혜택</span>
+                </div>
+
+                <div className="space-y-2 max-xl:space-y-1.5">
+                  {group.benefits.map((benefit, index) => {
+                    const isHighlighted = benefit.grades.some((grade) =>
+                      isUserGrade(grade, benefit.carrier)
+                    );
+
+                    return (
+                      <div
+                        key={`${group.key}-${benefit.grades.join('-')}-${index}`}
+                        className={`grid grid-cols-[20px_74px_minmax(0,1fr)] gap-2 rounded-xl bg-white px-2.5 py-2 items-start max-md:grid-cols-[16px_58px_minmax(0,1fr)] max-md:gap-1.5 max-md:px-2 ${
+                          isHighlighted ? 'ring-1 ring-orange04/40' : ''
+                        }`}
+                      >
+                        <TbCheck
+                          size={20}
+                          className={`mt-0.5 max-md:w-4 max-md:h-4 ${
+                            isHighlighted ? 'text-orange04' : 'text-grey04'
+                          }`}
+                        />
+                        <span
+                          className={`text-body-3 max-xl:text-body-4 ${
+                            isHighlighted ? 'text-orange04 font-bold' : 'text-grey05 font-medium'
+                          }`}
+                        >
+                          {benefit.grades.map(getGradeDisplayName).join(', ')}
+                        </span>
+                        <span
+                          className={`min-w-0 whitespace-pre-line break-words text-body-3 leading-relaxed max-xl:text-body-4 ${
+                            isHighlighted ? 'text-orange04 font-bold' : 'text-grey05'
+                          }`}
+                        >
+                          {benefit.context}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
             ))}
           </div>
         ) : (

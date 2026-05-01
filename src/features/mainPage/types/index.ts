@@ -1,3 +1,9 @@
+export interface PlatformBenefit {
+  carrier?: string | null;
+  grade: string;
+  context: string;
+}
+
 export interface Platform {
   id: string;
   storeId: number;
@@ -16,6 +22,7 @@ export interface Platform {
   longitude: number;
   carrier?: string | null;
   benefits: string[];
+  benefitDetails?: PlatformBenefit[];
   rating: number;
   distance: number;
   hasCoupon: boolean;

@@ -40,6 +40,7 @@ export const convertStoreDataToPlatform = (storeData: StoreData): Platform | nul
     longitude: store.longitude,
     carrier,
     benefits: benefits,
+    benefitDetails: tierBenefit,
     rating: 4.5,
     distance: distance, // API에서 제공하는 거리 값 사용
     hasCoupon: store.hasCoupon,
@@ -77,6 +78,7 @@ export const createPlatformWithoutCoords = (storeData: StoreData): Platform => {
     longitude: 0,
     carrier,
     benefits: benefits,
+    benefitDetails: tierBenefit,
     rating: 4.5,
     distance: distance, // API에서 제공하는 거리 값 사용
     hasCoupon: store.hasCoupon,

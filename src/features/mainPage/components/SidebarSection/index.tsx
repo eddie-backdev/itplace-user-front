@@ -279,7 +279,9 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
           postCode: item.store.postCode,
           latitude: item.store.latitude,
           longitude: item.store.longitude,
+          carrier: item.carrier,
           benefits: item.tierBenefit.map((benefit) => `${benefit.grade}: ${benefit.context}`),
+          benefitDetails: item.tierBenefit,
           rating: 0, // API에서 제공하지 않으므로 기본값
           distance: item.distance,
           hasCoupon: item.store.hasCoupon,
@@ -356,7 +358,9 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
           postCode: item.store.postCode,
           latitude: item.store.latitude,
           longitude: item.store.longitude,
+          carrier: item.carrier,
           benefits: item.tierBenefit.map((benefit) => `${benefit.grade}: ${benefit.context}`),
+          benefitDetails: item.tierBenefit,
           rating: 0, // API에서 제공하지 않으므로 기본값
           distance: item.distance,
           hasCoupon: item.store.hasCoupon,

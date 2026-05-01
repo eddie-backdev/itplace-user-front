@@ -9,6 +9,7 @@ import {
   getMembershipGradeLabel,
   isGradeApplicableToProfile,
 } from '../../../../../utils/membership';
+import { groupPlatformBenefitsByCarrier } from '../../../utils/benefitGrouping';
 
 interface StoreCardProps {
   platform: Platform;
@@ -20,17 +21,10 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
   // Redux에서 사용자 등급 가져오기
   const user = useSelector((state: RootState) => state.auth.user);
 
-  // 사용자 등급 확인 헬퍼 함수
-  const isUserGrade = (grade: string) =>
-    isGradeApplicableToProfile({
-      benefitCarrier: platform.carrier,
-      benefitGrade: grade,
-      userCarrier: user?.carrier,
-      userGrade: user?.membershipGradeCode ?? user?.membershipGrade,
-    });
-
   // 등급 표시명 변환 헬퍼 함수
   const getGradeDisplayName = (grade: string) => getMembershipGradeLabel(grade);
+
+  const benefitGroups = groupPlatformBenefitsByCarrier(platform);
 
   // 주소 툴팁 상태 관리
   const [showAddressTooltip, setShowAddressTooltip] = useState(false);
@@ -150,32 +144,62 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
             혜택 내용
           </div>
 
-          <div className="space-y-1 max-md:space-y-0.5">
-            {platform.benefits.map((benefitText) => {
-              const [fixedGrade] = benefitText.split(': ');
-              // 해당 등급의 혜택 찾기
-              const content = benefitText.split(': ')[1] ?? '-';
-              const displayGrade = getGradeDisplayName(fixedGrade);
-
-              return (
-                <div
-                  key={fixedGrade}
-                  className="grid grid-cols-[20px_60px_1fr] gap-2 items-center max-md:grid-cols-[16px_50px_1fr] max-md:gap-1.5"
-                >
-                  <TbCheck size={16} className="text-grey04 max-md:w-4 max-md:h-4" />
-                  <span
-                    className={`text-body-4 max-md:text-body-5 ${isUserGrade(fixedGrade) && content !== '-' ? 'text-orange04 font-bold' : 'text-grey05'}`}
-                  >
-                    {displayGrade}
+          <div className="space-y-2 max-md:space-y-1.5">
+            {benefitGroups.map((group) => (
+              <section
+                key={group.key}
+                className="rounded-xl border border-grey02 bg-white/70 px-2.5 py-2 max-md:px-2 max-md:py-1.5"
+              >
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <span className="rounded-full bg-purple01 px-2 py-0.5 text-body-5 font-bold text-purple04 max-md:text-body-6">
+                    {group.label}
                   </span>
-                  <span
-                    className={`text-body-4 max-md:text-body-5 truncate ${isUserGrade(fixedGrade) && content !== '-' ? 'text-orange04 font-bold' : 'text-grey05'}`}
-                  >
-                    {content}
-                  </span>
+                  <span className="text-body-6 text-grey04">{group.benefits.length}개</span>
                 </div>
-              );
-            })}
+
+                <div className="space-y-1 max-md:space-y-0.5">
+                  {group.benefits.map((benefit, index) => {
+                    const isMatchedGrade =
+                      benefit.grades.some((grade) =>
+                        isGradeApplicableToProfile({
+                          benefitCarrier: benefit.carrier,
+                          benefitGrade: grade,
+                          userCarrier: user?.carrier,
+                          userGrade: user?.membershipGradeCode ?? user?.membershipGrade,
+                        })
+                      ) && benefit.context !== '-';
+
+                    return (
+                      <div
+                        key={`${group.key}-${benefit.grades.join('-')}-${index}`}
+                        className="grid grid-cols-[20px_68px_minmax(0,1fr)] gap-2 items-start max-md:grid-cols-[16px_56px_minmax(0,1fr)] max-md:gap-1.5"
+                      >
+                        <TbCheck
+                          size={16}
+                          className={`mt-0.5 max-md:w-4 max-md:h-4 ${
+                            isMatchedGrade ? 'text-orange04' : 'text-grey04'
+                          }`}
+                        />
+                        <span
+                          className={`text-body-4 max-md:text-body-5 ${
+                            isMatchedGrade ? 'text-orange04 font-bold' : 'text-grey05 font-medium'
+                          }`}
+                        >
+                          {benefit.grades.map(getGradeDisplayName).join(', ')}
+                        </span>
+                        <span
+                          className={`min-w-0 whitespace-pre-line break-words text-body-4 leading-relaxed max-md:text-body-5 ${
+                            isMatchedGrade ? 'text-orange04 font-bold' : 'text-grey05'
+                          }`}
+                        >
+                          {benefit.context}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         </div>
       </div>
