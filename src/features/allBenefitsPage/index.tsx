@@ -7,6 +7,7 @@ import SearchBar from '../../components/SearchBar';
 import Pagination from '../../components/Pagination';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import NoResult from '../../components/NoResult';
+import SafeImage from '../../components/SafeImage';
 import { TbStar, TbStarFilled } from 'react-icons/tb';
 import { showToast } from '../../utils/toast';
 import {
@@ -421,10 +422,11 @@ const AllBenefitsLayout: React.FC = () => {
                       상세 조건은 카드 클릭 후 확인할 수 있어요
                     </p>
                     <div className="flex h-[64px] w-[64px] flex-shrink-0 items-center justify-center md:h-[72px] md:w-[72px]">
-                      <img
-                        src={benefit.image || '/images/admin/CGV.png'}
+                      <SafeImage
+                        src={benefit.image}
                         alt={`${benefit.benefitName} 로고`}
-                        className="max-h-full max-w-full object-contain"
+                        fallbackLabel={benefit.benefitName}
+                        className="h-full w-full object-contain"
                       />
                     </div>
                   </div>

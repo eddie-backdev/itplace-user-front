@@ -9,3 +9,5 @@ export { default as Modal } from './Modal';
 export { default as NoResult } from './NoResult';
 export { default as StatisticsCard } from './StatisticsCard';
 export { default as ToastProvider } from './ToastProvider';
+export { default as SafeImage } from './SafeImage';
+export { normalizeImageSrc } from '../utils/image';

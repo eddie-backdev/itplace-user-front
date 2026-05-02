@@ -1,3 +1,4 @@
+import SafeImage from '../../../../../components/SafeImage';
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Platform } from '../../../types';
@@ -8,6 +9,7 @@ import { showToast } from '../../../../../utils/toast';
 import {
   getMembershipGradeLabel,
   isGradeApplicableToProfile,
+  isCarrierCode,
 } from '../../../../../utils/membership';
 import { groupPlatformBenefitsByCarrier } from '../../../utils/benefitGrouping';
 
@@ -25,6 +27,18 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
   const getGradeDisplayName = (grade: string) => getMembershipGradeLabel(grade);
 
   const benefitGroups = groupPlatformBenefitsByCarrier(platform);
+  const selectPlatformWithCarrier = (
+    event: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>,
+    carrier: string
+  ) => {
+    if (!isCarrierCode(carrier)) return;
+
+    event.stopPropagation();
+    onSelect({
+      ...platform,
+      carrier,
+    });
+  };
 
   // 주소 툴팁 상태 관리
   const [showAddressTooltip, setShowAddressTooltip] = useState(false);
@@ -124,17 +138,13 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
 
           {/* 오른쪽: 브랜드 로고 */}
           <div className="w-[45px] h-[45px] flex items-center justify-center flex-shrink-0 max-md:w-[40px] max-md:h-[40px]">
-            {platform.imageUrl ? (
-              <img
-                src={platform.imageUrl}
-                alt={`${platform.name} 로고`}
-                className="w-full h-full object-contain rounded"
-              />
-            ) : (
-              <div className="w-full h-full bg-red-500 rounded flex items-center justify-center">
-                <span className="text-white text-xs font-bold">{platform.name.charAt(0)}</span>
-              </div>
-            )}
+            <SafeImage
+              src={platform.imageUrl}
+              alt={`${platform.name} 로고`}
+              fallbackLabel={platform.name}
+              className="w-full h-full object-contain rounded"
+              fallbackClassName="bg-purple04 text-white text-xs"
+            />
           </div>
         </div>
 
@@ -148,7 +158,17 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
             {benefitGroups.map((group) => (
               <section
                 key={group.key}
-                className="rounded-xl border border-grey02 bg-white/70 px-2.5 py-2 max-md:px-2 max-md:py-1.5"
+                role={isCarrierCode(group.key) ? 'button' : undefined}
+                tabIndex={isCarrierCode(group.key) ? 0 : undefined}
+                aria-label={`${group.label} 혜택으로 ${platform.name} 상세 보기`}
+                onClick={(event) => selectPlatformWithCarrier(event, group.key)}
+                onKeyDown={(event) => {
+                  if ((event.key === 'Enter' || event.key === ' ') && isCarrierCode(group.key)) {
+                    event.preventDefault();
+                    selectPlatformWithCarrier(event, group.key);
+                  }
+                }}
+                className="rounded-xl border border-grey02 bg-white/70 px-2.5 py-2 transition-colors hover:border-purple02 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-md:px-2 max-md:py-1.5"
               >
                 <div className="mb-1.5 flex items-center gap-1.5">
                   <span className="rounded-full bg-purple01 px-2 py-0.5 text-body-5 font-bold text-purple04 max-md:text-body-6">

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getImageFallbackText, normalizeImageSrc } from '../../../../../utils/image';
 
 interface CustomMarkerProps {
   imageUrl?: string;
@@ -8,6 +9,9 @@ interface CustomMarkerProps {
 }
 
 const CustomMarker: React.FC<CustomMarkerProps> = ({ imageUrl, name, isSelected = false }) => {
+  const normalizedImageUrl = normalizeImageSrc(imageUrl);
+  const fallbackLabel = getImageFallbackText(name || '가맹점');
+
   return (
     <div
       className="relative cursor-pointer w-[68px] h-[84px]"
@@ -44,18 +48,26 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({ imageUrl, name, isSelected 
           <polygon points="27,68 34,78 41,68" fill="white" />
         </svg>
 
-        {/* 로고 이미지 */}
-        <div className="absolute top-0 left-0 w-[68px] h-[68px] flex items-center justify-center z-10">
-          {imageUrl ? (
+        {/* 로고 이미지: renderToString으로 만든 카카오 오버레이는 React onError가 붙지 않으므로 DOM에 별도 fallback listener를 설치한다. */}
+        <div
+          className="absolute top-0 left-0 w-[68px] h-[68px] flex items-center justify-center z-10"
+          data-marker-image-wrap="true"
+        >
+          <span
+            role="img"
+            aria-label={`${name || '가맹점'} 로고`}
+            data-marker-fallback="true"
+            className={`w-[50px] h-[50px] inline-flex items-center justify-center rounded-lg bg-grey02 text-grey04 text-sm font-bold ${normalizedImageUrl ? 'hidden' : ''}`}
+          >
+            {fallbackLabel}
+          </span>
+          {normalizedImageUrl && (
             <img
-              src={imageUrl}
-              alt={name || '가맹점'}
+              src={normalizedImageUrl}
+              alt={`${name || '가맹점'} 로고`}
               className="w-[50px] h-[50px] object-contain rounded-lg"
+              data-marker-image="true"
             />
-          ) : (
-            <div className="w-[50px] h-[50px] bg-grey02 rounded-lg flex items-center justify-center">
-              <span className="text-grey04 text-sm font-bold">{name ? name.charAt(0) : '?'}</span>
-            </div>
           )}
         </div>
       </div>

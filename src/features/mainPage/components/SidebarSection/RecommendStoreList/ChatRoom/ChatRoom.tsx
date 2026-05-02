@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { TbSend, TbRefresh, TbX } from 'react-icons/tb';
+import SafeImage from '../../../../../../components/SafeImage';
 import LoadingSpinner from '../../../../../../components/LoadingSpinner';
 import { getRecommendation, RecommendationError } from '../../../../api/recommendChatApi';
 import { getCurrentLocation } from '../../../../api/storeApi';
@@ -492,14 +493,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                               onClick={() => handlePartnerClick(partner.partnerName)}
                             >
                               <div className="flex items-center gap-3">
-                                <img
+                                <SafeImage
                                   src={partner.imgUrl}
-                                  alt={partner.partnerName}
+                                  alt={`${partner.partnerName} 로고`}
+                                  fallbackLabel={partner.partnerName}
                                   className="w-12 h-12 rounded-lg object-contain border border-grey02"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.src = '/images/thumbnail.png';
-                                  }}
                                 />
                                 <div className="flex-1">
                                   <h4 className="text-body-2-bold text-grey05">

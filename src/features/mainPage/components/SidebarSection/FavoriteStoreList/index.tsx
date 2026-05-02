@@ -1,3 +1,4 @@
+import SafeImage from '../../../../../components/SafeImage';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { TbChevronRight } from 'react-icons/tb';
@@ -81,19 +82,13 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
         >
           {/* 왼쪽: 파트너 이미지 */}
           <div className="w-[50px] h-[50px] rounded-[10px] overflow-hidden flex-shrink-0 mr-6 max-md:w-[40px] max-md:h-[40px] max-md:mr-4 max-sm:w-[35px] max-sm:h-[35px] max-sm:mr-3 bg-white">
-            {favorite.partnerImage ? (
-              <img
-                src={favorite.partnerImage}
-                alt={`${favorite.partnerName} 로고`}
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <div className="w-full h-full bg-purple04 flex items-center justify-center">
-                <span className="text-white text-body-4 font-bold max-md:text-body-5 max-sm:text-body-6">
-                  {favorite.partnerName.charAt(0)}
-                </span>
-              </div>
-            )}
+            <SafeImage
+              src={favorite.partnerImage}
+              alt={`${favorite.partnerName} 로고`}
+              fallbackLabel={favorite.partnerName}
+              className="w-full h-full object-contain"
+              fallbackClassName="bg-purple04 text-white text-body-4 max-md:text-body-5 max-sm:text-body-6"
+            />
           </div>
 
           {/* 중앙: 파트너 이름 */}

@@ -9,6 +9,7 @@ import {
 } from '../apis/allBenefitsApi';
 import { showToast } from '../../../utils/toast';
 import NoResult from '../../../components/NoResult';
+import SafeImage from '../../../components/SafeImage';
 import { getCarrierGradeOrder, getMembershipGradeLabel } from '../../../utils/membership';
 
 interface InfoSectionProps {
@@ -18,20 +19,20 @@ interface InfoSectionProps {
 }
 
 const InfoSection: React.FC<InfoSectionProps> = ({ label, value, className = '' }) => (
-  <div className="flex mb-8 max-md:mb-6 ml-[16px] max-md:ml-0 max-md:flex-col">
-    <h5 className="text-title-5 max-md:text-title-8 text-black mb-4 max-md:mb-2 w-[100px] max-md:w-full flex-shrink-0">
+  <section className="mb-5 rounded-2xl border border-grey02 bg-white px-5 py-4 shadow-sm max-md:mb-4 max-md:px-4 max-md:py-3">
+    <h5 className="mb-3 inline-flex rounded-full bg-purple01 px-3 py-1 text-title-8 text-purple05 max-md:text-body-4">
       {label}
     </h5>
-    <div className="pl-[24px] max-md:pl-0 flex-1">
+    <div className="min-w-0">
       <div className="space-y-3 max-md:space-y-2">
         <div
-          className={`text-body-0 max-md:text-body-4 text-grey05 whitespace-pre-line ${className}`}
+          className={`whitespace-pre-line break-words text-body-1 leading-8 text-grey05 max-md:text-body-4 max-md:leading-7 ${className}`}
         >
           {value}
         </div>
       </div>
     </div>
-  </div>
+  </section>
 );
 
 interface BenefitDetailModalProps {
@@ -94,7 +95,7 @@ const BenefitDetailModal: React.FC<BenefitDetailModalProps> = ({ isOpen, benefit
   const displayDescription =
     benefitDetail?.description ||
     `${benefit.category} • ${benefit.usageType === 'ONLINE' ? '온라인' : '오프라인'}`;
-  const displayImage = benefitDetail?.image || benefit.image || '/images/admin/CGV.png';
+  const displayImage = benefitDetail?.image || benefit.image;
 
   // 제공 횟수 정보
   const getBenefitInfo = () => {
@@ -141,20 +142,22 @@ const BenefitDetailModal: React.FC<BenefitDetailModalProps> = ({ isOpen, benefit
           ) : (
             <>
               {/* 브랜드 정보 */}
-              <div className="flex items-center justify-between mb-[28px] max-md:mb-4 max-md:flex-row max-md:items-start max-md:mt-2">
-                <div className="flex flex-col justify-center ml-[16px] max-md:ml-0 max-md:mr-2 flex-1 max-md:mb-4">
-                  <h4 className="text-title-2 max-md:text-title-5 max-md:font-bold text-black mb-1">
+              <div className="mb-5 flex min-w-0 items-start gap-5 rounded-2xl bg-grey01/60 p-5 max-md:mb-4 max-md:gap-3 max-md:p-4">
+                <div className="flex min-w-0 flex-1 flex-col justify-center">
+                  <h4 className="mb-2 break-keep text-title-2 leading-tight text-black max-md:text-title-5 max-md:font-bold">
                     {displayName}
                   </h4>
-                  <p className="text-body-0 max-md:text-body-4 text-grey05 mt-1">
+                  <p className="break-keep text-body-0 leading-7 text-grey05 max-md:text-body-4 max-md:leading-6">
                     {displayDescription}
                   </p>
                 </div>
-                <div className="w-[120px] h-[120px] max-md:w-[80px] max-md:h-[80px] bg-white flex items-center justify-center ml-4 max-md:ml-0">
-                  <img
+                <div className="flex h-[120px] w-[120px] flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-grey02 bg-white max-md:h-[82px] max-md:w-[82px]">
+                  <SafeImage
                     src={displayImage}
                     alt={`${displayName} 로고`}
-                    className="w-[120px] h-[120px] max-md:w-[80px] max-md:h-[80px] object-contain"
+                    fallbackLabel={displayName}
+                    className="h-full w-full object-contain p-2 max-md:p-1.5"
+                    fallbackClassName="text-title-4 max-md:text-title-7"
                   />
                 </div>
               </div>

@@ -3,6 +3,7 @@ import ChatRoom from './ChatRoom/ChatRoom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store';
 import { RecommendationItem } from '../../../types/api';
+import SafeImage from '../../../../../components/SafeImage';
 import NoResult from '../../../../../components/NoResult';
 import { useAnimatedLoadingText } from '../../../hooks/useAnimatedLoadingText';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
@@ -266,9 +267,10 @@ const RecommendStoreList: React.FC<RecommendStoreListProps> = ({
                 >
                   {/* 왼쪽 이미지 */}
                   <div className="w-[50px] h-[50px] bg-white rounded-[10px] overflow-hidden flex-shrink-0 mr-6 max-md:w-[40px] max-md:h-[40px] max-md:mr-4 max-sm:w-[35px] max-sm:h-[35px] max-sm:mr-3">
-                    <img
+                    <SafeImage
                       src={store.imgUrl || 'images/main/RecommendDefault.webp'}
                       alt={`${store.partnerName} 로고`}
+                      fallbackLabel={store.partnerName}
                       className="w-full h-full object-contain"
                     />
                   </div>
