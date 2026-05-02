@@ -93,7 +93,7 @@ export default function MyPageLayout() {
         )}
 
         {/* 중앙+우측을 자식 페이지에서 구성 */}
-        <div className="flex flex-1 gap-[28px]">
+        <div className="flex min-w-0 flex-1 gap-[28px] max-lg:flex-col max-lg:gap-[16px]">
           <Outlet />
         </div>
       </div>

@@ -19,6 +19,7 @@ import { ko } from 'date-fns/locale/ko';
 import { RiResetRightFill } from 'react-icons/ri';
 import FadeWrapper from '../../features/myPage/components/FadeWrapper';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import SafeImage from '../../components/SafeImage';
 import BenefitInfoCard from '../../components/BenefitInfoCard';
 import { useResponsive } from '../../hooks/useResponsive';
 
@@ -52,7 +53,8 @@ export default function MyHistoryPage() {
   const [totalAmount, setTotalAmount] = useState(0);
 
   // 로딩 상태
-  const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const [reloadSeed, setReloadSeed] = useState(0);
 
@@ -63,7 +65,7 @@ export default function MyHistoryPage() {
     if (!membershipGrade) return; // 멤버십 없으면 호출 X
 
     const fetchHistory = async () => {
-      setLoading(true);
+      setHistoryLoading(true);
       try {
         setHistoryError(false);
         let startParam: string | undefined;
@@ -110,7 +112,7 @@ export default function MyHistoryPage() {
         setCurrentPage(0);
         setTotalElements(0);
       } finally {
-        setLoading(false);
+        setHistoryLoading(false);
       }
     };
 
@@ -122,7 +124,7 @@ export default function MyHistoryPage() {
     if (!membershipGrade) return;
 
     const fetchSummary = async () => {
-      setLoading(true);
+      setSummaryLoading(true);
       try {
         const res = await api.get('/api/v1/membership-history/summary');
         const data = res.data?.data;
@@ -133,7 +135,7 @@ export default function MyHistoryPage() {
       } catch {
         setTotalAmount(0);
       } finally {
-        setLoading(false);
+        setSummaryLoading(false);
       }
     };
 
@@ -200,7 +202,7 @@ export default function MyHistoryPage() {
 
             {/* 📋 혜택 사용 이력 리스트 */}
             <div className="flex-grow">
-              {loading ? (
+              {historyLoading ? (
                 // 로딩 중
                 <div className="flex justify-center items-center h-full">
                   <LoadingSpinner />
@@ -274,13 +276,14 @@ export default function MyHistoryPage() {
                     : history.map((item, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center border border-purple02 rounded-[10px] p-2"
+                          className="flex items-center border border-purple02 rounded-[10px] p-3 min-w-0 gap-3"
                         >
                           <div className="flex items-center gap-4 flex-1 min-w-0 min-h-[40px]">
-                            <img
+                            <SafeImage
                               src={item.image}
-                              alt={item.benefitName}
-                              className="h-[70px] w-auto object-contain flex-shrink-0 ml-3 max-xl:h-[50px] max-lg:hidden"
+                              alt={`${item.benefitName} 로고`}
+                              fallbackLabel={item.benefitName}
+                              className="h-[70px] w-[70px] object-contain flex-shrink-0 ml-3 max-xl:h-[50px] max-xl:w-[50px] max-lg:hidden"
                             />
                             <span
                               className="ml-2 text-purple05 text-title-5 font-semibold overflow-hidden text-ellipsis whitespace-nowrap block max-xl:text-title-7 max-xl:font-semibold"
@@ -289,11 +292,11 @@ export default function MyHistoryPage() {
                               {item.benefitName}
                             </span>
                           </div>
-                          <div className="flex items-center gap-4 flex-shrink-0">
-                            <span className="text-black text-title-5 font-semibold w-[120px] text-right max-xl:text-title-7 max-xl:font-semibold max-lg:text-title-8">
+                          <div className="flex min-w-0 flex-shrink-0 items-center gap-4 max-xlg:gap-2">
+                            <span className="min-w-[96px] whitespace-nowrap text-right text-title-5 font-semibold text-black max-xl:min-w-[84px] max-xl:text-title-7 max-xl:font-semibold max-lg:text-title-8">
                               {item.discountAmount.toLocaleString()}원
                             </span>
-                            <span className="text-grey05 text-body-1 px-4 font-light max-xl:text-body-3 max-xl:font-light max-xl:px-3 max-xlg:text-body-5 max-lg:text-body-4">
+                            <span className="min-w-0 truncate px-4 text-body-1 font-light text-grey05 max-xl:px-3 max-xl:text-body-3 max-xl:font-light max-xlg:text-body-5 max-lg:text-body-4">
                               {dayjs
                                 .utc(item.usedAt)
                                 .tz('Asia/Seoul')
@@ -322,7 +325,7 @@ export default function MyHistoryPage() {
         }
         aside={
           <FadeWrapper changeKey={totalAmount.toLocaleString()}>
-            {loading ? (
+            {summaryLoading ? (
               // 로딩 중
               <div className="flex justify-center items-center mt-20 h-full">
                 <LoadingSpinner />

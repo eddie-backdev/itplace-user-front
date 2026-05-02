@@ -1,4 +1,5 @@
 // src/features/myPage/components/BenefitCardList.tsx
+import SafeImage from '../../../../components/SafeImage';
 import { TbStarFilled } from 'react-icons/tb';
 import { FavoriteItem } from '../../../../types/favorites';
 
@@ -103,13 +104,14 @@ export default function BenefitCardList({
           )}
 
           {/* 카드 이미지 및 제목 */}
-          <img
+          <SafeImage
             src={item.partnerImage}
-            alt={item.benefitName}
-            className="h-[108px] w-auto object-contain mt-6 max-xl:h-[60px] max-xlg:mt-1 max-md:h-[98px] max-sm:h-[60px]"
+            alt={`${item.benefitName} 로고`}
+            fallbackLabel={item.partnerName || item.benefitName}
+            className="h-[108px] w-[108px] object-contain mt-6 max-xl:h-[60px] max-xl:w-[60px] max-xlg:mt-1 max-md:h-[98px] max-md:w-[98px] max-sm:h-[60px] max-sm:w-[60px]"
           />
           <div className="flex flex-grow" />
-          <p className="text-grey05 text-title-5 text-center mt-2 line-clamp-2 max-xlg:mt-3 max-xlg:line-clamp-3 min-h-[4rem] max-xl:text-title-7 max-lg:text-title-8 max-md:text-title-6 max-sm:text-title-7 ">
+          <p className="text-grey05 text-title-5 text-center mt-2 line-clamp-2 max-xlg:mt-3 max-xlg:line-clamp-3 min-h-[4rem] max-xl:text-title-7 max-lg:text-title-8 max-md:text-title-6 max-sm:text-title-7 break-keep leading-snug">
             {item.benefitName}
           </p>
         </div>
