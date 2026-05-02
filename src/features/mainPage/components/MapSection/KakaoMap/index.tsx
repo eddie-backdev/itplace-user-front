@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { renderToString } from 'react-dom/server';
 import { Platform, MapLocation } from '../../../types';
 import {
@@ -9,6 +9,7 @@ import {
   KakaoMouseEvent,
 } from '../../../types/kakao';
 import CustomMarker from './CustomMarker';
+import { installCustomMarkerImageFallback } from './customMarkerFallback';
 
 interface KakaoMapProps {
   platforms: Platform[];
@@ -21,6 +22,71 @@ interface KakaoMapProps {
   isRoadviewMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
 }
+
+interface MarkerDisplayPosition {
+  latitude: number;
+  longitude: number;
+}
+
+const EARTH_METERS_PER_DEGREE = 111_320;
+const DUPLICATE_MARKER_RADIUS_METERS = 9;
+const DUPLICATE_MARKER_RING_SIZE = 8;
+
+const coordinateKey = (platform: Platform): string =>
+  `${Number(platform.latitude).toFixed(12)}:${Number(platform.longitude).toFixed(12)}`;
+
+const toDisplayPositionMap = (platforms: Platform[]): Map<string, MarkerDisplayPosition> => {
+  const groups = new Map<string, Platform[]>();
+
+  platforms.forEach((platform) => {
+    if (!platform.latitude || !platform.longitude) {
+      return;
+    }
+    const key = coordinateKey(platform);
+    const group = groups.get(key);
+    if (group) {
+      group.push(platform);
+      return;
+    }
+    groups.set(key, [platform]);
+  });
+
+  const displayPositions = new Map<string, MarkerDisplayPosition>();
+
+  groups.forEach((group) => {
+    if (group.length === 1) {
+      const [platform] = group;
+      displayPositions.set(platform.id, {
+        latitude: platform.latitude,
+        longitude: platform.longitude,
+      });
+      return;
+    }
+
+    const orderedGroup = [...group].sort((first, second) => first.storeId - second.storeId);
+    orderedGroup.forEach((platform, index) => {
+      const ring = Math.floor(index / DUPLICATE_MARKER_RING_SIZE);
+      const indexInRing = index % DUPLICATE_MARKER_RING_SIZE;
+      const countInRing = Math.min(
+        DUPLICATE_MARKER_RING_SIZE,
+        orderedGroup.length - ring * DUPLICATE_MARKER_RING_SIZE
+      );
+      const angle = (2 * Math.PI * indexInRing) / countInRing - Math.PI / 2;
+      const radiusMeters = DUPLICATE_MARKER_RADIUS_METERS + ring * 6;
+      const latitudeOffset = (Math.sin(angle) * radiusMeters) / EARTH_METERS_PER_DEGREE;
+      const longitudeOffset =
+        (Math.cos(angle) * radiusMeters) /
+        (EARTH_METERS_PER_DEGREE * Math.cos((platform.latitude * Math.PI) / 180));
+
+      displayPositions.set(platform.id, {
+        latitude: platform.latitude + latitudeOffset,
+        longitude: platform.longitude + longitudeOffset,
+      });
+    });
+  });
+
+  return displayPositions;
+};
 
 const KakaoMap: React.FC<KakaoMapProps> = ({
   platforms,
@@ -43,6 +109,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(5);
   const [isMapInitialized, setIsMapInitialized] = useState<boolean>(false);
   const [visiblePlatforms, setVisiblePlatforms] = useState<Platform[]>([]);
+  const displayPositionByPlatformId = useMemo(() => toDisplayPositionMap(platforms), [platforms]);
 
   // Viewport 내 플랫폼 필터링 함수
   const updateVisiblePlatforms = useCallback(() => {
@@ -344,7 +411,11 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         return;
       }
 
-      const markerPosition = new window.kakao.maps.LatLng(platform.latitude, platform.longitude);
+      const displayPosition = displayPositionByPlatformId.get(platform.id) ?? platform;
+      const markerPosition = new window.kakao.maps.LatLng(
+        displayPosition.latitude,
+        displayPosition.longitude
+      );
 
       // 줌 레벨에 따라 클러스터링 또는 개별 표시
       if (isClusteringActive) {
@@ -379,6 +450,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         // 마커 클릭 이벤트 (HTML 요소에 직접 이벤트 추가)
         const markerElement = document.createElement('div');
         markerElement.innerHTML = markerHTML;
+        installCustomMarkerImageFallback(markerElement);
         markerElement.addEventListener('click', () => {
           onPlatformSelect(platform);
         });
@@ -415,7 +487,14 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       });
       markersRef.current = newCustomOverlays;
     }
-  }, [visiblePlatforms, platforms, selectedPlatform, currentZoomLevel, onPlatformSelect]);
+  }, [
+    visiblePlatforms,
+    platforms,
+    selectedPlatform,
+    currentZoomLevel,
+    onPlatformSelect,
+    displayPositionByPlatformId,
+  ]);
 
   // 선택된 플랫폼으로 지도 중심 이동
   useEffect(() => {

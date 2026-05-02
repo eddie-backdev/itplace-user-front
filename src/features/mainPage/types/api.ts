@@ -39,6 +39,7 @@ export interface Partner {
 }
 
 export interface TierBenefit {
+  benefitId?: number | string | null;
   carrier?: string | null;
   grade: string;
   context: string;
@@ -48,7 +49,8 @@ export interface TierBenefit {
 export interface BenefitDetailRequest {
   storeId: number;
   partnerId: number;
-  mainCategory: 'VIP_COCK' | 'BASIC_BENEFIT';
+  mainCategory?: 'VIP_COCK' | 'BASIC_BENEFIT' | null;
+  carrier?: string | null;
 }
 
 export interface BenefitDetailResponse {
@@ -62,6 +64,7 @@ export interface BenefitDetailResponse {
 export interface BenefitDetailData {
   benefitId: string;
   benefitName: string;
+  image?: string | null;
   mainCategory: string;
   manual: string;
   url: string;

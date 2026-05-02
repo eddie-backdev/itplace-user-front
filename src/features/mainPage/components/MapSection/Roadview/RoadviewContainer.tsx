@@ -4,6 +4,7 @@ import { Platform } from '../../../types';
 import { KakaoRoadview, KakaoCustomOverlay } from '../../../types/kakao';
 import { getStoreList, getCurrentLocation } from '../../../api/storeApi';
 import CustomMarker from '../KakaoMap/CustomMarker';
+import { installCustomMarkerImageFallback } from '../KakaoMap/customMarkerFallback';
 import { showToast } from '../../../../../utils/toast';
 
 interface RoadviewContainerProps {
@@ -157,6 +158,7 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
         // 클릭 가능한 오버레이 요소 생성
         const overlayContent = document.createElement('div');
         overlayContent.innerHTML = markerHTML;
+        installCustomMarkerImageFallback(overlayContent);
 
         // data-store-id 속성 추가 (선택 상태 업데이트용)
         const markerElement = overlayContent.querySelector('div');

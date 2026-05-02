@@ -1,32 +1,38 @@
 import api from '../../../apis/axiosInstance';
 import { BenefitDetailRequest, BenefitDetailResponse } from '../types/api';
 
-// 전역 중복 호출 방지
-let isGlobalBenefitDetailLoading = false;
+// 같은 상세정보 요청이 동시에 여러 번 발생해도 네트워크 호출은 1번만 수행한다.
+const pendingBenefitDetailRequests = new Map<string, Promise<BenefitDetailResponse>>();
+
+const getBenefitDetailRequestKey = (params: BenefitDetailRequest) =>
+  [params.storeId, params.partnerId, params.mainCategory ?? '', params.carrier ?? ''].join(':');
 
 export const getBenefitDetail = async (
   params: BenefitDetailRequest
 ): Promise<BenefitDetailResponse> => {
-  // 전역 중복 호출 방지
-  if (isGlobalBenefitDetailLoading) {
-    throw new Error('Duplicate request prevented');
+  const requestKey = getBenefitDetailRequestKey(params);
+  const pendingRequest = pendingBenefitDetailRequests.get(requestKey);
+
+  if (pendingRequest) {
+    return pendingRequest;
   }
 
-  isGlobalBenefitDetailLoading = true;
-
-  try {
-    const response = await api.get('/api/v1/benefits/map-detail', {
+  const request = api
+    .get('/api/v1/benefits/map-detail', {
       params: {
         storeId: params.storeId,
         partnerId: params.partnerId,
-        mainCategory: params.mainCategory,
+        ...(params.mainCategory ? { mainCategory: params.mainCategory } : {}),
+        ...(params.carrier ? { carrier: params.carrier } : {}),
       },
+    })
+    .then((response) => response.data)
+    .finally(() => {
+      pendingBenefitDetailRequests.delete(requestKey);
     });
 
-    return response.data;
-  } finally {
-    isGlobalBenefitDetailLoading = false;
-  }
+  pendingBenefitDetailRequests.set(requestKey, request);
+  return request;
 };
 
 export const submitUsageAmount = (benefitId: number, amount: number, storeId: number) => {

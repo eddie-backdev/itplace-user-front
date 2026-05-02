@@ -19,6 +19,7 @@ interface StoreDetailActionButtonProps {
   partnerName?: string;
   distance: number;
   onBottomSheetReset?: () => void;
+  isDetailRefreshing?: boolean;
 }
 
 const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
@@ -29,6 +30,7 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
   partnerName,
   distance,
   onBottomSheetReset,
+  isDetailRefreshing = false,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -205,7 +207,7 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
                 : 'border-grey03 bg-white'
           }`}
           onClick={handleFavoriteToggle}
-          disabled={!isLoggedIn || !benefitId || isLoading}
+          disabled={!isLoggedIn || !benefitId || isLoading || isDetailRefreshing}
         >
           {isFavorite ? (
             <span ref={heartButtonRef} className="inline-block">
@@ -223,7 +225,7 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
         {/* 사용 금액 입력하기 버튼 */}
         <button
           className={`flex-1 py-3 text-body-3-bold rounded-lg transition-colors max-xl:py-2 max-xl:text-body-3-bold md:text-body-2-bold max-md:py-3 md:py-3 ${
-            !isDesktop && isDistanceValid && isLoggedIn && benefitId
+            !isDesktop && isDistanceValid && isLoggedIn && benefitId && !isDetailRefreshing
               ? 'bg-purple04 hover:bg-purple05 text-white'
               : 'bg-grey03 text-grey04 cursor-not-allowed'
           }`}
@@ -236,6 +238,10 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
               showToast('혜택 정보가 없습니다.', 'error');
               return;
             }
+            if (isDetailRefreshing) {
+              showToast('선택한 통신사 혜택 정보를 확인 중입니다.', 'info');
+              return;
+            }
             if (isDesktop) {
               // 웹 버전에서는 모달을 열지 않음
               return;
@@ -244,17 +250,21 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
               setIsModalOpen(true);
             }
           }}
-          disabled={isDesktop || !isDistanceValid || !isLoggedIn || !benefitId}
+          disabled={
+            isDesktop || !isDistanceValid || !isLoggedIn || !benefitId || isDetailRefreshing
+          }
         >
-          {!isLoggedIn
-            ? '로그인이 필요해요'
-            : !benefitId
-              ? '혜택 정보가 없어요'
-              : isDistanceValid
-                ? isDesktop
-                  ? '모바일에서 사용 가능해요!'
-                  : '혜택 사용 이력 등록하기'
-                : '사용하기에 너무 멀어요'}
+          {isDetailRefreshing
+            ? '혜택 정보를 확인 중이에요'
+            : !isLoggedIn
+              ? '로그인이 필요해요'
+              : !benefitId
+                ? '혜택 정보가 없어요'
+                : isDistanceValid
+                  ? isDesktop
+                    ? '모바일에서 사용 가능해요!'
+                    : '혜택 사용 이력 등록하기'
+                  : '사용하기에 너무 멀어요'}
         </button>
       </div>
 

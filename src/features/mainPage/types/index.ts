@@ -1,4 +1,5 @@
 export interface PlatformBenefit {
+  benefitId?: number | string | null;
   carrier?: string | null;
   grade: string;
   context: string;
