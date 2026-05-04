@@ -50,7 +50,7 @@ const OAuthRedirectHandler = () => {
 
           // 로그인 성공 토스트
           showToast('로그인에 성공하셨습니다!', 'success');
-          navigate('/main');
+          navigate('/');
         } else {
           navigate('/login');
         }

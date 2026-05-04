@@ -18,8 +18,7 @@ interface MobileHeaderProps {
 }
 
 const menus = [
-  { label: '잇플 소개', path: '/' },
-  { label: '잇플 맵', path: '/main' },
+  { label: '잇플 맵', path: '/' },
   { label: '전체 혜택', path: '/benefits' },
   { label: '마이페이지', path: '/mypage/info', match: '/mypage' },
 ];
@@ -37,8 +36,7 @@ const MobileHeader = ({
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
-  const isMain = pathname.startsWith('/main');
-  const isLanding = pathname === '/';
+  const isMain = pathname === '/';
 
   const handleLogout = async () => {
     try {
@@ -53,7 +51,7 @@ const MobileHeader = ({
       setIsSidebarOpen(false);
       sessionStorage.removeItem('chatMessages');
       // 페이지 이동
-      navigate('/main');
+      navigate('/');
     } catch (err) {
       console.error('로그아웃 실패:', err);
       // 실패 토스트 표시
@@ -95,7 +93,7 @@ const MobileHeader = ({
       <header
         className={
           `w-full h-[54px] fixed top-0 left-0 flex items-center px-4 z-[9999] border-grey01 max-md:flex ${backgroundColor} ` +
-          (isMain || isLanding ? 'border-b-none' : 'border-b')
+          (isMain ? 'border-b-none' : 'border-b')
         }
       >
         <div className="flex flex-row items-center h-full w-full">

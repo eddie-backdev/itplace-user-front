@@ -12,7 +12,7 @@ const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
 
   if (isLoggedIn) {
     // 로그인된 사용자라면 메인 페이지로 리다이렉트
-    return <Navigate to="/main" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // 로그인되지 않은 사용자라면 요청된 컴포넌트 렌더링

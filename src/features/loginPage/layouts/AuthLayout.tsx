@@ -80,7 +80,7 @@ const AuthLayout = () => {
 
         showToast('로그인에 성공하셨습니다!', 'success');
         window.history.replaceState({}, '', '/login');
-        navigate('/main');
+        navigate('/');
       } else if (code === 'PRE_AUTHENTICATION_SUCCESS') {
         window.history.replaceState({}, '', '/login?step=oauthIntegration&verifiedType=oauth');
         setFormStep('oauthIntegration');

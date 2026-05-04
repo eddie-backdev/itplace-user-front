@@ -45,7 +45,7 @@ export default function MyPageLayout() {
                 })
               }
               secondaryButtonText="메인으로 가기"
-              onSecondaryButtonClick={() => navigate('/main')}
+              onSecondaryButtonClick={() => navigate('/')}
               message1FontSize="text-title-4 max-md:text-title-6"
               message2FontSize="text-body-1 max-md:text-body-3"
             />

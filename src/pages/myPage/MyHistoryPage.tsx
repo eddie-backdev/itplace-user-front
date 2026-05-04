@@ -245,7 +245,7 @@ export default function MyHistoryPage() {
                     message1FontSize="max-xl:text-title-6"
                     message2FontSize="max-xl:text-body-3"
                     buttonText="근처 혜택 보러가기"
-                    buttonRoute="/main"
+                    buttonRoute="/"
                   />
                 </div>
               ) : (

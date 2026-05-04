@@ -84,7 +84,7 @@ const StartCTASection = () => {
               로그인하기
             </Button>
           )}
-          <Button variant="primary" onClick={() => navigate('/main')}>
+          <Button variant="primary" onClick={() => navigate('/')}>
             잇플레이스로 가기
           </Button>
         </div>

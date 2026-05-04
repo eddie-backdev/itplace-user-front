@@ -34,7 +34,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword }: Props) => {
       if (code === 'LOGIN_SUCCESS') {
         dispatch(setLoginSuccess(data));
         showToast('로그인에 성공하셨습니다!', 'success');
-        navigate('/main');
+        navigate('/');
       } else {
         showToast('로그인에 실패하셨습니다.', 'error');
       }

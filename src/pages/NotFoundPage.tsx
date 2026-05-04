@@ -30,7 +30,7 @@ const NotFoundPage = () => {
           주소를 다시 확인하거나 메인 페이지에서 원하는 혜택을 찾아보세요.
         </p>
         <button
-          onClick={() => navigate('/main')}
+          onClick={() => navigate('/')}
           className="bg-white text-purple03 px-16 pt-3 pb-2 text-xl rounded-full max-sm:text-base max-sm:px-10 hover:bg-purple02 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         >
           메인페이지로 가기

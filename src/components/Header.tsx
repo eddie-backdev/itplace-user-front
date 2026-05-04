@@ -1,12 +1,4 @@
-import {
-  TbSparkles,
-  TbMap2,
-  TbUser,
-  TbLogout,
-  TbLogin,
-  TbMapPin,
-  TbLayoutList,
-} from 'react-icons/tb';
+import { TbMap2, TbUser, TbLogout, TbLogin, TbMapPin, TbLayoutList } from 'react-icons/tb';
 import clsx from 'clsx';
 import { useLocation, Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -18,8 +10,7 @@ import { persistor } from '../store';
 import { showToast } from '../utils/toast';
 
 const menus = [
-  { id: 'intro', label: '잇플 소개', icon: TbSparkles, path: '/' },
-  { id: 'map', label: '잇플 맵', icon: TbMap2, path: '/main' },
+  { id: 'map', label: '잇플 맵', icon: TbMap2, path: '/' },
   { id: 'benefits', label: '전체 혜택', icon: TbLayoutList, path: '/benefits' },
   { id: 'mypage', label: '마이페이지', icon: TbUser, path: '/mypage/info' },
 ];
@@ -43,7 +34,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
       showToast('로그아웃 되었습니다.', 'success');
       sessionStorage.removeItem('chatMessages');
       // 페이지 이동
-      navigate('/main');
+      navigate('/');
     } catch (err) {
       console.error('로그아웃 실패:', err);
       // 실패 토스트 표시
