@@ -13,53 +13,48 @@ const MembershipInfo: React.FC<Props> = ({ name, carrier, grade, verified = fals
   const hasProfile = Boolean(carrier && grade);
   const displayCarrier = getCarrierLabel(carrier);
   const displayGrade = getMembershipGradeLabel(grade);
+  const displayName = name?.trim() || '회원';
 
   return (
     <div className="flex flex-col gap-4">
       {hasProfile ? (
         <>
-          <p className="text-black text-title-2 mb-8 max-xl:text-title-4 max-xl:mb-4 max-xl:font-semibold max-xlg:mb-0 max-md:mb-4 max-sm:mb-0 max-md:text-grey05">
-            안녕하세요{' '}
-            <span className="text-purple04 text-title-2 max-xl:text-title-4 max-xl:font-semibold">
-              {name.slice(1)}
-            </span>
-            님🐰
-          </p>
-          <p className="text-grey05 text-body-0 max-xl:text-body-2">
-            {name.slice(1)}님이 선택한 멤버십 프로필은{' '}
-            <span className="text-purple03 text-body-0-bold max-xl:text-body-2">
+          <div>
+            <p className="text-body-3-bold text-purple03">나의 멤버십</p>
+            <p className="mt-2 text-black text-title-3 max-xl:text-title-4 max-xl:font-semibold max-md:text-grey05">
+              안녕하세요, <span className="text-purple04">{displayName}</span>님🐰
+            </p>
+          </div>
+          <div className="rounded-[20px] bg-purple01/55 p-4">
+            <p className="text-body-1 text-grey05 max-xl:text-body-2">선택한 멤버십 프로필은</p>
+            <p className="mt-2 text-title-5 text-purple05 max-xl:text-title-7">
               {displayCarrier} · {displayGrade}
-            </span>
-            입니다.
-            <br />
-            통신 3사 혜택을 선택한 등급 기준으로 살펴보세요.
-          </p>
-          <p className="text-body-4 text-grey04 max-xl:text-body-5">
-            {verified ? '통신사 인증 완료' : '자가 선택 정보 · 통신사 실인증 전'}
-          </p>
-          <div className="bg-gradient-myPage text-white text-[72px] font-bold text-center rounded-[18px] px-6 pb-0 pt-4 mt-10 max-xl:text-[52px] max-xl:px-3 max-xl:mt-4 max-xlg:text-[32px] max-xlg:mt-0 max-xlg:py-2 max-md:text-body-1-bold max-md:mt-0 max-md:py-3 max-md:rounded-xl">
+            </p>
+            <p className="mt-3 text-body-4 text-grey04 max-xl:text-body-5">
+              {verified ? '통신사 인증 완료' : '자가 선택 정보 · 통신사 실인증 전'}
+            </p>
+          </div>
+          <div className="bg-gradient-myPage text-white text-[44px] font-bold text-center rounded-[22px] px-5 py-5 mt-2 shadow-[0_14px_28px_rgba(118,56,250,0.20)] max-xl:text-[36px] max-xl:px-4 max-xl:py-4 max-xlg:text-[30px] max-md:text-title-4 max-md:mt-0 max-md:py-4">
             {displayGrade}
+          </div>
+          <div className="rounded-[16px] border border-purple01 bg-white px-4 py-3">
+            <p className="text-body-3 text-grey04">
+              통신 3사 혜택을 선택한 등급 기준으로 추천하고 보여드려요.
+            </p>
           </div>
         </>
       ) : (
         <>
-          <p className="text-black text-title-2 mb-8 max-xl:text-title-4 max-xl:mb-4 max-xl:font-semibold max-xlg:mb-0 max-sm:mb-0 max-md:text-grey05">
-            안녕하세요{' '}
-            <span className="text-purple04 text-title-2 max-xl:text-title-4 max-xl:mb-4 max-xl:font-semibold">
-              {name.slice(1)}
-            </span>
-            님🐰
+          <p className="text-body-3-bold text-purple03">나의 멤버십</p>
+          <p className="text-black text-title-3 max-xl:text-title-4 max-xl:font-semibold max-md:text-grey05">
+            안녕하세요, <span className="text-purple04">{displayName}</span>님🐰
           </p>
-          <p className="text-grey05 text-body-0 max-xl:text-body-2">
-            지금은{' '}
-            <span className="text-purple03 text-body-0-bold max-xl:text-body-2-bold">
-              멤버십 프로필 없이
-            </span>{' '}
-            이용 중이에요.
-          </p>
-          <p className="text-grey05 text-body-0 max-xl:text-body-2">
-            회원 정보에서 통신사와 등급을 선택하면 맞춤 혜택을 더 쉽게 확인할 수 있어요.
-          </p>
+          <div className="rounded-[22px] border border-dashed border-purple02 bg-purple01/35 px-5 py-6">
+            <p className="text-title-6 text-purple05">아직 멤버십 프로필이 없어요</p>
+            <p className="mt-3 text-body-2 text-grey05 max-xl:text-body-3">
+              회원 정보에서 통신사와 등급을 선택하면 맞춤 혜택을 더 쉽게 확인할 수 있어요.
+            </p>
+          </div>
         </>
       )}
     </div>

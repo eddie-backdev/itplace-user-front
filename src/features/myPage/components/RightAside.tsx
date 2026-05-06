@@ -25,7 +25,7 @@ export default function RightAside({
   return (
     <aside
       className={
-        'max-h-[891px] max-xlg:max-h-none w-full max-w-[476px] min-w-[400px] bg-white rounded-[18px] drop-shadow-basic pt-[76px] pb-[56px] px-[40px] flex flex-col max-xl:max-w-[390px] max-xl:min-w-[320px] max-xl:pt-[56px] max-xlg:max-w-none max-xlg:w-full max-xlg:min-w-[240px] max-xlg:pt-[36px] max-xlg:pb-[32px] max-xlg:px-[28px] max-md:w-full max-md:p-6 ' +
+        'w-full max-w-[360px] min-w-[310px] min-h-[620px] max-xlg:min-h-0 bg-white/95 rounded-[24px] border border-white/80 shadow-[0_14px_36px_rgba(37,9,97,0.09)] pt-[32px] pb-[26px] px-[28px] flex flex-col max-xl:max-w-[320px] max-xl:min-w-[280px] max-xl:pt-[30px] max-xlg:max-w-none max-xlg:w-full max-xlg:min-w-[240px] max-xlg:pt-[26px] max-xlg:pb-[24px] max-xlg:px-[24px] max-md:w-full max-md:rounded-[22px] max-md:p-5 ' +
         (isSimpleLayout ? ' max-md:hidden' : '')
       }
     >
@@ -34,11 +34,11 @@ export default function RightAside({
 
       {/* 아래쪽 토끼 이미지 영역 */}
       {imgSrc && (
-        <div className="mt-auto flex justify-center mb-[-30px] max-xlg:hidden">
+        <div className="mt-auto flex justify-center mb-[-12px] max-xlg:hidden">
           <img
             src={imgSrc}
             alt={bottomImageAlt ?? '하단 이미지'}
-            className="w-[310px] h-auto object-contain max-xl:w-[230px]"
+            className="w-[180px] h-auto object-contain max-xl:w-[150px]"
             onError={() => {
               // webp 로드 실패 시 fallback으로 교체
               if (bottomImageFallback) {

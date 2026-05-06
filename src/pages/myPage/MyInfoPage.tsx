@@ -6,6 +6,7 @@ import MembershipInfo from '../../features/myPage/components/MyInfo/MembershipIn
 import FadeWrapper from '../../features/myPage/components/FadeWrapper';
 import PasswordChangeModal from '../../features/myPage/components/MyInfo/PasswordChangeModal';
 import UserDeleteModal from '../../features/myPage/components/MyInfo/UserDeleteModal';
+import MembershipProfileModal from '../../features/myPage/components/MyInfo/MembershipProfileModal';
 import api from '../../apis/axiosInstance';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import NoResult from '../../components/NoResult';
@@ -42,6 +43,7 @@ export default function MyInfoPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [password, setPassword] = useState('');
 
+  const [membershipModalOpen, setMembershipModalOpen] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
 
   const dispatch = useDispatch();
@@ -70,7 +72,7 @@ export default function MyInfoPage() {
   // ✅ 로딩중일 경우
   if (loading) {
     return (
-      <div className="flex flex-row gap-[28px] w-full h-full max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
+      <div className="flex flex-row gap-[20px] w-full h-full max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
         <MyPageContentLayout
           main={
             <div className="flex justify-center items-center h-full">
@@ -89,7 +91,7 @@ export default function MyInfoPage() {
   // ✅ user가 없을 경우
   if (!user) {
     return (
-      <div className="flex flex-row gap-[28px] w-full h-full max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
+      <div className="flex flex-row gap-[20px] w-full h-full max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
         <MyPageContentLayout
           main={
             <div className="flex h-full items-center justify-center">
@@ -130,6 +132,7 @@ export default function MyInfoPage() {
         membershipGradeCode,
       });
       showToast('멤버십 프로필이 저장되었습니다.', 'success');
+      setMembershipModalOpen(false);
       setUser((prev) =>
         prev
           ? {
@@ -159,13 +162,19 @@ export default function MyInfoPage() {
   };
 
   return (
-    <div className="flex flex-row gap-[28px] w-full h-full max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-[20px]">
+    <div className="flex flex-row gap-[20px] w-full h-full max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-[20px]">
       <MyPageContentLayout
         main={
           <div>
-            <h1 className="text-title-2 text-black mb-8 max-xl:text-title-4 max-xl:font-semibold max-xl:mb-4 max-md:hidden">
-              회원 정보
-            </h1>
+            <div className="mb-6 max-xl:mb-5 max-md:hidden">
+              <p className="text-body-3-bold text-purple03">MY INFO</p>
+              <h1 className="mt-1 text-title-2 text-black max-xl:text-title-4 max-xl:font-semibold">
+                회원 정보
+              </h1>
+              <p className="mt-2 text-body-2 text-grey04">
+                기본 정보와 멤버십 프로필을 확인하고 수정할 수 있어요.
+              </p>
+            </div>
             <UserInfoForm
               name={user.name}
               gender={user.gender}
@@ -175,8 +184,7 @@ export default function MyInfoPage() {
               onChangePasswordClick={() => setIsPwModalOpen(true)}
               carrier={user.carrier}
               membershipGradeCode={user.membershipGradeCode ?? user.membershipGrade}
-              membershipProfileSaving={profileSaving}
-              onSaveMembershipProfile={handleMembershipProfileSave}
+              onChangeMembershipProfileClick={() => setMembershipModalOpen(true)}
               onDeleteClick={() => setDeleteModalOpen(true)}
             />
           </div>
@@ -196,6 +204,18 @@ export default function MyInfoPage() {
         bottomImage="/images/myPage/bunny-info.webp"
         bottomImageFallback="/images/myPage/bunny-info.png"
         bottomImageAlt="회원 정보 토끼"
+      />
+      <MembershipProfileModal
+        isOpen={membershipModalOpen}
+        carrier={user.carrier}
+        membershipGradeCode={user.membershipGradeCode ?? user.membershipGrade}
+        saving={profileSaving}
+        onClose={() => {
+          if (!profileSaving) {
+            setMembershipModalOpen(false);
+          }
+        }}
+        onSave={handleMembershipProfileSave}
       />
       {/* 비밀번호 변경 */}
       <PasswordChangeModal

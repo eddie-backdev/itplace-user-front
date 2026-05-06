@@ -57,14 +57,14 @@ export default function MyPageLayout() {
 
   // ✅ 로그인된 경우에는 마이페이지 레이아웃 정상 렌더
   return (
-    <div className="bg-grey01">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#F1E9FF_0,#F5F5F5_34%,#F8F8FA_100%)]">
       <div className="hidden fixed top-0 left-0 w-full z-[9999] max-md:block">
         <MobileHeader title="마이잇플" />
       </div>
 
       <div
         className={
-          `min-h-screen bg-grey01 mx-auto max-w-[1800px] p-[28px] flex gap-[28px] max-lg:gap-[16px] max-md:-mx-5 max-md:max-h-none max-md:flex-col max-md:p-0 max-md:pt-[48px]` +
+          `min-h-screen mx-auto max-w-[1480px] p-[24px] flex gap-[20px] max-lg:gap-[16px] max-md:-mx-5 max-md:max-h-none max-md:flex-col max-md:p-0 max-md:pt-[48px]` +
           (isWhiteLayout ? ' max-md:gap-0 max-md:bg-white' : '')
         }
       >
@@ -93,7 +93,7 @@ export default function MyPageLayout() {
         )}
 
         {/* 중앙+우측을 자식 페이지에서 구성 */}
-        <div className="flex min-w-0 flex-1 gap-[28px] max-lg:flex-col max-lg:gap-[16px]">
+        <div className="flex min-w-0 flex-1 gap-[20px] max-lg:flex-col max-lg:gap-[16px]">
           <Outlet />
         </div>
       </div>

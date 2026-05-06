@@ -39,7 +39,7 @@ export default function BenefitCardList({
   };
 
   return (
-    <div className="grid grid-cols-3 gap-x-10 gap-y-5 min-h-[520px] max-xl:min-h-[300px] max-xl:gap-x-5 max-xlg:gap-x-3 max-xlg:grid-cols-2">
+    <div className="grid grid-cols-2 gap-4 min-h-[360px] max-xl:min-h-[300px] max-md:gap-3">
       {items.map((item) => (
         <div
           key={item.benefitId}
@@ -63,13 +63,13 @@ export default function BenefitCardList({
               }
             }
           }}
-          className={`relative p-4 border flex flex-col items-center rounded-[18px] aspect-[12/13] w-full max-xl:aspect-[1/1] max-xlg:max-h-[150px] max-md:max-h-none max-md:aspect-[4/3] max-sm:aspect-[12/13] cursor-pointer border-none shadow-[0px_3px_12px_rgba(0,0,0,0.15)] ${
+          className={`relative p-4 border flex flex-col items-center rounded-[22px] aspect-[16/11] w-full max-xl:aspect-[16/10] max-md:max-h-none max-md:aspect-[4/3] max-sm:aspect-[12/13] cursor-pointer border-none bg-white shadow-[0_10px_28px_rgba(37,9,97,0.10)] transition hover:-translate-y-1 hover:shadow-[0_16px_34px_rgba(37,9,97,0.16)] ${
             isEditing
               ? selectedItems.includes(item.benefitId)
-                ? 'ring-2 ring-purple04'
+                ? 'ring-2 ring-purple04 bg-purple01/30'
                 : ''
               : selectedId === item.benefitId
-                ? 'ring-2 ring-purple04'
+                ? 'ring-2 ring-purple04 bg-purple01/30'
                 : ''
           } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02`}
         >
@@ -85,7 +85,7 @@ export default function BenefitCardList({
                   setSelectedItems(selectedItems.filter((id) => id !== item.benefitId));
                 }
               }}
-              className="absolute top-5 right-5 w-5 h-5 max-xl:w-4 max-xl:h-4 accent-purple04 appearance-none rounded-md max-xl:rounded-[4px] border border-grey03 checked:bg-[url('/images/myPage/icon-check.png')] bg-no-repeat bg-center checked:border-purple04"
+              className="absolute top-5 right-5 w-5 h-5 max-xl:w-4 max-xl:h-4 accent-purple04 appearance-none rounded-md max-xl:rounded-[4px] border border-grey03 bg-white checked:bg-[url('/images/myPage/icon-check.png')] bg-no-repeat bg-center checked:border-purple04"
             />
           )}
 
@@ -96,10 +96,10 @@ export default function BenefitCardList({
                 e.stopPropagation();
                 onRequestDelete(item.benefitId); // 모달 열기
               }}
-              className="absolute top-5 right-5 max-xl:top-4 max-xl:right-4 text-orange03 hover:scale-110 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 rounded-full"
+              className="absolute top-5 right-5 max-xl:top-4 max-xl:right-4 rounded-full bg-orange01 p-1 text-orange04 hover:scale-110 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
               title="즐겨찾기 해제"
             >
-              <TbStarFilled size={22} />
+              <TbStarFilled size={20} />
             </button>
           )}
 
@@ -108,10 +108,10 @@ export default function BenefitCardList({
             src={item.partnerImage}
             alt={`${item.benefitName} 로고`}
             fallbackLabel={item.partnerName || item.benefitName}
-            className="h-[108px] w-[108px] object-contain mt-6 max-xl:h-[60px] max-xl:w-[60px] max-xlg:mt-1 max-md:h-[98px] max-md:w-[98px] max-sm:h-[60px] max-sm:w-[60px]"
+            className="h-[82px] w-[82px] object-contain mt-4 max-xl:h-[60px] max-xl:w-[60px] max-xlg:mt-1 max-md:h-[98px] max-md:w-[98px] max-sm:h-[60px] max-sm:w-[60px]"
           />
           <div className="flex flex-grow" />
-          <p className="text-grey05 text-title-5 text-center mt-2 line-clamp-2 max-xlg:mt-3 max-xlg:line-clamp-3 min-h-[4rem] max-xl:text-title-7 max-lg:text-title-8 max-md:text-title-6 max-sm:text-title-7 break-keep leading-snug">
+          <p className="text-grey05 text-title-6 text-center mt-2 line-clamp-2 max-xlg:mt-3 max-xlg:line-clamp-3 min-h-[3rem] max-xl:text-title-7 max-lg:text-title-8 max-md:text-title-6 max-sm:text-title-7 break-keep leading-snug">
             {item.benefitName}
           </p>
         </div>

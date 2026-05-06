@@ -41,7 +41,7 @@ export default function MyFavoritesPage() {
     itemsPerPage,
     currentPage,
     reloadFavorites,
-  } = useFavorites(6);
+  } = useFavorites(4);
 
   const user = useSelector((state: RootState) => state.auth.user);
   const userCarrier = user?.carrier;
@@ -49,7 +49,7 @@ export default function MyFavoritesPage() {
   const { isMobile } = useResponsive();
 
   return (
-    <div className="flex flex-row gap-[28px] w-full h-full max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-[20px]">
+    <div className="flex flex-row gap-[20px] w-full h-full max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-[20px]">
       <MyPageContentLayout
         // ✨ MainContent 영역
 
@@ -58,11 +58,14 @@ export default function MyFavoritesPage() {
             className={`flex flex-col flex-1 h-full ${isMobile && isEditing ? 'pb-[80px]' : ''}`}
           >
             {/* 상단 타이틀 */}
-            <h1 className="text-title-2 text-black mb-7 max-xl:text-title-4 max-xl:mb-4 max-xl:font-semibold max-md:hidden">
-              관심 혜택
-            </h1>
+            <div className="mb-5 max-xl:mb-4 max-md:hidden">
+              <p className="text-body-3-bold text-purple03">FAVORITES</p>
+              <h1 className="mt-1 text-title-2 text-black max-xl:text-title-4 max-xl:font-semibold">
+                관심 혜택
+              </h1>
+            </div>
             {/* 토글 + 검색 */}
-            <div className="flex justify-between mb-[-10px] max-md:flex-col max-md:-mt-8">
+            <div className="flex justify-between mb-1 gap-3 max-md:flex-col max-md:-mt-8">
               <BenefitFilterToggle
                 value={benefitFilter}
                 onChange={setBenefitFilter}
