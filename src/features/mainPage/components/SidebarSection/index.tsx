@@ -461,7 +461,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   };
 
   return (
-    <div className="bg-white flex flex-col overflow-hidden w-full h-full rounded-[18px] drop-shadow-basic max-md:bg-transparent max-md:rounded-none max-md:drop-shadow-none max-md:overflow-visible">
+    <div className="bg-white flex flex-col overflow-hidden w-full h-full border-r border-grey02 shadow-[4px_0_18px_rgba(25,22,52,0.08)] max-md:border-r-0 max-md:bg-transparent max-md:rounded-none max-md:drop-shadow-none max-md:shadow-none max-md:overflow-visible">
       {viewMode === 'list' ? (
         // 리스트 모드: 기존 UI
         <div className="flex flex-col mx-5 mt-[15px] mb-[18px] w-[330px] max-md:mx-0 max-md:w-full flex-1 min-h-0">

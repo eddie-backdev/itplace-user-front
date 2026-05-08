@@ -484,15 +484,13 @@ const MainPageLayout: React.FC = () => {
   return (
     <>
       {/* 데스크톱 레이아웃 */}
-      <div className="hidden md:flex h-screen bg-grey01 p-6 relative overflow-hidden">
+      <div className="hidden md:flex h-screen bg-white relative overflow-hidden">
         {/* 사이드바 컨테이너 */}
         <div
-          className={`flex-shrink-0 h-full transition-all duration-300 ease-in-out ${
-            isSidebarCollapsed ? '-ml-6' : ''
-          }`}
+          className="flex-shrink-0 h-full transition-all duration-300 ease-in-out"
           style={{
-            width: isSidebarCollapsed ? '0px' : `${LAYOUT.SIDEBAR_WIDTH + 24}px`, // padding 포함
-            minWidth: isSidebarCollapsed ? '0px' : `${LAYOUT.SIDEBAR_MIN_WIDTH + 24}px`,
+            width: isSidebarCollapsed ? '0px' : `${LAYOUT.SIDEBAR_WIDTH}px`,
+            minWidth: isSidebarCollapsed ? '0px' : `${LAYOUT.SIDEBAR_MIN_WIDTH}px`,
           }}
         >
           <div
@@ -526,27 +524,25 @@ const MainPageLayout: React.FC = () => {
           </div>
         </div>
 
-        {/* 사이드바 토글 버튼 */}
+        {/* 검색 패널 토글 */}
         <button
+          type="button"
           onClick={handleSidebarToggle}
-          className={`absolute top-40 z-40 bg-white rounded-[18px] drop-shadow-basic px-1 py-3 hover:bg-grey01 transition-all duration-300 ease-in-out transform -translate-y-1/2 ${
-            isSidebarCollapsed ? 'left-[0px]' : 'left-[395px]'
+          aria-expanded={!isSidebarCollapsed}
+          aria-label={isSidebarCollapsed ? '검색 패널 열기' : '검색 패널 접기'}
+          className={`absolute top-1/2 z-40 flex h-16 w-7 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-grey02 bg-white text-grey04 shadow-[4px_0_14px_rgba(25,22,52,0.14)] transition-all duration-300 ease-in-out hover:bg-purple01 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple03 ${
+            isSidebarCollapsed ? 'left-0' : 'left-[370px]'
           }`}
-          style={{ width: '24px', height: '60px' }}
         >
           {isSidebarCollapsed ? (
-            <TbChevronRight size={14} className="text-grey05" />
+            <TbChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
           ) : (
-            <TbChevronLeft size={14} className="text-grey05" />
+            <TbChevronLeft size={18} strokeWidth={2.2} aria-hidden="true" />
           )}
         </button>
 
         {/* 맵 영역 */}
-        <div
-          className={`flex-1 h-full transition-all duration-300 ease-in-out ${
-            isSidebarCollapsed ? 'pl-6' : ''
-          }`}
-        >
+        <div className="flex-1 h-full transition-all duration-300 ease-in-out">
           <MapSection
             platforms={stablePlatforms}
             selectedPlatform={selectedPlatform}
@@ -574,7 +570,7 @@ const MainPageLayout: React.FC = () => {
             isSidebarCollapsed ? 'opacity-0' : 'opacity-100'
           }`}
           style={{
-            left: isSidebarCollapsed ? '20px' : '400px',
+            left: isSidebarCollapsed ? '24px' : '376px',
             transform: 'translateX(-20%)',
             width: '380px',
             height: '200px', // 허리까지만 보이도록 절반 높이
@@ -593,7 +589,7 @@ const MainPageLayout: React.FC = () => {
           <div
             className="absolute z-30 transition-all duration-300 ease-in-out"
             style={{
-              left: isSidebarCollapsed ? '120px' : '500px',
+              left: isSidebarCollapsed ? '120px' : '476px',
               bottom: '365px', // 말풍선보다 위쪽
               transform: 'translateX(-20%)',
               width: '410px',
@@ -611,7 +607,7 @@ const MainPageLayout: React.FC = () => {
           <div
             className="absolute z-20 transition-all duration-300 ease-in-out"
             style={{
-              left: isSidebarCollapsed ? '120px' : '500px',
+              left: isSidebarCollapsed ? '120px' : '476px',
               bottom: '200px', // 캐릭터 머리 위쪽
               transform: 'translateX(-20%)',
             }}
