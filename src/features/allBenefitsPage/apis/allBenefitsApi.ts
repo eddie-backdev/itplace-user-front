@@ -37,7 +37,7 @@ export interface BenefitApiParams {
   category?: string;
   filter?: 'ONLINE' | 'OFFLINE';
   sort?: string;
-  carrier?: string;
+  carriers?: string[];
 }
 
 // 즐겨찾기 요청 타입
@@ -98,7 +98,7 @@ export const getBenefits = async (params: BenefitApiParams): Promise<BenefitResp
     ...(params.category && { category: params.category }),
     ...(params.filter && { filter: params.filter }),
     ...(params.keyword && { keyword: params.keyword }),
-    ...(params.carrier && { carrier: params.carrier }),
+    ...(params.carriers && params.carriers.length > 0 && { carriers: params.carriers.join(',') }),
   };
 
   const response = await axiosInstance.get('/api/v1/benefits', { params: queryParams });

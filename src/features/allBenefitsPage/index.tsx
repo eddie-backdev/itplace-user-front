@@ -2,7 +2,6 @@ import React from 'react';
 import SimpleRanking from './components/SimpleRanking';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { debounce } from 'lodash';
-import BenefitFilterToggle from '../../components/BenefitFilterToggle';
 import SearchBar from '../../components/SearchBar';
 import Pagination from '../../components/Pagination';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -24,15 +23,12 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { CARRIER_OPTIONS, CarrierCode, getCarrierLabel } from '../../utils/membership';
 import { CATEGORIES } from '../mainPage/constants';
 
-type CarrierFilter = 'ALL' | CarrierCode;
-
 const AllBenefitsLayout: React.FC = () => {
-  const [filter, setFilter] = useState<'default' | 'vipkok'>('default');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('전체');
-  const [selectedCarrier, setSelectedCarrier] = useState<CarrierFilter>('ALL');
+  const [selectedCarriers, setSelectedCarriers] = useState<CarrierCode[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [benefits, setBenefits] = useState<BenefitItem[]>([]);
   const [totalElements, setTotalElements] = useState(0);
@@ -53,13 +49,13 @@ const AllBenefitsLayout: React.FC = () => {
 
       try {
         const params: BenefitApiParams = {
-          mainCategory: filter === 'vipkok' ? 'VIP_COCK' : 'BASIC_BENEFIT',
+          mainCategory: 'BASIC_BENEFIT',
           page: page,
           size: 9, // 3x3 그리드
         };
 
         if (keyword) params.keyword = keyword;
-        if (selectedCarrier !== 'ALL') params.carrier = selectedCarrier;
+        if (selectedCarriers.length > 0) params.carriers = selectedCarriers;
         if (category && category !== '전체') {
           params.category = category;
         }
@@ -84,7 +80,7 @@ const AllBenefitsLayout: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [filter, selectedCarrier]
+    [selectedCarriers]
   );
 
   // 즐겨찾기 토글 함수
@@ -203,8 +199,18 @@ const AllBenefitsLayout: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleCarrierChange = (carrier: CarrierFilter) => {
-    setSelectedCarrier(carrier);
+  const handleCarrierChange = (carrier: CarrierCode | 'ALL') => {
+    if (carrier === 'ALL') {
+      setSelectedCarriers([]);
+      setCurrentPage(1);
+      return;
+    }
+
+    setSelectedCarriers((prevCarriers) =>
+      prevCarriers.includes(carrier)
+        ? prevCarriers.filter((selectedCarrier) => selectedCarrier !== carrier)
+        : [...prevCarriers, carrier]
+    );
     setCurrentPage(1);
   };
 
@@ -231,15 +237,12 @@ const AllBenefitsLayout: React.FC = () => {
     return basicBenefit ? basicBenefit.context : tierBenefits[0]?.context || '';
   };
 
-  const carrierFilters: Array<{ code: CarrierFilter; label: string }> = [
+  const carrierFilters: Array<{ code: CarrierCode | 'ALL'; label: string }> = [
     { code: 'ALL', label: '통신 3사 전체' },
     ...CARRIER_OPTIONS,
   ];
 
-  const activeFilterCount =
-    (selectedCategory !== '전체' ? 1 : 0) +
-    (filter !== 'default' ? 1 : 0) +
-    (selectedCarrier !== 'ALL' ? 1 : 0);
+  const activeFilterCount = (selectedCategory !== '전체' ? 1 : 0) + selectedCarriers.length;
 
   return (
     <div className="overflow-x-hidden bg-white pt-[54px] md:pt-0">
@@ -250,106 +253,107 @@ const AllBenefitsLayout: React.FC = () => {
 
       {/* 전체 레이아웃 컨테이너 */}
       <div className="mx-auto w-full max-w-[1280px] px-5 pb-10 pt-6 md:px-7 md:pb-14 md:pt-10">
-        <section className="mb-8 md:mb-10">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
-            <div className="hidden md:block">
+        <section className="mb-7 md:mb-8">
+          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
               <p className="text-body-3 font-medium text-purple04">혜택 탐색</p>
-              <div className="mt-2 flex items-center gap-4">
-                <h1 className="text-title-2 text-black">전체 혜택</h1>
-              </div>
-              <p className="mt-3 max-w-[520px] text-body-2 text-grey05">
-                가장 중요한 혜택 목록을 먼저 보고, 필요한 조건만 빠르게 좁혀볼 수 있도록 구성을
-                정리했어요.
+              <h1 className="mt-2 text-title-2 text-black max-md:text-title-4">전체 혜택</h1>
+              <p className="mt-3 max-w-[560px] text-body-2 leading-7 text-grey05 max-md:text-body-3">
+                검색어와 필터를 조합해 통신사별 멤버십 혜택을 빠르게 좁혀보세요.
               </p>
             </div>
-
-            <div className="w-full md:mt-2 md:flex md:max-w-[380px] md:flex-shrink-0 md:items-center md:justify-end">
-              <SearchBar
-                placeholder="제휴처 검색"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                onClear={() => setSearchTerm('')}
-                className="h-[44px] w-full md:w-[380px]"
-                backgroundColor="bg-grey01"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="border-b border-grey01 pb-6 md:pb-7">
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <p className="text-body-4 font-medium text-grey04">통신사 필터</p>
-                <span className="rounded-full bg-grey01 px-2.5 py-1 text-[12px] font-medium leading-none text-grey04">
-                  LG U+ · SKT · KT
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {carrierFilters.map((carrier) => (
-                  <button
-                    key={carrier.code}
-                    type="button"
-                    onClick={() => handleCarrierChange(carrier.code)}
-                    className={`rounded-full border px-3.5 py-1.5 text-body-4 transition-colors md:px-4 ${
-                      selectedCarrier === carrier.code
-                        ? 'border-purple04 bg-purple01 text-purple04'
-                        : 'border-grey02 bg-white text-grey04 hover:border-purple02 hover:text-purple04'
-                    }`}
-                  >
-                    {carrier.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <p className="text-body-4 font-medium text-grey04">카테고리 필터</p>
+            <div className="flex flex-wrap gap-2 md:justify-end">
+              <span className="rounded-full bg-grey01 px-3 py-1 text-body-4 text-grey05">
+                {totalElements.toLocaleString()}개 혜택
+              </span>
               {activeFilterCount > 0 && (
-                <span className="rounded-full bg-purple01 px-2.5 py-1 text-[12px] font-medium leading-none text-purple04">
-                  {activeFilterCount}개 적용
+                <span className="rounded-full bg-purple01 px-3 py-1 text-body-4 text-purple04">
+                  필터 {activeFilterCount}개 적용
                 </span>
               )}
             </div>
+          </div>
 
-            <div className="pt-1">
-              <div className="flex flex-wrap items-center gap-2">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => handleCategoryChange(category.id)}
-                    className={`rounded-full border px-3.5 py-1.5 text-body-4 transition-colors md:px-4 ${
-                      selectedCategory === category.id
-                        ? 'border-purple04 bg-purple01 text-purple04'
-                        : 'border-grey02 bg-white text-grey04 hover:border-purple02 hover:text-purple04'
-                    }`}
-                  >
-                    {category.name}
-                  </button>
-                ))}
+          <div className="rounded-[24px] border border-grey01 bg-[#fbfbfd] p-4 md:p-5">
+            <div>
+              <label className="mb-2 block text-body-4 font-medium text-grey04">제휴처 검색</label>
+              <SearchBar
+                placeholder="브랜드명, 혜택명으로 검색"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onClear={() => setSearchTerm('')}
+                className="h-[48px] w-full"
+                backgroundColor="bg-white"
+              />
+            </div>
+
+            <div className="mt-5 grid gap-4 border-t border-grey01 pt-5 xl:grid-cols-[minmax(250px,330px)_minmax(0,1fr)]">
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <p className="text-body-4 font-medium text-grey04">통신사</p>
+                  {selectedCarriers.length > 0 && (
+                    <span className="rounded-full bg-purple01 px-2.5 py-1 text-[12px] font-semibold leading-none text-purple04">
+                      {selectedCarriers.map((carrier) => getCarrierLabel(carrier)).join(' · ')}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {carrierFilters.map((carrier) => (
+                    <button
+                      key={carrier.code}
+                      type="button"
+                      onClick={() => handleCarrierChange(carrier.code)}
+                      className={`rounded-full border px-3.5 py-1.5 text-body-4 transition-colors md:px-4 ${
+                        (
+                          carrier.code === 'ALL'
+                            ? selectedCarriers.length === 0
+                            : selectedCarriers.includes(carrier.code)
+                        )
+                          ? 'border-purple04 bg-purple01 text-purple04'
+                          : 'border-grey02 bg-white text-grey04 hover:border-purple02 hover:text-purple04'
+                      }`}
+                    >
+                      {carrier.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <p className="text-body-4 font-medium text-grey04">카테고리</p>
+                  {selectedCategory !== '전체' && (
+                    <span className="rounded-full bg-purple01 px-2.5 py-1 text-[12px] font-semibold leading-none text-purple04">
+                      {selectedCategory}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => handleCategoryChange(category.id)}
+                      className={`rounded-full border px-3.5 py-1.5 text-body-4 transition-colors md:px-4 ${
+                        selectedCategory === category.id
+                          ? 'border-purple04 bg-purple01 text-purple04'
+                          : 'border-grey02 bg-white text-grey04 hover:border-purple02 hover:text-purple04'
+                      }`}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="mt-8 md:mt-10">
-          <div className="mb-4">
-            <BenefitFilterToggle
-              value={filter}
-              onChange={setFilter}
-              width="w-full md:w-[190px]"
-              className="mb-0"
-              fontSize="text-body-4"
-              heightClass="h-[34px]"
-            />
-          </div>
-
+        <section className="mt-7 md:mt-8">
           <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-2">
               <p className="text-body-4 font-medium text-purple04">혜택 목록</p>
-              <h2 className="text-title-5 text-black">한눈에 확인하고 자세히 비교해보세요.</h2>
+              <h2 className="text-title-5 text-black">조건에 맞는 혜택을 비교해보세요.</h2>
             </div>
 
             <p className="text-body-3 text-grey04 lg:self-center">
@@ -357,7 +361,7 @@ const AllBenefitsLayout: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-5">
             {isLoading ? (
               <div className="col-span-1 flex h-[320px] items-center justify-center md:col-span-2 xl:col-span-3">
                 <LoadingSpinner />
@@ -369,7 +373,7 @@ const AllBenefitsLayout: React.FC = () => {
                   role="button"
                   tabIndex={0}
                   aria-label={`${benefit.benefitName} 혜택 상세 보기`}
-                  className="group relative flex min-h-[188px] cursor-pointer flex-col justify-between rounded-[24px] border border-grey01 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 md:min-h-[200px]"
+                  className="group relative flex min-h-[196px] cursor-pointer flex-col justify-between rounded-[20px] border border-grey01 bg-white p-5 transition-all hover:border-purple02 hover:shadow-[0_12px_28px_rgba(25,22,52,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 md:min-h-[208px]"
                   onClick={() => handleCardClick(benefit)}
                   onKeyDown={(event) => handleCardKeyDown(event, benefit)}
                 >
@@ -383,7 +387,7 @@ const AllBenefitsLayout: React.FC = () => {
                         ? '관심 혜택에서 제거'
                         : '관심 혜택에 추가'
                     }
-                    className="absolute right-5 top-5 text-orange03 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                    className="absolute right-5 top-5 rounded-full p-1.5 text-orange03 transition-colors hover:bg-orange01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
                   >
                     {benefit.isFavorite || favorites.includes(benefit.benefitId) ? (
                       <TbStarFilled className="h-6 w-6" />
@@ -392,9 +396,9 @@ const AllBenefitsLayout: React.FC = () => {
                     )}
                   </button>
 
-                  <div className="pr-10">
+                  <div className="pr-11">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-purple01 px-2.5 py-1 text-[12px] font-medium leading-none text-purple04">
+                      <span className="rounded-full bg-purple01 px-2.5 py-1 text-[12px] font-semibold leading-none text-purple04">
                         {getCarrierLabel(benefit.carrier)}
                       </span>
                       <span className="text-body-4 text-grey04">
@@ -402,11 +406,11 @@ const AllBenefitsLayout: React.FC = () => {
                         {benefit.category}
                       </span>
                     </div>
-                    <h3 className="mt-3 line-clamp-2 text-title-5 text-black md:text-title-6">
+                    <h3 className="mt-3 line-clamp-2 text-title-5 leading-tight text-black md:text-title-6">
                       {benefit.benefitName}
                     </h3>
                     <p
-                      className="mt-3 overflow-hidden text-body-3 text-grey05 md:text-body-4"
+                      className="mt-3 overflow-hidden text-body-3 leading-6 text-grey05 md:text-body-4"
                       style={{
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
@@ -417,11 +421,11 @@ const AllBenefitsLayout: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="mt-6 flex items-end justify-between gap-4">
-                    <p className="line-clamp-1 text-body-4 text-grey03">
+                  <div className="mt-5 flex items-end justify-between gap-4 border-t border-grey01 pt-4">
+                    <p className="line-clamp-1 text-body-4 text-grey04">
                       상세 조건은 카드 클릭 후 확인할 수 있어요
                     </p>
-                    <div className="flex h-[64px] w-[64px] flex-shrink-0 items-center justify-center md:h-[72px] md:w-[72px]">
+                    <div className="flex h-[64px] w-[64px] flex-shrink-0 items-center justify-center rounded-[16px] bg-grey01 p-2 md:h-[72px] md:w-[72px]">
                       <SafeImage
                         src={benefit.image}
                         alt={`${benefit.benefitName} 로고`}
@@ -445,8 +449,7 @@ const AllBenefitsLayout: React.FC = () => {
                   secondaryButtonText="필터 초기화"
                   onSecondaryButtonClick={() => {
                     setSelectedCategory('전체');
-                    setSelectedCarrier('ALL');
-                    setFilter('default');
+                    setSelectedCarriers([]);
                     setSearchTerm('');
                     setDebouncedSearchTerm('');
                     setCurrentPage(1);
@@ -478,7 +481,7 @@ const AllBenefitsLayout: React.FC = () => {
           </div>
         </section>
 
-        <section className="mt-12 space-y-5 border-t border-grey01 pt-8 md:mt-16 md:space-y-6 md:pt-10">
+        <section className="mt-12 space-y-5 md:mt-14 md:space-y-6">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-body-4 font-medium text-purple04">추가 탐색</p>
