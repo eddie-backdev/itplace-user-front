@@ -44,11 +44,11 @@ npm install
 
 ```env
 VITE_APP_BASE_URL=http://localhost:8080/
-VITE_CHAT_WS_URL=http://localhost:8080/ws-chat
 VITE_KAKAO_REST_API_KEY=
 VITE_KAKAO_JDK_API_KEY=
 VITE_KAKAO_REDIRECT_URI=http://localhost:8080/oauth/kakao
 VITE_KAKAO_CLIENT_ID=
+VITE_CONTACT_EMAIL=support@itplace.click
 ```
 
 ### 3. 개발 서버 실행

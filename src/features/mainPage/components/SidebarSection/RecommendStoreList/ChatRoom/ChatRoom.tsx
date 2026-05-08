@@ -20,6 +20,7 @@ interface Message {
 
 interface ChatRoomProps {
   onClose: () => void;
+  presentation?: 'embedded' | 'drawer' | 'modal';
   onSearchPartner?: (partnerName: string) => void;
   onChangeTab?: (tabId: string) => void;
   onBottomSheetReset?: () => void;
@@ -30,8 +31,10 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   onSearchPartner,
   onChangeTab,
   onBottomSheetReset,
+  presentation = 'embedded',
 }) => {
   const { isMobile, isTablet } = useResponsive();
+  const isDrawer = presentation === 'drawer' && !isMobile && !isTablet;
   const [isBotLoading, setIsBotLoading] = React.useState(false);
   const [input, setInput] = React.useState('');
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -51,7 +54,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         // 파싱 실패 시 기본값 반환
       }
     }
-    return [{ sender: 'bot', text: '궁금한 점을 자유롭게 물어보세요!' }];
+    return [
+      { sender: 'bot', text: '어떤 혜택이나 장소가 필요하세요? 자연어로 편하게 물어보세요!' },
+    ];
   };
 
   const [messages, setMessages] = React.useState<Message[]>(getInitialMessages());
@@ -90,7 +95,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   // 채팅 내용 초기화
   const handleClearChat = () => {
     const initialMessages: Message[] = [
-      { sender: 'bot', text: '궁금한 점을 자유롭게 물어보세요!' },
+      { sender: 'bot', text: '어떤 혜택이나 장소가 필요하세요? 자연어로 편하게 물어보세요!' },
     ];
     setMessages(initialMessages);
     sessionStorage.setItem('chatMessages', JSON.stringify(initialMessages));
@@ -332,10 +337,10 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
 
   // 예시 질문들
   const exampleQuestions = [
-    '근처 관광지 추천해줘',
-    '카페 갈 만한 곳 있어?',
-    '쇼핑할 수 있는 곳 알려줘',
-    '테마파크 갈 만한 곳 있어?',
+    '날씨가 더운데 시원하게 갈만한 곳 추천해줘',
+    '근처에서 할인되는 카페 알려줘',
+    '데이트하기 좋은 제휴처 추천해줘',
+    '아이랑 갈만한 실내 장소 있어?',
   ];
 
   // 제휴업체 카드 클릭 처리
@@ -353,8 +358,10 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   // 채팅방 JSX 컴포넌트
   const chatRoomContent = (
     <div
-      className={`bg-white rounded-[18px] shadow-lg border border-grey02 p-0 flex flex-col items-center z-[9999] ${
-        isMobile || isTablet ? '' : 'h-full'
+      className={`bg-white p-0 flex flex-col items-center z-[9999] ${
+        isDrawer
+          ? 'h-full w-full overflow-hidden border-r border-grey02 shadow-[4px_0_18px_rgba(25,22,52,0.08)]'
+          : `rounded-[18px] shadow-lg border border-grey02 ${isMobile || isTablet ? '' : 'h-full'}`
       }`}
       style={
         isMobile || isTablet
@@ -373,23 +380,42 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
               boxShadow:
                 '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
             }
-          : {
-              height: '60vh',
-              maxHeight: '60vh',
-              minHeight: '500px',
-              overflow: 'hidden',
-            }
+          : isDrawer
+            ? {
+                height: '100%',
+                maxHeight: 'none',
+                minHeight: 0,
+                overflow: 'hidden',
+              }
+            : {
+                height: '60vh',
+                maxHeight: '60vh',
+                minHeight: '500px',
+                overflow: 'hidden',
+              }
       }
     >
       {/* 상단 프로필/타이틀 */}
-      <div className="w-full flex items-center justify-end px-5 pt-5 pb-4 relative">
-        <span className="absolute left-1/2 transform -translate-x-1/2 text-title-6 text-purple04">
-          잇플AI 채팅방
-        </span>
+      <div
+        className={`w-full flex items-center justify-between px-5 pt-5 pb-4 relative ${
+          isDrawer ? 'border-b border-grey02 bg-white px-6 pb-5 pt-6 text-grey06' : ''
+        }`}
+      >
+        {isDrawer ? (
+          <div>
+            <p className="text-body-4 text-purple04">IT: PLACE</p>
+            <h2 className="text-title-6 text-grey06">잇플AI 추천</h2>
+            <p className="mt-1 text-body-4 text-grey04">상황에 맞는 제휴처를 바로 찾아드릴게요</p>
+          </div>
+        ) : (
+          <span className="absolute left-1/2 transform -translate-x-1/2 text-title-6 text-purple04">
+            잇플AI 채팅방
+          </span>
+        )}
         <div className="flex items-center gap-2">
           {/* 채팅 초기화 버튼 */}
           <button
-            className="text-grey03 hover:text-grey04 text-title-4 transition-colors"
+            className={`text-title-4 transition-colors ${isDrawer ? 'text-grey03 hover:text-purple04' : 'text-grey03 hover:text-grey04'}`}
             onClick={() => setShowClearConfirm(true)}
             aria-label="채팅 내용 초기화"
           >
@@ -397,7 +423,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
           </button>
           {/* 닫기 버튼 */}
           <button
-            className="text-grey03 hover:text-grey04 text-title-4"
+            className={`text-title-4 transition-colors ${isDrawer ? 'text-grey03 hover:text-purple04' : 'text-grey03 hover:text-grey04'}`}
             onClick={handleClose}
             aria-label="채팅방 닫기"
           >
@@ -409,7 +435,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
 
       {/* 메시지 영역 */}
       <div
-        className="overflow-y-auto border-l border-r border-grey02 p-4 bg-grey01 w-full"
+        className={`w-full overflow-y-auto p-4 ${isDrawer ? 'border-0 bg-gradient-to-b from-[#f8f4ff] via-[#fbf9ff] to-white' : 'border-l border-r border-grey02 bg-grey01'}`}
         style={{ flex: 1, maxHeight: isMobile || isTablet ? '50vh' : 'none', height: '100%' }}
       >
         {messages.length === 1 && messages[0].sender === 'bot' ? (
@@ -532,7 +558,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         )}
       </div>
       {/* 입력창 영역 */}
-      <div className="w-full px-5 pb-5 bg-white flex gap-2 items-center">
+      <div className={`w-full border-t border-grey01 bg-white px-5 pb-5 flex gap-2 items-center`}>
         <input
           type="text"
           className="flex-1 rounded-[10px] px-4 mt-4 text-body-3 bg-grey01 focus:bg-white focus:outline-purple03"

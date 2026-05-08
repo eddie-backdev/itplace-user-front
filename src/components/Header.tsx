@@ -1,4 +1,14 @@
-import { TbMap2, TbUser, TbLogout, TbLogin, TbMapPin, TbLayoutList } from 'react-icons/tb';
+import { useEffect, useState } from 'react';
+import {
+  TbMap2,
+  TbUser,
+  TbLogout,
+  TbLogin,
+  TbMapPin,
+  TbLayoutList,
+  TbSparkles,
+  TbMail,
+} from 'react-icons/tb';
 import clsx from 'clsx';
 import { useLocation, Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +18,10 @@ import { RootState } from '../store';
 import { logout } from '../store/authSlice';
 import { persistor } from '../store';
 import { showToast } from '../utils/toast';
+import {
+  addAiRecommendationChatStateListener,
+  openAiRecommendationChat,
+} from '../features/aiRecommendationChat/utils/aiRecommendationChatEvents';
 
 const menus = [
   { id: 'map', label: '잇플 맵', icon: TbMap2, path: '/' },
@@ -15,12 +29,41 @@ const menus = [
   { id: 'mypage', label: '마이페이지', icon: TbUser, path: '/mypage/info' },
 ];
 
+const primaryNavItemClass =
+  'relative flex h-[74px] w-[72px] flex-col items-center justify-center rounded-2xl text-white text-title-8 transition hover:bg-white/15 hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70';
+
+const utilityNavItemClass =
+  'flex h-[64px] w-[72px] flex-col items-center justify-center rounded-2xl text-white text-title-8 transition hover:bg-white/15 hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70';
+
+const activeNavClass = 'bg-white/25 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16)]';
+
 export default function Header({ variant = 'default' }: { variant?: 'default' | 'glass' }) {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
+  const [isAiRecommendationOpen, setIsAiRecommendationOpen] = useState(false);
+
+  useEffect(() => {
+    return addAiRecommendationChatStateListener(setIsAiRecommendationOpen);
+  }, []);
+
+  const handleContact = () => {
+    const contactEmail = import.meta.env.VITE_CONTACT_EMAIL?.trim() || 'support@itplace.click';
+    const subject = encodeURIComponent('[IT: PLACE] 문의하기');
+    const body = encodeURIComponent(
+      [
+        '문의 유형: 오류 신고 / 혜택 정보 수정 / 제휴 문의 / 기타',
+        '',
+        '문의 내용:',
+        '',
+        '연락받을 이메일:',
+      ].join('\n')
+    );
+
+    window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
+  };
 
   const handleLogout = async () => {
     try {
@@ -51,7 +94,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
         )}
       >
         {/* 로고 영역 */}
-        <div className="mb-16 flex flex-col items-center text-white">
+        <div className="mb-12 flex flex-col items-center text-white">
           <TbMapPin
             className="text-3xl mb-2 drop-shadow-[0_0_5px_rgba(255,255,255)]"
             strokeWidth={1.3}
@@ -61,8 +104,8 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
           </span>
         </div>
 
-        {/* 메뉴들 */}
-        <nav className="flex-1 flex flex-col items-center gap-y-6 max-xl:gap-y-3">
+        {/* 주요 메뉴 */}
+        <nav className="flex-1 flex flex-col items-center gap-y-3">
           {menus.map((m) => {
             const Icon = m.icon;
             const isActive =
@@ -74,32 +117,42 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
                 to={m.path}
                 key={m.id}
                 aria-current={isActive ? 'page' : undefined}
-                className={clsx(
-                  'relative flex flex-col items-center justify-center text-white text-title-8 group w-[72px] h-[76px] rounded-xl hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
-                  isActive && 'drop-shadow-[0_0_5px_rgba(255,255,255,0.6)]'
-                )}
+                className={clsx(primaryNavItemClass, isActive && activeNavClass)}
               >
-                {/* 선택된 메뉴 하이라이트 */}
-                {isActive && (
-                  <div className="absolute top-1/2 left-1/2 w-[72px] h-[76px] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white opacity-25 -z-10 drop-shadow-basic"></div>
-                )}
-                <Icon className="text-3xl" />
-                <span className="mt-1">{m.label}</span>
+                <Icon className="text-[28px]" strokeWidth={1.35} />
+                <span className="mt-1 leading-none">{m.label}</span>
               </Link>
             );
           })}
+
+          <button
+            type="button"
+            onClick={openAiRecommendationChat}
+            className={clsx(primaryNavItemClass, isAiRecommendationOpen && activeNavClass)}
+            aria-pressed={isAiRecommendationOpen}
+            aria-label="AI 추천 채팅 열기"
+          >
+            <TbSparkles className="text-[28px]" strokeWidth={1.35} />
+            <span className="mt-1 leading-none">AI 추천</span>
+          </button>
         </nav>
 
-        {/* 로그인 / 로그아웃 */}
-        <div className="mb-1 mt-9">
+        {/* 보조 액션 */}
+        <div className="mb-1 mt-6 flex flex-col items-center gap-y-2 border-t border-white/15 pt-3">
+          <button
+            type="button"
+            onClick={handleContact}
+            className={utilityNavItemClass}
+            aria-label="문의하기"
+          >
+            <TbMail className="text-[27px]" strokeWidth={1.35} />
+            <span className="mt-1 leading-none">문의</span>
+          </button>
+
           {isLoggedIn ? (
-            <button
-              className="flex flex-col items-center rounded-xl text-white text-sm hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-              onClick={handleLogout}
-              aria-label="로그아웃"
-            >
-              <TbLogout className="text-3xl" strokeWidth={1.3} />
-              <span className="mt-1 text-title-8">로그아웃</span>
+            <button className={utilityNavItemClass} onClick={handleLogout} aria-label="로그아웃">
+              <TbLogout className="text-[27px]" strokeWidth={1.35} />
+              <span className="mt-1 leading-none">로그아웃</span>
             </button>
           ) : (
             <button
@@ -109,10 +162,10 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
                   replace: true,
                 });
               }}
-              className="flex flex-col items-center rounded-xl text-white text-title-8 hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              className={utilityNavItemClass}
             >
-              <TbLogin className="text-3xl" strokeWidth={1.3} />
-              <span className="mt-1">로그인</span>
+              <TbLogin className="text-[27px]" strokeWidth={1.35} />
+              <span className="mt-1 leading-none">로그인</span>
             </button>
           )}
         </div>
