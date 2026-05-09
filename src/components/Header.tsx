@@ -49,6 +49,15 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
     return addAiRecommendationChatStateListener(setIsAiRecommendationOpen);
   }, []);
 
+  const handleAiRecommendationClick = () => {
+    if (!isLoggedIn) {
+      showToast('AI 추천은 로그인 후 사용할 수 있습니다.', 'info');
+      return;
+    }
+
+    openAiRecommendationChat();
+  };
+
   const handleContact = () => {
     const contactEmail = import.meta.env.VITE_CONTACT_EMAIL?.trim() || 'support@itplace.click';
     const subject = encodeURIComponent('[IT: PLACE] 문의하기');
@@ -127,7 +136,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
 
           <button
             type="button"
-            onClick={openAiRecommendationChat}
+            onClick={handleAiRecommendationClick}
             className={clsx(primaryNavItemClass, isAiRecommendationOpen && activeNavClass)}
             aria-pressed={isAiRecommendationOpen}
             aria-label="AI 추천 채팅 열기"

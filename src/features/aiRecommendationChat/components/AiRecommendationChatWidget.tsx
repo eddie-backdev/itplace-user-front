@@ -1,7 +1,9 @@
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import ChatRoom from '../../mainPage/components/SidebarSection/RecommendStoreList/ChatRoom/ChatRoom';
 import { useResponsive } from '../../../hooks/useResponsive';
+import { RootState } from '../../../store';
 import {
   addAiRecommendationChatOpenListener,
   addAiRecommendationChatToggleListener,
@@ -10,25 +12,38 @@ import {
 
 const AiRecommendationChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const { isMobile, isTablet } = useResponsive();
 
   useEffect(() => {
-    const removeOpenListener = addAiRecommendationChatOpenListener(() => setIsOpen(true));
+    const removeOpenListener = addAiRecommendationChatOpenListener(() => {
+      if (isLoggedIn) {
+        setIsOpen(true);
+      }
+    });
     const removeToggleListener = addAiRecommendationChatToggleListener(() => {
-      setIsOpen((currentIsOpen) => !currentIsOpen);
+      if (isLoggedIn) {
+        setIsOpen((currentIsOpen) => !currentIsOpen);
+      }
     });
 
     return () => {
       removeOpenListener();
       removeToggleListener();
     };
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
-    notifyAiRecommendationChatState(isOpen);
-  }, [isOpen]);
+    if (!isLoggedIn && isOpen) {
+      setIsOpen(false);
+    }
+  }, [isLoggedIn, isOpen]);
 
-  if (!isOpen) {
+  useEffect(() => {
+    notifyAiRecommendationChatState(isOpen && isLoggedIn);
+  }, [isOpen, isLoggedIn]);
+
+  if (!isOpen || !isLoggedIn) {
     return null;
   }
 
