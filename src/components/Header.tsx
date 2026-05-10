@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import {
   TbMap2,
   TbUser,
@@ -18,6 +18,8 @@ import { RootState } from '../store';
 import { logout } from '../store/authSlice';
 import { persistor } from '../store';
 import { showToast } from '../utils/toast';
+import Modal from './Modal';
+import { createInquiry } from '../apis/inquiryApi';
 import {
   addAiRecommendationChatStateListener,
   openAiRecommendationChat,
@@ -37,6 +39,8 @@ const utilityNavItemClass =
 
 const activeNavClass = 'bg-white/25 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.16)]';
 
+const inquiryCategoryOptions = ['오류 신고', '혜택 정보 수정', '제휴 문의', '기타'];
+
 export default function Header({ variant = 'default' }: { variant?: 'default' | 'glass' }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,6 +48,13 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
 
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const [isAiRecommendationOpen, setIsAiRecommendationOpen] = useState(false);
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const [isInquirySubmitting, setIsInquirySubmitting] = useState(false);
+  const [inquiryForm, setInquiryForm] = useState({
+    category: inquiryCategoryOptions[0],
+    title: '',
+    content: '',
+  });
 
   useEffect(() => {
     return addAiRecommendationChatStateListener(setIsAiRecommendationOpen);
@@ -59,19 +70,55 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
   };
 
   const handleContact = () => {
-    const contactEmail = import.meta.env.VITE_CONTACT_EMAIL?.trim() || 'support@itplace.click';
-    const subject = encodeURIComponent('[IT: PLACE] 문의하기');
-    const body = encodeURIComponent(
-      [
-        '문의 유형: 오류 신고 / 혜택 정보 수정 / 제휴 문의 / 기타',
-        '',
-        '문의 내용:',
-        '',
-        '연락받을 이메일:',
-      ].join('\n')
-    );
+    setIsInquiryOpen(true);
+  };
 
-    window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
+  const handleInquiryChange = (field: keyof typeof inquiryForm, value: string) => {
+    setInquiryForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const resetInquiryForm = () => {
+    setInquiryForm({
+      category: inquiryCategoryOptions[0],
+      title: '',
+      content: '',
+    });
+  };
+
+  const handleInquiryClose = () => {
+    if (isInquirySubmitting) {
+      return;
+    }
+
+    setIsInquiryOpen(false);
+    resetInquiryForm();
+  };
+
+  const handleInquirySubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const title = inquiryForm.title.trim();
+    const content = inquiryForm.content.trim();
+    if (!title || !content) {
+      showToast('문의 제목과 내용을 입력해 주세요.', 'error');
+      return;
+    }
+
+    try {
+      setIsInquirySubmitting(true);
+      await createInquiry({
+        category: inquiryForm.category,
+        title,
+        content,
+      });
+      showToast('문의가 등록되었습니다.', 'success');
+      setIsInquiryOpen(false);
+      resetInquiryForm();
+    } catch {
+      showToast('문의 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.', 'error');
+    } finally {
+      setIsInquirySubmitting(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -152,7 +199,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
             type="button"
             onClick={handleContact}
             className={utilityNavItemClass}
-            aria-label="문의하기"
+            aria-label="문의 남기기"
           >
             <TbMail className="text-[27px]" strokeWidth={1.35} />
             <span className="mt-1 leading-none">문의</span>
@@ -179,6 +226,73 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
           )}
         </div>
       </aside>
+
+      <Modal
+        isOpen={isInquiryOpen}
+        title="문의 남기기"
+        onClose={handleInquiryClose}
+        widthClass="w-full max-w-[560px]"
+      >
+        <form onSubmit={handleInquirySubmit} className="flex w-full flex-col gap-4 text-left">
+          <label className="flex flex-col gap-2 text-body-2 text-black">
+            문의 유형
+            <select
+              value={inquiryForm.category}
+              onChange={(event) => handleInquiryChange('category', event.target.value)}
+              className="h-[46px] rounded-[10px] bg-grey01 px-4 text-body-2 text-grey05 outline-none focus:ring-2 focus:ring-purple02"
+              disabled={isInquirySubmitting}
+            >
+              {inquiryCategoryOptions.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-2 text-body-2 text-black">
+            제목
+            <input
+              value={inquiryForm.title}
+              onChange={(event) => handleInquiryChange('title', event.target.value)}
+              maxLength={200}
+              placeholder="문의 제목을 입력해 주세요"
+              className="h-[46px] rounded-[10px] bg-grey01 px-4 text-body-2 text-grey05 placeholder-grey03 outline-none focus:ring-2 focus:ring-purple02"
+              disabled={isInquirySubmitting}
+            />
+          </label>
+
+          <label className="flex flex-col gap-2 text-body-2 text-black">
+            문의 내용
+            <textarea
+              value={inquiryForm.content}
+              onChange={(event) => handleInquiryChange('content', event.target.value)}
+              maxLength={4000}
+              placeholder="게시글을 작성하듯 문의 내용을 남겨주세요"
+              className="min-h-[150px] resize-none rounded-[10px] bg-grey01 px-4 py-3 text-body-2 text-grey05 placeholder-grey03 outline-none focus:ring-2 focus:ring-purple02"
+              disabled={isInquirySubmitting}
+            />
+          </label>
+
+          <div className="mt-2 flex gap-3">
+            <button
+              type="button"
+              onClick={handleInquiryClose}
+              className="h-[52px] flex-1 rounded-[10px] border border-grey02 text-title-6 text-grey04 transition hover:border-grey04 hover:text-grey05"
+              disabled={isInquirySubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              className="h-[52px] flex-1 rounded-[10px] bg-purple04 text-title-6 text-white transition hover:bg-purple05 disabled:cursor-not-allowed disabled:bg-grey03"
+              disabled={isInquirySubmitting}
+            >
+              {isInquirySubmitting ? '접수 중' : '문의 등록'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </>
   );
 }
