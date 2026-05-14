@@ -1,52 +1,54 @@
-// src/apis/recommend.ts
 import api from '../../../apis/axiosInstance';
 import {
-  RecommendRequest,
-  RecommendSuccessResponse,
-  RecommendErrorResponse,
-} from '../../../types/recommend';
+  QuestionRecommendationRequest,
+  QuestionRecommendationSuccessResponse,
+  QuestionRecommendationErrorResponse,
+} from '../../../types/questionRecommendation';
 
-export class RecommendationError extends Error {
+export class QuestionRecommendationError extends Error {
   constructor(
     public code: string,
     public status: string,
     message: string
   ) {
     super(message);
-    this.name = 'RecommendationError';
+    this.name = 'QuestionRecommendationError';
   }
 }
 
-export const getRecommendation = async ({
+export const getQuestionRecommendation = async ({
   question,
   lat,
   lng,
-}: RecommendRequest): Promise<RecommendSuccessResponse> => {
+}: QuestionRecommendationRequest): Promise<QuestionRecommendationSuccessResponse> => {
   try {
-    console.log('API 호출 시작:', { question, lat, lng });
+    console.log('질문형 AI 추천 API 호출 시작:', { question, lat, lng });
 
-    const response = await api.get<RecommendSuccessResponse>('/api/v1/questions/recommend', {
-      params: {
-        question,
-        lat,
-        lng,
-      },
-    });
+    const response = await api.get<QuestionRecommendationSuccessResponse>(
+      '/api/v1/questions/recommend',
+      {
+        params: {
+          question,
+          lat,
+          lng,
+        },
+      }
+    );
 
-    console.log('API 응답 성공:', response.data);
+    console.log('질문형 AI 추천 API 응답 성공:', response.data);
     return response.data;
   } catch (error: unknown) {
-    console.log('API 오류 발생:', error);
+    console.log('질문형 AI 추천 API 오류 발생:', error);
 
     // axios 오류 처리
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as {
         response?: {
-          data?: RecommendErrorResponse;
+          data?: QuestionRecommendationErrorResponse;
           status?: number;
         };
       };
-      console.log('Axios 오류 상세:', {
+      console.log('질문형 AI 추천 Axios 오류 상세:', {
         status: axiosError.response?.status,
         data: axiosError.response?.data,
       });
@@ -61,7 +63,7 @@ export const getRecommendation = async ({
           );
         }
 
-        throw new RecommendationError(errorData.code, errorData.status, errorData.message);
+        throw new QuestionRecommendationError(errorData.code, errorData.status, errorData.message);
       }
 
       // HTTP 상태 코드별 처리

@@ -23,7 +23,7 @@ const SpeechBubble: React.FC<SpeechBubbleProps> = ({
         {/* 제목과 닫기 버튼 */}
         <div className="flex justify-between items-start mb-2 max-md:mb-1.5">
           <p className="text-body-2 text-black font-semibold flex-1 pr-2 max-md:text-body-3 max-md:whitespace-normal max-md:pr-1">
-            잇플AI가 회원님의 클릭, 검색, 혜택 사용 이력을 분석해 가장 알맞은{' '}
+            맞춤 AI 추천이 회원님의 클릭, 검색, 혜택 사용 이력을 분석해 가장 알맞은{' '}
             <span className="text-purple04 font-bold">{partnerName}</span>를 추천드려요🐰
           </p>
           {onClose && (

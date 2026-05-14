@@ -9,7 +9,7 @@ import { RootState } from './store';
 import { logout } from './store/authSlice';
 import { persistor } from './store';
 import { refreshToken } from './features/loginPage/apis/auth';
-import AiRecommendationChatWidget from './features/aiRecommendationChat/components/AiRecommendationChatWidget';
+import QuestionRecommendationChatWidget from './features/questionRecommendationChat/components/QuestionRecommendationChatWidget';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -39,7 +39,7 @@ const App = () => {
     <>
       <RouterProvider router={router} />
       <ToastProvider />
-      <AiRecommendationChatWidget />
+      <QuestionRecommendationChatWidget />
     </>
   );
 };

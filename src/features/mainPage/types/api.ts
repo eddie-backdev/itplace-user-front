@@ -143,12 +143,12 @@ export interface FavoriteBenefit {
   partnerImage: string;
 }
 
-// AI 추천 API 타입
-export interface RecommendationResponse {
-  data: RecommendationItem[];
+// 맞춤 AI 추천 API 타입
+export interface PersonalizedRecommendationResponse {
+  data: PersonalizedRecommendationItem[];
 }
 
-export interface RecommendationItem {
+export interface PersonalizedRecommendationItem {
   rank: number;
   partnerName: string;
   reason: string;
@@ -156,8 +156,8 @@ export interface RecommendationItem {
   benefitIds?: number[];
 }
 
-// ItPlace AI API 전용 응답 타입 (기존 StoreData 타입 재사용)
-export interface ItplaceAiResponse {
+// 추천 제휴처 매장 조회 응답 타입 (기존 StoreData 타입 재사용)
+export interface RecommendationStoreResponse {
   code: string;
   status: string;
   message: string;

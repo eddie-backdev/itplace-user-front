@@ -2,8 +2,8 @@ import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import SidebarSection from '../SidebarSection';
 import MapSection from '../MapSection';
 import SearchSection from '../SidebarSection/SearchSection';
-import SpeechBubble from '../SidebarSection/RecommendStoreList/SpeechBubble';
-import BenefitDetailCard from '../SidebarSection/RecommendStoreList/BenefitDetailCard';
+import SpeechBubble from '../SidebarSection/PersonalizedRecommendationList/SpeechBubble';
+import BenefitDetailCard from '../SidebarSection/PersonalizedRecommendationList/BenefitDetailCard';
 import MobileHeader from '../../../../components/MobileHeader';
 import { Platform, MapLocation } from '../../types';
 import { CATEGORIES, LAYOUT } from '../../constants';
@@ -27,7 +27,7 @@ const MainPageLayout: React.FC = () => {
   // UI 상태 관리
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null); // 선택된 가맹점
   const [filteredPlatforms, setFilteredPlatforms] = useState<Platform[]>([]); // 검색 결과 가맹점 목록
-  const [activeTab, setActiveTab] = useState<string>('nearby'); // 사이드바 활성 탭 ('주변 혜택', '관심 혜택', '잏AI 추천')
+  const [activeTab, setActiveTab] = useState<string>('nearby'); // 사이드바 활성 탭 ('주변 혜택', '관심 혜택', '맞춤 AI 추천')
   const [searchQuery, setSearchQuery] = useState<string>(''); // 검색어 상태
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false); // 사이드바 접힘 상태
 
@@ -42,13 +42,17 @@ const MainPageLayout: React.FC = () => {
   const [startY, setStartY] = useState<number>(0); // 드래그 시작 Y 좌표
   const [startHeight, setStartHeight] = useState<number>(0); // 드래그 시작 시 높이
   const [isAnimating, setIsAnimating] = useState(false);
+  const isMapZoomingRef = useRef(false);
+  const lastViewportHeightRef = useRef<number>(
+    typeof window === 'undefined' ? 0 : window.innerHeight
+  );
   const { isMobile } = useResponsive();
 
   const location = useLocation();
 
   const mobileGuideMessage =
     activeTab === 'ai'
-      ? '아래 시트를 올려 AI 추천과 대화를 확인해보세요.'
+      ? '아래 시트를 올려 맞춤 AI 추천과 질문형 AI 추천을 확인해보세요.'
       : activeTab === 'favorites'
         ? '아래 시트를 올려 저장한 혜택을 빠르게 확인해보세요.'
         : '아래 시트를 올려 주변 혜택과 검색 결과를 확인해보세요.';
@@ -120,9 +124,10 @@ const MainPageLayout: React.FC = () => {
     clearPlatforms, // 플랫폼 데이터 즉시 초기화
   } = useStoreData(currentMapCenter);
 
-  // ItPlace AI 추천 결과 상태 (SidebarSection에서 올려받음)
-  const [itplaceAiResults, setItplaceAiResults] = useState<Platform[]>([]);
-  const [isShowingItplaceAiResults, setIsShowingItplaceAiResults] = useState(false);
+  // 추천 매장 조회 결과 상태 (SidebarSection에서 올려받음)
+  const [recommendationStoreResults, setRecommendationStoreResults] = useState<Platform[]>([]);
+  const [isShowingRecommendationStoreResults, setIsShowingRecommendationStoreResults] =
+    useState(false);
   const [isCategoryChanging, setIsCategoryChanging] = useState(false);
 
   /**
@@ -135,8 +140,8 @@ const MainPageLayout: React.FC = () => {
       setSelectedPlatform(null); // 선택된 가맹점 초기화
       setFilteredPlatforms([]); // 검색 결과 초기화
       setSearchQuery(''); // 검색어 초기화
-      setIsShowingItplaceAiResults(false); // AI 결과 숨기기
-      setItplaceAiResults([]); // AI 결과 초기화
+      setIsShowingRecommendationStoreResults(false); // 추천 매장 결과 숨기기
+      setRecommendationStoreResults([]); // 추천 매장 결과 초기화
 
       // 카테고리 변경 시 즉시 마커 제거를 위해 플랫폼 데이터 초기화
       clearPlatforms?.();
@@ -349,9 +354,21 @@ const MainPageLayout: React.FC = () => {
     if (!isMobile) return;
 
     const updateSheetBounds = () => {
+      if (isMapZoomingRef.current) {
+        return;
+      }
+
+      const viewportHeight = window.innerHeight;
+      const viewportHeightDelta = Math.abs(viewportHeight - lastViewportHeightRef.current);
+
+      if (viewportHeightDelta > 0 && viewportHeightDelta < 80) {
+        return;
+      }
+
+      lastViewportHeightRef.current = viewportHeight;
       const nextMaxHeight = Math.max(
         BOTTOM_SHEET_MIN_HEIGHT,
-        window.innerHeight - BOTTOM_SHEET_VIEWPORT_OFFSET
+        viewportHeight - BOTTOM_SHEET_VIEWPORT_OFFSET
       );
       setMaxBottomSheetHeight(nextMaxHeight);
       setBottomSheetHeight((height) =>
@@ -363,9 +380,17 @@ const MainPageLayout: React.FC = () => {
     window.addEventListener('resize', updateSheetBounds);
     window.addEventListener('orientationchange', updateSheetBounds);
 
+    const handleMapZoomState = (event: Event) => {
+      const customEvent = event as CustomEvent<{ isZooming?: boolean }>;
+      isMapZoomingRef.current = Boolean(customEvent.detail?.isZooming);
+    };
+
+    window.addEventListener('itplace:map-zoom-state', handleMapZoomState);
+
     return () => {
       window.removeEventListener('resize', updateSheetBounds);
       window.removeEventListener('orientationchange', updateSheetBounds);
+      window.removeEventListener('itplace:map-zoom-state', handleMapZoomState);
     };
   }, [isMobile]);
 
@@ -430,11 +455,14 @@ const MainPageLayout: React.FC = () => {
     animateTo(closestSnapPoint);
   }, [bottomSheetHeight, animateTo, getMaxHeight]);
 
-  // ItPlace AI 추천 결과 핸들러
-  const handleItplaceAiResults = useCallback((results: Platform[], isShowing: boolean) => {
-    setItplaceAiResults(results);
-    setIsShowingItplaceAiResults(isShowing);
-  }, []);
+  // 추천 매장 조회 결과 핸들러
+  const handleRecommendationStoreResults = useCallback(
+    (results: Platform[], isShowing: boolean) => {
+      setRecommendationStoreResults(results);
+      setIsShowingRecommendationStoreResults(isShowing);
+    },
+    []
+  );
 
   // apiPlatforms가 업데이트되면 카테고리 변경 완료
   useEffect(() => {
@@ -443,10 +471,10 @@ const MainPageLayout: React.FC = () => {
     }
   }, [apiPlatforms, isLoading, isCategoryChanging]);
 
-  // platforms 배열 안정화 (ItPlace AI 결과 우선 표시)
+  // platforms 배열 안정화 (추천 매장 조회 결과 우선 표시)
   const stablePlatforms = useMemo(() => {
-    if (isShowingItplaceAiResults && itplaceAiResults.length > 0) {
-      return itplaceAiResults;
+    if (isShowingRecommendationStoreResults && recommendationStoreResults.length > 0) {
+      return recommendationStoreResults;
     }
     // 카테고리 변경 중이면 빈 배열 반환 (이전 마커 제거)
     if (isCategoryChanging) {
@@ -463,8 +491,8 @@ const MainPageLayout: React.FC = () => {
   }, [
     filteredPlatforms,
     apiPlatforms,
-    itplaceAiResults,
-    isShowingItplaceAiResults,
+    recommendationStoreResults,
+    isShowingRecommendationStoreResults,
     isCategoryChanging,
   ]);
 
@@ -517,7 +545,7 @@ const MainPageLayout: React.FC = () => {
               onBenefitDetailRequest={handleBenefitDetailRequest}
               onShowSpeechBubble={handleShowSpeechBubble}
               userCoords={userCoords}
-              onItplaceAiResults={handleItplaceAiResults}
+              onRecommendationStoreResults={handleRecommendationStoreResults}
               onSearchPartner={handleKeywordSearch}
               onBottomSheetReset={resetBottomSheet}
             />
@@ -701,7 +729,7 @@ const MainPageLayout: React.FC = () => {
               <div className="px-5 pb-2 text-body-4 text-grey04">
                 {bottomSheetHeight <= BOTTOM_SHEET_MIN_HEIGHT + 24
                   ? mobileGuideMessage
-                  : '탭을 바꿔 주변 혜택, 관심 혜택, AI 추천을 살펴보세요.'}
+                  : '탭을 바꿔 주변 혜택, 관심 혜택, 맞춤 AI 추천을 살펴보세요.'}
               </div>
             )}
 
@@ -727,7 +755,7 @@ const MainPageLayout: React.FC = () => {
                 onBenefitDetailRequest={handleBenefitDetailRequest}
                 onShowSpeechBubble={handleShowSpeechBubble}
                 userCoords={userCoords}
-                onItplaceAiResults={handleItplaceAiResults}
+                onRecommendationStoreResults={handleRecommendationStoreResults}
                 onSearchPartner={handleKeywordSearch}
                 onBottomSheetReset={resetBottomSheet}
                 // 모바일 드래그 이벤트 핸들러들 추가

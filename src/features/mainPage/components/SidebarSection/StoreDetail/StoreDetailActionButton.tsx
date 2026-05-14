@@ -52,7 +52,7 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
   // 거리 조건 체크 (0.1km 이하만 사용 가능)
   const isDistanceValid = distance <= 0.5;
 
-  // 모달 열림/닫힘 시 바텀시트 제어 (ChatRoom과 동일한 로직)
+  // 모달 열림/닫힘 시 바텀시트 제어 (질문형 AI 추천 채팅방과 동일한 로직)
   useEffect(() => {
     if (isModalOpen) {
       // 모달이 열릴 때 현재 스크롤 위치 저장

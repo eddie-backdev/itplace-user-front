@@ -1,17 +1,17 @@
 import React from 'react';
-import ChatRoom from './ChatRoom/ChatRoom';
+import QuestionRecommendationChatRoom from '../../../../questionRecommendationChat/components/QuestionRecommendationChatRoom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store';
-import { RecommendationItem } from '../../../types/api';
+import { PersonalizedRecommendationItem } from '../../../types/api';
 import SafeImage from '../../../../../components/SafeImage';
 import NoResult from '../../../../../components/NoResult';
 import { useAnimatedLoadingText } from '../../../hooks/useAnimatedLoadingText';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
 import { useResponsive } from '../../../../../hooks/useResponsive';
 
-interface RecommendStoreListProps {
-  stores: RecommendationItem[];
-  onItemClick: (store: RecommendationItem) => void;
+interface PersonalizedRecommendationListProps {
+  stores: PersonalizedRecommendationItem[];
+  onItemClick: (store: PersonalizedRecommendationItem) => void;
   isLoading?: boolean;
   error?: string | null;
   onBenefitDetailRequest?: (benefitIds: number[]) => void;
@@ -21,7 +21,7 @@ interface RecommendStoreListProps {
   onChatStateChange?: (isOpen: boolean) => void;
 }
 
-const RecommendStoreList: React.FC<RecommendStoreListProps> = ({
+const PersonalizedRecommendationList: React.FC<PersonalizedRecommendationListProps> = ({
   stores,
   onItemClick,
   isLoading = false,
@@ -33,7 +33,7 @@ const RecommendStoreList: React.FC<RecommendStoreListProps> = ({
 }) => {
   const isLoggedIn = useSelector((state: RootState) => !!state.auth.user);
   const { isMobile, isTablet } = useResponsive();
-  // 채팅방 UI 상태
+  // 질문형 AI 추천 채팅방 UI 상태
   const [isChatOpen, setIsChatOpen] = React.useState(false);
 
   const animatedText = useAnimatedLoadingText({
@@ -46,7 +46,7 @@ const RecommendStoreList: React.FC<RecommendStoreListProps> = ({
     ],
   });
 
-  // 채팅방 열기/닫기 핸들러
+  // 질문형 AI 추천 채팅방 열기/닫기 핸들러
   const handleChatOpen = () => {
     setIsChatOpen(true);
     onChatStateChange?.(true);
@@ -77,13 +77,13 @@ const RecommendStoreList: React.FC<RecommendStoreListProps> = ({
       errorMessage.includes('추천 결과 생성 실패') ||
       errorMessage.includes('RECOMMENDATION_RESULT_FAIL')
     ) {
-      return 'AI 추천 생성에 실패했어요!';
+      return '맞춤 AI 추천 생성에 실패했어요!';
     }
     if (errorMessage.includes('INTERNAL_SERVER_ERROR')) {
       return '서버에 문제가 발생했어요!';
     }
     // 기본 에러 메시지
-    return 'AI 추천을 불러올 수 없어요!';
+    return '맞춤 AI 추천을 불러올 수 없어요!';
   };
 
   const getBadgeClass = (rank: number) => {
@@ -190,7 +190,7 @@ const RecommendStoreList: React.FC<RecommendStoreListProps> = ({
         <div className="flex-1 flex items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4">
           <NoResult
             message1="로그인이 필요해요!"
-            message2="AI 추천을 받으려면 로그인해 주세요"
+            message2="맞춤 AI 추천을 받으려면 로그인해 주세요"
             message1FontSize="text-title-6"
             message2FontSize="text-body-3"
             isLoginRequired={true}
@@ -228,7 +228,7 @@ const RecommendStoreList: React.FC<RecommendStoreListProps> = ({
       ) : !stores || stores.length === 0 ? (
         <div className="flex-1 flex items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4">
           <NoResult
-            message1="추천 결과가 없어요!"
+            message1="맞춤 추천 결과가 없어요!"
             message2="ItPlace 이용 정보가 부족해요"
             message1FontSize="text-title-6"
             message2FontSize="text-body-3"
@@ -244,11 +244,11 @@ const RecommendStoreList: React.FC<RecommendStoreListProps> = ({
                 className="w-[328px] h-[48px] bg-purple04 text-white rounded-[10px] px-4 flex items-center justify-center cursor-pointer font-bold shadow hover:bg-purple03 transition-colors mb-2 max-md:w-full max-md:h-[64px] max-md:px-3 max-sm:h-[35px] max-sm:px-2"
                 onClick={handleChatOpen}
               >
-                잇플AI에게 질문하기
+                질문형 AI 추천 열기
               </button>
             )}
             {isChatOpen && (
-              <ChatRoom
+              <QuestionRecommendationChatRoom
                 onClose={handleChatClose}
                 onSearchPartner={onSearchPartner}
                 onChangeTab={onChangeTab}
@@ -295,4 +295,4 @@ const RecommendStoreList: React.FC<RecommendStoreListProps> = ({
   );
 };
 
-export default RecommendStoreList;
+export default PersonalizedRecommendationList;

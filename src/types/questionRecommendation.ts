@@ -1,23 +1,22 @@
-// src/types/recommend.ts
-export interface Partner {
+export interface QuestionRecommendationPartner {
   partnerName: string;
   imgUrl: string;
 }
 
-export interface RecommendData {
+export interface QuestionRecommendationData {
   reason: string;
-  partners: Partner[];
+  partners: QuestionRecommendationPartner[];
 }
 
-export interface RecommendSuccessResponse {
+export interface QuestionRecommendationSuccessResponse {
   code: 'QUESTION_SUCCESS';
   status: 'OK';
   message: string;
-  data: RecommendData;
+  data: QuestionRecommendationData;
   timestamp: string;
 }
 
-export interface RecommendErrorResponse {
+export interface QuestionRecommendationErrorResponse {
   code: 'FORBIDDEN_WORD_DETECTED' | 'NO_STORE_FOUND' | string;
   status: 'BAD_REQUEST' | 'NOT_FOUND' | string;
   message: string;
@@ -25,7 +24,7 @@ export interface RecommendErrorResponse {
   timestamp: string;
 }
 
-export interface RecommendRequest {
+export interface QuestionRecommendationRequest {
   question: string;
   lat: number;
   lng: number;

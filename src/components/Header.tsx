@@ -21,9 +21,9 @@ import { showToast } from '../utils/toast';
 import Modal from './Modal';
 import { createInquiry } from '../apis/inquiryApi';
 import {
-  addAiRecommendationChatStateListener,
-  openAiRecommendationChat,
-} from '../features/aiRecommendationChat/utils/aiRecommendationChatEvents';
+  addQuestionRecommendationChatStateListener,
+  openQuestionRecommendationChat,
+} from '../features/questionRecommendationChat/utils/questionRecommendationChatEvents';
 
 const menus = [
   { id: 'map', label: '잇플 맵', icon: TbMap2, path: '/' },
@@ -47,7 +47,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
   const dispatch = useDispatch();
 
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
-  const [isAiRecommendationOpen, setIsAiRecommendationOpen] = useState(false);
+  const [isQuestionRecommendationOpen, setIsQuestionRecommendationOpen] = useState(false);
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isInquirySubmitting, setIsInquirySubmitting] = useState(false);
   const [inquiryForm, setInquiryForm] = useState({
@@ -57,16 +57,16 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
   });
 
   useEffect(() => {
-    return addAiRecommendationChatStateListener(setIsAiRecommendationOpen);
+    return addQuestionRecommendationChatStateListener(setIsQuestionRecommendationOpen);
   }, []);
 
-  const handleAiRecommendationClick = () => {
+  const handleQuestionRecommendationClick = () => {
     if (!isLoggedIn) {
-      showToast('AI 추천은 로그인 후 사용할 수 있습니다.', 'info');
+      showToast('질문형 AI 추천은 로그인 후 사용할 수 있습니다.', 'info');
       return;
     }
 
-    openAiRecommendationChat();
+    openQuestionRecommendationChat();
   };
 
   const handleContact = () => {
@@ -131,6 +131,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
       persistor.purge();
       // 성공 토스트 표시
       showToast('로그아웃 되었습니다.', 'success');
+      sessionStorage.removeItem('questionRecommendationChatMessages');
       sessionStorage.removeItem('chatMessages');
       // 페이지 이동
       navigate('/');
@@ -183,13 +184,13 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
 
           <button
             type="button"
-            onClick={handleAiRecommendationClick}
-            className={clsx(primaryNavItemClass, isAiRecommendationOpen && activeNavClass)}
-            aria-pressed={isAiRecommendationOpen}
-            aria-label="AI 추천 채팅 열기"
+            onClick={handleQuestionRecommendationClick}
+            className={clsx(primaryNavItemClass, isQuestionRecommendationOpen && activeNavClass)}
+            aria-pressed={isQuestionRecommendationOpen}
+            aria-label="질문형 AI 추천 열기"
           >
             <TbSparkles className="text-[28px]" strokeWidth={1.35} />
-            <span className="mt-1 leading-none">AI 추천</span>
+            <span className="mt-1 leading-none">AI 질문</span>
           </button>
         </nav>
 

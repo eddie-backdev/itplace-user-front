@@ -1,11 +1,18 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { TbSend, TbRefresh, TbX } from 'react-icons/tb';
-import SafeImage from '../../../../../../components/SafeImage';
-import LoadingSpinner from '../../../../../../components/LoadingSpinner';
-import { getRecommendation, RecommendationError } from '../../../../api/recommendChatApi';
-import { getCurrentLocation } from '../../../../api/storeApi';
-import { useResponsive } from '../../../../../../hooks/useResponsive';
+import SafeImage from '../../../components/SafeImage';
+import LoadingSpinner from '../../../components/LoadingSpinner';
+import {
+  getQuestionRecommendation,
+  QuestionRecommendationError,
+} from '../../mainPage/api/questionRecommendationApi';
+import { getCurrentLocation } from '../../mainPage/api/storeApi';
+import { useResponsive } from '../../../hooks/useResponsive';
+
+const QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY = 'questionRecommendationChatMessages';
+const LEGACY_CHAT_MESSAGES_KEY = 'chatMessages';
+const INITIAL_MESSAGE = '어떤 혜택이나 장소가 필요하세요? 질문형 AI 추천에 편하게 물어보세요!';
 
 interface Partner {
   partnerName: string;
@@ -18,7 +25,7 @@ interface Message {
   partners?: Partner[];
 }
 
-interface ChatRoomProps {
+interface QuestionRecommendationChatRoomProps {
   onClose: () => void;
   presentation?: 'embedded' | 'drawer' | 'modal';
   onSearchPartner?: (partnerName: string) => void;
@@ -26,7 +33,42 @@ interface ChatRoomProps {
   onBottomSheetReset?: () => void;
 }
 
-const ChatRoom: React.FC<ChatRoomProps> = ({
+const normalizeBotText = (text: string) =>
+  text
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]*•[ \t]*/g, '\n• ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+const BotMessageContent: React.FC<{ text: string }> = ({ text }) => {
+  const lines = normalizeBotText(text).split('\n');
+
+  return (
+    <div className="space-y-2 leading-relaxed">
+      {lines.map((line, index) => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) {
+          return <div key={index} className="h-1" aria-hidden="true" />;
+        }
+
+        if (trimmedLine.startsWith('•')) {
+          return (
+            <div key={index} className="flex gap-2">
+              <span className="mt-[1px] text-purple04" aria-hidden="true">
+                •
+              </span>
+              <span className="min-w-0 flex-1">{trimmedLine.slice(1).trim()}</span>
+            </div>
+          );
+        }
+
+        return <p key={index}>{trimmedLine}</p>;
+      })}
+    </div>
+  );
+};
+
+const QuestionRecommendationChatRoom: React.FC<QuestionRecommendationChatRoomProps> = ({
   onClose,
   onSearchPartner,
   onChangeTab,
@@ -43,7 +85,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
 
   // sessionStorage에서 메시지 복원
   const getInitialMessages = (): Message[] => {
-    const saved = sessionStorage.getItem('chatMessages');
+    const saved =
+      sessionStorage.getItem(QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY) ??
+      sessionStorage.getItem(LEGACY_CHAT_MESSAGES_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -54,16 +98,16 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         // 파싱 실패 시 기본값 반환
       }
     }
-    return [
-      { sender: 'bot', text: '어떤 혜택이나 장소가 필요하세요? 자연어로 편하게 물어보세요!' },
-    ];
+    return [{ sender: 'bot', text: INITIAL_MESSAGE }];
   };
 
   const [messages, setMessages] = React.useState<Message[]>(getInitialMessages());
 
   // 컴포넌트 마운트 시 sessionStorage에서 메시지 복원
   React.useEffect(() => {
-    const saved = sessionStorage.getItem('chatMessages');
+    const saved =
+      sessionStorage.getItem(QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY) ??
+      sessionStorage.getItem(LEGACY_CHAT_MESSAGES_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -80,7 +124,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   // 메시지 변경 시 sessionStorage에 저장 (초기화 완료 후에만)
   React.useEffect(() => {
     if (isInitialized) {
-      sessionStorage.setItem('chatMessages', JSON.stringify(messages));
+      sessionStorage.setItem(QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY, JSON.stringify(messages));
+      sessionStorage.removeItem(LEGACY_CHAT_MESSAGES_KEY);
     }
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -94,11 +139,13 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
 
   // 채팅 내용 초기화
   const handleClearChat = () => {
-    const initialMessages: Message[] = [
-      { sender: 'bot', text: '어떤 혜택이나 장소가 필요하세요? 자연어로 편하게 물어보세요!' },
-    ];
+    const initialMessages: Message[] = [{ sender: 'bot', text: INITIAL_MESSAGE }];
     setMessages(initialMessages);
-    sessionStorage.setItem('chatMessages', JSON.stringify(initialMessages));
+    sessionStorage.setItem(
+      QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY,
+      JSON.stringify(initialMessages)
+    );
+    sessionStorage.removeItem(LEGACY_CHAT_MESSAGES_KEY);
     setShowClearConfirm(false);
   };
 
@@ -193,7 +240,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
       }
 
       // API 호출
-      const response = await getRecommendation({
+      const response = await getQuestionRecommendation({
         question: trimmed,
         lat: location.lat,
         lng: location.lng,
@@ -215,7 +262,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         '죄송합니다. 현재 추천 정보를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.';
 
       // 구체적인 오류 처리
-      if (error instanceof RecommendationError) {
+      if (error instanceof QuestionRecommendationError) {
         switch (error.code) {
           case 'FORBIDDEN_WORD_DETECTED':
             errorMessage =
@@ -278,7 +325,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
       }
 
       // API 호출
-      const response = await getRecommendation({
+      const response = await getQuestionRecommendation({
         question,
         lat: location.lat,
         lng: location.lng,
@@ -300,7 +347,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         '죄송합니다. 현재 추천 정보를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.';
 
       // 구체적인 오류 처리
-      if (error instanceof RecommendationError) {
+      if (error instanceof QuestionRecommendationError) {
         switch (error.code) {
           case 'FORBIDDEN_WORD_DETECTED':
             errorMessage =
@@ -349,7 +396,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
       onSearchPartner(partnerName);
     }
     if (onChangeTab) {
-      onChangeTab('ai'); // 잇플AI 추천 탭 유지
+      onChangeTab('ai'); // 맞춤 AI 추천 탭 유지
     }
     // 채팅방 닫기
     onClose();
@@ -404,12 +451,12 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
         {isDrawer ? (
           <div>
             <p className="text-body-4 text-purple04">IT: PLACE</p>
-            <h2 className="text-title-6 text-grey06">잇플AI 추천</h2>
+            <h2 className="text-title-6 text-grey06">질문형 AI 추천</h2>
             <p className="mt-1 text-body-4 text-grey04">상황에 맞는 제휴처를 바로 찾아드릴게요</p>
           </div>
         ) : (
           <span className="absolute left-1/2 transform -translate-x-1/2 text-title-6 text-purple04">
-            잇플AI 채팅방
+            질문형 AI 채팅방
           </span>
         )}
         <div className="flex items-center gap-2">
@@ -449,9 +496,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                   alt="잇콩이"
                   className="w-7 h-7 rounded-full border border-purple02 bg-white mr-2"
                 />
-                <span className="px-4 py-2 max-w-none break-words shadow bg-white text-black text-body-3 rounded-[10px]">
-                  {messages[0].text}
-                </span>
+                <div className="px-4 py-3 max-w-none break-words shadow bg-white text-black text-body-3 rounded-[10px]">
+                  <BotMessageContent text={messages[0].text} />
+                </div>
               </div>
             </div>
 
@@ -505,9 +552,9 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
                     className="w-7 h-7 rounded-full border border-purple02 bg-white flex-shrink-0"
                   />
                   <div className="flex flex-col gap-2" style={{ maxWidth: 'calc(100% - 2.25rem)' }}>
-                    <span className="px-4 py-2 break-words shadow bg-white text-black text-body-3 font-light rounded-[10px]">
-                      {msg.text}
-                    </span>
+                    <div className="px-4 py-3 break-words shadow bg-white text-black text-body-3 font-light rounded-[10px]">
+                      <BotMessageContent text={msg.text} />
+                    </div>
                     {/* 제휴업체 카드 */}
                     {msg.partners && msg.partners.length > 0 && (
                       <div className="w-full">
@@ -615,4 +662,4 @@ const ChatRoom: React.FC<ChatRoomProps> = ({
   return chatRoomContent;
 };
 
-export default ChatRoom;
+export default QuestionRecommendationChatRoom;

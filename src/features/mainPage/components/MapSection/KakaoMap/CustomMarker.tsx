@@ -14,6 +14,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({ imageUrl, name, isSelected 
 
   return (
     <div
+      data-itplace-map-marker="true"
       className="relative cursor-pointer w-[68px] h-[84px]"
       style={{
         zIndex: isSelected ? 1000 : 1,
