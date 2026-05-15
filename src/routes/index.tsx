@@ -9,6 +9,7 @@ import MyHistoryPage from '../pages/myPage/MyHistoryPage';
 import AllBenefitsPage from '../pages/AllBenefitsPage';
 import LoginPage from '../pages/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage';
+import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
 import OAuthRedirectHandler from '../features/loginPage/layouts/OAuthRedirectHandler';
 import PublicRoute from '../features/loginPage/layouts/PublicRoute'; // PublicRoute import
 
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
         ],
       },
       { path: '/benefits', element: <AllBenefitsPage /> },
+      { path: '/privacy', element: <PrivacyPolicyPage /> },
     ],
   },
   {
