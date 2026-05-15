@@ -18,6 +18,51 @@ type SignUpPhoneVerificationFormProps = {
 };
 
 const normalizePhoneNumber = (value: string) => value.replace(/\D/g, '');
+const SIGNUP_SMS_STORAGE_KEY = 'itplace.signupSmsVerification';
+
+type StoredSmsVerification = {
+  phoneNumber: string;
+  issue: SmsVerificationIssueResponse;
+  expiresAt: number;
+};
+
+const clearStoredSmsVerification = () => {
+  window.sessionStorage.removeItem(SIGNUP_SMS_STORAGE_KEY);
+};
+
+const readStoredSmsVerification = (initialPhoneNumber: string): StoredSmsVerification | null => {
+  try {
+    const stored = window.sessionStorage.getItem(SIGNUP_SMS_STORAGE_KEY);
+    if (!stored) return null;
+
+    const parsed = JSON.parse(stored) as StoredSmsVerification;
+    const hasValidShape =
+      parsed.phoneNumber &&
+      parsed.issue?.phoneNumber &&
+      parsed.issue?.verificationText &&
+      parsed.issue?.receiverPhoneNumber &&
+      Number.isFinite(parsed.expiresAt);
+
+    if (!hasValidShape || Date.now() > parsed.expiresAt) {
+      clearStoredSmsVerification();
+      return null;
+    }
+
+    if (initialPhoneNumber && normalizePhoneNumber(initialPhoneNumber) !== parsed.phoneNumber) {
+      clearStoredSmsVerification();
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    clearStoredSmsVerification();
+    return null;
+  }
+};
+
+const storeSmsVerification = (verification: StoredSmsVerification) => {
+  window.sessionStorage.setItem(SIGNUP_SMS_STORAGE_KEY, JSON.stringify(verification));
+};
 
 const formatSeconds = (seconds: number) => {
   const minutes = Math.floor(seconds / 60)
@@ -31,9 +76,10 @@ const openSmsComposer = ({
   receiverPhoneNumber,
   verificationText,
 }: SmsVerificationIssueResponse) => {
+  const receiver = receiverPhoneNumber.replace(/\D/g, '') || receiverPhoneNumber;
   const body = encodeURIComponent(verificationText);
   const separator = /iPhone|iPad|iPod/i.test(window.navigator.userAgent) ? '&' : '?';
-  window.location.href = `sms:${receiverPhoneNumber}${separator}body=${body}`;
+  window.location.href = `sms:${receiver}${separator}body=${body}`;
 };
 
 const SignUpPhoneVerificationForm = ({
@@ -44,9 +90,14 @@ const SignUpPhoneVerificationForm = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const checkingRef = useRef(false);
   const completedRef = useRef(false);
-  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
-  const [issue, setIssue] = useState<SmsVerificationIssueResponse | null>(null);
-  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [storedVerification] = useState(() => readStoredSmsVerification(initialPhoneNumber));
+  const [phoneNumber, setPhoneNumber] = useState(
+    storedVerification?.phoneNumber ?? normalizePhoneNumber(initialPhoneNumber)
+  );
+  const [issue, setIssue] = useState<SmsVerificationIssueResponse | null>(
+    storedVerification?.issue ?? null
+  );
+  const [expiresAt, setExpiresAt] = useState<number | null>(storedVerification?.expiresAt ?? null);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [loading, setLoading] = useState(false);
   const [autoChecking, setAutoChecking] = useState(false);
@@ -65,6 +116,7 @@ const SignUpPhoneVerificationForm = ({
     setExpiresAt(null);
     setRemainingSeconds(0);
     completedRef.current = false;
+    clearStoredSmsVerification();
   };
 
   const handleIssueSms = async () => {
@@ -77,9 +129,15 @@ const SignUpPhoneVerificationForm = ({
     try {
       setLoading(true);
       const response = await issueSmsVerificationCode(normalized);
+      const nextExpiresAt = Date.now() + response.expiresInSeconds * 1000;
       setIssue(response);
       setPhoneNumber(response.phoneNumber);
-      setExpiresAt(Date.now() + response.expiresInSeconds * 1000);
+      setExpiresAt(nextExpiresAt);
+      storeSmsVerification({
+        phoneNumber: response.phoneNumber,
+        issue: response,
+        expiresAt: nextExpiresAt,
+      });
       completedRef.current = false;
       showToast('문자 앱에서 전송 버튼을 누르고 돌아오면 자동으로 인증됩니다.', 'success');
       openSmsComposer(response);
@@ -104,6 +162,7 @@ const SignUpPhoneVerificationForm = ({
       setExpiresAt(null);
       setRemainingSeconds(0);
       setAutoChecking(false);
+      clearStoredSmsVerification();
       showToast('문자 인증 시간이 만료되었습니다. 다시 인증해주세요.', 'error');
       return;
     }
@@ -113,6 +172,7 @@ const SignUpPhoneVerificationForm = ({
     try {
       await confirmSmsVerificationCode(issue.phoneNumber);
       completedRef.current = true;
+      clearStoredSmsVerification();
       showToast('휴대폰 인증이 완료되었습니다.', 'success');
       onNext(issue.phoneNumber);
     } catch {
