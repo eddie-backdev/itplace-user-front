@@ -8,7 +8,7 @@ import { showToast } from '../../../utils/toast';
 import LoginForm from '../components/login/LoginForm';
 import FindPasswordForm from '../components/find/FindPasswordForm';
 import OAuthIntegrationForm from '../components/signup/OAuthIntegrationForm';
-import SignUpForm from '../components/signup/SignUpForm';
+import SignUpPhoneVerificationForm from '../components/signup/SignUpPhoneVerificationForm';
 import SignUpFinalForm from '../components/signup/SignUpFinalForm';
 import { oauthSignUp } from '../apis/user';
 import { getOAuthResult } from '../apis/auth';
@@ -20,6 +20,7 @@ import Modal from '../../../components/Modal';
 import { useResponsive } from '../../../hooks/useResponsive';
 
 const emptyLocalSignupData = {
+  phoneNumber: '',
   name: '',
   birthday: '',
   gender: '',
@@ -192,15 +193,11 @@ const AuthLayout = () => {
       )}
 
       {formStep === 'signUp' && (
-        <SignUpForm
-          initialName={signUpData.name}
-          initialBirthday={signUpData.birthday}
-          initialGender={signUpData.gender}
-          initialCarrier={signUpData.carrier}
-          initialMembershipGradeCode={signUpData.membershipGradeCode}
+        <SignUpPhoneVerificationForm
+          initialPhoneNumber={signUpData.phoneNumber}
           onGoToLogin={goToLogin}
-          onNext={(data) => {
-            setSignUpData(data);
+          onNext={(phoneNumber) => {
+            setSignUpData((previous) => ({ ...previous, phoneNumber }));
             goToSignUpFinal();
           }}
         />
@@ -209,11 +206,12 @@ const AuthLayout = () => {
       {formStep === 'signUpFinal' && (
         <SignUpFinalForm
           onGoToLogin={goToLogin}
-          name={signUpData.name}
-          birthday={signUpData.birthday}
-          gender={signUpData.gender}
-          carrier={signUpData.carrier}
-          membershipGradeCode={signUpData.membershipGradeCode}
+          phoneNumber={signUpData.phoneNumber}
+          initialName={signUpData.name}
+          initialBirthday={signUpData.birthday}
+          initialGender={signUpData.gender}
+          initialCarrier={signUpData.carrier}
+          initialMembershipGradeCode={signUpData.membershipGradeCode}
         />
       )}
 
