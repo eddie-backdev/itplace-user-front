@@ -3,7 +3,6 @@ import { Platform } from '../../../types';
 import StoreCard from './StoreCard';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
 import NoResult from '../../../../../components/NoResult';
-import { useResponsive } from '../../../../../hooks/useResponsive';
 
 interface StoreCardsSectionProps {
   platforms: Platform[];
@@ -27,8 +26,6 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   error,
   backButton,
 }) => {
-  const { isMobile } = useResponsive();
-
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col">
@@ -106,7 +103,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 min-h-0 flex flex-col">
       {/* 현재 위치와 뒤로가기 버튼 */}
       <div
         className={`${backButton ? 'flex items-center justify-between' : ''} mb-4 max-md:mb-3 max-sm:mb-2 max-md:px-4 max-sm:px-3`}
@@ -135,13 +132,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
       {/* 현재 위치 아래 구분선 */}
       <div className="border-b border-grey03 w-[330px] mb-0 max-md:mx-4 max-sm:mx-3 max-md:w-auto" />
 
-      <div
-        className="-mx-5 overflow-y-auto overflow-x-hidden max-md:overflow-y-scroll max-md:mx-0"
-        style={{
-          height: isMobile ? 'calc(100vh - 200px)' : 'calc(100vh - 360px)',
-          maxHeight: isMobile ? 'calc(100vh - 200px)' : undefined,
-        }}
-      >
+      <div className="-mx-5 flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-10 max-md:overflow-y-scroll max-md:mx-0 max-md:pb-24">
         {platforms.map((platform, index) => (
           <div key={platform.id}>
             <StoreCard
@@ -158,7 +149,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
         ))}
 
         {/* 마지막 카드 아래 여백 */}
-        <div className="h-4 max-md:h-2 max-sm:h-1"></div>
+        <div className="h-8 max-md:h-10 max-sm:h-8"></div>
       </div>
     </div>
   );
