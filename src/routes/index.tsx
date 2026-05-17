@@ -2,6 +2,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import ResponsiveLayout from '../layouts/ResponsiveLayout';
 import MainPage from '../pages/MainPage';
+import HomeRoute from '../pages/HomeRoute';
 import MyPageLayout from '../layouts/MyPageLayout';
 import MyInfoPage from '../pages/myPage/MyInfoPage';
 import MyFavoritesPage from '../pages/myPage/MyFavoritesPage';
@@ -28,8 +29,9 @@ const router = createBrowserRouter([
           </PublicRoute>
         ),
       },
-      { path: '/', element: <MainPage /> },
+      { path: '/', element: <HomeRoute /> },
       { path: '/main', element: <Navigate to="/" replace /> },
+      { path: '/map', element: <MainPage /> },
       {
         path: '/mypage',
         element: <MyPageLayout />,

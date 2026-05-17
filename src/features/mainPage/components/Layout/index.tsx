@@ -16,7 +16,8 @@ import { disableScroll, enableScroll } from '../../../../utils/scrollLock';
 
 const BOTTOM_SHEET_MIN_HEIGHT = 150;
 const BOTTOM_SHEET_MID_HEIGHT = 300;
-const BOTTOM_SHEET_VIEWPORT_OFFSET = 105;
+const MOBILE_APP_TAB_BAR_HEIGHT = 64;
+const BOTTOM_SHEET_VIEWPORT_OFFSET = 105 + MOBILE_APP_TAB_BAR_HEIGHT;
 
 /**
  * 메인페이지 레이아웃 컴포넌트
@@ -704,7 +705,7 @@ const MainPageLayout: React.FC = () => {
             }`}
             style={{
               height: `${bottomSheetHeight}px`,
-              bottom: 0,
+              bottom: `${MOBILE_APP_TAB_BAR_HEIGHT}px`,
               minHeight: `${BOTTOM_SHEET_MIN_HEIGHT}px`,
               maxHeight: `${getMaxHeight()}px`,
               overflow: 'hidden',

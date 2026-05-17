@@ -64,7 +64,7 @@ export default function MyPageLayout() {
 
       <div
         className={
-          `min-h-screen mx-auto max-w-[1480px] p-[24px] flex gap-[20px] max-lg:gap-[16px] max-md:-mx-5 max-md:max-h-none max-md:flex-col max-md:p-0 max-md:pt-[48px]` +
+          `min-h-screen mx-auto max-w-[1480px] p-[24px] flex gap-[20px] max-lg:gap-[16px] max-md:mx-0 max-md:max-h-none max-md:flex-col max-md:p-0 max-md:pt-[48px]` +
           (isWhiteLayout ? ' max-md:gap-0 max-md:bg-white' : '')
         }
       >

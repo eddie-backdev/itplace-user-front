@@ -1,18 +1,27 @@
 // src/layouts/MobileLayout.tsx
 import { Outlet, useLocation } from 'react-router-dom';
+import MobileAppTabBar from '../components/MobileAppTabBar';
+
+const isAppTabPath = (pathname: string) =>
+  pathname === '/' ||
+  pathname === '/map' ||
+  pathname === '/benefits' ||
+  pathname.startsWith('/mypage');
 
 const MobileLayout = () => {
   const location = useLocation();
-  const isNoMobileLayoutPage = location.pathname === '/benefits';
-  const needsPageOwnedHeaderOffset = location.pathname === '/benefits';
+  const showTabBar = isAppTabPath(location.pathname);
+  const isFullBleedPage = location.pathname === '/map' || location.pathname === '/benefits';
+  const isAuthPage = location.pathname === '/login';
 
   return (
-    <div className="max-md:block hidden bg-white min-h-screen">
+    <div className={`${showTabBar ? 'bg-[#f5f3ff]' : 'bg-white'} max-md:block hidden min-h-screen`}>
       <main
-        className={`${isNoMobileLayoutPage ? '' : 'px-5'} ${needsPageOwnedHeaderOffset ? '' : 'mt-[54px]'}`}
+        className={`${isFullBleedPage || isAuthPage ? '' : 'px-0'} ${showTabBar ? 'pb-[64px]' : ''}`}
       >
         <Outlet />
       </main>
+      {showTabBar && <MobileAppTabBar />}
     </div>
   );
 };
