@@ -19,7 +19,7 @@ const useValidation = () => {
   const [errors, setErrors] = useState<Errors>({});
   const [emailChecked, setEmailChecked] = useState(false);
 
-  const validateField = useCallback(
+  const getValidationMessage = useCallback(
     (field: keyof FormData, value: string, formData: FormData) => {
       let message = '';
 
@@ -65,24 +65,35 @@ const useValidation = () => {
         }
       }
 
-      setErrors((prev) => ({ ...prev, [field]: message }));
+      return message;
     },
-    [] // 의존성이 없기 때문에 이 배열은 비워도 됩니다.
+    []
+  );
+
+  const validateField = useCallback(
+    (field: keyof FormData, value: string, formData: FormData) => {
+      const message = getValidationMessage(field, value, formData);
+      setErrors((prev) => ({ ...prev, [field]: message }));
+      return !message;
+    },
+    [getValidationMessage]
   );
 
   const validateAll = (formData: FormData) => {
-    validateField('email', formData.email, formData);
-    validateField('password', formData.password, formData);
-    validateField('passwordConfirm', formData.passwordConfirm, formData);
+    const nextErrors: Errors = {
+      email: getValidationMessage('email', formData.email, formData),
+      password: getValidationMessage('password', formData.password, formData),
+      passwordConfirm: getValidationMessage('passwordConfirm', formData.passwordConfirm, formData),
+      birth: getValidationMessage('birth', formData.birth ?? '', formData),
+    };
 
-    // setErrors는 validateField에서 처리됨 → 여기선 생략 가능
+    setErrors(nextErrors);
+
     return (
-      formData.email &&
-      formData.password &&
-      formData.passwordConfirm &&
-      !errors.email &&
-      !errors.password &&
-      !errors.passwordConfirm
+      Boolean(formData.email) &&
+      Boolean(formData.password) &&
+      Boolean(formData.passwordConfirm) &&
+      Object.values(nextErrors).every((message) => !message)
     );
   };
 

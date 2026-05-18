@@ -74,7 +74,12 @@ const SignUpFinalForm = ({
   };
 
   const handleNext = async () => {
-    const valid = validateAll(formData);
+    const valid = validateAll({
+      email: formData.email,
+      password: formData.password,
+      passwordConfirm: formData.passwordConfirm,
+      birth: formData.birthday,
+    });
     if (!valid || !emailVerified || !isProfileValid) {
       showToast('입력 정보를 다시 확인해주세요.', 'error');
       return;
