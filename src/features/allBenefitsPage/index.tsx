@@ -406,34 +406,38 @@ const AllBenefitsLayout: React.FC = () => {
                         {benefit.category}
                       </span>
                     </div>
-                    <h3 className="mt-3 line-clamp-2 text-title-5 leading-tight text-black md:text-title-6">
-                      {benefit.benefitName}
-                    </h3>
-                    <p
-                      className="mt-3 overflow-hidden text-body-3 leading-6 text-grey05 md:text-body-4"
-                      style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
-                      {getBenefitDescription(benefit.tierBenefits)}
-                    </p>
-                  </div>
 
-                  <div className="mt-5 flex items-end justify-between gap-4 border-t border-grey01 pt-4">
-                    <p className="line-clamp-1 text-body-4 text-grey04">
-                      상세 조건은 카드 클릭 후 확인할 수 있어요
-                    </p>
-                    <div className="flex h-[64px] w-[64px] flex-shrink-0 items-center justify-center rounded-[16px] bg-grey01 p-2 md:h-[72px] md:w-[72px]">
-                      <SafeImage
-                        src={benefit.image}
-                        alt={`${benefit.benefitName} 로고`}
-                        fallbackLabel={benefit.benefitName}
-                        className="h-full w-full object-contain"
-                      />
+                    <div className="mt-4 flex items-start gap-4">
+                      <div className="flex h-[64px] w-[64px] flex-shrink-0 items-center justify-center rounded-[16px] bg-grey01 p-2 md:h-[72px] md:w-[72px]">
+                        <SafeImage
+                          src={benefit.image}
+                          alt={`${benefit.benefitName} 로고`}
+                          fallbackLabel={benefit.benefitName}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+
+                      <div className="min-w-0 flex-1 pt-0.5">
+                        <h3 className="line-clamp-2 text-title-5 leading-tight text-black md:text-title-6">
+                          {benefit.benefitName}
+                        </h3>
+                        <p
+                          className="mt-3 overflow-hidden text-body-3 leading-6 text-grey05 md:text-body-4"
+                          style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                        >
+                          {getBenefitDescription(benefit.tierBenefits)}
+                        </p>
+                      </div>
                     </div>
                   </div>
+
+                  <p className="mt-5 line-clamp-1 text-body-4 text-grey04">
+                    상세 조건은 카드 클릭 후 확인할 수 있어요
+                  </p>
                 </div>
               ))
             ) : loadError ? (
