@@ -72,14 +72,23 @@ const formatSeconds = (seconds: number) => {
   return `${minutes}:${restSeconds}`;
 };
 
+const isMobileSmsEnvironment = () =>
+  /Android|iPhone|iPad|iPod/i.test(window.navigator.userAgent) ||
+  (window.navigator.maxTouchPoints > 1 && /Macintosh/i.test(window.navigator.userAgent));
+
 const openSmsComposer = ({
   receiverPhoneNumber,
   verificationText,
 }: SmsVerificationIssueResponse) => {
+  if (!isMobileSmsEnvironment()) {
+    return false;
+  }
+
   const receiver = receiverPhoneNumber.replace(/\D/g, '') || receiverPhoneNumber;
   const body = encodeURIComponent(verificationText);
   const separator = /iPhone|iPad|iPod/i.test(window.navigator.userAgent) ? '&' : '?';
   window.location.href = `sms:${receiver}${separator}body=${body}`;
+  return true;
 };
 
 const SignUpPhoneVerificationForm = ({
@@ -100,7 +109,6 @@ const SignUpPhoneVerificationForm = ({
   const [expiresAt, setExpiresAt] = useState<number | null>(storedVerification?.expiresAt ?? null);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [autoChecking, setAutoChecking] = useState(false);
 
   useEffect(() => {
     gsap.fromTo(
@@ -139,8 +147,11 @@ const SignUpPhoneVerificationForm = ({
         expiresAt: nextExpiresAt,
       });
       completedRef.current = false;
-      showToast('문자 앱에서 전송 버튼을 누르고 돌아오면 자동으로 인증됩니다.', 'success');
-      openSmsComposer(response);
+      if (openSmsComposer(response)) {
+        showToast('문자 앱에서 전송 버튼을 누르고 돌아오면 자동으로 인증됩니다.', 'success');
+      } else {
+        showToast('휴대폰에서 안내된 문자 내용을 전송하면 자동으로 인증됩니다.', 'success');
+      }
     } catch (error) {
       const axiosError = error as AxiosError<{ code?: string; message?: string }>;
       const code = axiosError.response?.data?.code;
@@ -161,14 +172,12 @@ const SignUpPhoneVerificationForm = ({
       setIssue(null);
       setExpiresAt(null);
       setRemainingSeconds(0);
-      setAutoChecking(false);
       clearStoredSmsVerification();
       showToast('문자 인증 시간이 만료되었습니다. 다시 인증해주세요.', 'error');
       return;
     }
 
     checkingRef.current = true;
-    setAutoChecking(true);
     try {
       await confirmSmsVerificationCode(issue.phoneNumber);
       completedRef.current = true;
@@ -179,7 +188,6 @@ const SignUpPhoneVerificationForm = ({
       // Octomo에 수신 문자가 아직 반영되지 않은 정상 대기 상태입니다.
     } finally {
       checkingRef.current = false;
-      setAutoChecking(false);
     }
   }, [expiresAt, issue, onNext]);
 
@@ -230,13 +238,8 @@ const SignUpPhoneVerificationForm = ({
 
   return (
     <div ref={wrapperRef} className="w-full flex flex-col items-center">
-      <div className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full text-left mb-[51px] max-xl:mb-[44px] max-lg:mb-[34px] max-md:mb-[36px] max-sm:mb-[36px]">
-        <p className="text-title-4 max-xl:text-title-5 max-lg:text-title-6 max-md:text-title-5 max-sm:text-title-5">
-          먼저 <span className="font-semibold">휴대폰 인증</span>을 진행해주세요
-        </p>
-        <p className="mt-3 text-body-4 text-grey04 leading-relaxed">
-          본인 휴대폰에서 안내 문자를 전송하면 인증 완료 후 가입 정보 입력 화면으로 이동합니다.
-        </p>
+      <div className="mb-6 w-[320px] text-left max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+        <p className="text-body-3 font-semibold text-grey06 max-md:text-body-2">휴대폰 번호</p>
       </div>
 
       <div className="mb-[16px] w-full flex justify-center">
@@ -251,7 +254,15 @@ const SignUpPhoneVerificationForm = ({
       </div>
 
       <AuthButton
-        label={loading ? '인증 준비 중...' : issue ? '문자 앱 다시 열기' : '문자 인증하기'}
+        label={
+          loading
+            ? '인증 준비 중...'
+            : issue
+              ? isMobileSmsEnvironment()
+                ? '문자 앱 다시 열기'
+                : '인증 상태 확인'
+              : '문자 인증하기'
+        }
         onClick={() => {
           if (issue) {
             openSmsComposer(issue);
@@ -264,7 +275,7 @@ const SignUpPhoneVerificationForm = ({
       />
 
       {issue && (
-        <div className="mt-5 w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full rounded-[18px] border border-purple02 bg-purple01/40 px-4 py-4 text-left">
+        <div className="mt-5 w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full rounded-[20px] border border-purple02 bg-gradient-to-br from-purple01/60 to-white px-4 py-4 text-left shadow-[0_10px_24px_rgba(118,56,250,0.08)]">
           <p className="text-body-3 font-semibold text-purple05">문자 전송 후 자동 확인 중</p>
           <p className="mt-2 text-body-5 text-grey05 leading-relaxed">
             모바일 웹에서는 문자 앱이 열립니다. 데스크톱에서는 본인 휴대폰에서 아래 내용을 그대로
@@ -280,7 +291,7 @@ const SignUpPhoneVerificationForm = ({
             </p>
           </div>
           <p className="mt-3 text-body-5 text-grey04">
-            {autoChecking ? '수신 여부를 확인하고 있어요.' : '문자 전송 후 잠시 기다려주세요.'}
+            수신 여부를 자동으로 확인하고 있어요.
             {remainingSeconds > 0 ? ` 남은 시간 ${formatSeconds(remainingSeconds)}` : ''}
           </p>
         </div>
