@@ -8,7 +8,7 @@ export const AuthTransition = () => {
   const sideCardRef = useRef<HTMLDivElement>(null);
 
   const [formStep, setFormStep] = useState<
-    'login' | 'signUp' | 'signUpFinal' | 'findPassword' | 'oauthIntegration'
+    'login' | 'signUp' | 'signUpAccount' | 'signUpFinal' | 'findPassword' | 'oauthIntegration'
   >('login');
 
   const getDistance = () => {
@@ -27,11 +27,15 @@ export const AuthTransition = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      if (formStep !== 'login') {
+      if (formStep === 'findPassword') {
         const newDistance = getDistance();
         gsap.set(formCardRef.current, { x: newDistance });
         gsap.set(sideCardRef.current, { x: -newDistance });
+        return;
       }
+
+      gsap.set(formCardRef.current, { x: 0 });
+      gsap.set(sideCardRef.current, { x: 0 });
     };
 
     window.addEventListener('resize', handleResize);
@@ -68,6 +72,13 @@ export const AuthTransition = () => {
   const goToLogin = () => {
     navigate('/login', { replace: true });
 
+    if (formStep !== 'findPassword') {
+      gsap.set(formCardRef.current, { x: 0 });
+      gsap.set(sideCardRef.current, { x: 0 });
+      setFormStep('login');
+      return;
+    }
+
     const distance = getDistance();
     const tl = gsap.timeline();
 
@@ -77,7 +88,7 @@ export const AuthTransition = () => {
       ease: 'power2.out',
       onUpdate: () => {
         const x = gsap.getProperty(formCardRef.current, 'x') as number;
-        if (x < distance / 2 && formStep !== 'login') {
+        if (x < distance / 2) {
           setFormStep('login');
         }
       },
@@ -94,7 +105,12 @@ export const AuthTransition = () => {
     );
   };
 
-  const goToSignUp = () => animateToRight('signUp');
+  const goToSignUp = () => {
+    gsap.set(formCardRef.current, { x: 0 });
+    gsap.set(sideCardRef.current, { x: 0 });
+    setFormStep('signUp');
+  };
+  const goToSignUpAccount = () => setFormStep('signUpAccount');
   const goToSignUpFinal = () => setFormStep('signUpFinal');
   const goToFindPassword = () => animateToRight('findPassword');
 
@@ -105,6 +121,7 @@ export const AuthTransition = () => {
     sideCardRef,
     goToLogin,
     goToSignUp,
+    goToSignUpAccount,
     goToSignUpFinal,
     goToFindPassword,
   };

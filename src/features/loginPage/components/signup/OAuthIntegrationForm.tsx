@@ -13,6 +13,7 @@ type OAuthIntegrationFormProps = {
   membershipGradeCode: string;
   onGoToLogin: () => void;
   onNext: (data: {
+    name: string;
     email: string;
     birthday: string;
     gender: string;
@@ -30,6 +31,7 @@ const OAuthIntegrationForm = ({
   onGoToLogin,
   onNext,
 }: OAuthIntegrationFormProps) => {
+  const [nameValue, setNameValue] = useState(name);
   const [email, setEmail] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
   const [birthday, setBirthday] = useState(initialBirthday);
@@ -38,6 +40,7 @@ const OAuthIntegrationForm = ({
   const [membershipGradeCode, setMembershipGradeCode] = useState(initialMembershipGradeCode);
 
   const isValid =
+    !!nameValue.trim() &&
     emailVerified &&
     !!birthday &&
     (gender === 'MALE' || gender === 'FEMALE') &&
@@ -46,14 +49,17 @@ const OAuthIntegrationForm = ({
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full text-left mb-[51px] max-xl:mb-[44px] max-lg:mb-[34px] max-md:mb-[30px] max-sm:mb-[30px]">
-        <p className="text-title-4 max-xl:text-title-5 max-lg:text-title-6 max-md:text-title-7 max-sm:text-title-7">
-          <span className="font-semibold">가입 정보를</span> 확인해주세요
-        </p>
+      <div className="mb-5 w-[320px] text-left max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+        <p className="text-body-3 font-semibold text-grey06 max-md:text-body-2">카카오 가입 정보</p>
       </div>
 
       <div className="mb-[20px] max-md:mb-[16px] max-sm:mb-[16px] w-full flex justify-center">
-        <AuthInput name="name" placeholder="이름" value={name} disabled />
+        <AuthInput
+          name="name"
+          placeholder="이름"
+          value={nameValue}
+          onChange={(event) => setNameValue(event.target.value)}
+        />
       </div>
 
       <div className="mb-[20px] max-md:mb-[16px] max-sm:mb-[16px] w-full flex justify-center">
@@ -107,8 +113,8 @@ const OAuthIntegrationForm = ({
           onCarrierChange={setCarrier}
           onGradeChange={setMembershipGradeCode}
         />
-        <p className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full text-body-5 text-grey04">
-          멤버십 번호 없이 선택한 통신사와 등급으로 가입합니다.
+        <p className="w-[320px] text-body-5 text-grey04 max-xl:w-[274px] max-lg:w-[205px] max-md:w-full">
+          선택한 등급 기준으로 가입됩니다.
         </p>
       </div>
 
@@ -116,6 +122,7 @@ const OAuthIntegrationForm = ({
         label="가입하기"
         onClick={() =>
           onNext({
+            name: nameValue.trim(),
             email,
             birthday,
             gender,

@@ -5,6 +5,7 @@ export type RadiusOption = 'all' | 'right' | 'left' | 'none';
 type Props = {
   children: ReactNode;
   radius?: RadiusOption;
+  variant?: 'default' | 'signup';
 };
 
 const getRadiusClass = (radius: RadiusOption) => {
@@ -21,13 +22,19 @@ const getRadiusClass = (radius: RadiusOption) => {
   }
 };
 
-const AuthFormCard = ({ children, radius = 'all' }: Props) => {
+const AuthFormCard = ({ children, radius = 'all', variant = 'default' }: Props) => {
   const radiusClass = getRadiusClass(radius);
+  const isSignup = variant === 'signup';
+  const sizeClass = isSignup
+    ? 'w-full max-w-[620px] max-xl:max-w-[560px] max-lg:max-w-[500px] px-10 py-9 max-xl:px-9 max-xl:py-8 max-lg:px-8 max-lg:py-7'
+    : 'w-[583px] max-xl:w-[500px] max-lg:w-[375px] max-md:w-full max-sm:w-full h-[639px] max-xl:h-[548px] max-lg:h-[430px] max-md:h-auto max-sm:h-auto';
+  const layoutClass = isSignup ? 'items-center justify-start' : 'items-center justify-center';
+  const visualClass = isSignup
+    ? 'relative border border-white/80 bg-white/[0.96] shadow-[0_24px_60px_rgba(37,9,97,0.14)] backdrop-blur-sm before:absolute before:inset-x-10 before:top-0 before:h-[3px] before:rounded-full before:bg-gradient-to-r before:from-purple03 before:via-pink03 before:to-orange03'
+    : 'bg-white drop-shadow-basic';
 
   return (
-    <div
-      className={`w-[583px] max-xl:w-[500px] max-lg:w-[375px] max-md:w-full max-sm:w-full h-[639px] max-xl:h-[548px] max-lg:h-[430px] max-md:h-auto max-sm:h-auto bg-white drop-shadow-basic flex flex-col items-center justify-center ${radiusClass}`}
-    >
+    <div className={`${sizeClass} ${visualClass} flex flex-col ${layoutClass} ${radiusClass}`}>
       {children}
     </div>
   );

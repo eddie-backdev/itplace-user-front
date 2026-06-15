@@ -3,17 +3,18 @@ import { AxiosError } from 'axios';
 import gsap from 'gsap';
 import { showToast } from '../../../../utils/toast';
 import AuthButton from '../common/AuthButton';
-import EmailVerificationBox from '../verification/EmailVerificationBox';
 import AuthFooter from '../common/AuthFooter';
 import useValidation from '../../hooks/useValidation';
 import { signUpFinal } from '../../apis/user';
-import PasswordInputForm from '../common/PasswordInputForm';
 import AuthInput from '../common/AuthInput';
 import MembershipProfileSelector from '../../../../components/membership/MembershipProfileSelector';
 
 type SignUpFinalFormProps = {
   onGoToLogin: () => void;
   phoneNumber: string;
+  email: string;
+  password: string;
+  passwordConfirm: string;
   initialName?: string;
   initialBirthday?: string;
   initialGender?: string;
@@ -24,6 +25,9 @@ type SignUpFinalFormProps = {
 const SignUpFinalForm = ({
   onGoToLogin,
   phoneNumber,
+  email,
+  password,
+  passwordConfirm,
   initialName = '',
   initialBirthday = '',
   initialGender = '',
@@ -46,41 +50,32 @@ const SignUpFinalForm = ({
     gender: initialGender,
     carrier: initialCarrier,
     membershipGradeCode: initialMembershipGradeCode,
-    email: '',
-    password: '',
-    passwordConfirm: '',
   });
 
-  const [emailVerified, setEmailVerified] = useState(false);
-
-  const { errors, validateAll, validateField } = useValidation();
+  const { errors, validateField } = useValidation();
 
   const handleChange = (field: keyof typeof formData, value: string) => {
-    const updated = { ...formData, [field]: value };
-    setFormData(updated);
-
-    if (field === 'email' || field === 'password' || field === 'passwordConfirm') {
-      validateField(field, value, updated);
-    }
+    setFormData((previous) => ({ ...previous, [field]: value }));
 
     if (field === 'birthday') {
       validateField('birth', value, {
-        email: updated.email,
-        password: updated.password,
-        passwordConfirm: updated.passwordConfirm,
+        email,
+        password,
+        passwordConfirm,
         birth: value,
       });
     }
   };
 
   const handleNext = async () => {
-    const valid = validateAll({
-      email: formData.email,
-      password: formData.password,
-      passwordConfirm: formData.passwordConfirm,
+    const isBirthValid = validateField('birth', formData.birthday, {
+      email,
+      password,
+      passwordConfirm,
       birth: formData.birthday,
     });
-    if (!valid || !emailVerified || !isProfileValid) {
+
+    if (!isProfileValid || !isBirthValid) {
       showToast('입력 정보를 다시 확인해주세요.', 'error');
       return;
     }
@@ -88,9 +83,9 @@ const SignUpFinalForm = ({
     try {
       await signUpFinal({
         name: formData.name.trim(),
-        email: formData.email,
-        password: formData.password,
-        passwordConfirm: formData.passwordConfirm,
+        email,
+        password,
+        passwordConfirm,
         phoneNumber,
         gender: formData.gender,
         birthday: formData.birthday,
@@ -130,6 +125,9 @@ const SignUpFinalForm = ({
 
   const isProfileValid =
     phoneNumber &&
+    email &&
+    password &&
+    passwordConfirm &&
     formData.name.trim() &&
     formData.birthday.trim() &&
     (formData.gender === 'MALE' || formData.gender === 'FEMALE') &&
@@ -137,29 +135,14 @@ const SignUpFinalForm = ({
     formData.membershipGradeCode &&
     !errors.birth;
 
-  const isValid =
-    isProfileValid &&
-    formData.email &&
-    formData.password &&
-    formData.passwordConfirm &&
-    formData.password === formData.passwordConfirm &&
-    !errors.email &&
-    !errors.password &&
-    !errors.passwordConfirm &&
-    emailVerified;
-
   return (
-    <div ref={wrapperRef} className="w-full max-h-full overflow-y-auto px-2 py-6 flex flex-col">
-      <div className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full text-left mx-auto">
-        <p className="text-title-4 max-xl:text-title-5 max-lg:text-title-6 max-md:text-title-5 max-sm:text-title-5">
-          가입 정보를 입력해주세요
-        </p>
-        <p className="mt-3 text-body-5 text-grey04">
-          휴대폰 인증 완료: <span className="font-semibold text-purple05">{phoneNumber}</span>
-        </p>
+    <div ref={wrapperRef} className="flex w-full flex-col px-2 py-2">
+      <div className="mx-auto mb-5 w-[320px] text-left max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+        <p className="text-body-3 font-semibold text-grey06 max-md:text-body-2">가입 정보</p>
+        <p className="mt-2 text-body-5 text-grey04">혜택 추천에 필요한 정보를 입력해주세요.</p>
       </div>
 
-      <div className="w-full mt-[28px] max-xl:mt-[24px] max-lg:mt-[20px] max-md:mt-[24px] max-sm:mt-[24px] flex flex-col items-center gap-[14px]">
+      <div className="flex w-full flex-col items-center gap-[14px]">
         <AuthInput
           name="name"
           placeholder="이름"
@@ -207,40 +190,17 @@ const SignUpFinalForm = ({
             onCarrierChange={(carrier) => handleChange('carrier', carrier)}
             onGradeChange={(grade) => handleChange('membershipGradeCode', grade)}
           />
-          <p className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full text-body-5 text-grey04">
-            선택한 통신사와 등급으로 맞춤 혜택을 보여드려요.
+          <p className="w-[320px] text-body-5 text-grey04 max-xl:w-[274px] max-lg:w-[205px] max-md:w-full">
+            선택한 등급 기준으로 맞춤 혜택을 추천합니다.
           </p>
         </div>
-      </div>
-
-      <div className="w-full mt-[18px] flex justify-center">
-        <EmailVerificationBox
-          email={formData.email}
-          onChangeEmail={(val) => {
-            setEmailVerified(false);
-            handleChange('email', val);
-          }}
-          onVerifiedChange={setEmailVerified}
-          mode="signup"
-        />
-      </div>
-
-      <div className="mt-[14px] w-full">
-        <PasswordInputForm
-          password={formData.password}
-          passwordConfirm={formData.passwordConfirm}
-          onChangePassword={(val) => handleChange('password', val)}
-          onChangeConfirm={(val) => handleChange('passwordConfirm', val)}
-          passwordError={errors.password}
-          passwordConfirmError={errors.passwordConfirm}
-        />
       </div>
 
       <div className="flex justify-center">
         <AuthButton
           label="회원가입"
           onClick={() => void handleNext()}
-          variant={isValid ? 'default' : 'disabled'}
+          variant={isProfileValid ? 'default' : 'disabled'}
           className="mt-[32px] max-md:mt-[28px] max-sm:mt-[28px]"
         />
       </div>
