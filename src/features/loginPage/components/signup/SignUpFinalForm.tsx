@@ -3,11 +3,16 @@ import { AxiosError } from 'axios';
 import gsap from 'gsap';
 import { showToast } from '../../../../utils/toast';
 import AuthButton from '../common/AuthButton';
-import AuthFooter from '../common/AuthFooter';
 import useValidation from '../../hooks/useValidation';
 import { signUpFinal } from '../../apis/user';
 import AuthInput from '../common/AuthInput';
 import MembershipProfileSelector from '../../../../components/membership/MembershipProfileSelector';
+import BirthDateInput from './BirthDateInput';
+import {
+  birthDateInputToApiDate,
+  formatBirthDateInput,
+  isCompleteBirthDateInput,
+} from '../../utils/birthDate';
 
 type SignUpFinalFormProps = {
   onGoToLogin: () => void;
@@ -46,7 +51,7 @@ const SignUpFinalForm = ({
 
   const [formData, setFormData] = useState({
     name: initialName,
-    birthday: initialBirthday,
+    birthday: formatBirthDateInput(initialBirthday),
     gender: initialGender,
     carrier: initialCarrier,
     membershipGradeCode: initialMembershipGradeCode,
@@ -88,7 +93,7 @@ const SignUpFinalForm = ({
         passwordConfirm,
         phoneNumber,
         gender: formData.gender,
-        birthday: formData.birthday,
+        birthday: birthDateInputToApiDate(formData.birthday),
         carrier: formData.carrier,
         membershipGradeCode: formData.membershipGradeCode,
       });
@@ -129,7 +134,7 @@ const SignUpFinalForm = ({
     password &&
     passwordConfirm &&
     formData.name.trim() &&
-    formData.birthday.trim() &&
+    isCompleteBirthDateInput(formData.birthday) &&
     (formData.gender === 'MALE' || formData.gender === 'FEMALE') &&
     formData.carrier &&
     formData.membershipGradeCode &&
@@ -150,12 +155,9 @@ const SignUpFinalForm = ({
           onChange={(event) => handleChange('name', event.target.value)}
         />
 
-        <input
-          type="date"
-          name="birth"
+        <BirthDateInput
           value={formData.birthday}
-          onChange={(event) => handleChange('birthday', event.target.value)}
-          className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full h-[48px] max-xl:h-[41px] max-lg:h-[32px] max-md:h-[48px] max-sm:h-[50px] px-[16px] max-xl:px-[14px] max-lg:px-[11px] max-md:px-[16px] max-sm:px-[16px] rounded-[18px] max-xl:rounded-[15px] max-lg:rounded-[12px] max-md:rounded-[16px] max-sm:rounded-[16px] border border-grey02 text-body-2 max-xl:text-body-3 max-lg:text-body-4 max-md:text-body-3 max-sm:text-body-3 text-grey05"
+          onChange={(value) => handleChange('birthday', value)}
         />
 
         <div className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full flex gap-[14px]">
@@ -189,6 +191,7 @@ const SignUpFinalForm = ({
             membershipGradeCode={formData.membershipGradeCode}
             onCarrierChange={(carrier) => handleChange('carrier', carrier)}
             onGradeChange={(grade) => handleChange('membershipGradeCode', grade)}
+            gradeMenuPlacement="top"
           />
           <p className="w-[320px] text-body-5 text-grey04 max-xl:w-[274px] max-lg:w-[205px] max-md:w-full">
             선택한 등급 기준으로 맞춤 혜택을 추천합니다.
@@ -202,14 +205,6 @@ const SignUpFinalForm = ({
           onClick={() => void handleNext()}
           variant={isProfileValid ? 'default' : 'disabled'}
           className="mt-[32px] max-md:mt-[28px] max-sm:mt-[28px]"
-        />
-      </div>
-
-      <div className="flex justify-center">
-        <AuthFooter
-          leftText="이미 회원이신가요?"
-          rightText="로그인 하러 가기"
-          onRightClick={onGoToLogin}
         />
       </div>
     </div>

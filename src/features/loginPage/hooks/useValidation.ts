@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { showToast } from '../../../utils/toast';
+import { birthDateInputToApiDate, isCompleteBirthDateInput } from '../utils/birthDate';
 
 type FormData = {
   email: string;
@@ -45,23 +46,26 @@ const useValidation = () => {
       }
 
       if (field === 'birth' && value) {
-        const inputDate = new Date(value);
-        const today = new Date();
+        if (!isCompleteBirthDateInput(value)) {
+          message = '생년월일을 YYYY.MM.DD 형식으로 입력해주세요.';
+        } else {
+          const normalizedValue = birthDateInputToApiDate(value);
+          const inputDate = new Date(`${normalizedValue}T00:00:00`);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
 
-        // 오늘 날짜인지 확인
-        if (inputDate.toDateString() === today.toDateString()) {
-          showToast('오늘은 선택이 불가능해요!', 'error');
-          message = '생년월일을 다시 확인해주세요.';
-        }
-        // 미래 날짜인지 확인
-        else if (inputDate > today) {
-          showToast('미래는 선택이 불가능해요!', 'error');
-          message = '생년월일을 다시 확인해주세요.';
-        }
-        // 너무 오래된 날짜인지 확인 (예: 1900년 이전)
-        else if (inputDate < new Date('1900-01-01')) {
-          showToast('생년월일을 다시 확인해주세요.', 'error');
-          message = '생년월일을 다시 확인해주세요.';
+          if (Number.isNaN(inputDate.getTime())) {
+            message = '생년월일을 다시 확인해주세요.';
+          } else if (inputDate.toDateString() === today.toDateString()) {
+            showToast('오늘은 선택이 불가능해요!', 'error');
+            message = '생년월일을 다시 확인해주세요.';
+          } else if (inputDate > today) {
+            showToast('미래는 선택이 불가능해요!', 'error');
+            message = '생년월일을 다시 확인해주세요.';
+          } else if (inputDate < new Date('1900-01-01T00:00:00')) {
+            showToast('생년월일을 다시 확인해주세요.', 'error');
+            message = '생년월일을 다시 확인해주세요.';
+          }
         }
       }
 

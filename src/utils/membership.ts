@@ -21,9 +21,9 @@ export type MembershipGradeOption = {
 };
 
 export const CARRIER_OPTIONS: Array<{ code: CarrierCode; label: string }> = [
-  { code: 'LGU', label: 'LG U+' },
   { code: 'SKT', label: 'SKT' },
   { code: 'KT', label: 'KT' },
+  { code: 'LGU', label: 'LG U+' },
 ];
 
 export const MEMBERSHIP_GRADE_OPTIONS_BY_CARRIER: Record<CarrierCode, MembershipGradeOption[]> = {

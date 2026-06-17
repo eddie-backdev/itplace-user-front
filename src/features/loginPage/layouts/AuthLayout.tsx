@@ -8,10 +8,11 @@ import { showToast } from '../../../utils/toast';
 import LoginForm from '../components/login/LoginForm';
 import FindPasswordForm from '../components/find/FindPasswordForm';
 import OAuthIntegrationForm from '../components/signup/OAuthIntegrationForm';
+import OAuthAccountLinkForm from '../components/signup/OAuthAccountLinkForm';
 import SignUpAccountForm from '../components/signup/SignUpAccountForm';
 import SignUpPhoneVerificationForm from '../components/signup/SignUpPhoneVerificationForm';
 import SignUpFinalForm from '../components/signup/SignUpFinalForm';
-import { oauthSignUp } from '../apis/user';
+import { oauthLink, oauthSignUp } from '../apis/user';
 import { getOAuthResult } from '../apis/auth';
 import { AuthTransition } from '../hooks/AuthTransition';
 import { useDispatch } from 'react-redux';
@@ -46,27 +47,30 @@ const SignupFlowCard = ({ children }: { children: ReactNode }) => {
       label: '내 주변 혜택',
       detail: '지도 기반 탐색',
       icon: TbMapPin,
-      tone: 'from-purple04 to-purple03',
+      tone: 'from-accentBlue to-accentTeal',
+      iconColor: 'text-white',
     },
     {
       label: '멤버십 등급',
       detail: '맞춤 혜택',
       icon: TbTicket,
-      tone: 'from-orange04 to-orange03',
+      tone: 'from-accentGold to-accentGoldDark',
+      iconColor: 'text-grey07',
     },
     {
       label: '관심 혜택',
       detail: '놓치지 않게',
       icon: TbSparkles,
-      tone: 'from-pink03 to-purple03',
+      tone: 'from-accentRose to-accentRoseDark',
+      iconColor: 'text-white',
     },
   ];
 
   return (
-    <section className="relative w-full max-w-[540px] overflow-hidden rounded-[30px] border border-purple02/70 bg-white shadow-[0_24px_60px_rgba(37,9,97,0.14)]">
-      <div className="relative overflow-hidden bg-gradient-to-br from-purple05 via-purple04 to-orange04 px-8 pb-6 pt-7 text-white max-lg:px-7">
+    <section className="relative w-full max-w-[540px] overflow-hidden rounded-[30px] border border-purple02/70 bg-white shadow-[0_24px_60px_rgba(16,17,20,0.12)]">
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple06 via-purple04 to-purple03 px-8 pb-5 pt-6 text-white max-lg:px-7">
         <div className="absolute -right-12 -top-16 h-36 w-36 rounded-full bg-white/15 blur-2xl" />
-        <div className="absolute -bottom-16 left-10 h-36 w-36 rounded-full bg-orange02/25 blur-2xl" />
+        <div className="absolute -bottom-16 left-10 h-36 w-36 rounded-full bg-purple03/25 blur-2xl" />
 
         <div className="relative flex items-center justify-center gap-5">
           {motifs.map((motif, index) => {
@@ -75,7 +79,7 @@ const SignupFlowCard = ({ children }: { children: ReactNode }) => {
             return (
               <div key={motif.label} className="flex flex-col items-center">
                 <span
-                  className={`flex items-center justify-center rounded-[24px] bg-gradient-to-br ${motif.tone} text-white shadow-[0_14px_30px_rgba(37,9,97,0.2)] ring-1 ring-white/25 ${
+                  className={`flex items-center justify-center rounded-[24px] bg-gradient-to-br ${motif.tone} ${motif.iconColor} shadow-[0_14px_30px_rgba(16,17,20,0.16)] ring-1 ring-white/25 ${
                     isCenter ? 'h-[68px] w-[68px]' : 'mt-2 h-[54px] w-[54px]'
                   }`}
                 >
@@ -88,12 +92,12 @@ const SignupFlowCard = ({ children }: { children: ReactNode }) => {
           })}
         </div>
 
-        <div className="relative mt-6 text-center">
+        <div className="relative mt-4 text-center">
           <div className="flex items-center justify-center gap-2 text-title-7 font-bold text-white/90">
             <TbHeartHandshake className="text-[22px]" strokeWidth={1.8} />
             IT:PLACE 회원가입
           </div>
-          <p className="mt-2.5 text-title-5 font-bold leading-snug max-lg:text-title-6">
+          <p className="mt-2 text-title-6 font-bold leading-snug max-lg:text-title-7">
             내 멤버십에 맞는 혜택을
             <br />더 빠르게 찾아드릴게요
           </p>
@@ -125,6 +129,8 @@ const AuthLayout = () => {
   const location = useLocation();
   const [signUpData, setSignUpData] = useState(emptyLocalSignupData);
   const [oauthUserData, setOAuthUserData] = useState(emptyOAuthUserData);
+  const [oauthLinkEmail, setOAuthLinkEmail] = useState('');
+  const [isOAuthLinking, setIsOAuthLinking] = useState(false);
   const [isOAuthProcessing, setIsOAuthProcessing] = useState(false);
   const { isMobile } = useResponsive();
   const hasInitialized = useRef(false);
@@ -132,7 +138,8 @@ const AuthLayout = () => {
     formStep === 'signUp' ||
     formStep === 'signUpAccount' ||
     formStep === 'signUpFinal' ||
-    formStep === 'oauthIntegration';
+    formStep === 'oauthIntegration' ||
+    formStep === 'oauthLink';
 
   const checkOAuthResult = useCallback(async () => {
     try {
@@ -239,11 +246,62 @@ const AuthLayout = () => {
         setOAuthUserData(emptyOAuthUserData);
       }, 500);
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
+      const axiosError = error as AxiosError<{ code?: string; message?: string }>;
+
+      if (axiosError.response?.data?.code === 'DUPLICATE_EMAIL') {
+        setOAuthLinkEmail(email);
+        setFormStep('oauthLink');
+        showToast('이미 동일한 이메일로 가입된 계정이 있습니다.', 'info');
+        return;
+      }
+
       const msg =
         axiosError.response?.data?.message || '회원가입에 실패했습니다. 다시 시도해주세요.';
 
       showToast(msg, 'error');
+    }
+  };
+
+  const handleOAuthLink = async (password: string) => {
+    if (!oauthLinkEmail || !password.trim()) {
+      showToast('기존 계정 비밀번호를 입력해주세요.', 'error');
+      return;
+    }
+
+    try {
+      setIsOAuthLinking(true);
+      const response = await oauthLink({ email: oauthLinkEmail, password });
+      const data = response.data.data;
+
+      if (data) {
+        dispatch(
+          setLoginSuccess({
+            name: data.name,
+            carrier: data.carrier ?? null,
+            membershipGrade: data.membershipGradeCode || data.membershipGrade || 'NORMAL',
+            membershipGradeCode: data.membershipGradeCode || data.membershipGrade || null,
+            membershipVerified: data.membershipVerified ?? false,
+          })
+        );
+      }
+
+      showToast('카카오 계정이 기존 계정에 연동되었습니다.', 'success');
+      navigate('/', { replace: true });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ code?: string; message?: string }>;
+      const code = axiosError.response?.data?.code;
+
+      if (code === 'UNAUTHORIZED_ACCESS' || code === 'PASSWORD_MISMATCH') {
+        showToast('비밀번호가 일치하지 않습니다.', 'error');
+        return;
+      }
+
+      showToast(
+        axiosError.response?.data?.message || '계정 연동에 실패했습니다. 다시 시도해주세요.',
+        'error'
+      );
+    } finally {
+      setIsOAuthLinking(false);
     }
   };
 
@@ -279,7 +337,6 @@ const AuthLayout = () => {
       {formStep === 'signUp' && (
         <SignUpPhoneVerificationForm
           initialPhoneNumber={signUpData.phoneNumber}
-          onGoToLogin={goToLogin}
           onNext={(phoneNumber) => {
             setSignUpData((previous) => ({ ...previous, phoneNumber }));
             goToSignUpAccount();
@@ -293,7 +350,6 @@ const AuthLayout = () => {
           initialEmail={signUpData.email}
           initialPassword={signUpData.password}
           initialPasswordConfirm={signUpData.passwordConfirm}
-          onGoToLogin={goToLogin}
           onNext={(accountData) => {
             setSignUpData((previous) => ({ ...previous, ...accountData }));
             goToSignUpFinal();
@@ -323,8 +379,23 @@ const AuthLayout = () => {
           gender={oauthUserData.gender}
           carrier={oauthUserData.carrier}
           membershipGradeCode={oauthUserData.membershipGradeCode}
-          onGoToLogin={goToLogin}
           onNext={handleOAuthSignup}
+          onDuplicateEmail={(email) => {
+            setOAuthLinkEmail(email);
+            setFormStep('oauthLink');
+          }}
+        />
+      )}
+
+      {formStep === 'oauthLink' && (
+        <OAuthAccountLinkForm
+          email={oauthLinkEmail}
+          loading={isOAuthLinking}
+          onLink={handleOAuthLink}
+          onBack={() => {
+            setOAuthLinkEmail('');
+            setFormStep('oauthIntegration');
+          }}
         />
       )}
 
@@ -353,10 +424,10 @@ const AuthLayout = () => {
     return (
       <div
         key="signup-flow"
-        className="relative min-h-[100dvh] overflow-hidden bg-gradient-to-br from-[#fbf8ff] via-white to-[#fff6ec] max-md:fixed max-md:inset-0 max-md:h-[100dvh] max-md:bg-white max-md:overflow-hidden"
+        className="relative min-h-[100dvh] overflow-hidden bg-gradient-to-br from-purple01/60 via-white to-grey01 max-md:fixed max-md:inset-0 max-md:h-[100dvh] max-md:bg-white max-md:overflow-hidden"
       >
         <div className="pointer-events-none absolute left-[7%] top-8 h-64 w-64 rounded-full bg-purple02/35 blur-3xl max-md:hidden" />
-        <div className="pointer-events-none absolute bottom-10 right-[8%] h-72 w-72 rounded-full bg-orange02/35 blur-3xl max-md:hidden" />
+        <div className="pointer-events-none absolute bottom-10 right-[8%] h-72 w-72 rounded-full bg-purple03/25 blur-3xl max-md:hidden" />
         <div className="pointer-events-none absolute left-[58%] top-[18%] h-28 w-28 rounded-full border border-purple02/50 max-md:hidden" />
 
         <div className="fixed top-0 left-0 z-[9999] hidden w-full max-md:block">
@@ -370,7 +441,7 @@ const AuthLayout = () => {
           {renderFormContent()}
         </div>
 
-        <div className="relative flex min-h-[100dvh] w-full items-start justify-center overflow-y-auto px-6 py-10 max-md:hidden">
+        <div className="relative flex min-h-[100dvh] w-full items-center justify-center overflow-y-auto px-6 py-12 max-xl:py-10 max-lg:items-start max-md:hidden">
           <div className="flex w-full max-w-[540px] justify-center" style={{ transform: 'none' }}>
             <SignupFlowCard>{renderFormContent()}</SignupFlowCard>
           </div>

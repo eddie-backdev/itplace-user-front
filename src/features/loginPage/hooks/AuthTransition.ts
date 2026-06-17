@@ -8,7 +8,13 @@ export const AuthTransition = () => {
   const sideCardRef = useRef<HTMLDivElement>(null);
 
   const [formStep, setFormStep] = useState<
-    'login' | 'signUp' | 'signUpAccount' | 'signUpFinal' | 'findPassword' | 'oauthIntegration'
+    | 'login'
+    | 'signUp'
+    | 'signUpAccount'
+    | 'signUpFinal'
+    | 'findPassword'
+    | 'oauthIntegration'
+    | 'oauthLink'
   >('login');
 
   const getDistance = () => {

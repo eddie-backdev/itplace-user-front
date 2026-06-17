@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import AuthButton from '../common/AuthButton';
-import AuthFooter from '../common/AuthFooter';
+import AuthInput from '../common/AuthInput';
 import EmailVerificationBox from '../verification/EmailVerificationBox';
 import PasswordInputForm from '../common/PasswordInputForm';
 import useValidation from '../../hooks/useValidation';
@@ -12,7 +12,6 @@ type SignUpAccountFormProps = {
   initialPassword?: string;
   initialPasswordConfirm?: string;
   phoneNumber: string;
-  onGoToLogin: () => void;
   onNext: (data: { email: string; password: string; passwordConfirm: string }) => void;
 };
 
@@ -21,7 +20,6 @@ const SignUpAccountForm = ({
   initialPassword = '',
   initialPasswordConfirm = '',
   phoneNumber,
-  onGoToLogin,
   onNext,
 }: SignUpAccountFormProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -64,9 +62,23 @@ const SignUpAccountForm = ({
 
   return (
     <div ref={wrapperRef} className="flex w-full flex-col items-center">
-      <div className="mb-5 w-[320px] text-left max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+      <div className="mb-4 w-[320px] text-left max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
         <p className="text-body-3 font-semibold text-grey06 max-md:text-body-2">계정 정보</p>
-        <p className="mt-2 text-body-5 text-grey04">인증된 번호 {phoneNumber}</p>
+        <p className="mt-1.5 text-body-5 text-grey04">이메일과 비밀번호를 설정해 주세요.</p>
+      </div>
+
+      <div className="mb-3 w-full flex justify-center">
+        <div className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+          <p className="mb-1.5 text-caption font-semibold text-grey04">인증된 휴대폰 번호</p>
+          <AuthInput
+            name="verifiedPhoneNumber"
+            value={phoneNumber}
+            disabled
+            bgColor="bg-purple01/45"
+            textColor="text-purple05"
+            className="font-semibold"
+          />
+        </div>
       </div>
 
       <div className="w-full flex justify-center">
@@ -110,12 +122,6 @@ const SignUpAccountForm = ({
         onClick={handleNext}
         variant={isValid ? 'default' : 'disabled'}
         className="mt-[32px] max-md:mt-[28px] max-sm:mt-[28px]"
-      />
-
-      <AuthFooter
-        leftText="이미 회원이신가요?"
-        rightText="로그인 하러 가기"
-        onRightClick={onGoToLogin}
       />
     </div>
   );

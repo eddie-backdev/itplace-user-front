@@ -22,20 +22,24 @@ setInterval(() => {
   }
 }, CLEANUP_INTERVAL);
 
-// ✅ 공통 스타일: flex로 중앙정렬 + gap
+// ✅ 공통 스타일: 작고 세련된 floating pill
 const commonStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: '0px 20px', // 세로로 납작
-  borderRadius: '8px', // 둥근 모서리
-  fontSize: '16px', // 텍스트 크기
-  fontWeight: 400,
-  whiteSpace: 'nowrap', // 줄바꿈 안 하고 한 줄로
-  width: 'auto', // 토스트 너비 글자 수에 따라 자동
-  minWidth: '250px',
-  maxWidth: 'none', // 토스트 최대 너비 제한 해제
-  minHeight: '45px',
+  gap: '8px',
+  padding: '11px 18px',
+  borderRadius: '18px',
+  fontSize: '14px',
+  fontWeight: 700,
+  lineHeight: 1.35,
+  whiteSpace: 'normal',
+  width: 'fit-content',
+  minWidth: '0',
+  maxWidth: 'min(420px, calc(100vw - 32px))',
+  minHeight: '40px',
+  boxShadow: '0 12px 28px rgba(16, 17, 20, 0.18)',
+  backdropFilter: 'blur(12px)',
 };
 
 // ✅ 타입별 스타일
@@ -43,22 +47,22 @@ const toastStyles: Record<'success' | 'error' | 'info', ToastOptions> = {
   success: {
     style: {
       ...commonStyle,
-      backgroundColor: '#4CAF50', // 초록
-      color: '#ffffff',
+      backgroundColor: 'rgba(20, 158, 97, 0.94)',
+      color: '#FFFFFF',
     },
   },
   error: {
     style: {
       ...commonStyle,
-      backgroundColor: '#D7263D', // 빨강
-      color: '#ffffff',
+      backgroundColor: 'rgba(215, 38, 61, 0.94)',
+      color: '#FFFFFF',
     },
   },
   info: {
     style: {
       ...commonStyle,
-      backgroundColor: '#38383B', // 회색
-      color: '#ffffff',
+      backgroundColor: 'rgba(16, 17, 20, 0.9)',
+      color: '#FFFFFF',
     },
   },
 };
@@ -82,16 +86,16 @@ export function showToast(
   // 현재 시간을 기록
   lastToastTime.set(toastKey, now);
 
-  let icon: ToastIcon = <MdInfo size={20} color="#fff" />;
+  let icon: ToastIcon = <MdInfo size={18} color="#FFFFFF" />;
 
   if (type === 'success') {
-    icon = <MdCheckCircle size={20} color="#fff" />;
+    icon = <MdCheckCircle size={18} color="#FFFFFF" />;
   }
   if (type === 'error') {
-    icon = <MdError size={20} color="#fff" />;
+    icon = <MdError size={18} color="#FFFFFF" />;
   }
   if (type === 'info') {
-    icon = <MdInfo size={20} color="#fff" />;
+    icon = <MdInfo size={18} color="#FFFFFF" />;
   }
 
   // ✅ toast 호출할 때 최종 스타일 병합
@@ -100,16 +104,13 @@ export function showToast(
     ...options?.style, // 여기에 사용자가 넘긴 width만 덮어쓰기
   };
 
-  // ✅ 모바일인지 아닌지 판별 (767px 이하를 모바일로 간주)
-  const isMobile = window.innerWidth <= 767;
-
   toast(message, {
     ...options, // ✅ 먼저 사용자가 전달한 옵션을 펼치기
-    position: options?.position || (isMobile ? 'bottom-center' : 'top-center'),
+    position: options?.position || 'top-center',
     icon,
     ...toastStyles[type],
     style: customStyle, // ✅ 맨 마지막에 최종 스타일을 덮어쓰기
-    className: isMobile ? 'custom-toast' : undefined,
+    className: 'custom-toast',
   });
 }
 

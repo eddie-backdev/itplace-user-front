@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AxiosError } from 'axios';
 import gsap from 'gsap';
 import AuthButton from '../common/AuthButton';
-import AuthFooter from '../common/AuthFooter';
 import AuthInput from '../common/AuthInput';
 import { showToast } from '../../../../utils/toast';
 import {
@@ -13,7 +12,6 @@ import {
 
 type SignUpPhoneVerificationFormProps = {
   initialPhoneNumber?: string;
-  onGoToLogin: () => void;
   onNext: (phoneNumber: string) => void;
 };
 
@@ -93,7 +91,6 @@ const openSmsComposer = ({
 
 const SignUpPhoneVerificationForm = ({
   initialPhoneNumber = '',
-  onGoToLogin,
   onNext,
 }: SignUpPhoneVerificationFormProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -275,7 +272,7 @@ const SignUpPhoneVerificationForm = ({
       />
 
       {issue && (
-        <div className="mt-5 w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full rounded-[20px] border border-purple02 bg-gradient-to-br from-purple01/60 to-white px-4 py-4 text-left shadow-[0_10px_24px_rgba(118,56,250,0.08)]">
+        <div className="mt-5 w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full rounded-[20px] border border-purple02 bg-gradient-to-br from-purple01/60 to-white px-4 py-4 text-left shadow-[0_10px_24px_rgba(113,50,245,0.08)]">
           <p className="text-body-3 font-semibold text-purple05">문자 전송 후 자동 확인 중</p>
           <p className="mt-2 text-body-5 text-grey05 leading-relaxed">
             모바일 웹에서는 문자 앱이 열립니다. 데스크톱에서는 본인 휴대폰에서 아래 내용을 그대로
@@ -296,12 +293,6 @@ const SignUpPhoneVerificationForm = ({
           </p>
         </div>
       )}
-
-      <AuthFooter
-        leftText="이미 회원이신가요?"
-        rightText="로그인 하러 가기"
-        onRightClick={onGoToLogin}
-      />
     </div>
   );
 };

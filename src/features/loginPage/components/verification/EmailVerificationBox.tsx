@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import AuthInput from '../common/AuthInput';
 import ErrorMessage from '../common/ErrorMessage';
-import Modal from '../../../../components/Modal';
 import useEmailVerification from '../../hooks/useEmailVerification';
-import LoadingSpinner from '../../../../components/LoadingSpinner'; // LoadingSpinner 가져오기
+import LoadingSpinner from '../../../../components/LoadingSpinner';
 
 type Props = {
   email: string;
@@ -11,6 +10,7 @@ type Props = {
   onVerifiedChange?: (verified: boolean) => void;
   mode?: 'signup' | 'reset';
   onResetTokenChange?: (token: string) => void;
+  onDuplicateEmail?: (email: string) => void;
 };
 
 const EmailVerificationBox = ({
@@ -19,6 +19,7 @@ const EmailVerificationBox = ({
   onVerifiedChange,
   mode,
   onResetTokenChange,
+  onDuplicateEmail,
 }: Props) => {
   const [code, setCode] = useState('');
   const [manualLoading, setManualLoading] = useState(false); // 버튼 로딩 전용
@@ -29,7 +30,7 @@ const EmailVerificationBox = ({
     sendCode,
     verifyCode,
     loading, // useEmailVerification 내부 로딩
-  } = useEmailVerification({ email, onVerifiedChange, mode, onResetTokenChange });
+  } = useEmailVerification({ email, onVerifiedChange, mode, onResetTokenChange, onDuplicateEmail });
 
   // 이메일이 변경되면 인증번호 입력 초기화
   useEffect(() => {
@@ -95,13 +96,16 @@ const EmailVerificationBox = ({
         </div>
       )}
 
-      {/* 로딩 모달 */}
+      {/* 로딩 상태: 큰 모달 대신 작은 floating pill */}
       {loading && (
-        <Modal isOpen={loading} title="인증 메일을 전송 중입니다." onClose={() => {}}>
-          <div className="w-full flex justify-center mt-[16px] max-xl:mt-[14px] max-lg:mt-[11px] max-md:mt-[12px] max-sm:mt-[14px]">
-            <LoadingSpinner />
-          </div>
-        </Modal>
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed left-[calc(50%+40.5px)] top-6 z-[10001] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/70 bg-grey07/90 px-4 py-2.5 text-body-3-bold text-white shadow-[0_14px_34px_rgba(16,17,20,0.22)] backdrop-blur-md max-md:left-1/2 max-md:top-auto max-md:bottom-6 max-md:text-body-4-bold"
+        >
+          <LoadingSpinner className="h-4 w-4 border-2 border-white/70 border-t-transparent" />
+          <span>인증 메일 전송 중</span>
+        </div>
       )}
     </div>
   );

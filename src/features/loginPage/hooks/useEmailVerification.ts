@@ -12,6 +12,7 @@ type UseEmailVerificationProps = {
   onVerifiedChange?: (verified: boolean) => void;
   mode?: Mode;
   onResetTokenChange?: (token: string) => void;
+  onDuplicateEmail?: (email: string) => void;
 };
 
 const useEmailVerification = ({
@@ -19,6 +20,7 @@ const useEmailVerification = ({
   onVerifiedChange,
   mode = 'signup',
   onResetTokenChange, // ← 이 부분 추가!
+  onDuplicateEmail,
 }: UseEmailVerificationProps) => {
   const [emailSent, setEmailSent] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
@@ -86,7 +88,10 @@ const useEmailVerification = ({
       let msg = '인증에 실패했습니다.';
       if (axios.isAxiosError(err)) {
         const errorCode = err.response?.data?.code;
-        if (errorCode === 'EMAIL_CODE_MISMATCH') {
+        if (errorCode === 'DUPLICATE_EMAIL' && mode === 'signup') {
+          msg = '이미 동일한 이메일로 가입된 자체 계정이 있습니다.';
+          onDuplicateEmail?.(email);
+        } else if (errorCode === 'EMAIL_CODE_MISMATCH') {
           msg = '인증번호가 일치하지 않습니다.';
         } else if (errorCode === 'EMAIL_CODE_EXPIRED') {
           msg = '인증번호가 만료되었습니다.';

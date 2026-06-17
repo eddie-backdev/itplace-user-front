@@ -55,6 +55,10 @@ export const oauthSignUp = (data: {
   return api.post('/api/v1/auth/oauth/signUp', data);
 };
 
+export const oauthLink = (data: { email: string; password: string }) => {
+  return api.post('/api/v1/auth/oauth/link', data);
+};
+
 export const verifyRecaptcha = async (recaptchaToken: string) => {
   return await api.post('/api/v1/auth/recaptcha', {
     recaptchaToken,
