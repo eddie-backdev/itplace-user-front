@@ -77,7 +77,7 @@ const SimpleRanking: React.FC<SimpleRankingProps> = ({ className = '' }) => {
 
   return (
     <div
-      className={`w-full rounded-[24px] bg-orange01 px-5 py-5 shadow-[0_18px_40px_rgba(251,146,60,0.18)] md:px-6 md:py-6 max-md:rounded-[20px] max-md:shadow-none ${className}`}
+      className={`w-full rounded-[24px] bg-orange01 px-5 py-5 shadow-[0_18px_40px_rgba(20,158,97,0.14)] md:px-6 md:py-6 max-md:rounded-[20px] max-md:shadow-none ${className}`}
     >
       <div className="hidden md:grid md:grid-cols-[minmax(180px,220px)_repeat(3,minmax(0,1fr))] md:items-stretch md:gap-3">
         <div className="flex flex-col justify-center">

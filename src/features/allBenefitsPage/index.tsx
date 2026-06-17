@@ -274,7 +274,7 @@ const AllBenefitsLayout: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-grey01 bg-[#fbfbfd] p-4 md:p-5">
+          <div className="rounded-[24px] border border-grey01 bg-grey01 p-4 md:p-5">
             <div>
               <label className="mb-2 block text-body-4 font-medium text-grey04">제휴처 검색</label>
               <SearchBar
@@ -373,7 +373,7 @@ const AllBenefitsLayout: React.FC = () => {
                   role="button"
                   tabIndex={0}
                   aria-label={`${benefit.benefitName} 혜택 상세 보기`}
-                  className="group relative flex min-h-[196px] cursor-pointer flex-col justify-between rounded-[20px] border border-grey01 bg-white p-5 transition-all hover:border-purple02 hover:shadow-[0_12px_28px_rgba(25,22,52,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 md:min-h-[208px]"
+                  className="group relative flex min-h-[196px] cursor-pointer flex-col justify-between rounded-[20px] border border-grey01 bg-white p-5 transition-all hover:border-purple02 hover:shadow-[0_12px_28px_rgba(16,17,20,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 md:min-h-[208px]"
                   onClick={() => handleCardClick(benefit)}
                   onKeyDown={(event) => handleCardKeyDown(event, benefit)}
                 >

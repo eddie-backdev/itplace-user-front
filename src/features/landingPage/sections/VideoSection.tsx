@@ -159,7 +159,7 @@ const VideoSection = ({ videoEnded, setVideoEnded }: VideoSectionProps) => {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full h-[100vh] bg-[#000000] text-white flex items-center justify-center overflow-hidden z-20"
+      className="relative w-full h-[100vh] bg-black text-white flex items-center justify-center overflow-hidden z-20"
     >
       <Video ref={videoRef} videoBoxRef={videoBoxRef} onVideoEnd={() => setVideoEnded(true)} />
       <PurpleCircle ref={circleRef} />

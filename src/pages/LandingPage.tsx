@@ -17,7 +17,7 @@ const StartCTASection = lazy(() => import('../features/landingPage/sections/Star
 const LandingPage = () => {
   const [showIntro, setShowIntro] = useState(true);
   const [videoEnded, setVideoEnded] = useState(false);
-  const [iconColor, setIconColor] = useState<'text-white' | 'text-[#000000]'>('text-white');
+  const [iconColor, setIconColor] = useState<'text-white' | 'text-black'>('text-white');
   const ctaRef = useRef<HTMLDivElement>(null);
 
   // 윈도우 리사이즈 핸들러
@@ -84,7 +84,7 @@ const LandingPage = () => {
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
-            setIconColor('text-[#000000]');
+            setIconColor('text-black');
           } else {
             setIconColor('text-white');
           }

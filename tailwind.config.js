@@ -37,48 +37,56 @@ export default {
       // 컬러
       // bg-[지정명]
       colors: {
-        black: '#17171B',
+        black: '#101114',
         white: '#FFFFFF',
-        danger: '#DC3545',
-        success: '#28A745',
-        // Primary Color
-        purple01: '#E6DBFF',
-        purple02: '#CDB5FF',
-        purple03: '#A175FF',
-        purple04: '#7638FA', // main
-        purple05: '#530CC2', // hover
-        purple06: '#250961',
-        // Secondary Color - Orange
-        orange01: '#FFEEDC',
-        orange02: '#FFD4A0',
-        orange03: '#FFBD6D',
-        orange04: '#FFA023', // main
-        orange05: '#F58700',
-        // Neutral - Grey
-        grey01: '#F5F5F5',
-        grey02: '#DDDDDD',
-        grey03: '#BCBCBD',
-        grey04: '#7A7A7C',
-        grey05: '#38383B',
-        grey06: '#17171B',
-        grey07: '#111827',
-        // Pink Color
-        pink01: '#FFECEF',
-        pink02: '#FFBDC8',
-        pink03: '#FF4C91', // main
-        pink04: '#FF0069',
-        pink05: '#DF005A',
+        danger: '#D7263D',
+        success: '#149E61',
+        successDark: '#026B3F',
+        // Semantic accents paired with Brand Purple
+        accentBlue: '#2F80ED',
+        accentTeal: '#14B8A6',
+        accentGold: '#F6C343',
+        accentGoldDark: '#D98E04',
+        accentRose: '#EC4899',
+        accentRoseDark: '#BE185D',
+        // ITPLACE Brand Purple — Kraken reference values with ITPLACE naming
+        purple01: '#EDE7FE', // subtle surface derived from rgba(133, 91, 251, 0.16)
+        purple02: '#D8CBFE', // focus ring / soft border
+        purple03: '#855BFB', // light brand accent
+        purple04: '#7132F5', // primary brand / CTA
+        purple05: '#5741D8', // hover / active
+        purple06: '#5B1ECF', // deep emphasis
+        // Legacy accent aliases. 신규 UI에서는 success*/purple* 사용을 우선한다.
+        orange01: '#E7F4EE',
+        orange02: '#CBE9DA',
+        orange03: '#149E61',
+        orange04: '#149E61',
+        orange05: '#026B3F',
+        // Neutral - Kraken cool gray scale
+        grey01: '#F8F8FA',
+        grey02: '#DEDEE5',
+        grey03: '#C9CBD6',
+        grey04: '#9497A9',
+        grey05: '#686B82',
+        grey06: '#484B5E',
+        grey07: '#101114',
+        // Legacy pink aliases. 신규 UI에서는 purple* 사용을 우선한다.
+        pink01: '#EDE7FE',
+        pink02: '#D8CBFE',
+        pink03: '#855BFB',
+        pink04: '#7132F5',
+        pink05: '#5741D8',
       },
       // 그라데이션
       // bg-[지정명]
       backgroundImage: {
-        'gradient-header': 'linear-gradient(#7638FA 0%, #7638FA 32%, #250961 100%)',
-        'gradient-myPage': 'linear-gradient(90deg, #FFBD6D 0%, #FF4C91 28%, #7638FA 100%)',
+        'gradient-header': 'linear-gradient(#7132F5 0%, #7132F5 32%, #5B1ECF 100%)',
+        'gradient-myPage': 'linear-gradient(90deg, #855BFB 0%, #7132F5 45%, #5B1ECF 100%)',
       },
       // 드롭 섀도우
       // drop-shadow-[지정명]
       dropShadow: {
-        basic: '0px 3px 12px rgba(0, 0, 0, 0.15)',
+        basic: '0px 3px 12px rgba(16, 17, 20, 0.12)',
       },
     },
     screens: {

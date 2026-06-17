@@ -68,7 +68,7 @@ const StartCTASection = () => {
       <div className="text-center z-10">
         <h1
           ref={textRef}
-          className="custom-font text-[200px] text-purple04 drop-shadow-[0_10px_10px_rgba(0,0,0,0.3)] tracking-wide max-xl:text-[130px] max-sm:text-[52px]"
+          className="custom-font text-[200px] text-purple04 drop-shadow-[0_10px_10px_rgba(16,17,20,0.24)] tracking-wide max-xl:text-[130px] max-sm:text-[52px]"
         >
           LET’S START
           <br />

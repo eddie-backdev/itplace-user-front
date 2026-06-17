@@ -15,7 +15,6 @@ import { CarrierCode, isCarrierCode } from '../../../../../utils/membership';
 interface StoreDetailCardProps {
   platform: Platform;
   onClose: () => void;
-  onBottomSheetReset?: () => void;
 }
 
 type DetailCacheValue = BenefitDetailResponse | null;
@@ -26,11 +25,7 @@ const getDetailCacheKey = (storeId: number, partnerId: number, carrier: CarrierC
 // 상세 패널을 닫았다 다시 열어도 같은 매장/통신사 정보는 세션 안에서 재사용한다.
 const benefitDetailCache = new Map<string, DetailCacheValue>();
 
-const StoreDetailCard: React.FC<StoreDetailCardProps> = ({
-  platform,
-  onClose,
-  onBottomSheetReset,
-}) => {
+const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) => {
   const user = useSelector((state: RootState) => state.auth.user);
   const [activeCarrier, setActiveCarrier] = useState<CarrierCode | null>(() => {
     if (isCarrierCode(platform.carrier)) return platform.carrier;
@@ -341,12 +336,8 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({
       <div className="relative z-10 flex-shrink-0 border-t border-grey02 bg-white px-6 pt-3 pb-2 max-md:fixed max-md:bottom-0 max-md:w-full max-md:px-4 max-md:pb-2">
         <StoreDetailActionButton
           benefitId={selectedCarrierBenefitId}
-          storeId={platform.storeId}
           isFavorite={activeIsFavorite}
           onFavoriteChange={handleFavoriteChange}
-          partnerName={platform.name}
-          distance={platform.distance}
-          onBottomSheetReset={onBottomSheetReset}
           isDetailRefreshing={isDetailRefreshing}
         />
       </div>

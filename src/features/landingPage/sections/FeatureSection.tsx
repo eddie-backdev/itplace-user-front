@@ -97,7 +97,7 @@ const FeatureSection = () => {
     <section
       ref={featureSectionRef}
       data-theme="dark"
-      className="relative h-[500vh] px-5 py-20 bg-[#000000] flex flex-col justify-center gap-10 max-lg:px-8 overflow-hidden z-10"
+      className="relative h-[500vh] px-5 py-20 bg-black flex flex-col justify-center gap-10 max-lg:px-8 overflow-hidden z-10"
     >
       <img
         src="/images/landing/feature/wave.webp"
@@ -128,7 +128,7 @@ const FeatureSection = () => {
             분석하고 추천해줘요!
           </>
         }
-        description="사용 내역과 관심사를 AI가 분석하여 가장 적합한 혜택을 맞춤 추천해드립니다. 더 이상 어렵게 찾지 말고 나만을 위한 혜택을 빠르게 받아보세요."
+        description="관심사와 탐색 흐름을 AI가 분석하여 가장 적합한 혜택을 맞춤 추천해드립니다. 더 이상 어렵게 찾지 말고 나만을 위한 혜택을 빠르게 받아보세요."
       />
       <FeatureItem
         number={3}

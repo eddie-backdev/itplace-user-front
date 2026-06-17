@@ -104,7 +104,7 @@ const MobileHeader = ({
             aria-controls="mobile-navigation-drawer"
             onClick={handleMenuClick}
           >
-            <TbMenu2 className={`w-5 h-5 ${iconColor ?? 'text-[#000000]'}`} />
+            <TbMenu2 className={`w-5 h-5 ${iconColor ?? 'text-black'}`} />
           </button>
           {title && (
             <span className="text-body-2 text-black leading-none flex items-center h-full mt-[5px]">

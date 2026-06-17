@@ -79,8 +79,8 @@ const Intro = ({ onFinish }: IntroProps) => {
           )
           // 2. 텍스트 색상 하얀색, 배경 색상 검정색으로 변경
           .add(() => {
-            gsap.to(logoRef.current, { color: '#000000' });
-            gsap.to(descRef.current, { color: '#000000' });
+            gsap.to(logoRef.current, { color: '#101114' });
+            gsap.to(descRef.current, { color: '#101114' });
             gsap.to(bgRef.current, { backgroundColor: 'white' });
           }, '+=0.1')
 
@@ -111,7 +111,7 @@ const Intro = ({ onFinish }: IntroProps) => {
   return (
     <div
       ref={bgRef}
-      className="fixed top-0 left-0 w-full h-screen bg-[#000000] text-white flex flex-col justify-center items-center z-[9999] overflow-hidden"
+      className="fixed top-0 left-0 w-full h-screen bg-black text-white flex flex-col justify-center items-center z-[9999] overflow-hidden"
     >
       <h1 ref={logoRef} className="custom-font text-8xl max-sm:text-6xl">
         IT:PLACE

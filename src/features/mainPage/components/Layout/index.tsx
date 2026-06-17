@@ -559,7 +559,7 @@ const MainPageLayout: React.FC = () => {
           onClick={handleSidebarToggle}
           aria-expanded={!isSidebarCollapsed}
           aria-label={isSidebarCollapsed ? '검색 패널 열기' : '검색 패널 접기'}
-          className={`absolute top-1/2 z-40 flex h-16 w-7 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-grey02 bg-white text-grey04 shadow-[4px_0_14px_rgba(25,22,52,0.14)] transition-all duration-300 ease-in-out hover:bg-purple01 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple03 ${
+          className={`absolute top-1/2 z-40 flex h-16 w-7 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-grey02 bg-white text-grey04 shadow-[4px_0_14px_rgba(16,17,20,0.12)] transition-all duration-300 ease-in-out hover:bg-purple01 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple03 ${
             isSidebarCollapsed ? 'left-0' : 'left-[370px]'
           }`}
         >

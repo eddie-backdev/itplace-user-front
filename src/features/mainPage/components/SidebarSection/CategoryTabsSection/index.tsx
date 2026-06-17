@@ -83,8 +83,8 @@ const CategoryTabsSection: React.FC<CategoryTabsSectionProps> = ({
       container: `flex items-center ${isSidebarMode ? 'gap-2' : 'gap-3'} overflow-x-auto scrollbar-hide pb-2`,
       button: `select-none flex-shrink-0 py-2 flex items-center justify-center gap-2 font-medium transition-colors duration-200 border-none ${
         isSidebarMode
-          ? `h-[${LAYOUT.CATEGORY_TAB_HEIGHT_COMPACT}px] px-4 rounded-[20px] text-body-2 shadow-[0_2px_4px_rgba(0,0,0,0.2)] max-xl:h-[32px] max-xl:px-3 max-xl:text-body-3 max-sm:h-[30px] max-sm:px-4 max-sm:text-body-3` // 사이드바: 더 작게
-          : `h-[${LAYOUT.CATEGORY_TAB_HEIGHT}px] px-6 rounded-[30px] text-body-2 shadow-[0_2px_4px_rgba(0,0,0,0.2)] max-xl:h-[36px] max-xl:px-4 max-xl:text-body-3 max-xl:gap-1 max-sm:h-[33px] max-sm:px-4 max-sm:text-body-3 max-sm:gap-0.5` // 맵: 더 작게
+          ? `h-[${LAYOUT.CATEGORY_TAB_HEIGHT_COMPACT}px] px-4 rounded-[20px] text-body-2 shadow-[0_2px_4px_rgba(16,17,20,0.16)] max-xl:h-[32px] max-xl:px-3 max-xl:text-body-3 max-sm:h-[30px] max-sm:px-4 max-sm:text-body-3` // 사이드바: 더 작게
+          : `h-[${LAYOUT.CATEGORY_TAB_HEIGHT}px] px-6 rounded-[30px] text-body-2 shadow-[0_2px_4px_rgba(16,17,20,0.16)] max-xl:h-[36px] max-xl:px-4 max-xl:text-body-3 max-xl:gap-1 max-sm:h-[33px] max-sm:px-4 max-sm:text-body-3 max-sm:gap-0.5` // 맵: 더 작게
       }`,
       showIcon: isMapMode, // 맵 모드에서만 아이콘 표시
     };

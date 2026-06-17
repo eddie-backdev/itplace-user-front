@@ -15,7 +15,9 @@ const MobileLayout = () => {
   const isAuthPage = location.pathname === '/login';
 
   return (
-    <div className={`${showTabBar ? 'bg-[#f5f3ff]' : 'bg-white'} max-md:block hidden min-h-screen`}>
+    <div
+      className={`${showTabBar ? 'bg-purple01/60' : 'bg-white'} max-md:block hidden min-h-screen`}
+    >
       <main
         className={`${isFullBleedPage || isAuthPage ? '' : 'px-0'} ${showTabBar ? 'pb-[64px]' : ''}`}
       >

@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+
+:root {
+  --itplace-color-brand: #7132f5;
+  --itplace-color-brand-hover: #5741d8;
+  --itplace-color-brand-light: #855bfb;
+  --itplace-color-brand-subtle: #ede7fe;
+  --itplace-color-surface: #ffffff;
+  --itplace-color-surface-subtle: #f8f8fa;
+  --itplace-color-text: #101114;
+  --itplace-color-border: #dedee5;
+  --itplace-shadow-soft: 0 4px 24px rgba(16, 17, 20, 0.06);
+}
+
 @font-face {
   font-family: 'NanumBarunGothic';
   src: url('/font/nanum-barun-gothic/NanumBarunGothicUltraLight.otf') format('opentype');
@@ -77,7 +90,7 @@
   width: 6px;
 }
 .scrollArea::-webkit-scrollbar-thumb {
-  background-color: #cdb5ff;
+  background-color: var(--itplace-color-brand-subtle);
   border-radius: 4px;
 }
 .scrollArea::-webkit-scrollbar-track {
@@ -88,8 +101,8 @@
 .react-datepicker {
   font-family: inherit;
   border: none;
-  box-shadow: 2px 4px 8px 3px rgba(0, 0, 0, 0.1);
-  background-color: white;
+  box-shadow: 2px 4px 8px 3px rgba(16, 17, 20, 0.08);
+  background-color: var(--itplace-color-surface);
   padding: 12px 8px;
   display: flex;
   justify-content: center;
@@ -97,13 +110,13 @@
 
 /* 달력 헤더 */
 .react-datepicker__header {
-  background-color: white;
+  background-color: var(--itplace-color-surface);
   border-bottom: none;
 }
 
 /* 현재 월 */
 .react-datepicker__current-month {
-  color: #a175ff;
+  color: var(--itplace-color-brand-light);
   font-size: 16px;
 }
 
@@ -118,7 +131,7 @@
 
 /* 요일 */
 .react-datepicker__day-name {
-  color: #a175ff;
+  color: var(--itplace-color-brand-light);
   width: 32px;
   height: 32px;
   line-height: 32px;
@@ -129,7 +142,7 @@
 .react-datepicker__month {
   display: flex;
   flex-direction: column;
-  background-color: white;
+  background-color: var(--itplace-color-surface);
 }
 
 /* 주 */
@@ -156,8 +169,8 @@
   height: 32px;
   line-height: 32px;
   border-radius: 20px !important;
-  background-color: #f3f4f6;
-  color: black;
+  background-color: var(--itplace-color-surface-subtle);
+  color: var(--itplace-color-text);
 }
 
 /* 선택된 날짜 */
@@ -167,8 +180,8 @@
 .react-datepicker__day--keyboard-selected:hover,
 .react-datepicker .react-datepicker__month .react-datepicker__day--selected,
 .react-datepicker .react-datepicker__month .react-datepicker__day--selected:hover {
-  background-color: #cdb5ff !important;
-  color: white !important;
+  background-color: var(--itplace-color-brand) !important;
+  color: var(--itplace-color-surface) !important;
   border-radius: 20px !important;
   width: 32px !important;
   height: 32px !important;
@@ -209,7 +222,7 @@
     margin-top: 16px;
   }
   .react-datepicker__day-name {
-    color: #a175ff;
+    color: var(--itplace-color-brand-light);
     width: 20px;
     height: 20px;
     line-height: 20px;
@@ -227,8 +240,8 @@
     height: 32px;
     line-height: 32px;
     border-radius: 20px !important;
-    background-color: #f3f4f6;
-    color: black;
+    background-color: var(--itplace-color-surface-subtle);
+    color: var(--itplace-color-text);
   }
 
   /* 선택된 날짜 */
@@ -257,7 +270,7 @@
   .react-datepicker-popper {
     position: absolute !important;
     top: 270px !important;
-    left: 50% !important;
+    left: calc(50% + 40.5px) !important;
     transform: translate(-50%, -50%) !important;
     z-index: 9999 !important;
     width: auto !important;
@@ -275,7 +288,7 @@
 
   /* 요일 */
   .react-datepicker__day-name {
-    color: #a175ff;
+    color: var(--itplace-color-brand-light);
     width: 32px;
     height: 32px;
     line-height: 32px;
@@ -286,7 +299,7 @@
   .react-datepicker__month {
     display: flex;
     flex-direction: column;
-    background-color: white;
+    background-color: var(--itplace-color-surface);
   }
 
   .react-datepicker__week {
@@ -295,14 +308,195 @@
   }
 }
 
+.Toastify__toast-container.custom-toast-container {
+  left: calc(50% + 40.5px) !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  width: auto !important;
+  max-width: min(420px, calc(100vw - 32px)) !important;
+  padding: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.Toastify__toast.custom-toast {
+  margin: 0 !important;
+  width: fit-content !important;
+  min-width: 0 !important;
+  max-width: min(420px, calc(100vw - 32px)) !important;
+  border-radius: 18px !important;
+  padding: 11px 18px !important;
+  overflow: hidden !important;
+}
+
+.Toastify__toast.custom-toast .Toastify__toast-body {
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 10px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  overflow-wrap: anywhere !important;
+  word-break: keep-all !important;
+  white-space: normal !important;
+  min-width: 0 !important;
+}
+
+
+.Toastify__toast.custom-toast .Toastify__toast-body > div:last-child {
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: keep-all !important;
+  line-height: 1.35 !important;
+  text-align: center !important;
+}
+
+.Toastify__toast.custom-toast .Toastify__toast-icon {
+  width: 18px !important;
+  flex-shrink: 0 !important;
+  margin-inline-end: 0 !important;
+}
+
 @media (max-width: 767px) {
+  .Toastify__toast-container.custom-toast-container {
+    left: 50% !important;
+  }
+
   .Toastify__toast-container--bottom-center.custom-toast-container {
-    bottom: 20px !important; /* 원하는 만큼 위로 */
+    bottom: 20px !important;
+  }
+
+  .Toastify__toast-container.custom-toast-container {
+    width: auto !important;
+    max-width: calc(100vw - 28px) !important;
   }
 
   .Toastify__toast.custom-toast {
-    width: 92% !important;
-    min-width: 92% !important;
-    max-width: 92% !important;
+    width: fit-content !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 28px) !important;
+    padding: 11px 16px !important;
+  }
+}
+
+/* 회원가입 생년월일 선택 달력 */
+.itplace-birth-datepicker {
+  border-radius: 22px !important;
+  box-shadow: 0 20px 52px rgba(16, 17, 20, 0.14) !important;
+  border: 1px solid rgba(222, 222, 229, 0.82) !important;
+  padding: 14px !important;
+  overflow: hidden;
+}
+
+.itplace-birth-datepicker .react-datepicker__header {
+  padding: 2px 0 0;
+}
+
+.itplace-birth-datepicker__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 2px 0;
+}
+
+.itplace-birth-datepicker__month-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.itplace-birth-datepicker__select {
+  height: 34px;
+  border: 1px solid var(--itplace-color-border);
+  border-radius: 999px;
+  background: var(--itplace-color-surface-subtle);
+  color: var(--itplace-color-text);
+  padding: 0 28px 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.itplace-birth-datepicker__year-select {
+  min-width: 96px;
+}
+
+.itplace-birth-datepicker__month-select {
+  min-width: 78px;
+}
+
+.itplace-birth-datepicker__select:hover {
+  background: #f3efff;
+  border-color: var(--itplace-color-brand-light);
+}
+
+.itplace-birth-datepicker__select:focus {
+  border-color: var(--itplace-color-brand);
+  box-shadow: 0 0 0 3px var(--itplace-color-brand-subtle);
+}
+
+.itplace-birth-datepicker__nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--itplace-color-brand);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.itplace-birth-datepicker__nav-button:hover:not(:disabled) {
+  background: var(--itplace-color-brand-subtle);
+  color: var(--itplace-color-brand-hover);
+}
+
+.itplace-birth-datepicker__nav-button:disabled {
+  color: var(--itplace-color-border);
+  cursor: not-allowed;
+}
+
+.itplace-birth-datepicker .react-datepicker__day-names {
+  margin-top: 14px;
+}
+
+@media (max-width: 500px) {
+  .itplace-birth-datepicker__header-row {
+    gap: 8px;
+  }
+
+  .itplace-birth-datepicker__select {
+    height: 32px;
+    font-size: 12px;
+    padding: 0 24px 0 10px;
+  }
+
+  .itplace-birth-datepicker__year-select {
+    min-width: 88px;
+  }
+
+  .itplace-birth-datepicker__month-select {
+    min-width: 70px;
+  }
+
+  .itplace-birth-datepicker__nav-button {
+    width: 28px;
+    height: 28px;
   }
 }

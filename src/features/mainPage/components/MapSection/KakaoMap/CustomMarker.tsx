@@ -39,8 +39,8 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({ imageUrl, name, isSelected 
         className="w-full h-full"
         style={{
           filter: isSelected
-            ? 'drop-shadow(0px 0px 12px rgba(255, 160, 35, 0.9))'
-            : 'drop-shadow(2px 2px 8px rgba(0, 0, 0, 0.35))',
+            ? 'drop-shadow(0px 0px 12px rgba(113, 50, 245, 0.78))'
+            : 'drop-shadow(2px 2px 8px rgba(16, 17, 20, 0.28))',
         }}
       >
         {/* 말풍선 SVG */}

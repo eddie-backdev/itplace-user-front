@@ -25,7 +25,7 @@ const MobileAppTabBar = () => {
   return (
     <nav
       aria-label="모바일 주요 탭"
-      className="fixed bottom-0 left-0 right-0 z-[20000] h-[64px] border-t border-black/5 bg-white/95 px-3 pt-1.5 shadow-[0_-8px_24px_rgba(23,17,47,0.08)] backdrop-blur md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-[20000] h-[64px] border-t border-black/5 bg-white/95 px-3 pt-1.5 shadow-[0_-8px_24px_rgba(16,17,20,0.08)] backdrop-blur md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="mx-auto flex h-full max-w-[520px] items-center justify-between gap-1">

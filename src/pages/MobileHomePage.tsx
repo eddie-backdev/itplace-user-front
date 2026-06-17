@@ -46,8 +46,8 @@ const MobileHomePage = () => {
   }, [loadPopularBenefits]);
 
   return (
-    <div className="min-h-screen bg-[#f5f3ff] px-5 pb-[96px] pt-[calc(env(safe-area-inset-top)+18px)] text-black">
-      <section className="rounded-[28px] bg-white p-5 shadow-[0_18px_42px_rgba(83,12,194,0.10)]">
+    <div className="min-h-screen bg-purple01/60 px-5 pb-[96px] pt-[calc(env(safe-area-inset-top)+18px)] text-black">
+      <section className="rounded-[28px] bg-white p-5 shadow-[0_18px_42px_rgba(113,50,245,0.10)]">
         <p className="text-body-4 font-bold text-purple04">IT:PLACE BENEFIT</p>
         <h1 className="mt-2 text-[26px] font-extrabold leading-[1.22] text-grey06">
           오늘 쓸 수 있는 혜택을 먼저 확인해요
@@ -59,7 +59,7 @@ const MobileHomePage = () => {
           <button
             type="button"
             onClick={() => navigate('/benefits')}
-            className="rounded-[18px] bg-purple04 px-4 py-3 text-left text-white shadow-[0_10px_22px_rgba(118,56,250,0.24)] active:scale-[0.98]"
+            className="rounded-[18px] bg-purple04 px-4 py-3 text-left text-white shadow-[0_10px_22px_rgba(113,50,245,0.24)] active:scale-[0.98]"
           >
             <TbGift className="mb-2 h-6 w-6" aria-hidden="true" />
             <span className="block text-body-3 font-bold">전체 혜택 보기</span>
@@ -79,7 +79,7 @@ const MobileHomePage = () => {
         <button
           type="button"
           onClick={() => navigate('/benefits')}
-          className="rounded-[22px] bg-white p-4 text-left shadow-[0_10px_28px_rgba(23,17,47,0.06)] active:scale-[0.98]"
+          className="rounded-[22px] bg-white p-4 text-left shadow-[0_10px_28px_rgba(16,17,20,0.06)] active:scale-[0.98]"
         >
           <span className="flex h-10 w-10 items-center justify-center rounded-[15px] bg-orange01 text-[20px]">
             🎁
@@ -90,7 +90,7 @@ const MobileHomePage = () => {
         <button
           type="button"
           onClick={() => navigate('/map')}
-          className="rounded-[22px] bg-white p-4 text-left shadow-[0_10px_28px_rgba(23,17,47,0.06)] active:scale-[0.98]"
+          className="rounded-[22px] bg-white p-4 text-left shadow-[0_10px_28px_rgba(16,17,20,0.06)] active:scale-[0.98]"
         >
           <span className="flex h-10 w-10 items-center justify-center rounded-[15px] bg-purple01 text-purple05">
             <TbSparkles className="h-6 w-6" aria-hidden="true" />
@@ -169,7 +169,7 @@ const MobileHomePage = () => {
               key={benefit.benefitId}
               type="button"
               onClick={() => navigate('/benefits')}
-              className="flex w-full items-center gap-3 rounded-[22px] bg-white p-4 text-left shadow-[0_10px_26px_rgba(23,17,47,0.06)] active:scale-[0.99]"
+              className="flex w-full items-center gap-3 rounded-[22px] bg-white p-4 text-left shadow-[0_10px_26px_rgba(16,17,20,0.06)] active:scale-[0.99]"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple01 text-body-4 font-extrabold text-purple05">
                 {index + 1}

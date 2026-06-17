@@ -407,7 +407,7 @@ const QuestionRecommendationChatRoom: React.FC<QuestionRecommendationChatRoomPro
     <div
       className={`bg-white p-0 flex flex-col items-center z-[9999] ${
         isDrawer
-          ? 'h-full w-full overflow-hidden border-r border-grey02 shadow-[4px_0_18px_rgba(25,22,52,0.08)]'
+          ? 'h-full w-full overflow-hidden border-r border-grey02 shadow-[4px_0_18px_rgba(16,17,20,0.08)]'
           : `rounded-[18px] shadow-lg border border-grey02 ${isMobile || isTablet ? '' : 'h-full'}`
       }`}
       style={
@@ -482,7 +482,7 @@ const QuestionRecommendationChatRoom: React.FC<QuestionRecommendationChatRoomPro
 
       {/* 메시지 영역 */}
       <div
-        className={`w-full overflow-y-auto p-4 ${isDrawer ? 'border-0 bg-gradient-to-b from-[#f8f4ff] via-[#fbf9ff] to-white' : 'border-l border-r border-grey02 bg-grey01'}`}
+        className={`w-full overflow-y-auto p-4 ${isDrawer ? 'border-0 bg-gradient-to-b from-purple01/50 via-grey01 to-white' : 'border-l border-r border-grey02 bg-grey01'}`}
         style={{ flex: 1, maxHeight: isMobile || isTablet ? '50vh' : 'none', height: '100%' }}
       >
         {messages.length === 1 && messages[0].sender === 'bot' ? (

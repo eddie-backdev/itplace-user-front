@@ -85,7 +85,7 @@ const NavigationTabsSection: React.FC<NavigationTabsSectionProps> = ({
               <img
                 src="/images/main/tab-highlight.webp"
                 alt="ai탭 강조 이미지"
-                className="w-full h-full transform scale-[1.15] filter drop-shadow-[0_0_6px_#7638FA]"
+                className="w-full h-full transform scale-[1.15] filter drop-shadow-[0_0_6px_#7132F5]"
               />
             </span>
           )}
