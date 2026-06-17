@@ -6,7 +6,6 @@ import HomeRoute from '../pages/HomeRoute';
 import MyPageLayout from '../layouts/MyPageLayout';
 import MyInfoPage from '../pages/myPage/MyInfoPage';
 import MyFavoritesPage from '../pages/myPage/MyFavoritesPage';
-import MyHistoryPage from '../pages/myPage/MyHistoryPage';
 import AllBenefitsPage from '../pages/AllBenefitsPage';
 import LoginPage from '../pages/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -38,7 +37,7 @@ const router = createBrowserRouter([
         children: [
           { path: 'info', element: <MyInfoPage /> },
           { path: 'favorites', element: <MyFavoritesPage /> },
-          { path: 'history', element: <MyHistoryPage /> },
+          { path: 'history', element: <Navigate to="/mypage/favorites" replace /> },
         ],
       },
       { path: '/benefits', element: <AllBenefitsPage /> },
