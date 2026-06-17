@@ -28,6 +28,8 @@ interface UserInfo {
   membershipGrade: string | null;
   membershipGradeCode: string | null;
   membershipVerified?: boolean;
+  hasLocalPassword?: boolean;
+  socialAccount?: boolean;
 }
 
 export default function MyInfoPage() {
@@ -72,17 +74,14 @@ export default function MyInfoPage() {
   // ✅ 로딩중일 경우
   if (loading) {
     return (
-      <div className="flex flex-row gap-[20px] w-full h-full max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
+      <div className="flex h-[640px] flex-row items-stretch gap-4 w-full max-md:h-auto max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
         <MyPageContentLayout
           main={
-            <div className="flex justify-center items-center h-full">
+            <div className="flex justify-center items-center min-h-[220px]">
               <LoadingSpinner />
             </div>
           }
           aside={<></>}
-          bottomImage="/images/myPage/bunny-info.webp"
-          bottomImageFallback="/images/myPage/bunny-info.png"
-          bottomImageAlt="회원 정보 토끼"
         />
       </div>
     );
@@ -91,10 +90,10 @@ export default function MyInfoPage() {
   // ✅ user가 없을 경우
   if (!user) {
     return (
-      <div className="flex flex-row gap-[20px] w-full h-full max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
+      <div className="flex h-[640px] flex-row items-stretch gap-4 w-full max-md:h-auto max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
         <MyPageContentLayout
           main={
-            <div className="flex h-full items-center justify-center">
+            <div className="flex min-h-[220px] items-center justify-center">
               <NoResult
                 variant="error"
                 message1="회원 정보를 불러오지 못했어요"
@@ -111,9 +110,6 @@ export default function MyInfoPage() {
             </div>
           }
           aside={<></>}
-          bottomImage="/images/myPage/bunny-info.webp"
-          bottomImageFallback="/images/myPage/bunny-info.png"
-          bottomImageAlt="회원 정보 토끼"
         />
       </div>
     );
@@ -162,17 +158,15 @@ export default function MyInfoPage() {
   };
 
   return (
-    <div className="flex flex-row gap-[20px] w-full h-full max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-[20px]">
+    <div className="flex h-[640px] flex-row items-stretch gap-4 w-full max-lg:h-auto max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-3">
       <MyPageContentLayout
         main={
-          <div>
-            <div className="mb-6 max-xl:mb-5 max-md:hidden">
+          <div className="min-h-0 flex-1">
+            <div className="mb-4 max-md:hidden">
               <p className="text-body-3-bold text-purple03">MY INFO</p>
-              <h1 className="mt-1 text-title-2 text-black max-xl:text-title-4 max-xl:font-semibold">
-                회원 정보
-              </h1>
-              <p className="mt-2 text-body-2 text-grey04">
-                기본 정보와 멤버십 프로필을 확인하고 수정할 수 있어요.
+              <h1 className="mt-1 text-title-4 font-semibold text-black">회원 정보</h1>
+              <p className="mt-1.5 text-body-3 text-grey04">
+                기본 회원 정보를 확인하고 수정할 수 있어요.
               </p>
             </div>
             <UserInfoForm
@@ -182,9 +176,6 @@ export default function MyInfoPage() {
               phoneNumber={user.phoneNumber}
               email={user.email}
               onChangePasswordClick={() => setIsPwModalOpen(true)}
-              carrier={user.carrier}
-              membershipGradeCode={user.membershipGradeCode ?? user.membershipGrade}
-              onChangeMembershipProfileClick={() => setMembershipModalOpen(true)}
               onDeleteClick={() => setDeleteModalOpen(true)}
             />
           </div>
@@ -198,12 +189,10 @@ export default function MyInfoPage() {
               carrier={user.carrier}
               grade={user.membershipGradeCode ?? user.membershipGrade}
               verified={user.membershipVerified}
+              onChangeProfileClick={() => setMembershipModalOpen(true)}
             />
           </FadeWrapper>
         }
-        bottomImage="/images/myPage/bunny-info.webp"
-        bottomImageFallback="/images/myPage/bunny-info.png"
-        bottomImageAlt="회원 정보 토끼"
       />
       <MembershipProfileModal
         isOpen={membershipModalOpen}
@@ -263,12 +252,16 @@ export default function MyInfoPage() {
       <UserDeleteModal
         isOpen={deleteModalOpen}
         password={password}
+        requiresPassword={user.hasLocalPassword !== false}
         onPasswordChange={setPassword}
-        onCancel={() => setDeleteModalOpen(false)}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setPassword('');
+        }}
         onDelete={async () => {
           try {
             await api.delete('api/v1/users', {
-              data: { password },
+              data: user.hasLocalPassword === false ? {} : { password },
             });
 
             showToast('회원 탈퇴가 완료되었습니다.', 'success');

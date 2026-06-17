@@ -4,6 +4,7 @@ import Modal from '../../../../components/Modal';
 interface UserDeleteModalProps {
   isOpen: boolean;
   password: string;
+  requiresPassword?: boolean;
   onPasswordChange: (val: string) => void;
   onCancel: () => void;
   onDelete: () => void;
@@ -12,6 +13,7 @@ interface UserDeleteModalProps {
 export default function UserDeleteModal({
   isOpen,
   password,
+  requiresPassword = true,
   onPasswordChange,
   onCancel,
   onDelete,
@@ -21,8 +23,12 @@ export default function UserDeleteModal({
       isOpen={isOpen}
       inputType="password"
       title="정말 탈퇴하시겠습니까?"
-      message="탈퇴를 위해 현재 비밀번호를 입력해주세요."
-      input
+      message={
+        requiresPassword
+          ? '탈퇴를 위해 현재 비밀번호를 입력해주세요.'
+          : '소셜 로그인 계정은 앱 비밀번호가 없어 확인 후 바로 탈퇴할 수 있습니다.'
+      }
+      input={requiresPassword}
       inputPlaceholder="현재 비밀번호 입력"
       inputValue={password}
       onInputChange={onPasswordChange}

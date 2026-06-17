@@ -50,6 +50,8 @@ const Modal: React.FC<ModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  const pointerDownOnOverlayRef = useRef(false);
   const titleId = useId();
   const descriptionId = useId();
 
@@ -58,6 +60,10 @@ const Modal: React.FC<ModalProps> = ({
       entranceAnimation.bounceToFront(modalRef.current);
     }
   }, [isOpen, animateOnOpen]);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -73,7 +79,7 @@ const Modal: React.FC<ModalProps> = ({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
       }
     };
 
@@ -85,12 +91,18 @@ const Modal: React.FC<ModalProps> = ({
       enableScroll();
       previousFocusRef.current?.focus?.();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
+  const handleOverlayPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    pointerDownOnOverlayRef.current = event.target === event.currentTarget;
+  };
+
+  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (pointerDownOnOverlayRef.current && event.target === event.currentTarget) {
       onClose();
     }
+
+    pointerDownOnOverlayRef.current = false;
   };
 
   if (!isOpen) return null;
@@ -98,6 +110,7 @@ const Modal: React.FC<ModalProps> = ({
   return createPortal(
     <div
       className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/40"
+      onPointerDown={handleOverlayPointerDown}
       onClick={handleOverlayClick}
     >
       <div

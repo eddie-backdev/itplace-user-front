@@ -8,29 +8,13 @@ interface MyPageContentLayoutProps {
   main: ReactNode;
   /** RightAside 안쪽에 렌더링할 우측 컨텐츠 */
   aside: ReactNode;
-  /** RightAside의 하단 이미지들 */
-  bottomImage?: string;
-  bottomImageAlt?: string;
-  bottomImageFallback?: string;
 }
 
-export default function MyPageContentLayout({
-  main,
-  aside,
-  bottomImage,
-  bottomImageAlt,
-  bottomImageFallback,
-}: MyPageContentLayoutProps) {
+export default function MyPageContentLayout({ main, aside }: MyPageContentLayoutProps) {
   return (
     <>
       <MainContentWrapper>{main}</MainContentWrapper>
-      <RightAside
-        bottomImage={bottomImage}
-        bottomImageAlt={bottomImageAlt}
-        bottomImageFallback={bottomImageFallback}
-      >
-        {aside}
-      </RightAside>
+      <RightAside>{aside}</RightAside>
     </>
   );
 }

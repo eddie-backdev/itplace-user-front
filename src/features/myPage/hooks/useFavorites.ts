@@ -1,13 +1,38 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { fetchFavorites, deleteFavorites } from '../apis/favorites';
-import { FavoriteItem } from '../../../types/favorites';
+import { fetchFavoriteDetail, fetchFavorites, deleteFavorites } from '../apis/favorites';
+import { FavoriteDetail, FavoriteItem } from '../../../types/favorites';
 import { showToast } from '../../../utils/toast';
 import { useResponsive } from '../../../hooks/useResponsive';
+import { isGradeApplicableToProfile } from '../../../utils/membership';
+import { FavoriteBenefitFilter } from '../../../components/BenefitFilterToggle';
 
-export function useFavorites(itemsPerPageInit = 6) {
+const isFavoriteApplicableToProfile = (
+  detail: FavoriteDetail,
+  userCarrier?: string | null,
+  userGrade?: string | null
+) => {
+  if (!userCarrier || !userGrade) return false;
+
+  return detail.tiers.some(
+    (tier) =>
+      tier.isAll ||
+      isGradeApplicableToProfile({
+        benefitCarrier: tier.carrier,
+        benefitGrade: tier.grade,
+        userCarrier,
+        userGrade,
+      })
+  );
+};
+
+export function useFavorites(
+  itemsPerPageInit = 6,
+  userCarrier?: string | null,
+  userGrade?: string | null
+) {
   const [allFavorites, setAllFavorites] = useState<FavoriteItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [benefitFilter, setBenefitFilter] = useState<'default' | 'vipkok'>('default');
+  const [benefitFilter, setBenefitFilter] = useState<FavoriteBenefitFilter>('all');
   const [keyword, setKeyword] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
@@ -23,6 +48,8 @@ export function useFavorites(itemsPerPageInit = 6) {
   // 로딩 상태
   const [loading, setLoading] = useState(false);
 
+  const hasMembershipProfile = Boolean(userCarrier && userGrade);
+
   // ✅ 전체 데이터 기반으로 totalElements 관리
   const totalElements = allFavorites.length;
 
@@ -31,10 +58,35 @@ export function useFavorites(itemsPerPageInit = 6) {
     setLoading(true);
     try {
       setLoadError(false);
-      const category = benefitFilter === 'vipkok' ? 'VIP 콕' : '기본 혜택';
-      // size를 충분히 크게 해서 전체 데이터를 한 번에 불러옴
-      const res = await fetchFavorites(category, 0, 9999);
-      setAllFavorites(res.data.content); // 전체 데이터를 저장
+      const res = await fetchFavorites(undefined, 0, 9999);
+      let favorites = res.data.content;
+
+      if (benefitFilter === 'myMembership') {
+        if (!hasMembershipProfile) {
+          favorites = [];
+        } else {
+          const details = await Promise.all(
+            favorites.map(async (favorite) => {
+              try {
+                const detail = await fetchFavoriteDetail(favorite.benefitId);
+                return { favorite, detail: detail.data };
+              } catch (error) {
+                console.error('관심 혜택 상세 필터링 실패', error);
+                return { favorite, detail: null };
+              }
+            })
+          );
+
+          favorites = details
+            .filter(
+              ({ detail }) =>
+                detail && isFavoriteApplicableToProfile(detail, userCarrier, userGrade)
+            )
+            .map(({ favorite }) => favorite);
+        }
+      }
+
+      setAllFavorites(favorites);
     } catch (err) {
       console.error('즐겨찾기 목록 불러오기 실패', err);
       setLoadError(true);
@@ -42,7 +94,7 @@ export function useFavorites(itemsPerPageInit = 6) {
     } finally {
       setLoading(false);
     }
-  }, [benefitFilter]);
+  }, [benefitFilter, hasMembershipProfile, userCarrier, userGrade]);
 
   useEffect(() => {
     loadFavorites();
@@ -90,6 +142,8 @@ export function useFavorites(itemsPerPageInit = 6) {
       } else {
         setSelectedId(null);
       }
+    } else {
+      setSelectedId(null);
     }
   }, [searchedFavorites, isMobile]);
 
@@ -145,5 +199,6 @@ export function useFavorites(itemsPerPageInit = 6) {
     handleDeleteSelected,
     setSelectedId,
     reloadFavorites: loadFavorites,
+    hasMembershipProfile,
   };
 }

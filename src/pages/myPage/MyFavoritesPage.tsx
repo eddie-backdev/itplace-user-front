@@ -15,6 +15,11 @@ import { IoCloseOutline } from 'react-icons/io5';
 import { useResponsive } from '../../hooks/useResponsive';
 
 export default function MyFavoritesPage() {
+  const user = useSelector((state: RootState) => state.auth.user);
+  const userCarrier = user?.carrier;
+  const userGrade = user?.membershipGradeCode ?? user?.membershipGrade;
+  const { isMobile } = useResponsive();
+
   const {
     loading,
     loadError,
@@ -41,36 +46,31 @@ export default function MyFavoritesPage() {
     itemsPerPage,
     currentPage,
     reloadFavorites,
-  } = useFavorites(4);
-
-  const user = useSelector((state: RootState) => state.auth.user);
-  const userCarrier = user?.carrier;
-  const userGrade = user?.membershipGradeCode ?? user?.membershipGrade;
-  const { isMobile } = useResponsive();
+    hasMembershipProfile,
+  } = useFavorites(4, userCarrier, userGrade);
 
   return (
-    <div className="flex flex-row gap-[20px] w-full h-full max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-[20px]">
+    <div className="flex h-[640px] flex-row items-stretch gap-4 w-full max-lg:h-auto max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-3">
       <MyPageContentLayout
         // ✨ MainContent 영역
 
         main={
           <div
-            className={`flex flex-col flex-1 h-full ${isMobile && isEditing ? 'pb-[80px]' : ''}`}
+            className={`flex min-h-0 flex-1 flex-col ${isMobile && isEditing ? 'pb-[80px]' : ''}`}
           >
             {/* 상단 타이틀 */}
-            <div className="mb-5 max-xl:mb-4 max-md:hidden">
+            <div className="mb-4 max-md:hidden">
               <p className="text-body-3-bold text-purple03">FAVORITES</p>
-              <h1 className="mt-1 text-title-2 text-black max-xl:text-title-4 max-xl:font-semibold">
-                관심 혜택
-              </h1>
+              <h1 className="mt-1 text-title-4 font-semibold text-black">관심 혜택</h1>
             </div>
             {/* 토글 + 검색 */}
-            <div className="flex justify-between mb-1 gap-3 max-md:flex-col max-md:-mt-8">
+            <div className="flex justify-between mb-2 gap-2 max-md:flex-col max-md:-mt-8">
               <BenefitFilterToggle
                 value={benefitFilter}
                 onChange={setBenefitFilter}
-                width="w-[300px] max-xl:w-[175px] max-xlg:w-[180px] max-md:w-full"
+                width="w-[240px] max-xl:w-[210px] max-xlg:w-[200px] max-md:w-full"
                 fontSize="text-title-7 max-xl:text-body-3"
+                disabledMyMembership={!hasMembershipProfile}
               />
               <SearchBar
                 placeholder="제휴처명으로 검색하기"
@@ -78,7 +78,7 @@ export default function MyFavoritesPage() {
                 onChange={(e) => setKeyword(e.target.value)}
                 onClear={() => setKeyword('')}
                 backgroundColor="bg-grey01"
-                className="w-[280px] h-[50px] max-xl:w-[220px] max-xl:h-[44px] max-lg:w-[220px] max-md:w-full max-md:-mt-2"
+                className="w-[240px] h-[44px] max-xl:w-[210px] max-xl:h-[42px] max-lg:w-[210px] max-md:w-full max-md:-mt-2"
               />
             </div>
             {/* 편집/전체선택 컨트롤 */}
@@ -113,7 +113,7 @@ export default function MyFavoritesPage() {
             검색어가 없고 목록도 없을 때는 "찜한 혜택이 없음" 표시 */}
             {loading ? (
               // 로딩 중
-              <div className="flex justify-center items-center h-full">
+              <div className="flex justify-center items-center min-h-[220px]">
                 <LoadingSpinner />
               </div>
             ) : loadError ? (
@@ -156,8 +156,18 @@ export default function MyFavoritesPage() {
             ) : allFavorites.length === 0 ? (
               <div className="mt-28 max-xl:mt-20">
                 <NoResult
-                  message1="찜 보관함이 텅 비었어요!"
-                  message2="마음에 드는 혜택을 찜해보세요."
+                  message1={
+                    benefitFilter === 'myMembership'
+                      ? '내 멤버십에 맞는 관심 혜택이 없어요'
+                      : '찜 보관함이 텅 비었어요!'
+                  }
+                  message2={
+                    benefitFilter === 'myMembership'
+                      ? hasMembershipProfile
+                        ? '전체 혜택으로 전환하거나 다른 혜택을 찜해보세요.'
+                        : '회원 정보에서 통신사와 등급을 먼저 선택해 주세요.'
+                      : '마음에 드는 혜택을 찜해보세요.'
+                  }
                   buttonText="전체 혜택 보러가기"
                   buttonRoute="/benefits"
                   message1FontSize="max-xl:text-title-6"
@@ -232,9 +242,6 @@ export default function MyFavoritesPage() {
             />
           </div>
         }
-        bottomImage="/images/myPage/bunny-favorites.webp"
-        bottomImageAlt="찜한 혜택 토끼"
-        bottomImageFallback="/images/myPage/bunny-favorites.png"
       />
 
       {/* ✅ 모바일에서만, 편집 모드일 때 하단 고정 버튼 */}
