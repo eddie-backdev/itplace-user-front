@@ -30,15 +30,21 @@ const OAuthRedirectHandler = () => {
         const { code: responseCode } = response.data;
 
         if (responseCode === 'PRE_AUTHENTICATION_SUCCESS') {
-          // PRE_AUTHENTICATION_SUCCESS에서도 기본 사용자 정보가 있는지 확인
-          navigate('/login?step=oauthIntegration&verifiedType=oauth');
+          const preAuthData = response.data?.data;
+          const params = new URLSearchParams({
+            step: 'oauthIntegration',
+            verifiedType: 'oauth',
+            email: preAuthData?.email ?? '',
+            nickname: preAuthData?.nickname ?? '',
+          });
+          navigate(`/login?${params.toString()}`);
         } else if (responseCode === 'LOGIN_SUCCESS') {
           // Redux에 로그인 정보 저장
           const userData = response.data?.data;
           if (userData) {
             dispatch(
               setLoginSuccess({
-                name: userData.name,
+                nickname: userData.nickname,
                 carrier: userData.carrier ?? null,
                 membershipGrade: userData.membershipGradeCode || userData.membershipGrade || null,
                 membershipGradeCode:

@@ -1,7 +1,7 @@
 import api from '../../../apis/axiosInstance';
 
 export const signUpFinal = async (payload: {
-  name: string;
+  nickname: string;
   email: string;
   password: string;
   passwordConfirm: string;
@@ -45,8 +45,7 @@ export const resetPassword = async ({
 };
 
 export const oauthSignUp = (data: {
-  name: string;
-  email: string;
+  nickname: string;
   birthday: string;
   gender: string;
   carrier: string;

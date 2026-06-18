@@ -440,7 +440,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
 
   // 탭별 다른 InfoBanner 메시지와 강조 텍스트
   const getBannerConfig = () => {
-    const userName = user?.name ? `${user.name.slice(1)}님의` : '잇플님의';
+    const userName = user?.nickname ? `${user.nickname.slice(1)}님의` : '잇플님의';
 
     switch (activeTab) {
       case 'nearby':

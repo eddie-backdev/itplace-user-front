@@ -23,7 +23,7 @@ import { TbMapPin, TbSparkles, TbTicket, TbHeartHandshake } from 'react-icons/tb
 
 const emptyLocalSignupData = {
   phoneNumber: '',
-  name: '',
+  nickname: '',
   birthday: '',
   gender: '',
   carrier: '',
@@ -34,7 +34,8 @@ const emptyLocalSignupData = {
 };
 
 const emptyOAuthUserData = {
-  name: '',
+  nickname: '',
+  email: '',
   birthday: '',
   gender: '',
   carrier: '',
@@ -154,7 +155,7 @@ const AuthLayout = () => {
         if (data) {
           dispatch(
             setLoginSuccess({
-              name: data.name,
+              nickname: data.nickname,
               carrier: data.carrier ?? null,
               membershipGrade: data.membershipGradeCode || data.membershipGrade || 'NORMAL',
               membershipGradeCode: data.membershipGradeCode || data.membershipGrade || null,
@@ -196,7 +197,8 @@ const AuthLayout = () => {
 
     if (step === 'oauthIntegration' && verifiedType === 'oauth') {
       setOAuthUserData({
-        name: params.get('name') || '',
+        nickname: params.get('nickname') || '',
+        email: params.get('email') || '',
         birthday: params.get('birthday') || '',
         gender: params.get('gender') || '',
         carrier: params.get('carrier') || '',
@@ -215,14 +217,14 @@ const AuthLayout = () => {
   }, [location.state, goToLogin]);
 
   const handleOAuthSignup = async ({
-    name,
+    nickname,
     email,
     birthday,
     gender,
     carrier,
     membershipGradeCode,
   }: {
-    name: string;
+    nickname: string;
     email: string;
     birthday: string;
     gender: string;
@@ -231,8 +233,7 @@ const AuthLayout = () => {
   }) => {
     try {
       await oauthSignUp({
-        name,
-        email,
+        nickname,
         gender,
         birthday,
         carrier,
@@ -276,7 +277,7 @@ const AuthLayout = () => {
       if (data) {
         dispatch(
           setLoginSuccess({
-            name: data.name,
+            nickname: data.nickname,
             carrier: data.carrier ?? null,
             membershipGrade: data.membershipGradeCode || data.membershipGrade || 'NORMAL',
             membershipGradeCode: data.membershipGradeCode || data.membershipGrade || null,
@@ -364,7 +365,7 @@ const AuthLayout = () => {
           email={signUpData.email}
           password={signUpData.password}
           passwordConfirm={signUpData.passwordConfirm}
-          initialName={signUpData.name}
+          initialNickname={signUpData.nickname}
           initialBirthday={signUpData.birthday}
           initialGender={signUpData.gender}
           initialCarrier={signUpData.carrier}
@@ -374,16 +375,13 @@ const AuthLayout = () => {
 
       {formStep === 'oauthIntegration' && (
         <OAuthIntegrationForm
-          name={oauthUserData.name}
+          nickname={oauthUserData.nickname}
+          email={oauthUserData.email}
           birthday={oauthUserData.birthday}
           gender={oauthUserData.gender}
           carrier={oauthUserData.carrier}
           membershipGradeCode={oauthUserData.membershipGradeCode}
           onNext={handleOAuthSignup}
-          onDuplicateEmail={(email) => {
-            setOAuthLinkEmail(email);
-            setFormStep('oauthLink');
-          }}
         />
       )}
 

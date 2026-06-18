@@ -19,7 +19,7 @@ import { isValidCarrierGradePair } from '../../utils/membership';
 
 interface UserInfo {
   id: number;
-  name: string;
+  nickname: string;
   email: string;
   phoneNumber: string;
   gender: string;
@@ -142,7 +142,7 @@ export default function MyInfoPage() {
       );
       dispatch(
         setLoginSuccess({
-          name: user.name,
+          nickname: user.nickname,
           carrier,
           membershipGrade: membershipGradeCode,
           membershipGradeCode,
@@ -170,7 +170,7 @@ export default function MyInfoPage() {
               </p>
             </div>
             <UserInfoForm
-              name={user.name}
+              nickname={user.nickname}
               gender={user.gender}
               birthday={user.birthday}
               phoneNumber={user.phoneNumber}
@@ -185,7 +185,7 @@ export default function MyInfoPage() {
             changeKey={`${user.carrier ?? 'none'}-${user.membershipGradeCode ?? user.membershipGrade ?? 'none'}`}
           >
             <MembershipInfo
-              name={user.name}
+              nickname={user.nickname}
               carrier={user.carrier}
               grade={user.membershipGradeCode ?? user.membershipGrade}
               verified={user.membershipVerified}

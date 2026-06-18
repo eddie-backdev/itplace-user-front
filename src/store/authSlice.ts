@@ -2,7 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 type UserInfo = {
-  name: string;
+  nickname: string;
   carrier?: string | null;
   membershipGrade?: string | null;
   membershipGradeCode?: string | null;

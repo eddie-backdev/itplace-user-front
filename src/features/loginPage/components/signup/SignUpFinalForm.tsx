@@ -20,7 +20,7 @@ type SignUpFinalFormProps = {
   email: string;
   password: string;
   passwordConfirm: string;
-  initialName?: string;
+  initialNickname?: string;
   initialBirthday?: string;
   initialGender?: string;
   initialCarrier?: string;
@@ -33,7 +33,7 @@ const SignUpFinalForm = ({
   email,
   password,
   passwordConfirm,
-  initialName = '',
+  initialNickname = '',
   initialBirthday = '',
   initialGender = '',
   initialCarrier = '',
@@ -50,7 +50,7 @@ const SignUpFinalForm = ({
   }, []);
 
   const [formData, setFormData] = useState({
-    name: initialName,
+    nickname: initialNickname,
     birthday: formatBirthDateInput(initialBirthday),
     gender: initialGender,
     carrier: initialCarrier,
@@ -87,7 +87,7 @@ const SignUpFinalForm = ({
 
     try {
       await signUpFinal({
-        name: formData.name.trim(),
+        nickname: formData.nickname.trim(),
         email,
         password,
         passwordConfirm,
@@ -133,7 +133,7 @@ const SignUpFinalForm = ({
     email &&
     password &&
     passwordConfirm &&
-    formData.name.trim() &&
+    formData.nickname.trim() &&
     isCompleteBirthDateInput(formData.birthday) &&
     (formData.gender === 'MALE' || formData.gender === 'FEMALE') &&
     formData.carrier &&
@@ -149,10 +149,10 @@ const SignUpFinalForm = ({
 
       <div className="flex w-full flex-col items-center gap-[14px]">
         <AuthInput
-          name="name"
-          placeholder="이름"
-          value={formData.name}
-          onChange={(event) => handleChange('name', event.target.value)}
+          name="nickname"
+          placeholder="닉네임"
+          value={formData.nickname}
+          onChange={(event) => handleChange('nickname', event.target.value)}
         />
 
         <BirthDateInput

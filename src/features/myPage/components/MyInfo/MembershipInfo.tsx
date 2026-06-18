@@ -3,7 +3,7 @@ import React from 'react';
 import { getCarrierLabel, getMembershipGradeLabel } from '../../../../utils/membership';
 
 type Props = {
-  name: string;
+  nickname: string;
   carrier?: string | null;
   grade?: string | null;
   verified?: boolean;
@@ -11,7 +11,7 @@ type Props = {
 };
 
 const MembershipInfo: React.FC<Props> = ({
-  name,
+  nickname,
   carrier,
   grade,
   verified = false,
@@ -20,7 +20,7 @@ const MembershipInfo: React.FC<Props> = ({
   const hasProfile = Boolean(carrier && grade);
   const displayCarrier = getCarrierLabel(carrier);
   const displayGrade = getMembershipGradeLabel(grade);
-  const displayName = name?.trim() || '회원';
+  const displayName = nickname?.trim() || '회원';
 
   return (
     <div className="flex flex-col gap-4">
