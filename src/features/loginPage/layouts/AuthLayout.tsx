@@ -232,20 +232,30 @@ const AuthLayout = () => {
     membershipGradeCode: string;
   }) => {
     try {
-      await oauthSignUp({
+      const response = await oauthSignUp({
         nickname,
         gender,
         birthday,
         carrier,
         membershipGradeCode,
       });
+      const data = response.data.data;
+
+      if (data) {
+        dispatch(
+          setLoginSuccess({
+            nickname: data.nickname,
+            carrier: data.carrier ?? null,
+            membershipGrade: data.membershipGradeCode || data.membershipGrade || 'NORMAL',
+            membershipGradeCode: data.membershipGradeCode || data.membershipGrade || null,
+            membershipVerified: data.membershipVerified ?? false,
+          })
+        );
+      }
 
       showToast('회원가입이 완료되었습니다.', 'success');
-      goToLogin();
-
-      setTimeout(() => {
-        setOAuthUserData(emptyOAuthUserData);
-      }, 500);
+      setOAuthUserData(emptyOAuthUserData);
+      navigate('/', { replace: true });
     } catch (error) {
       const axiosError = error as AxiosError<{ code?: string; message?: string }>;
 
