@@ -1,11 +1,14 @@
 import api from '../../../apis/axiosInstance';
 import axios from 'axios';
 import { USER_API_BASE_URL } from '../../../apis/apiConfig';
+import { attachCsrfHeader, clearCsrfToken } from '../../../apis/csrf';
 
 const refreshApi = axios.create({
   baseURL: USER_API_BASE_URL,
   withCredentials: true,
 });
+
+refreshApi.interceptors.request.use(attachCsrfHeader);
 
 export const refreshToken = () => {
   return refreshApi.post(
@@ -19,8 +22,8 @@ export const refreshToken = () => {
   );
 };
 
-export const login = (email: string, password: string) => {
-  return refreshApi.post(
+export const login = async (email: string, password: string) => {
+  const response = await refreshApi.post(
     '/api/v1/auth/login',
     { email, password },
     {
@@ -29,6 +32,8 @@ export const login = (email: string, password: string) => {
       },
     }
   );
+  clearCsrfToken();
+  return response;
 };
 
 export const kakaoOAuthLogin = (code: string) => {

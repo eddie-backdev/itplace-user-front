@@ -4,6 +4,7 @@ import { refreshToken } from '../features/loginPage/apis/auth';
 import { store } from '../store';
 import { logout } from '../store/authSlice';
 import { persistor } from '../store';
+import { clearCsrfToken } from './csrf';
 
 // 토큰 갱신 중인지 추적하는 플래그
 let isRefreshing = false;
@@ -28,6 +29,7 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 
 // 로그아웃 처리 함수
 const handleLogout = () => {
+  clearCsrfToken();
   store.dispatch(logout());
   // redux-persist 초기화
   persistor.purge();
@@ -39,7 +41,13 @@ const handleLogout = () => {
 export const setupInterceptors = () => {
   // Response Interceptor
   api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      const url = response.config.url ?? '';
+      if (url.includes('/api/v1/auth/login') || url.includes('/api/v1/auth/logout')) {
+        clearCsrfToken();
+      }
+      return response;
+    },
     async (error: AxiosError) => {
       const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
