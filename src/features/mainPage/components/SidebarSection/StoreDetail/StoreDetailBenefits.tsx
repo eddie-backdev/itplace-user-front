@@ -13,9 +13,19 @@ import {
   isCarrierCode,
 } from '../../../../../utils/membership';
 import {
+  BENEFIT_USAGE_CHANNEL_LABELS,
+  BENEFIT_USAGE_CHANNEL_ORDER,
+  DisplayBenefit,
   groupDetailBenefitsByCarrier,
   groupPlatformBenefitsByCarrier,
 } from '../../../utils/benefitGrouping';
+
+const groupBenefitsByUsageChannel = (benefits: DisplayBenefit[]) =>
+  BENEFIT_USAGE_CHANNEL_ORDER.map((channel) => ({
+    channel,
+    label: BENEFIT_USAGE_CHANNEL_LABELS[channel],
+    benefits: benefits.filter((benefit) => benefit.channel === channel),
+  })).filter((section) => section.benefits.length > 0);
 
 interface StoreDetailBenefitsProps {
   platform: Platform;
@@ -121,46 +131,58 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
                       </span>
                     </div>
 
-                    <div className="space-y-2 max-xl:space-y-1.5">
-                      {group.benefits.map((benefit, index) => {
-                        const isHighlighted = benefit.grades.some((grade) =>
-                          isUserGrade(grade, benefit.carrier)
-                        );
+                    <div className="space-y-3 max-xl:space-y-2">
+                      {groupBenefitsByUsageChannel(group.benefits).map((section) => (
+                        <div
+                          key={`${group.key}-${section.channel}`}
+                          className="space-y-2 max-xl:space-y-1.5"
+                        >
+                          <div className="flex items-center gap-2 pl-1">
+                            <span className="rounded-full bg-purple01 px-2 py-0.5 text-body-5 font-bold text-purple04">
+                              {section.label}
+                            </span>
+                          </div>
+                          {section.benefits.map((benefit, index) => {
+                            const isHighlighted = benefit.grades.some((grade) =>
+                              isUserGrade(grade, benefit.carrier)
+                            );
 
-                        return (
-                          <div
-                            key={`${group.key}-${benefit.grades.join('-')}-${index}`}
-                            className={`rounded-xl bg-white px-3 py-2.5 max-md:px-2.5 ${
-                              isHighlighted ? 'ring-1 ring-orange04/40' : ''
-                            }`}
-                          >
-                            <div className="mb-1.5 flex min-w-0 items-center gap-2">
-                              <TbCheck
-                                size={20}
-                                className={`flex-shrink-0 max-md:w-4 max-md:h-4 ${
-                                  isHighlighted ? 'text-orange04' : 'text-grey04'
-                                }`}
-                              />
-                              <span
-                                className={`min-w-0 rounded-full bg-grey01 px-2 py-0.5 text-body-3 leading-6 max-xl:text-body-4 ${
-                                  isHighlighted
-                                    ? 'text-orange04 font-bold'
-                                    : 'text-grey05 font-medium'
+                            return (
+                              <div
+                                key={`${group.key}-${benefit.channel}-${benefit.grades.join('-')}-${index}`}
+                                className={`rounded-xl bg-white px-3 py-2.5 max-md:px-2.5 ${
+                                  isHighlighted ? 'ring-1 ring-orange04/40' : ''
                                 }`}
                               >
-                                {benefit.grades.map(getGradeDisplayName).join(', ')}
-                              </span>
-                            </div>
-                            <p
-                              className={`min-w-0 whitespace-pre-line break-words pl-7 text-body-3 leading-7 max-xl:text-body-4 max-md:pl-6 ${
-                                isHighlighted ? 'text-orange04 font-bold' : 'text-grey05'
-                              }`}
-                            >
-                              {benefit.context}
-                            </p>
-                          </div>
-                        );
-                      })}
+                                <div className="mb-1.5 flex min-w-0 items-center gap-2">
+                                  <TbCheck
+                                    size={20}
+                                    className={`flex-shrink-0 max-md:w-4 max-md:h-4 ${
+                                      isHighlighted ? 'text-orange04' : 'text-grey04'
+                                    }`}
+                                  />
+                                  <span
+                                    className={`min-w-0 rounded-full bg-grey01 px-2 py-0.5 text-body-3 leading-6 max-xl:text-body-4 ${
+                                      isHighlighted
+                                        ? 'text-orange04 font-bold'
+                                        : 'text-grey05 font-medium'
+                                    }`}
+                                  >
+                                    {benefit.grades.map(getGradeDisplayName).join(', ')}
+                                  </span>
+                                </div>
+                                <p
+                                  className={`min-w-0 whitespace-pre-line break-words pl-7 text-body-3 leading-7 max-xl:text-body-4 max-md:pl-6 ${
+                                    isHighlighted ? 'text-orange04 font-bold' : 'text-grey05'
+                                  }`}
+                                >
+                                  {benefit.context}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
                     </div>
                   </section>
                 ))}

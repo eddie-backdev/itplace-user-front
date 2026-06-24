@@ -43,6 +43,8 @@ export interface TierBenefit {
   carrier?: string | null;
   grade: string;
   context: string;
+  onlineContext?: string | null;
+  offlineContext?: string | null;
 }
 
 // 상세 혜택 API 타입 정의
@@ -77,6 +79,8 @@ export interface DetailTierBenefit {
   carrier?: string | null;
   grade: string;
   context: string;
+  onlineContext?: string | null;
+  offlineContext?: string | null;
   isAll: boolean;
 }
 

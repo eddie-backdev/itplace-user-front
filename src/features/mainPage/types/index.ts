@@ -3,6 +3,8 @@ export interface PlatformBenefit {
   carrier?: string | null;
   grade: string;
   context: string;
+  onlineContext?: string | null;
+  offlineContext?: string | null;
 }
 
 export interface Platform {

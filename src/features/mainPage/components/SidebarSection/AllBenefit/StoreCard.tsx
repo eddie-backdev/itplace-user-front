@@ -11,7 +11,10 @@ import {
   isGradeApplicableToProfile,
   isCarrierCode,
 } from '../../../../../utils/membership';
-import { groupPlatformBenefitsByCarrier } from '../../../utils/benefitGrouping';
+import {
+  BENEFIT_USAGE_CHANNEL_LABELS,
+  groupPlatformBenefitsByCarrier,
+} from '../../../utils/benefitGrouping';
 
 interface StoreCardProps {
   platform: Platform;
@@ -191,7 +194,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
 
                     return (
                       <div
-                        key={`${group.key}-${benefit.grades.join('-')}-${index}`}
+                        key={`${group.key}-${benefit.channel}-${benefit.grades.join('-')}-${index}`}
                         className="grid grid-cols-[20px_68px_minmax(0,1fr)] gap-2 items-start max-md:grid-cols-[16px_56px_minmax(0,1fr)] max-md:gap-1.5"
                       >
                         <TbCheck
@@ -212,6 +215,9 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
                             isMatchedGrade ? 'text-orange04 font-bold' : 'text-grey05'
                           }`}
                         >
+                          <span className="mr-1 inline-flex rounded-full bg-grey01 px-1.5 py-0.5 text-body-6 font-bold text-purple04">
+                            {BENEFIT_USAGE_CHANNEL_LABELS[benefit.channel]}
+                          </span>
                           {benefit.context}
                         </span>
                       </div>

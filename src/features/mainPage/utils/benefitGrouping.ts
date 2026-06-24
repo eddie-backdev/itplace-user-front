@@ -2,10 +2,13 @@ import { getCarrierGradeOrder, getCarrierLabel, isCarrierCode } from '../../../u
 import { Platform, PlatformBenefit } from '../types';
 import { DetailTierBenefit } from '../types/api';
 
+export type BenefitUsageChannel = 'online' | 'offline' | 'common';
+
 export type DisplayBenefit = {
   carrier: string | null;
   grades: string[];
   context: string;
+  channel: BenefitUsageChannel;
 };
 
 export type BenefitCarrierGroup = {
@@ -18,7 +21,22 @@ type CarrierGradeBenefit = {
   carrier?: string | null;
   grade: string;
   context: string;
+  onlineContext?: string | null;
+  offlineContext?: string | null;
 };
+
+type ChannelContext = {
+  channel: BenefitUsageChannel;
+  context: string;
+};
+
+export const BENEFIT_USAGE_CHANNEL_LABELS: Record<BenefitUsageChannel, string> = {
+  online: '온라인',
+  offline: '오프라인',
+  common: '공통',
+};
+
+export const BENEFIT_USAGE_CHANNEL_ORDER: BenefitUsageChannel[] = ['online', 'offline', 'common'];
 
 const CARRIER_GROUP_ORDER = ['SKT', 'KT', 'LGU'];
 const MISSING_CARRIER_KEY = 'MISSING_CARRIER';
@@ -61,8 +79,17 @@ const getGradeSortIndex = (carrier: string | null, grades: string[]) => {
   return indexes.length > 0 ? Math.min(...indexes) : Number.MAX_SAFE_INTEGER;
 };
 
+const getChannelSortIndex = (channel: BenefitUsageChannel) => {
+  const index = BENEFIT_USAGE_CHANNEL_ORDER.indexOf(channel);
+  return index === -1 ? BENEFIT_USAGE_CHANNEL_ORDER.length : index;
+};
+
 const sortDisplayBenefitsByGradeOrder = (benefits: DisplayBenefit[]) => {
   return [...benefits].sort((a, b) => {
+    const aChannelIndex = getChannelSortIndex(a.channel);
+    const bChannelIndex = getChannelSortIndex(b.channel);
+    if (aChannelIndex !== bChannelIndex) return aChannelIndex - bChannelIndex;
+
     const aIndex = getGradeSortIndex(a.carrier, a.grades);
     const bIndex = getGradeSortIndex(b.carrier, b.grades);
 
@@ -92,6 +119,50 @@ const getPlatformBenefitItems = (platform: Platform) => {
   return platform.benefits.map((benefitText) => parseBenefitText(benefitText, platform.carrier));
 };
 
+const normalizeBenefitContext = (context?: string | null) =>
+  context?.replace(/\s+/g, ' ').trim() ?? '';
+
+const splitContextByUsageChannel = (context: string): ChannelContext[] => {
+  const result: ChannelContext[] = [];
+
+  context.split(/\s*\/\s*/).forEach((segment) => {
+    const normalizedSegment = normalizeBenefitContext(segment);
+    const match = /^(온라인|오프라인)\s*:\s*(.+)$/.exec(normalizedSegment);
+    if (!match) return;
+
+    result.push({
+      channel: match[1] === '온라인' ? 'online' : 'offline',
+      context: match[2].trim(),
+    });
+  });
+
+  return result;
+};
+
+const getBenefitChannelContexts = <T extends CarrierGradeBenefit>(benefit: T): ChannelContext[] => {
+  const contexts: ChannelContext[] = [];
+  const onlineContext = normalizeBenefitContext(benefit.onlineContext);
+  const offlineContext = normalizeBenefitContext(benefit.offlineContext);
+
+  if (onlineContext) {
+    contexts.push({ channel: 'online', context: onlineContext });
+  }
+  if (offlineContext) {
+    contexts.push({ channel: 'offline', context: offlineContext });
+  }
+
+  if (contexts.length > 0) {
+    return contexts;
+  }
+
+  const parsedContexts = splitContextByUsageChannel(benefit.context);
+  if (parsedContexts.length > 0) {
+    return parsedContexts;
+  }
+
+  return [{ channel: 'common', context: benefit.context }];
+};
+
 const mergeBenefitsByCarrierAndContext = <T extends CarrierGradeBenefit>(
   benefits: T[],
   fallbackCarrier: string | null | undefined
@@ -100,20 +171,25 @@ const mergeBenefitsByCarrierAndContext = <T extends CarrierGradeBenefit>(
 
   benefits.forEach((benefit) => {
     const carrier = getEffectiveCarrier(benefit.carrier, benefit.grade, fallbackCarrier);
-    const key = [carrier ?? '', benefit.context].join('|');
-    const existing = merged.get(key);
 
-    if (existing) {
-      if (!existing.grades.includes(benefit.grade)) {
-        existing.grades.push(benefit.grade);
+    getBenefitChannelContexts(benefit).forEach(({ channel, context }) => {
+      const normalizedContext = normalizeBenefitContext(context);
+      const key = [carrier ?? '', channel, normalizedContext].join('|');
+      const existing = merged.get(key);
+
+      if (existing) {
+        if (!existing.grades.includes(benefit.grade)) {
+          existing.grades.push(benefit.grade);
+        }
+        return;
       }
-      return;
-    }
 
-    merged.set(key, {
-      carrier,
-      grades: [benefit.grade],
-      context: benefit.context,
+      merged.set(key, {
+        carrier,
+        grades: [benefit.grade],
+        context: normalizedContext || '-',
+        channel,
+      });
     });
   });
 
