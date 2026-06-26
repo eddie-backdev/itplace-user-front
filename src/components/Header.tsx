@@ -8,6 +8,7 @@ import {
   TbLayoutList,
   TbSparkles,
   TbMail,
+  TbInfoCircle,
 } from 'react-icons/tb';
 import clsx from 'clsx';
 import { useLocation, Link } from 'react-router-dom';
@@ -196,6 +197,11 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
 
         {/* 보조 액션 */}
         <div className="mb-1 mt-6 flex flex-col items-center gap-y-2 border-t border-white/15 pt-3">
+          <Link to="/about" className={utilityNavItemClass} aria-label="서비스 안내 보기">
+            <TbInfoCircle className="text-[27px]" strokeWidth={1.35} />
+            <span className="mt-1 leading-none">안내</span>
+          </Link>
+
           <button
             type="button"
             onClick={handleContact}

@@ -23,6 +23,15 @@ const menus = [
   { label: '마이페이지', path: '/mypage/info', match: '/mypage' },
 ];
 
+const supportMenus = [
+  { label: '서비스 소개', path: '/about' },
+  { label: '혜택 이용 가이드', path: '/guide' },
+  { label: 'FAQ', path: '/faq' },
+  { label: '문의', path: '/contact' },
+  { label: '이용약관', path: '/terms' },
+  { label: '개인정보처리방침', path: '/privacy' },
+];
+
 const MobileHeader = ({
   title,
   backgroundColor = 'bg-white',
@@ -166,6 +175,22 @@ const MobileHeader = ({
                 </li>
               );
             })}
+            <li className="border-t border-grey01 pt-5">
+              <p className="mb-3 px-3 text-caption font-bold text-grey04">서비스 안내</p>
+              <ul className="space-y-2">
+                {supportMenus.map((menu) => (
+                  <li key={menu.path}>
+                    <Link
+                      to={menu.path}
+                      className="block rounded-[12px] px-3 py-2 text-body-3 text-grey06 transition-colors hover:text-purple04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                      onClick={closeSidebar}
+                    >
+                      {menu.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
             <li>
               {isLoggedIn ? (
                 <button

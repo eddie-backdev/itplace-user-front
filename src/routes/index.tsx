@@ -11,6 +11,11 @@ import LoginPage from '../pages/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
 import AccountDeletionPage from '../pages/AccountDeletionPage';
+import AboutPage from '../pages/AboutPage';
+import TermsPage from '../pages/TermsPage';
+import ContactPage from '../pages/ContactPage';
+import FaqPage from '../pages/FaqPage';
+import MembershipGuidePage from '../pages/MembershipGuidePage';
 import OAuthRedirectHandler from '../features/loginPage/layouts/OAuthRedirectHandler';
 import PublicRoute from '../features/loginPage/layouts/PublicRoute'; // PublicRoute import
 
@@ -41,6 +46,11 @@ const router = createBrowserRouter([
         ],
       },
       { path: '/benefits', element: <AllBenefitsPage /> },
+      { path: '/about', element: <AboutPage /> },
+      { path: '/guide', element: <MembershipGuidePage /> },
+      { path: '/faq', element: <FaqPage /> },
+      { path: '/contact', element: <ContactPage /> },
+      { path: '/terms', element: <TermsPage /> },
       { path: '/privacy', element: <PrivacyPolicyPage /> },
       { path: '/account-deletion', element: <AccountDeletionPage /> },
     ],
