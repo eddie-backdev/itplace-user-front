@@ -9,6 +9,10 @@ import {
   TbSparkles,
   TbMail,
   TbInfoCircle,
+  TbBook2,
+  TbHelpCircle,
+  TbFileText,
+  TbShieldLock,
 } from 'react-icons/tb';
 import clsx from 'clsx';
 import { useLocation, Link } from 'react-router-dom';
@@ -30,6 +34,15 @@ const menus = [
   { id: 'map', label: '잇플 맵', icon: TbMap2, path: '/' },
   { id: 'benefits', label: '전체 혜택', icon: TbLayoutList, path: '/benefits' },
   { id: 'mypage', label: '마이페이지', icon: TbUser, path: '/mypage/info' },
+];
+
+const supportMenus = [
+  { label: '안내', icon: TbInfoCircle, path: '/about', ariaLabel: '서비스 소개 보기' },
+  { label: '가이드', icon: TbBook2, path: '/guide', ariaLabel: '혜택 이용 가이드 보기' },
+  { label: 'FAQ', icon: TbHelpCircle, path: '/faq', ariaLabel: '자주 묻는 질문 보기' },
+  { label: '문의', icon: TbMail, path: '/contact', ariaLabel: '문의 페이지 보기' },
+  { label: '약관', icon: TbFileText, path: '/terms', ariaLabel: '이용약관 보기' },
+  { label: '개인정보', icon: TbShieldLock, path: '/privacy', ariaLabel: '개인정보처리방침 보기' },
 ];
 
 const primaryNavItemClass =
@@ -197,19 +210,33 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
 
         {/* 보조 액션 */}
         <div className="mb-1 mt-6 flex flex-col items-center gap-y-2 border-t border-white/15 pt-3">
-          <Link to="/about" className={utilityNavItemClass} aria-label="서비스 안내 보기">
-            <TbInfoCircle className="text-[27px]" strokeWidth={1.35} />
-            <span className="mt-1 leading-none">안내</span>
-          </Link>
+          {supportMenus.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={clsx(
+                  utilityNavItemClass,
+                  location.pathname === item.path && activeNavClass
+                )}
+                aria-label={item.ariaLabel}
+                aria-current={location.pathname === item.path ? 'page' : undefined}
+              >
+                <Icon className="text-[27px]" strokeWidth={1.35} />
+                <span className="mt-1 leading-none">{item.label}</span>
+              </Link>
+            );
+          })}
 
           <button
             type="button"
             onClick={handleContact}
             className={utilityNavItemClass}
-            aria-label="문의 남기기"
+            aria-label="빠른 문의 남기기"
           >
             <TbMail className="text-[27px]" strokeWidth={1.35} />
-            <span className="mt-1 leading-none">문의</span>
+            <span className="mt-1 leading-none">제보</span>
           </button>
 
           {isLoggedIn ? (

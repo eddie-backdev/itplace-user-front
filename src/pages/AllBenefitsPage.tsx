@@ -1,4 +1,5 @@
 import PageSeo from '../components/PageSeo';
+import SiteFooter from '../components/SiteFooter';
 import AllBenefitsLayout from '../features/allBenefitsPage';
 
 const AllBenefitsPage = () => {
@@ -10,6 +11,7 @@ const AllBenefitsPage = () => {
         path="/benefits"
       />
       <AllBenefitsLayout />
+      <SiteFooter />
     </>
   );
 };

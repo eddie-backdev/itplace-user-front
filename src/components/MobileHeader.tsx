@@ -30,6 +30,7 @@ const supportMenus = [
   { label: '문의', path: '/contact' },
   { label: '이용약관', path: '/terms' },
   { label: '개인정보처리방침', path: '/privacy' },
+  { label: '계정 삭제 안내', path: '/account-deletion' },
 ];
 
 const MobileHeader = ({

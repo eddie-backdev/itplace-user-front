@@ -1,5 +1,6 @@
 import PageSeo from '../components/PageSeo';
 import SiteFooter from '../components/SiteFooter';
+import { CONTACT_EMAIL, CONTACT_MAILTO } from '../config/contact';
 
 const lastUpdated = '2026년 5월 15일';
 
@@ -131,11 +132,8 @@ const PrivacyPolicyPage = () => {
               <dd className="font-bold text-grey07">IT:PLACE</dd>
               <dt className="font-bold text-grey05">문의 이메일</dt>
               <dd>
-                <a
-                  className="font-bold text-purple04 underline"
-                  href="mailto:noreply.itplace@gmail.com"
-                >
-                  noreply.itplace@gmail.com
+                <a className="font-bold text-purple04 underline" href={CONTACT_MAILTO}>
+                  {CONTACT_EMAIL}
                 </a>
               </dd>
             </dl>

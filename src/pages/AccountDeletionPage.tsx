@@ -1,5 +1,6 @@
 import PageSeo from '../components/PageSeo';
 import SiteFooter from '../components/SiteFooter';
+import { CONTACT_EMAIL, CONTACT_MAILTO } from '../config/contact';
 
 const lastUpdated = '2026년 5월 16일';
 
@@ -48,9 +49,9 @@ const AccountDeletionPage = () => {
               <p className="text-sm font-bold text-grey05">계정 삭제 요청 이메일</p>
               <a
                 className="mt-2 inline-block font-black text-purple04 underline"
-                href="mailto:noreply.itplace@gmail.com"
+                href={CONTACT_MAILTO}
               >
-                noreply.itplace@gmail.com
+                {CONTACT_EMAIL}
               </a>
             </div>
           </section>

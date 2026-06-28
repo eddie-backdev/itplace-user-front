@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import PageSeo from '../components/PageSeo';
 import InfoPageShell from '../components/InfoPageShell';
+import { CONTACT_EMAIL, CONTACT_MAILTO } from '../config/contact';
 
 const inquiryTypes = [
   '혜택 정보 수정 또는 누락 제보',
@@ -44,9 +45,9 @@ const ContactPage = () => {
               <p className="text-sm font-bold text-grey05">이메일 문의</p>
               <a
                 className="mt-3 inline-block font-black text-purple04 underline"
-                href="mailto:noreply.itplace@gmail.com"
+                href={CONTACT_MAILTO}
               >
-                noreply.itplace@gmail.com
+                {CONTACT_EMAIL}
               </a>
               <p className="mt-3 text-sm leading-6 text-grey05">
                 문의 시 오류 화면, 제휴처명, 통신사, 혜택 조건을 함께 적어주시면 확인이 빨라집니다.
