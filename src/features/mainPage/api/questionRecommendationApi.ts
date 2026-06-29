@@ -22,8 +22,6 @@ export const getQuestionRecommendation = async ({
   lng,
 }: QuestionRecommendationRequest): Promise<QuestionRecommendationSuccessResponse> => {
   try {
-    console.log('질문형 AI 추천 API 호출 시작:', { question, lat, lng });
-
     const response = await api.get<QuestionRecommendationSuccessResponse>(
       '/api/v1/questions/recommend',
       {
@@ -35,11 +33,8 @@ export const getQuestionRecommendation = async ({
       }
     );
 
-    console.log('질문형 AI 추천 API 응답 성공:', response.data);
     return response.data;
   } catch (error: unknown) {
-    console.log('질문형 AI 추천 API 오류 발생:', error);
-
     // axios 오류 처리
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as {
@@ -48,11 +43,6 @@ export const getQuestionRecommendation = async ({
           status?: number;
         };
       };
-      console.log('질문형 AI 추천 Axios 오류 상세:', {
-        status: axiosError.response?.status,
-        data: axiosError.response?.data,
-      });
-
       if (axiosError.response?.data) {
         const errorData = axiosError.response.data;
 

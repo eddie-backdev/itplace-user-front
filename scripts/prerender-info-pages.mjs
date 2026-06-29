@@ -4,7 +4,7 @@ import path from 'node:path';
 const SITE_ORIGIN = 'https://itplace.click';
 const DIST_DIR = path.resolve('dist');
 
-const pages = [
+const publicPages = [
   {
     path: '/about',
     title: '서비스 소개 | ITPLACE',
@@ -91,6 +91,85 @@ const pages = [
   },
 ];
 
+const appShellPages = [
+  {
+    path: '/map',
+    title: '통신사 멤버십 혜택 지도 | ITPLACE',
+    description:
+      'SKT, KT, LG U+ 멤버십 제휴처와 주변 혜택을 지도에서 검색하고 온라인·오프라인 이용 조건을 확인하세요.',
+    heading: '통신사 멤버십 혜택 지도',
+    paragraphs: [
+      '현재 위치 또는 선택한 지역 주변의 통신사 멤버십 제휴처를 지도에서 확인할 수 있습니다.',
+      '지도 기능은 브라우저에서 JavaScript가 활성화되어야 정상적으로 동작합니다.',
+    ],
+  },
+  {
+    path: '/benefits',
+    title: '전체 멤버십 혜택 | ITPLACE',
+    description:
+      'SKT, KT, LG U+ 통신사 멤버십 제휴 혜택을 브랜드, 카테고리, 통신사별로 검색하고 비교하세요.',
+    heading: '전체 멤버십 혜택',
+    paragraphs: [
+      '통신사별 멤버십 제휴 혜택을 브랜드, 카테고리, 이용 조건 기준으로 검색하고 비교할 수 있습니다.',
+      '혜택 목록은 서비스 API를 통해 최신 데이터로 불러오며 JavaScript가 활성화되어야 정상적으로 표시됩니다.',
+    ],
+  },
+  {
+    path: '/login',
+    title: '로그인 | ITPLACE',
+    description:
+      'ITPLACE 로그인 페이지입니다. 로그인 후 즐겨찾기와 맞춤 추천 기능을 이용할 수 있습니다.',
+    heading: '로그인',
+    paragraphs: ['로그인 후 즐겨찾기, 마이페이지, 맞춤 추천 기능을 이용할 수 있습니다.'],
+    noIndex: true,
+  },
+  {
+    path: '/oauth/callback/kakao',
+    title: '카카오 로그인 처리 중 | ITPLACE',
+    description: 'ITPLACE 카카오 로그인 콜백 처리 페이지입니다.',
+    heading: '카카오 로그인 처리 중',
+    paragraphs: ['카카오 로그인 처리를 완료하려면 브라우저에서 JavaScript가 활성화되어야 합니다.'],
+    noIndex: true,
+  },
+  {
+    path: '/mypage/info',
+    title: '마이페이지 | ITPLACE',
+    description: 'ITPLACE 회원 정보와 멤버십 정보를 관리하는 마이페이지입니다.',
+    heading: '마이페이지',
+    paragraphs: ['회원 정보와 저장한 혜택은 로그인 후 확인할 수 있습니다.'],
+    noIndex: true,
+  },
+  {
+    path: '/mypage/favorites',
+    title: '저장한 혜택 | ITPLACE',
+    description: 'ITPLACE에서 저장한 멤버십 혜택을 확인하는 페이지입니다.',
+    heading: '저장한 혜택',
+    paragraphs: ['저장한 혜택 목록은 로그인 후 확인할 수 있습니다.'],
+    noIndex: true,
+  },
+  {
+    path: '/mypage/history',
+    title: '저장한 혜택 | ITPLACE',
+    description: 'ITPLACE에서 저장한 멤버십 혜택을 확인하는 페이지입니다.',
+    heading: '저장한 혜택',
+    paragraphs: ['저장한 혜택 목록은 로그인 후 확인할 수 있습니다.'],
+    noIndex: true,
+  },
+];
+
+const notFoundPage = {
+  path: '/404',
+  title: '페이지를 찾을 수 없습니다 | ITPLACE',
+  description:
+    '요청한 ITPLACE 페이지를 찾을 수 없습니다. 주요 페이지에서 혜택을 다시 확인해 주세요.',
+  heading: '페이지를 찾을 수 없습니다',
+  paragraphs: [
+    '입력한 주소가 잘못되었거나 페이지가 이동되었을 수 있습니다.',
+    '지도, 전체 혜택, 서비스 소개, 문의 페이지에서 원하는 정보를 다시 찾아보세요.',
+  ],
+  noIndex: true,
+};
+
 const escapeHtml = (value) =>
   value
     .replaceAll('&', '&amp;')
@@ -106,9 +185,12 @@ const replaceOrInsertMeta = (html, selectorPattern, tag) => {
   return html.replace('</head>', `    ${tag}\n  </head>`);
 };
 
+const stripRobotsMeta = (html) =>
+  html.replace(/\s*<meta\s+name="robots"\s+content="[^"]*"\s*\/>/g, '');
+
 const updateHead = (html, page) => {
   const canonicalUrl = `${SITE_ORIGIN}${page.path}`;
-  let next = html
+  let next = stripRobotsMeta(html)
     .replace(/<title>.*?<\/title>/s, `<title>${escapeHtml(page.title)}</title>`)
     .replace(
       /<meta\s+name="description"\s+content="[^"]*"\s*\/>/s,
@@ -144,6 +226,14 @@ const updateHead = (html, page) => {
     /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/>/s,
     `<meta name="twitter:description" content="${escapeHtml(page.description)}" />`
   );
+
+  if (page.noIndex) {
+    next = replaceOrInsertMeta(
+      next,
+      /<meta\s+name="robots"\s+content="[^"]*"\s*\/>/s,
+      '<meta name="robots" content="noindex,follow" />'
+    );
+  }
 
   return next;
 };
@@ -189,10 +279,14 @@ const writeRouteHtml = async (html, page) => {
 };
 
 const template = await readFile(path.join(DIST_DIR, 'index.html'), 'utf8');
+const knownRoutes = [...publicPages, ...appShellPages];
 
-for (const page of pages) {
+for (const page of knownRoutes) {
   const html = injectFallback(updateHead(template, page), page);
   await writeRouteHtml(html, page);
 }
 
-console.log(`prerendered ${pages.length} info pages`);
+const notFoundHtml = injectFallback(updateHead(template, notFoundPage), notFoundPage);
+await writeFile(path.join(DIST_DIR, '404.html'), notFoundHtml, 'utf8');
+
+console.log(`prerendered ${knownRoutes.length} known routes and 404 page`);
