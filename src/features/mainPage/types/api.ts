@@ -84,27 +84,15 @@ export interface DetailTierBenefit {
   isAll: boolean;
 }
 
-// 카카오 좌표→주소 변환 API 타입
-export interface KakaoAddressResponse {
-  meta: {
-    total_count: number;
+// 좌표→주소 변환 API 타입
+export interface ReverseGeocodeApiResponse {
+  code: string;
+  status: string;
+  message: string;
+  data: {
+    addressName: string;
   };
-  documents: KakaoAddress[];
-}
-
-export interface KakaoAddress {
-  road_address: {
-    address_name: string;
-    region_1depth_name: string;
-    region_2depth_name: string;
-    region_3depth_name: string;
-  } | null;
-  address: {
-    address_name: string;
-    region_1depth_name: string;
-    region_2depth_name: string;
-    region_3depth_name: string;
-  };
+  timestamp: string;
 }
 
 // API 파라미터 타입
