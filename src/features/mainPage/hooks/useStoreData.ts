@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Platform } from '../types';
 import {
-  getStoreList,
-  getStoreListByCategory,
+  getStorePreviewList,
+  getStorePreviewListByCategory,
   getCurrentLocation,
   getAddressFromCoordinates,
-  searchStores,
+  searchStorePreviews,
 } from '../api/storeApi';
-import { transformStoreDataToPlatforms } from '../utils/dataTransform';
+import { transformMapStorePreviewsToPlatforms } from '../utils/dataTransform';
 import { getRadiusByMapLevel } from '../utils/mapUtils';
 import { useApiCall } from './useApiCall';
 import { DEFAULT_RADIUS } from '../constants';
@@ -56,7 +56,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       const finalUserLng = userLng !== undefined ? userLng : currentUserCoords?.lng;
 
       const storeResponse = shouldFilterByCategory
-        ? await getStoreListByCategory({
+        ? await getStorePreviewListByCategory({
             lat,
             lng,
             radiusMeters: radius,
@@ -64,7 +64,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
             userLat: finalUserLat,
             userLng: finalUserLng,
           })
-        : await getStoreList({
+        : await getStorePreviewList({
             lat,
             lng,
             radiusMeters: radius,
@@ -72,7 +72,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
             userLng: finalUserLng,
           });
 
-      return transformStoreDataToPlatforms(storeResponse.data);
+      return transformMapStorePreviewsToPlatforms(storeResponse.data);
     },
     []
   );
@@ -283,7 +283,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         if (!keyword.trim()) {
           const storeResponse =
             selectedCategory && selectedCategory !== '전체'
-              ? await getStoreListByCategory({
+              ? await getStorePreviewListByCategory({
                   lat: searchLat, // 검색 중심 좌표
                   lng: searchLng, // 검색 중심 좌표
                   radiusMeters: radius,
@@ -291,7 +291,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
                   userLat: currentUserCoords?.lat, // 사용자 실제 위치
                   userLng: currentUserCoords?.lng, // 사용자 실제 위치
                 })
-              : await getStoreList({
+              : await getStorePreviewList({
                   lat: searchLat, // 검색 중심 좌표
                   lng: searchLng, // 검색 중심 좌표
                   radiusMeters: radius,
@@ -299,11 +299,11 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
                   userLng: currentUserCoords?.lng, // 사용자 실제 위치
                 });
 
-          return transformStoreDataToPlatforms(storeResponse.data);
+          return transformMapStorePreviewsToPlatforms(storeResponse.data);
         }
 
         // 키워드 검색 API 호출 (검색 위치와 사용자 위치 분리)
-        const storeResponse = await searchStores({
+        const storeResponse = await searchStorePreviews({
           lat: searchLat, // 검색 중심 좌표
           lng: searchLng, // 검색 중심 좌표
           category: selectedCategory || undefined,
@@ -312,7 +312,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
           userLng: currentUserCoords?.lng, // 사용자 실제 위치
         });
 
-        return transformStoreDataToPlatforms(storeResponse.data);
+        return transformMapStorePreviewsToPlatforms(storeResponse.data);
       };
 
       await executeRef.current(keywordSearch);

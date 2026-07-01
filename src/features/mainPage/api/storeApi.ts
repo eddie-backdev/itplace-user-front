@@ -4,7 +4,67 @@ import {
   StoreListParams,
   SearchStoresParams,
   ReverseGeocodeApiResponse,
+  MapStorePreviewApiResponse,
 } from '../types/api';
+
+/**
+ * 사용자 위치 기반 전체 지점 목록 조회 - 지도 카드 표시용 경량 응답
+ */
+export const getStorePreviewList = async (
+  params: StoreListParams & { userLat?: number; userLng?: number }
+): Promise<MapStorePreviewApiResponse> => {
+  const response = await api.get('/api/v1/maps/nearby/previews', {
+    params: {
+      lat: params.lat,
+      lng: params.lng,
+      radiusMeters: params.radiusMeters,
+      userLat: params.userLat,
+      userLng: params.userLng,
+    },
+  });
+
+  return response.data;
+};
+
+/**
+ * 사용자 위치 기반 카테고리별 지점 목록 조회 - 지도 카드 표시용 경량 응답
+ */
+export const getStorePreviewListByCategory = async (
+  params: StoreListParams & { category?: string; userLat?: number; userLng?: number }
+): Promise<MapStorePreviewApiResponse> => {
+  const response = await api.get('/api/v1/maps/nearby/category/previews', {
+    params: {
+      lat: params.lat,
+      lng: params.lng,
+      radiusMeters: params.radiusMeters,
+      category: params.category,
+      userLat: params.userLat,
+      userLng: params.userLng,
+    },
+  });
+
+  return response.data;
+};
+
+/**
+ * 키워드 검색을 통한 지점 목록 조회 - 지도 카드 표시용 경량 응답
+ */
+export const searchStorePreviews = async (
+  params: SearchStoresParams & { userLat?: number; userLng?: number }
+): Promise<MapStorePreviewApiResponse> => {
+  const response = await api.get('/api/v1/maps/nearby/search/previews', {
+    params: {
+      lat: params.lat,
+      lng: params.lng,
+      category: params.category,
+      keyword: params.keyword,
+      userLat: params.userLat,
+      userLng: params.userLng,
+    },
+  });
+
+  return response.data;
+};
 
 /**
  * 사용자 위치 기반 전체 지점 목록 조회

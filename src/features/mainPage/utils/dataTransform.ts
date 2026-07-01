@@ -1,6 +1,10 @@
 import { Platform } from '../types';
-import { StoreData } from '../types/api';
-import { convertStoreDataToPlatform, createPlatformWithoutCoords } from './storeUtils';
+import { MapStorePreviewData, StoreData } from '../types/api';
+import {
+  convertStoreDataToPlatform,
+  convertStorePreviewToPlatform,
+  createPlatformWithoutCoords,
+} from './storeUtils';
 
 /**
  * 데이터 변환 관련 유틸리티 함수들
@@ -18,4 +22,14 @@ export const transformStoreDataToPlatforms = (storeDataList: StoreData[]): Platf
     const platform = convertStoreDataToPlatform(storeData);
     return platform ?? createPlatformWithoutCoords(storeData);
   });
+};
+
+/**
+ * 지도 카드 표시용 경량 API 응답을 Platform 배열로 변환
+ * 혜택 문구는 유지하고, 지도/주변 혜택 탭에 필요한 필드만 사용한다.
+ */
+export const transformMapStorePreviewsToPlatforms = (
+  storePreviewList: MapStorePreviewData[]
+): Platform[] => {
+  return storePreviewList.map(convertStorePreviewToPlatform);
 };

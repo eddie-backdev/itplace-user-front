@@ -1,4 +1,4 @@
-import { StoreData } from '../types/api';
+import { MapStorePreviewData, StoreData } from '../types/api';
 import { Platform } from '../types';
 import { getCarrierGradeOrder } from '../../../utils/membership';
 
@@ -83,5 +83,41 @@ export const createPlatformWithoutCoords = (storeData: StoreData): Platform => {
     distance: distance, // API에서 제공하는 거리 값 사용
     hasCoupon: store.hasCoupon,
     imageUrl: partner.image,
+  };
+};
+
+/**
+ * 지도 카드 표시용 경량 응답을 Platform 타입으로 변환
+ */
+export const convertStorePreviewToPlatform = (storeData: MapStorePreviewData): Platform => {
+  const availableGrades = storeData.tierBenefit.map((benefit) => benefit.grade);
+  const benefits = getCarrierGradeOrder(storeData.carrier, availableGrades).map((grade) => {
+    const benefit = storeData.tierBenefit.find((b) => b.grade === grade);
+    return benefit ? `${grade}: ${benefit.context}` : `${grade}: -`;
+  });
+
+  return {
+    id: storeData.storeId.toString(),
+    storeId: storeData.storeId,
+    partnerId: storeData.partnerId,
+    name: storeData.storeName,
+    category: storeData.category,
+    business: '',
+    city: '',
+    town: '',
+    legalDong: '',
+    address: storeData.address ?? '',
+    roadName: storeData.roadName ?? '',
+    roadAddress: storeData.roadAddress ?? '',
+    postCode: storeData.postCode ?? '',
+    latitude: storeData.latitude,
+    longitude: storeData.longitude,
+    carrier: storeData.carrier,
+    benefits,
+    benefitDetails: storeData.tierBenefit,
+    rating: 4.5,
+    distance: storeData.distance,
+    hasCoupon: storeData.hasCoupon,
+    imageUrl: storeData.image ?? undefined,
   };
 };

@@ -7,6 +7,32 @@ export interface StoreApiResponse {
   data: StoreData[];
 }
 
+export interface MapStorePreviewApiResponse {
+  code: string;
+  status: string;
+  message: string;
+  data: MapStorePreviewData[];
+}
+
+export interface MapStorePreviewData {
+  storeId: number;
+  partnerId: number;
+  storeName: string;
+  partnerName: string;
+  category: string;
+  image?: string | null;
+  latitude: number;
+  longitude: number;
+  address?: string | null;
+  roadName?: string | null;
+  roadAddress?: string | null;
+  postCode?: string | null;
+  hasCoupon: boolean;
+  tierBenefit: TierBenefit[];
+  distance: number;
+  carrier?: string | null;
+}
+
 export interface StoreData {
   carrier?: string | null;
   store: Store;
