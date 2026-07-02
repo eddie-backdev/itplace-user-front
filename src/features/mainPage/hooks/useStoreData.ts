@@ -77,28 +77,11 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
     []
   );
 
-  /**
-   * 좌표 업데이트 및 주소 변환 공통 함수
-   */
-  const updateLocationInfo = useCallback(async (lat: number, lng: number) => {
-    const coords = { lat, lng };
-    setUserCoords(coords);
-    userCoordsRef.current = coords; // ref도 업데이트
-    try {
-      const address = await getAddressFromCoordinates(lat, lng);
-      setCurrentLocation(address);
-    } catch {
-      // 주소 변환 실패 시 무시 (지도는 정상 동작)
-    }
-  }, []);
-
   // 함수 참조를 ref로 저장 (의존성 배열 최적화)
   const executeRef = useRef(execute);
   executeRef.current = execute;
   const loadStoresByCategoryRef = useRef(loadStoresByCategory);
   loadStoresByCategoryRef.current = loadStoresByCategory;
-  const updateLocationInfoRef = useRef(updateLocationInfo);
-  updateLocationInfoRef.current = updateLocationInfo;
 
   // 초기 데이터 로드 (컴포넌트 마운트 시에만)
   useEffect(() => {
@@ -114,15 +97,21 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         setCurrentLocation('기본 위치: 서울 중구 태평로1가');
       }
 
-      await updateLocationInfoRef.current(coords.lat, coords.lng);
+      setUserCoords(coords);
+      userCoordsRef.current = coords;
 
-      // 2. 근처 제휴처 데이터 로드 (초기에는 전체 카테고리)
-      const platforms = await loadStoresByCategoryRef.current(
-        coords.lat,
-        coords.lng,
-        DEFAULT_RADIUS,
-        null // 초기 로드는 전체 카테고리
-      );
+      // 2. 주소 변환과 근처 제휴처 데이터 로드를 병렬 실행
+      const [platforms] = await Promise.all([
+        loadStoresByCategoryRef.current(
+          coords.lat,
+          coords.lng,
+          DEFAULT_RADIUS,
+          null // 초기 로드는 전체 카테고리
+        ),
+        getAddressFromCoordinates(coords.lat, coords.lng)
+          .then(setCurrentLocation)
+          .catch(() => undefined),
+      ]);
 
       return platforms; // 데이터 반환
     };
@@ -214,24 +203,20 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         // 현재 사용자 위치 가져오기
         const currentUserCoords = userCoordsRef.current;
 
-        // 가맹점 검색 (지도 중심 좌표 기준, 사용자 위치는 별도 전달)
-        const platforms = await loadStoresByCategoryRef.current(
-          centerLat, // 검색 중심 좌표
-          centerLng, // 검색 중심 좌표
-          radius,
-          selectedCategory,
-          currentUserCoords?.lat, // 사용자 실제 위치
-          currentUserCoords?.lng // 사용자 실제 위치
-        );
-
-        // 사용자 위치는 업데이트하지 않음 (기존 userCoords 유지)
-        // 단, 현재 위치 텍스트만 업데이트 (주소 표시용)
-        try {
-          const address = await getAddressFromCoordinates(centerLat, centerLng);
-          setCurrentLocation(address);
-        } catch {
-          // 주소 변환 실패 시 무시
-        }
+        // 가맹점 검색과 현재 위치 텍스트 업데이트를 병렬 실행
+        const [platforms] = await Promise.all([
+          loadStoresByCategoryRef.current(
+            centerLat, // 검색 중심 좌표
+            centerLng, // 검색 중심 좌표
+            radius,
+            selectedCategory,
+            currentUserCoords?.lat, // 사용자 실제 위치
+            currentUserCoords?.lng // 사용자 실제 위치
+          ),
+          getAddressFromCoordinates(centerLat, centerLng)
+            .then(setCurrentLocation)
+            .catch(() => undefined),
+        ]);
 
         return platforms;
       };
@@ -247,16 +232,22 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   const updateToCurrentLocation = useCallback(
     async (lat: number, lng: number, mapLevel: number) => {
       const updateCurrentLocation = async () => {
-        // 사용자 위치 업데이트
-        await updateLocationInfoRef.current(lat, lng);
+        // 사용자 좌표는 즉시 갱신하고, 주소 변환과 매장 조회는 병렬 실행
+        const coords = { lat, lng };
+        setUserCoords(coords);
+        userCoordsRef.current = coords;
 
-        // 새로운 위치 기준으로 가맹점 데이터 로드
-        const platforms = await loadStoresByCategoryRef.current(
-          lat,
-          lng,
-          getRadiusByMapLevel(mapLevel),
-          selectedCategory
-        );
+        const [platforms] = await Promise.all([
+          loadStoresByCategoryRef.current(
+            lat,
+            lng,
+            getRadiusByMapLevel(mapLevel),
+            selectedCategory
+          ),
+          getAddressFromCoordinates(lat, lng)
+            .then(setCurrentLocation)
+            .catch(() => undefined),
+        ]);
 
         return platforms;
       };
