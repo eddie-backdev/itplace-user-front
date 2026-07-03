@@ -128,6 +128,16 @@ export interface StoreListParams {
   radiusMeters: number;
 }
 
+export interface StoreInViewParams {
+  minLat: number;
+  minLng: number;
+  maxLat: number;
+  maxLng: number;
+  category?: string;
+  userLat?: number;
+  userLng?: number;
+}
+
 // 즐겨찾기 API 타입
 export interface FavoriteRequest {
   benefitId: number;

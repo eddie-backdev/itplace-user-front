@@ -5,6 +5,8 @@ export interface KakaoLatLng {
 
 export interface KakaoLatLngBounds {
   contain(latlng: KakaoLatLng): boolean;
+  getSouthWest(): KakaoLatLng;
+  getNorthEast(): KakaoLatLng;
 }
 
 export interface KakaoMap {

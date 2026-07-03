@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Platform } from '../types';
+import { MapBounds, Platform } from '../types';
 import {
   getStorePreviewList,
   getStorePreviewListByCategory,
+  getStorePreviewsInView,
   getCurrentLocation,
   getAddressFromCoordinates,
   searchStorePreviews,
@@ -30,6 +31,9 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   // mapCenter의 최신 값을 참조하기 위한 ref
   const mapCenterRef = useRef<{ lat: number; lng: number } | null>(mapCenter);
   mapCenterRef.current = mapCenter;
+
+  // 지도 viewport bounds의 최신 값을 참조하기 위한 ref
+  const currentMapBoundsRef = useRef<MapBounds | null>(null);
 
   // 카테고리 필터 상태
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -77,11 +81,70 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
     []
   );
 
+  const loadStoresInBounds = useCallback(
+    async (bounds: MapBounds, category: string | null, userLat?: number, userLng?: number) => {
+      const currentUserCoords = userCoordsRef.current;
+      const boundsCenterLat = (bounds.minLat + bounds.maxLat) / 2;
+      const boundsCenterLng = (bounds.minLng + bounds.maxLng) / 2;
+      const finalUserLat =
+        userLat !== undefined ? userLat : (currentUserCoords?.lat ?? boundsCenterLat);
+      const finalUserLng =
+        userLng !== undefined ? userLng : (currentUserCoords?.lng ?? boundsCenterLng);
+      const shouldFilterByCategory = category && category !== '전체';
+
+      try {
+        const storeResponse = await getStorePreviewsInView({
+          minLat: bounds.minLat,
+          minLng: bounds.minLng,
+          maxLat: bounds.maxLat,
+          maxLng: bounds.maxLng,
+          category: shouldFilterByCategory ? category : undefined,
+          userLat: finalUserLat,
+          userLng: finalUserLng,
+        });
+
+        return transformMapStorePreviewsToPlatforms(storeResponse.data);
+      } catch {
+        const latMeters = Math.abs(bounds.maxLat - bounds.minLat) * 111_320;
+        const lngMeters =
+          Math.abs(bounds.maxLng - bounds.minLng) *
+          111_320 *
+          Math.cos((boundsCenterLat * Math.PI) / 180);
+        const fallbackRadius = Math.min(
+          400_000,
+          Math.max(300, Math.hypot(latMeters, lngMeters) / 2)
+        );
+
+        const fallbackResponse = shouldFilterByCategory
+          ? await getStorePreviewListByCategory({
+              lat: boundsCenterLat,
+              lng: boundsCenterLng,
+              radiusMeters: fallbackRadius,
+              category,
+              userLat: finalUserLat,
+              userLng: finalUserLng,
+            })
+          : await getStorePreviewList({
+              lat: boundsCenterLat,
+              lng: boundsCenterLng,
+              radiusMeters: fallbackRadius,
+              userLat: finalUserLat,
+              userLng: finalUserLng,
+            });
+
+        return transformMapStorePreviewsToPlatforms(fallbackResponse.data);
+      }
+    },
+    []
+  );
+
   // 함수 참조를 ref로 저장 (의존성 배열 최적화)
   const executeRef = useRef(execute);
   executeRef.current = execute;
   const loadStoresByCategoryRef = useRef(loadStoresByCategory);
   loadStoresByCategoryRef.current = loadStoresByCategory;
+  const loadStoresInBoundsRef = useRef(loadStoresInBounds);
+  loadStoresInBoundsRef.current = loadStoresInBounds;
 
   // 초기 데이터 로드 (컴포넌트 마운트 시에만)
   useEffect(() => {
@@ -149,12 +212,15 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         return [];
       }
 
-      const platforms = await loadStoresByCategoryRef.current(
-        coords.lat,
-        coords.lng,
-        getRadiusByMapLevel(currentMapLevelInHook),
-        selectedCategory
-      );
+      const bounds = currentMapBoundsRef.current;
+      const platforms = bounds
+        ? await loadStoresInBoundsRef.current(bounds, selectedCategory)
+        : await loadStoresByCategoryRef.current(
+            coords.lat,
+            coords.lng,
+            getRadiusByMapLevel(currentMapLevelInHook),
+            selectedCategory
+          );
       return platforms || []; // null/undefined 방어
     };
 
@@ -195,24 +261,27 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
    * 지도 레벨에 따른 반경으로 검색하되, 사용자 위치는 업데이트하지 않음
    */
   const searchInCurrentMap = useCallback(
-    async (centerLat: number, centerLng: number, mapLevel: number) => {
+    async (centerLat: number, centerLng: number, mapLevel: number, bounds?: MapBounds) => {
       const searchInMap = async () => {
-        // 맵 레벨에 따른 반경 계산
-        const radius = getRadiusByMapLevel(mapLevel);
-
-        // 현재 사용자 위치 가져오기
         const currentUserCoords = userCoordsRef.current;
+        const searchBounds = bounds ?? currentMapBoundsRef.current;
 
-        // 가맹점 검색과 현재 위치 텍스트 업데이트를 병렬 실행
         const [platforms] = await Promise.all([
-          loadStoresByCategoryRef.current(
-            centerLat, // 검색 중심 좌표
-            centerLng, // 검색 중심 좌표
-            radius,
-            selectedCategory,
-            currentUserCoords?.lat, // 사용자 실제 위치
-            currentUserCoords?.lng // 사용자 실제 위치
-          ),
+          searchBounds
+            ? loadStoresInBoundsRef.current(
+                searchBounds,
+                selectedCategory,
+                currentUserCoords?.lat,
+                currentUserCoords?.lng
+              )
+            : loadStoresByCategoryRef.current(
+                centerLat,
+                centerLng,
+                getRadiusByMapLevel(mapLevel),
+                selectedCategory,
+                currentUserCoords?.lat,
+                currentUserCoords?.lng
+              ),
           getAddressFromCoordinates(centerLat, centerLng)
             .then(setCurrentLocation)
             .catch(() => undefined),
@@ -222,6 +291,29 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       };
 
       await executeRef.current(searchInMap);
+    },
+    [selectedCategory]
+  );
+
+  /**
+   * 현재 지도 화면 영역 기준 가맹점 검색
+   */
+  const searchInMapBounds = useCallback(
+    async (bounds: MapBounds, centerLat: number, centerLng: number) => {
+      currentMapBoundsRef.current = bounds;
+
+      const searchInBounds = async () => {
+        const [platforms] = await Promise.all([
+          loadStoresInBoundsRef.current(bounds, selectedCategory),
+          getAddressFromCoordinates(centerLat, centerLng)
+            .then(setCurrentLocation)
+            .catch(() => undefined),
+        ]);
+
+        return platforms;
+      };
+
+      await executeRef.current(searchInBounds);
     },
     [selectedCategory]
   );
@@ -322,6 +414,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
     filterByCategory,
     setCategoryOnly,
     searchInCurrentMap,
+    searchInMapBounds,
     searchByKeyword,
     updateToCurrentLocation,
     currentMapLevelInHook,

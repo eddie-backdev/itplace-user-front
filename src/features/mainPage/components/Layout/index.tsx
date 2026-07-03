@@ -5,7 +5,7 @@ import SearchSection from '../SidebarSection/SearchSection';
 import SpeechBubble from '../SidebarSection/PersonalizedRecommendationList/SpeechBubble';
 import BenefitDetailCard from '../SidebarSection/PersonalizedRecommendationList/BenefitDetailCard';
 import MobileHeader from '../../../../components/MobileHeader';
-import { Platform, MapLocation } from '../../types';
+import { Platform, MapLocation, MapBounds } from '../../types';
 import { CATEGORIES, LAYOUT } from '../../constants';
 import { useStoreData } from '../../hooks/useStoreData';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
@@ -44,6 +44,8 @@ const MainPageLayout: React.FC = () => {
   const [startHeight, setStartHeight] = useState<number>(0); // 드래그 시작 시 높이
   const [isAnimating, setIsAnimating] = useState(false);
   const isMapZoomingRef = useRef(false);
+  const mapViewportSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastViewportSearchKeyRef = useRef<string>('');
   const lastViewportHeightRef = useRef<number>(
     typeof window === 'undefined' ? 0 : window.innerHeight
   );
@@ -107,7 +109,12 @@ const MainPageLayout: React.FC = () => {
   const [currentMapLevel, setCurrentMapLevel] = useState<number>(2); // 지도 확대/축소 레벨
   const [currentMapCenter, setCurrentMapCenter] = useState<{ lat: number; lng: number } | null>(
     null
-  ); // 지도 중심 좌표
+  ); // 현재 지도 중심 좌표
+  const [mapMoveTarget, setMapMoveTarget] = useState<{ lat: number; lng: number } | null>(null);
+  const mapMoveCenterLocation = useMemo(
+    () => (mapMoveTarget ? { latitude: mapMoveTarget.lat, longitude: mapMoveTarget.lng } : null),
+    [mapMoveTarget]
+  );
 
   // 가맹점 데이터 및 API 상태 관리
   const {
@@ -119,6 +126,7 @@ const MainPageLayout: React.FC = () => {
     updateLocationFromMap, // 지도에서 위치 이동 시 주소 업데이트
     filterByCategory, // 카테고리 필터링
     searchInCurrentMap, // 현재 지도 영역에서 검색
+    searchInMapBounds, // 현재 지도 화면 영역에서 검색
     searchByKeyword, // 키워드 검색
     updateToCurrentLocation, // 현재 위치 업데이트
     userCoords, // 사용자 초기 위치
@@ -190,11 +198,14 @@ const MainPageLayout: React.FC = () => {
   // 지도 중심 변경 핸들러 (지도 드래그 시)
   const handleMapCenterChange = useCallback(
     (location: MapLocation) => {
-      // 현재 지도 중심 저장 (API 호출은 안 함)
+      setMapMoveTarget(null);
       setCurrentMapCenter({ lat: location.latitude, lng: location.longitude });
-      updateLocationFromMap(location.latitude, location.longitude);
+
+      if (activeTab !== 'nearby' || searchQuery.trim()) {
+        updateLocationFromMap(location.latitude, location.longitude);
+      }
     },
-    [updateLocationFromMap]
+    [activeTab, searchQuery, updateLocationFromMap]
   );
 
   // 현재 위치로 이동 핸들러 (현재 위치 버튼 클릭 시)
@@ -204,6 +215,7 @@ const MainPageLayout: React.FC = () => {
       updateToCurrentLocation(latitude, longitude, currentMapLevel);
       // 지도 중심도 해당 위치로 이동
       setCurrentMapCenter({ lat: latitude, lng: longitude });
+      setMapMoveTarget({ lat: latitude, lng: longitude });
     },
     [updateToCurrentLocation, currentMapLevel]
   );
@@ -211,6 +223,7 @@ const MainPageLayout: React.FC = () => {
   // 지도 중심 이동 핸들러 (사이드바에서 호출)
   const handleMapCenterMove = useCallback((latitude: number, longitude: number) => {
     setCurrentMapCenter({ lat: latitude, lng: longitude });
+    setMapMoveTarget({ lat: latitude, lng: longitude });
   }, []);
 
   // 현 지도에서 검색 핸들러
@@ -223,6 +236,50 @@ const MainPageLayout: React.FC = () => {
   // 맵 레벨 변경 핸들러
   const handleMapLevelChange = useCallback((mapLevel: number) => {
     setCurrentMapLevel(mapLevel);
+  }, []);
+
+  // 지도 이동/줌 완료 후 현재 화면 기준 혜택 자동 재조회
+  const handleMapViewportChange = useCallback(
+    (bounds: MapBounds, center: MapLocation, mapLevel: number) => {
+      setMapMoveTarget(null);
+      setCurrentMapCenter({ lat: center.latitude, lng: center.longitude });
+      setCurrentMapLevel(mapLevel);
+
+      if (mapViewportSearchTimerRef.current) {
+        clearTimeout(mapViewportSearchTimerRef.current);
+      }
+
+      if (activeTab !== 'nearby' || searchQuery.trim()) {
+        return;
+      }
+
+      const viewportSearchKey = [
+        mapLevel,
+        bounds.minLat.toFixed(5),
+        bounds.minLng.toFixed(5),
+        bounds.maxLat.toFixed(5),
+        bounds.maxLng.toFixed(5),
+        selectedCategory || '전체',
+      ].join(':');
+
+      if (viewportSearchKey === lastViewportSearchKeyRef.current) {
+        return;
+      }
+
+      lastViewportSearchKeyRef.current = viewportSearchKey;
+      mapViewportSearchTimerRef.current = setTimeout(() => {
+        searchInMapBounds(bounds, center.latitude, center.longitude);
+      }, 350);
+    },
+    [activeTab, searchInMapBounds, searchQuery, selectedCategory]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (mapViewportSearchTimerRef.current) {
+        clearTimeout(mapViewportSearchTimerRef.current);
+      }
+    };
   }, []);
 
   // 마지막 검색어 추적 (중복 검색 방지용)
@@ -583,12 +640,9 @@ const MainPageLayout: React.FC = () => {
             selectedCategory={selectedCategory || '전체'}
             onCategorySelect={handleCategorySelect}
             onSearchInMap={handleSearchInMap}
-            centerLocation={
-              currentMapCenter
-                ? { latitude: currentMapCenter.lat, longitude: currentMapCenter.lng }
-                : null
-            }
+            centerLocation={mapMoveCenterLocation}
             onMapLevelChange={handleMapLevelChange}
+            onViewportChange={handleMapViewportChange}
             activeTab={activeTab}
           />
         </div>
@@ -689,12 +743,9 @@ const MainPageLayout: React.FC = () => {
             selectedCategory={selectedCategory || '전체'}
             onCategorySelect={handleCategorySelect}
             onSearchInMap={handleSearchInMap}
-            centerLocation={
-              currentMapCenter
-                ? { latitude: currentMapCenter.lat, longitude: currentMapCenter.lng }
-                : null
-            }
+            centerLocation={mapMoveCenterLocation}
             onMapLevelChange={handleMapLevelChange}
+            onViewportChange={handleMapViewportChange}
             activeTab={activeTab}
           />
 

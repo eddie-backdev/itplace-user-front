@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 /**
  * API 호출 공통 상태 관리 훅
@@ -17,19 +17,28 @@ export const useApiCall = <T = unknown>(initialData: T | null = null): UseApiCal
   const [data, setData] = useState<T | null>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestSeqRef = useRef(0);
 
   // API 호출 실행 함수
   const execute = useCallback(async (apiCall: () => Promise<T>) => {
+    const requestSeq = requestSeqRef.current + 1;
+    requestSeqRef.current = requestSeq;
     setIsLoading(true);
     setError(null);
 
     try {
       const result = await apiCall();
-      setData(result);
+      if (requestSeqRef.current === requestSeq) {
+        setData(result);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
+      if (requestSeqRef.current === requestSeq) {
+        setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
+      }
     } finally {
-      setIsLoading(false);
+      if (requestSeqRef.current === requestSeq) {
+        setIsLoading(false);
+      }
     }
   }, []);
 

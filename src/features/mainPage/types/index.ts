@@ -44,3 +44,10 @@ export interface MapLocation {
   latitude: number;
   longitude: number;
 }
+
+export interface MapBounds {
+  minLat: number;
+  minLng: number;
+  maxLat: number;
+  maxLng: number;
+}

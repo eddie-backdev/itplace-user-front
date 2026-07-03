@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Platform, Category, MapLocation } from '../../types';
+import { Platform, Category, MapLocation, MapBounds } from '../../types';
 import CategoryTabsSection from '../SidebarSection/CategoryTabsSection';
 import KakaoMap from './KakaoMap';
 import MapControls from './MapControls';
@@ -19,6 +19,7 @@ interface MapSectionProps {
   onSearchInMap?: () => void;
   centerLocation?: { latitude: number; longitude: number } | null;
   onMapLevelChange?: (mapLevel: number) => void;
+  onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
   activeTab: string;
 }
 
@@ -35,6 +36,7 @@ const MapSection: React.FC<MapSectionProps> = ({
   onSearchInMap,
   centerLocation,
   onMapLevelChange,
+  onViewportChange,
   activeTab,
 }) => {
   const [showSearchButton, setShowSearchButton] = useState(false);
@@ -46,9 +48,13 @@ const MapSection: React.FC<MapSectionProps> = ({
 
   // 지도 중심 변경 핸들러 (드래그 감지)
   const handleMapCenterChange = (location: MapLocation) => {
-    // 초기 검색이나 수동 검색을 한 후에만 드래그 시 버튼 표시
-    setShowSearchButton(true);
+    setShowSearchButton(activeTab !== 'nearby');
     onMapCenterChange?.(location);
+  };
+
+  const handleViewportChange = (bounds: MapBounds, center: MapLocation, mapLevel: number) => {
+    setShowSearchButton(false);
+    onViewportChange?.(bounds, center, mapLevel);
   };
 
   // 검색 실행 핸들러
@@ -107,6 +113,7 @@ const MapSection: React.FC<MapSectionProps> = ({
         onMapCenterChange={handleMapCenterChange}
         centerLocation={centerLocation}
         onMapLevelChange={onMapLevelChange}
+        onViewportChange={handleViewportChange}
         isRoadviewMode={isRoadviewMode}
         onMapClick={handleMapClick}
       />

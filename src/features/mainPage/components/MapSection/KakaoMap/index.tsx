@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { renderToString } from 'react-dom/server';
-import { Platform, MapLocation } from '../../../types';
+import { MapBounds, Platform, MapLocation } from '../../../types';
 import {
   KakaoMap as KakaoMapType,
   KakaoMarker,
@@ -19,6 +19,7 @@ interface KakaoMapProps {
   onMapCenterChange?: (location: MapLocation) => void;
   centerLocation?: { latitude: number; longitude: number } | null;
   onMapLevelChange?: (mapLevel: number) => void;
+  onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
   isRoadviewMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
 }
@@ -96,6 +97,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   onMapCenterChange,
   centerLocation,
   onMapLevelChange,
+  onViewportChange,
   isRoadviewMode = false,
   onMapClick,
 }) => {
@@ -165,6 +167,32 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       }
     };
   }, []);
+
+  const notifyViewportChange = useCallback(() => {
+    if (!mapRef.current || !onViewportChange) {
+      return;
+    }
+
+    const map = mapRef.current;
+    const bounds = map.getBounds();
+    const southWest = bounds.getSouthWest();
+    const northEast = bounds.getNorthEast();
+    const center = map.getCenter();
+
+    onViewportChange(
+      {
+        minLat: southWest.getLat(),
+        minLng: southWest.getLng(),
+        maxLat: northEast.getLat(),
+        maxLng: northEast.getLng(),
+      },
+      {
+        latitude: center.getLat(),
+        longitude: center.getLng(),
+      },
+      map.getLevel()
+    );
+  }, [onViewportChange]);
 
   // Viewport 내 플랫폼 필터링 함수
   const updateVisiblePlatforms = useCallback(() => {
@@ -340,6 +368,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
         requestAnimationFrame(() => {
           updateVisiblePlatforms();
+          notifyViewportChange();
 
           if (
             nextIsClusterMode &&
@@ -377,6 +406,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         }
         if (!isDragEndFromZoom) {
           updateVisiblePlatforms();
+          notifyViewportChange();
         }
       });
 
@@ -388,6 +418,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         if (map && map.relayout) {
           map.relayout();
         }
+        notifyViewportChange();
       }, 100);
     };
 
@@ -411,6 +442,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     onMapLevelChange,
     isMapInitialized,
     updateVisiblePlatforms,
+    notifyViewportChange,
     setCustomMarkersVisibility,
     revealCustomMarkersAfterZoom,
     notifyMapZoomState,
@@ -601,6 +633,16 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   // centerLocation prop이 변경되면 지도 중심 이동
   useEffect(() => {
     if (!mapRef.current || !centerLocation) {
+      return;
+    }
+
+    const currentCenter = mapRef.current.getCenter();
+    const isAlreadyCentered =
+      Math.abs(currentCenter.getLat() - centerLocation.latitude) < 0.000001 &&
+      Math.abs(currentCenter.getLng() - centerLocation.longitude) < 0.000001;
+
+    if (isAlreadyCentered) {
+      updateVisiblePlatforms();
       return;
     }
 
