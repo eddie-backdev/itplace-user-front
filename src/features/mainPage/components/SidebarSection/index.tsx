@@ -275,6 +275,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
           id: `${item.store.storeId}-${item.partner.partnerId}`,
           storeId: item.store.storeId,
           partnerId: item.partner.partnerId,
+          partnerName: item.partner.partnerName,
           name: item.store.storeName,
           category: item.partner.category,
           business: item.store.business,
@@ -354,6 +355,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
           id: `${item.store.storeId}-${item.partner.partnerId}`,
           storeId: item.store.storeId,
           partnerId: item.partner.partnerId,
+          partnerName: item.partner.partnerName,
           name: item.store.storeName,
           category: item.partner.category,
           business: item.store.business,
@@ -513,6 +515,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
               currentLocation={currentLocation}
               isLoading={isLoading || isRecommendationStoreLoading}
               error={error || recommendationStoreError}
+              displayMode={searchQuery?.trim() ? 'list' : 'summary'}
             />
           )}
 

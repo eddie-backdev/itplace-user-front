@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Platform, Category, MapLocation, MapBounds } from '../../types';
+import { Platform, Category, MapLocation, MapBounds, MapCluster } from '../../types';
 import CategoryTabsSection from '../SidebarSection/CategoryTabsSection';
 import KakaoMap from './KakaoMap';
 import MapControls from './MapControls';
@@ -8,6 +8,8 @@ import { showToast } from '../../../../utils/toast';
 
 interface MapSectionProps {
   platforms: Platform[];
+  clusters?: MapCluster[];
+  useServerClusters?: boolean;
   selectedPlatform?: Platform | null;
   onPlatformSelect: (platform: Platform | null) => void;
   onLocationChange?: (location: MapLocation) => void;
@@ -25,6 +27,8 @@ interface MapSectionProps {
 
 const MapSection: React.FC<MapSectionProps> = ({
   platforms,
+  clusters = [],
+  useServerClusters = false,
   selectedPlatform,
   onPlatformSelect,
   onLocationChange,
@@ -107,6 +111,8 @@ const MapSection: React.FC<MapSectionProps> = ({
 
       <KakaoMap
         platforms={platforms}
+        clusters={clusters}
+        useServerClusters={useServerClusters}
         selectedPlatform={selectedPlatform}
         onPlatformSelect={onPlatformSelect}
         onLocationChange={onLocationChange}

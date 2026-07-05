@@ -5,8 +5,30 @@ import {
   SearchStoresParams,
   ReverseGeocodeApiResponse,
   MapStorePreviewApiResponse,
+  MapStoreClusterApiResponse,
+  StoreClusterInViewParams,
   StoreInViewParams,
 } from '../types/api';
+
+/**
+ * 현재 지도 화면 영역 기반 클러스터 목록 조회 - 넓은 줌 레벨 전용 경량 응답
+ */
+export const getStoreClustersInView = async (
+  params: StoreClusterInViewParams
+): Promise<MapStoreClusterApiResponse> => {
+  const response = await api.get('/api/v1/maps/stores/in-view/clusters', {
+    params: {
+      minLat: params.minLat,
+      minLng: params.minLng,
+      maxLat: params.maxLat,
+      maxLng: params.maxLng,
+      category: params.category,
+      mapLevel: params.mapLevel,
+    },
+  });
+
+  return response.data;
+};
 
 /**
  * 현재 지도 화면 영역 기반 지점 목록 조회 - 지도 카드 표시용 경량 응답
@@ -23,6 +45,8 @@ export const getStorePreviewsInView = async (
       category: params.category,
       userLat: params.userLat,
       userLng: params.userLng,
+      limit: params.limit,
+      includeBenefits: params.includeBenefits,
     },
   });
 

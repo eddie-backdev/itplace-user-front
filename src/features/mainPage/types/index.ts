@@ -11,6 +11,7 @@ export interface Platform {
   id: string;
   storeId: number;
   partnerId: number;
+  partnerName?: string;
   name: string;
   category: string;
   business: string;
@@ -50,4 +51,12 @@ export interface MapBounds {
   minLng: number;
   maxLat: number;
   maxLng: number;
+}
+
+export interface MapCluster {
+  clusterId: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  count: number;
 }

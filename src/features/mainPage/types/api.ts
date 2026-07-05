@@ -14,6 +14,21 @@ export interface MapStorePreviewApiResponse {
   data: MapStorePreviewData[];
 }
 
+export interface MapStoreClusterApiResponse {
+  code: string;
+  status: string;
+  message: string;
+  data: MapStoreClusterData[];
+}
+
+export interface MapStoreClusterData {
+  clusterId: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  count: number;
+}
+
 export interface MapStorePreviewData {
   storeId: number;
   partnerId: number;
@@ -128,6 +143,15 @@ export interface StoreListParams {
   radiusMeters: number;
 }
 
+export interface StoreClusterInViewParams {
+  minLat: number;
+  minLng: number;
+  maxLat: number;
+  maxLng: number;
+  category?: string;
+  mapLevel: number;
+}
+
 export interface StoreInViewParams {
   minLat: number;
   minLng: number;
@@ -136,6 +160,8 @@ export interface StoreInViewParams {
   category?: string;
   userLat?: number;
   userLng?: number;
+  limit?: number;
+  includeBenefits?: boolean;
 }
 
 // 즐겨찾기 API 타입

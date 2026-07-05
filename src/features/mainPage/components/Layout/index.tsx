@@ -119,6 +119,7 @@ const MainPageLayout: React.FC = () => {
   // 가맹점 데이터 및 API 상태 관리
   const {
     platforms: apiPlatforms, // API에서 가져온 가맹점 목록
+    mapClusters, // 서버에서 집계한 지도 클러스터
     currentLocation, // 현재 위치 주소 텍스트
     isLoading, // 로딩 상태
     error, // 에러 상태
@@ -267,8 +268,14 @@ const MainPageLayout: React.FC = () => {
       }
 
       lastViewportSearchKeyRef.current = viewportSearchKey;
+
+      if (mapLevel >= 5) {
+        void searchInMapBounds(bounds, center.latitude, center.longitude, mapLevel);
+        return;
+      }
+
       mapViewportSearchTimerRef.current = setTimeout(() => {
-        searchInMapBounds(bounds, center.latitude, center.longitude);
+        searchInMapBounds(bounds, center.latitude, center.longitude, mapLevel);
       }, 350);
     },
     [activeTab, searchInMapBounds, searchQuery, selectedCategory]
@@ -631,6 +638,17 @@ const MainPageLayout: React.FC = () => {
         <div className="flex-1 h-full transition-all duration-300 ease-in-out">
           <MapSection
             platforms={stablePlatforms}
+            clusters={
+              activeTab === 'nearby' && !isShowingRecommendationStoreResults && !searchQuery.trim()
+                ? mapClusters
+                : []
+            }
+            useServerClusters={
+              activeTab === 'nearby' &&
+              !isShowingRecommendationStoreResults &&
+              !searchQuery.trim() &&
+              currentMapLevel >= 5
+            }
             selectedPlatform={selectedPlatform}
             onPlatformSelect={handlePlatformSelect}
             onLocationChange={handleLocationChange}
@@ -734,6 +752,17 @@ const MainPageLayout: React.FC = () => {
         <div className="absolute inset-0">
           <MapSection
             platforms={stablePlatforms}
+            clusters={
+              activeTab === 'nearby' && !isShowingRecommendationStoreResults && !searchQuery.trim()
+                ? mapClusters
+                : []
+            }
+            useServerClusters={
+              activeTab === 'nearby' &&
+              !isShowingRecommendationStoreResults &&
+              !searchQuery.trim() &&
+              currentMapLevel >= 5
+            }
             selectedPlatform={selectedPlatform}
             onPlatformSelect={handlePlatformSelect}
             onLocationChange={handleLocationChange}
