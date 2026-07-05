@@ -49,6 +49,13 @@ const uniquePlatforms = (platforms: Platform[]) => {
 
 const formatDistance = (distance: number) => `${distance.toFixed(1)}km`;
 
+const formatCarrierBadge = (carrierKey: string, carrierLabel: string) => {
+  if (carrierKey === 'SKT' || carrierKey === 'KT') return carrierKey;
+  if (carrierKey === 'LGU') return 'LGU';
+  if (carrierLabel && carrierLabel !== '통신사 정보 없음') return carrierLabel;
+  return '혜택';
+};
+
 const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   platforms,
   selectedPlatform,
@@ -76,7 +83,13 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
     >();
     const benefitMap = new Map<
       string,
-      { title: string; subtitle: string; platforms: Platform[]; benefitCount: number }
+      {
+        title: string;
+        subtitle: string;
+        platforms: Platform[];
+        benefitCount: number;
+        badge: string;
+      }
     >();
 
     platforms.forEach((platform) => {
@@ -103,6 +116,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
             subtitle: `${carrierGroup.label} · ${BENEFIT_USAGE_CHANNEL_LABELS[benefit.channel]}`,
             platforms: [],
             benefitCount: 0,
+            badge: formatCarrierBadge(carrierGroup.key, carrierGroup.label),
           };
           benefitEntry.platforms.push(platform);
           benefitEntry.benefitCount += 1;
@@ -166,6 +180,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
           subtitle: benefitInfo.subtitle,
           countLabel: `${benefitPlatforms.length}개 매장`,
           platforms: benefitPlatforms,
+          badge: benefitInfo.badge,
         };
       })
       .sort((first, second) => second.platforms.length - first.platforms.length)
@@ -239,6 +254,27 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
     </div>
   );
 
+  const renderSummaryVisual = (entry: SummaryEntry) => {
+    if (entry.imageUrl) {
+      return (
+        <SafeImage
+          src={entry.imageUrl}
+          alt={`${entry.title} 로고`}
+          fallbackLabel={entry.badge || entry.title}
+          className="h-10 w-10 shrink-0 rounded-xl object-contain"
+          fallbackClassName="bg-purple01 text-body-4-bold"
+          loading="lazy"
+        />
+      );
+    }
+
+    return (
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple01 px-1 text-center text-[11px] font-bold leading-tight text-purple04">
+        {entry.badge || entry.title}
+      </span>
+    );
+  };
+
   const renderSummaryCard = (entry: SummaryEntry) => (
     <button
       key={entry.key}
@@ -252,14 +288,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
       }
       className="flex w-full items-center gap-3 rounded-2xl border border-grey02 bg-white px-4 py-3 text-left transition-colors hover:border-purple02 hover:bg-purple01/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
     >
-      <SafeImage
-        src={entry.imageUrl}
-        alt={`${entry.title} 로고`}
-        fallbackLabel={entry.badge || entry.title}
-        className="h-10 w-10 shrink-0 rounded-xl object-contain"
-        fallbackClassName="bg-purple01 text-body-4-bold"
-        loading="lazy"
-      />
+      {renderSummaryVisual(entry)}
       <span className="min-w-0 flex-1">
         <span className="block truncate text-body-2-bold text-grey06">{entry.title}</span>
         <span className="mt-1 block truncate text-body-5 text-grey04">{entry.subtitle}</span>
