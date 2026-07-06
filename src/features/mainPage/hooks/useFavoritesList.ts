@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { FavoriteBenefit, FavoritesListRequest } from '../types/api';
 import { getFavoritesList } from '../api/favoritesListApi';
 import { useApiCall } from './useApiCall';
+import { addFavoritesChangedListener } from '../utils/favoriteEvents';
 
 /**
  * 즐겨찾기 목록 관리 훅
@@ -94,6 +95,14 @@ export const useFavoritesList = (category?: string) => {
       executeRef.current(() => fetchFavoritesRef.current(category));
     }
   }, [category]);
+
+  useEffect(() => {
+    return addFavoritesChangedListener(() => {
+      if (categoryRef.current !== undefined) {
+        executeRef.current(() => fetchFavoritesRef.current(categoryRef.current));
+      }
+    });
+  }, []);
 
   return {
     favorites: favorites || [], // null 방어

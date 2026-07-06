@@ -18,6 +18,7 @@ import { getRecommendationStoresByPartner } from '../../api/recommendationStoreA
 import { StoreData } from '../../types/api';
 import { RootState } from '../../../../store';
 import { useResponsive } from '../../../../hooks/useResponsive';
+import { addFavoritesChangedListener } from '../../utils/favoriteEvents';
 
 interface Tab {
   id: string;
@@ -103,6 +104,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
     activeTab === 'favorites' ? selectedCategory : undefined
   );
   const [allFavorites, setAllFavorites] = useState<FavoriteBenefit[]>([]);
+  const [favoritesRevision, setFavoritesRevision] = useState(0);
 
   // 즐겨찾기 매장 목록 표시 상태
   const [showFavoriteStoreList, setShowFavoriteStoreList] = useState(false);
@@ -110,6 +112,12 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   const [selectedFavorite, setSelectedFavorite] = useState<FavoriteBenefit | null>(null);
   const [isFavoriteStoreLoading, setIsFavoriteStoreLoading] = useState(false);
   const [favoriteStoreError, setFavoriteStoreError] = useState<string | null>(null);
+
+  useEffect(() => {
+    return addFavoritesChangedListener(() => {
+      setFavoritesRevision((current) => current + 1);
+    });
+  }, []);
 
   useEffect(() => {
     const fetchAllFavorites = async () => {
@@ -124,7 +132,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
     };
 
     fetchAllFavorites();
-  }, [activeTab]);
+  }, [activeTab, favoritesRevision]);
 
   // 맞춤 AI 추천 초기 로드 상태 관리 (nearby 방식과 완전히 동일)
   const [isInitialRecommendationsLoad, setIsInitialRecommendationsLoad] = useState(true);

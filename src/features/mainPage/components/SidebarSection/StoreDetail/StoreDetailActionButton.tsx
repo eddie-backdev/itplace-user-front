@@ -5,6 +5,7 @@ import { RootState } from '../../../../../store';
 import { addFavorite, removeFavorite } from '../../../api/favoriteApi';
 import { showToast } from '../../../../../utils/toast';
 import { actionAnimations } from '../../../../../utils/Animation';
+import { emitFavoritesChanged } from '../../../utils/favoriteEvents';
 
 interface StoreDetailActionButtonProps {
   benefitId?: string;
@@ -46,27 +47,43 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
 
     setIsLoading(true);
     try {
-      const benefitIdNumber = parseInt(benefitId);
+      const benefitIdNumber = Number(benefitId);
+      if (!Number.isInteger(benefitIdNumber) || benefitIdNumber <= 0) {
+        showToast('혜택 정보가 올바르지 않아 관심 혜택으로 추가할 수 없습니다.', 'error');
+        return;
+      }
 
       if (isFavorite) {
         const response = await removeFavorite([benefitIdNumber]);
         showToast(response.message, 'info');
         onFavoriteChange(false);
+        emitFavoritesChanged({ benefitIds: [benefitIdNumber], isFavorite: false });
       } else {
         const response = await addFavorite(benefitIdNumber);
         showToast(response.message, 'success');
         onFavoriteChange(true);
+        emitFavoritesChanged({ benefitIds: [benefitIdNumber], isFavorite: true });
       }
     } catch (error: unknown) {
       console.error('즐겨찾기 토글 실패:', error);
 
       const isAxiosError = (
         err: unknown
-      ): err is { response?: { data?: { message?: string } } } => {
+      ): err is { response?: { data?: { code?: string; message?: string } } } => {
         return typeof err === 'object' && err !== null && 'response' in err;
       };
 
       if (isAxiosError(error)) {
+        if (!isFavorite && error.response?.data?.code === 'FAVORITE_ALREADY_EXISTS') {
+          const benefitIdNumber = Number(benefitId);
+          onFavoriteChange(true);
+          if (Number.isInteger(benefitIdNumber) && benefitIdNumber > 0) {
+            emitFavoritesChanged({ benefitIds: [benefitIdNumber], isFavorite: true });
+          }
+          showToast(error.response.data.message || '이미 관심 혜택에 추가된 혜택입니다.', 'info');
+          return;
+        }
+
         const errorMessage = error.response?.data?.message;
         if (errorMessage) {
           showToast(errorMessage, 'error');

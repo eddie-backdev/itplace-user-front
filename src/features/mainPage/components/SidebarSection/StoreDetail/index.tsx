@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { getBenefitDetail } from '../../../api/benefitDetail';
+import { getFavoritesList } from '../../../api/favoritesListApi';
 import { Platform } from '../../../types';
 import { BenefitDetailResponse } from '../../../types/api';
 import StoreDetailHeader from './StoreDetailHeader';
@@ -11,6 +12,7 @@ import StoreDetailActionButton from './StoreDetailActionButton';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
 import { RootState } from '../../../../../store';
 import { CarrierCode, isCarrierCode } from '../../../../../utils/membership';
+import { addFavoritesChangedListener } from '../../../utils/favoriteEvents';
 
 interface StoreDetailCardProps {
   platform: Platform;
@@ -22,11 +24,17 @@ type DetailCacheValue = BenefitDetailResponse | null;
 const getDetailCacheKey = (storeId: number, partnerId: number, carrier: CarrierCode | null) =>
   `${storeId}:${partnerId}:${carrier ?? 'ALL'}`;
 
+const toValidBenefitId = (benefitId?: number | string | null) => {
+  const numericBenefitId = Number(benefitId);
+  return Number.isInteger(numericBenefitId) && numericBenefitId > 0 ? numericBenefitId : null;
+};
+
 // 상세 패널을 닫았다 다시 열어도 같은 매장/통신사 정보는 세션 안에서 재사용한다.
 const benefitDetailCache = new Map<string, DetailCacheValue>();
 
 const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) => {
   const user = useSelector((state: RootState) => state.auth.user);
+  const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const [activeCarrier, setActiveCarrier] = useState<CarrierCode | null>(() => {
     if (isCarrierCode(platform.carrier)) return platform.carrier;
     if (isCarrierCode(user?.carrier)) return user.carrier;
@@ -47,6 +55,15 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) 
   detailDataRef.current = detailData;
   const detailCacheRef = useRef(benefitDetailCache);
   const latestRequestKeyRef = useRef<string | null>(null);
+
+  const panelBenefitIds = useMemo(() => {
+    const ids = [
+      ...(platform.benefitDetails ?? []).map((benefit) => toValidBenefitId(benefit.benefitId)),
+      toValidBenefitId(detailData?.data?.benefitId),
+    ].filter((benefitId): benefitId is number => benefitId !== null);
+
+    return Array.from(new Set(ids));
+  }, [detailData?.data?.benefitId, platform.benefitDetails]);
 
   // 초기 로드 상태 관리 (nearby 방식과 완전히 동일)
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -202,6 +219,69 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) 
   // fetchDetail 참조를 ref로 저장 (의존성 배열 최적화)
   const fetchDetailRef = useRef(fetchDetail);
   fetchDetailRef.current = fetchDetail;
+
+  useEffect(() => {
+    return addFavoritesChangedListener(({ benefitIds, isFavorite }) => {
+      const changedIds = benefitIds.map(String);
+      setFavoriteByBenefitId((current) => {
+        const next = { ...current };
+        changedIds.forEach((benefitId) => {
+          next[benefitId] = isFavorite;
+        });
+        return next;
+      });
+
+      if (detailDataRef.current?.data?.benefitId) {
+        const detailBenefitId = String(detailDataRef.current.data.benefitId);
+        if (changedIds.includes(detailBenefitId)) {
+          setIsFavorite(isFavorite);
+          setDetailData((currentData) => {
+            if (!currentData) return currentData;
+            return {
+              ...currentData,
+              data: {
+                ...currentData.data,
+                isFavorite,
+              },
+            };
+          });
+        }
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn || panelBenefitIds.length === 0) {
+      return;
+    }
+
+    let isActive = true;
+
+    const syncFavoriteStates = async () => {
+      try {
+        const favoriteIds = new Set(
+          (await getFavoritesList({})).map((favorite) => favorite.benefitId)
+        );
+        if (!isActive) return;
+
+        setFavoriteByBenefitId((current) => {
+          const next = { ...current };
+          panelBenefitIds.forEach((benefitId) => {
+            next[String(benefitId)] = favoriteIds.has(benefitId);
+          });
+          return next;
+        });
+      } catch (error) {
+        console.error('관심 혜택 상태 동기화 실패:', error);
+      }
+    };
+
+    syncFavoriteStates();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isLoggedIn, panelBenefitIds]);
 
   // platform 변경 시 데이터 로드
   useEffect(() => {
