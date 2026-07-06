@@ -665,33 +665,13 @@ const MainPageLayout: React.FC = () => {
           />
         </div>
 
-        {/* 캐릭터 이미지 - 사이드바와 맵 사이 */}
-        <div
-          className={`absolute bottom-0 pointer-events-none z-30 overflow-hidden transition-all duration-300 ease-in-out ${
-            isSidebarCollapsed ? 'opacity-0' : 'opacity-100'
-          }`}
-          style={{
-            left: isSidebarCollapsed ? '24px' : '376px',
-            transform: 'translateX(-20%)',
-            width: '380px',
-            height: '200px', // 허리까지만 보이도록 절반 높이
-          }}
-        >
-          <img
-            src="/images/main/mainCharacter.webp"
-            alt="잇플 캐릭터"
-            className="w-full h-auto object-contain object-bottom"
-            style={{ width: '190px', height: '190px' }}
-          />
-        </div>
-
-        {/* 혜택 상세 카드 - 말풍선 위쪽에 위치 */}
+        {/* 혜택 상세 카드 */}
         {benefitDetailCard.isVisible && !isSidebarCollapsed && (
           <div
             className="absolute z-30 transition-all duration-300 ease-in-out"
             style={{
               left: isSidebarCollapsed ? '120px' : '476px',
-              bottom: '365px', // 말풍선보다 위쪽
+              bottom: '245px',
               transform: 'translateX(-20%)',
               width: '410px',
             }}
@@ -703,13 +683,13 @@ const MainPageLayout: React.FC = () => {
           </div>
         )}
 
-        {/* 말풍선 - 캐릭터 위에 위치 */}
+        {/* 지도 말풍선 */}
         {!isSidebarCollapsed && (
           <div
             className="absolute z-20 transition-all duration-300 ease-in-out"
             style={{
               left: isSidebarCollapsed ? '120px' : '476px',
-              bottom: '200px', // 캐릭터 머리 위쪽
+              bottom: '80px',
               transform: 'translateX(-20%)',
             }}
           >
