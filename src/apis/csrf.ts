@@ -9,6 +9,7 @@ type CsrfResponse = {
 };
 
 const DEFAULT_CSRF_HEADER_NAME = 'X-XSRF-TOKEN';
+const CSRF_COOKIE_NAME = 'XSRF-TOKEN';
 const unsafeMethods = new Set(['post', 'put', 'patch', 'delete']);
 
 let csrfHeaderName = DEFAULT_CSRF_HEADER_NAME;
@@ -23,7 +24,26 @@ export const clearCsrfToken = () => {
 export const isUnsafeMethod = (method?: string) =>
   unsafeMethods.has((method ?? 'get').toLowerCase());
 
+const readCookie = (name: string) => {
+  if (typeof document === 'undefined') return null;
+
+  const cookie = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${encodeURIComponent(name)}=`));
+
+  if (!cookie) return null;
+
+  const [, value] = cookie.split('=');
+  return value ? decodeURIComponent(value) : null;
+};
+
 export const ensureCsrfToken = async () => {
+  const cookieToken = readCookie(CSRF_COOKIE_NAME);
+  if (cookieToken) {
+    csrfToken = cookieToken;
+    return cookieToken;
+  }
+
   if (csrfToken) {
     return csrfToken;
   }

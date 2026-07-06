@@ -4,7 +4,7 @@ import { refreshToken } from '../features/loginPage/apis/auth';
 import { store } from '../store';
 import { logout } from '../store/authSlice';
 import { persistor } from '../store';
-import { clearCsrfToken } from './csrf';
+import { clearCsrfToken, isUnsafeMethod } from './csrf';
 
 // 토큰 갱신 중인지 추적하는 플래그
 let isRefreshing = false;
@@ -49,7 +49,21 @@ export const setupInterceptors = () => {
       return response;
     },
     async (error: AxiosError) => {
-      const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+      const originalRequest = error.config as AxiosRequestConfig & {
+        _retry?: boolean;
+        _csrfRetry?: boolean;
+      };
+
+      if (
+        error.response?.status === 403 &&
+        originalRequest &&
+        isUnsafeMethod(originalRequest.method) &&
+        !originalRequest._csrfRetry
+      ) {
+        originalRequest._csrfRetry = true;
+        clearCsrfToken();
+        return api(originalRequest);
+      }
 
       if (error.response?.status === 401 && !originalRequest._retry) {
         if (isRefreshing) {
