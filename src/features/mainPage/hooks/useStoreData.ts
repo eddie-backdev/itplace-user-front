@@ -190,14 +190,12 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
   const loadStoreClustersInBounds = useCallback(
     async (bounds: MapBounds, category: string | null, mapLevel: number) => {
-      const options = getInViewPreviewOptionsByMapLevel(mapLevel);
-      const queryBounds = expandMapBounds(bounds, options.boundsPaddingRatio);
       const shouldFilterByCategory = category && category !== '전체';
       const clusterResponse = await getStoreClustersInView({
-        minLat: queryBounds.minLat,
-        minLng: queryBounds.minLng,
-        maxLat: queryBounds.maxLat,
-        maxLng: queryBounds.maxLng,
+        minLat: bounds.minLat,
+        minLng: bounds.minLng,
+        maxLat: bounds.maxLat,
+        maxLng: bounds.maxLng,
         category: shouldFilterByCategory ? category : undefined,
         mapLevel,
       });

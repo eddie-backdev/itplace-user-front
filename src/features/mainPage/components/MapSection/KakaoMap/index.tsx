@@ -186,7 +186,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const areMarkersHiddenRef = useRef<boolean>(false);
   const markerRevealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const zoomSettledTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const zoomViewportNotifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suppressDragEndUntilRef = useRef<number>(0);
   const [userLocation, setUserLocation] = useState<MapLocation | null>(null);
   const [isClusterMode, setIsClusterMode] = useState<boolean>(false);
@@ -244,9 +243,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       if (zoomSettledTimerRef.current) {
         clearTimeout(zoomSettledTimerRef.current);
       }
-      if (zoomViewportNotifyTimerRef.current) {
-        clearTimeout(zoomViewportNotifyTimerRef.current);
-      }
       serverClusterOverlaysRef.current.forEach((overlay) => overlay.setMap(null));
       serverClusterOverlaysRef.current = [];
     };
@@ -277,16 +273,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       map.getLevel()
     );
   }, [onViewportChange]);
-
-  const notifyViewportChangeAfterZoomSettles = useCallback(() => {
-    if (zoomViewportNotifyTimerRef.current) {
-      clearTimeout(zoomViewportNotifyTimerRef.current);
-    }
-
-    zoomViewportNotifyTimerRef.current = setTimeout(() => {
-      notifyViewportChange();
-    }, 120);
-  }, [notifyViewportChange]);
 
   // Viewport 내 플랫폼 필터링 함수
   const updateVisiblePlatforms = useCallback(() => {
@@ -474,8 +460,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
         requestAnimationFrame(() => {
           updateVisiblePlatforms();
-          notifyViewportChange();
-          notifyViewportChangeAfterZoomSettles();
 
           if (
             nextIsClusterMode &&
@@ -491,10 +475,21 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       });
 
       window.kakao.maps.event.addListener(map, 'idle', () => {
-        if (isZoomingRef.current) {
-          onMapLevelChange?.(map.getLevel());
-          notifyViewportChange();
+        if (!isZoomingRef.current) {
+          return;
         }
+
+        if (zoomSettledTimerRef.current) {
+          clearTimeout(zoomSettledTimerRef.current);
+        }
+
+        isAnimatingRef.current = false;
+        isZoomingRef.current = false;
+        onMapLevelChange?.(map.getLevel());
+        updateVisiblePlatforms();
+        notifyViewportChange();
+        notifyMapZoomState(false);
+        revealCustomMarkersAfterZoom();
       });
 
       // 드래그 시작 - 애니메이션 상태 시작
@@ -557,7 +552,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     isMapInitialized,
     updateVisiblePlatforms,
     notifyViewportChange,
-    notifyViewportChangeAfterZoomSettles,
     setCustomMarkersVisibility,
     revealCustomMarkersAfterZoom,
     notifyMapZoomState,
