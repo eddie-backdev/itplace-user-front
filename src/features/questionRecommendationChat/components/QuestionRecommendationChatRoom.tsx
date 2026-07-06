@@ -13,6 +13,9 @@ import { useResponsive } from '../../../hooks/useResponsive';
 const QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY = 'questionRecommendationChatMessages';
 const LEGACY_CHAT_MESSAGES_KEY = 'chatMessages';
 const INITIAL_MESSAGE = '어떤 혜택이나 장소가 필요하세요? 질문형 AI 추천에 편하게 물어보세요!';
+const DEFAULT_RECOMMENDATION_LOCATION = { lat: 37.5665, lng: 126.978 };
+
+type RecommendationLocation = typeof DEFAULT_RECOMMENDATION_LOCATION;
 
 interface Partner {
   partnerName: string;
@@ -80,6 +83,8 @@ const QuestionRecommendationChatRoom: React.FC<QuestionRecommendationChatRoomPro
   const [isBotLoading, setIsBotLoading] = React.useState(false);
   const [input, setInput] = React.useState('');
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const recommendationLocationRef = React.useRef<RecommendationLocation | null>(null);
+  const pendingLocationRef = React.useRef<Promise<RecommendationLocation> | null>(null);
   const [isInitialized, setIsInitialized] = React.useState(false);
   const [showClearConfirm, setShowClearConfirm] = React.useState(false);
 
@@ -219,167 +224,108 @@ const QuestionRecommendationChatRoom: React.FC<QuestionRecommendationChatRoomPro
     };
   }, [isMobile]);
 
-  const handleSend = async () => {
-    const trimmed = input.trim();
-    if (!trimmed || isBotLoading) return; // 로딩 중이면 전송 방지
-
-    // 사용자 메시지 추가
-    setMessages((prev) => [...prev, { sender: 'user', text: trimmed }]);
-    setInput('');
-    setIsBotLoading(true);
-
-    try {
-      // 현재 위치 가져오기 (실패 시 기본 위치 사용)
-      let location;
-      try {
-        location = await getCurrentLocation();
-      } catch (locationError) {
-        console.warn('위치 정보를 가져올 수 없어 기본 위치를 사용합니다:', locationError);
-        // 기본 위치: 서울시청
-        location = { lat: 37.5665, lng: 126.978 };
+  const resolveRecommendationLocation =
+    React.useCallback(async (): Promise<RecommendationLocation> => {
+      if (recommendationLocationRef.current) {
+        return recommendationLocationRef.current;
       }
 
-      // API 호출
-      const response = await getQuestionRecommendation({
-        question: trimmed,
-        lat: location.lat,
-        lng: location.lng,
-      });
-
-      // 봇 응답 추가
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: 'bot',
-          text: response.data.reason,
-          partners: response.data.partners,
-        },
-      ]);
-    } catch (error) {
-      console.error('추천 정보를 가져오는 중 오류가 발생했습니다:', error);
-
-      let errorMessage =
-        '죄송합니다. 현재 추천 정보를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.';
-
-      // 구체적인 오류 처리
-      if (error instanceof QuestionRecommendationError) {
-        switch (error.code) {
-          case 'FORBIDDEN_WORD_DETECTED':
-            errorMessage =
-              '죄송합니다. 부적절한 내용이 포함된 질문입니다. 다른 질문으로 시도해주세요.';
-            break;
-          case 'NO_STORE_FOUND':
-            errorMessage =
-              '현재 위치 주변에 해당하는 제휴처가 없습니다. 다른 지역이나 다른 키워드로 검색해보세요.';
-            break;
-          case 'INTERNAL_SERVER_ERROR':
-            errorMessage =
-              '현재 AI 서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
-            break;
-          default:
-            errorMessage = error.message;
-        }
-      } else if (error instanceof Error) {
-        // 일반 Error 객체 처리
-        errorMessage = error.message;
+      if (!pendingLocationRef.current) {
+        pendingLocationRef.current = getCurrentLocation()
+          .then((location) => {
+            recommendationLocationRef.current = location;
+            return location;
+          })
+          .catch((locationError) => {
+            console.warn('위치 정보를 가져올 수 없어 기본 위치를 사용합니다:', locationError);
+            recommendationLocationRef.current = DEFAULT_RECOMMENDATION_LOCATION;
+            return DEFAULT_RECOMMENDATION_LOCATION;
+          })
+          .finally(() => {
+            pendingLocationRef.current = null;
+          });
       }
 
-      // 오류 발생 시 기본 응답
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: 'bot',
-          text: errorMessage,
-        },
-      ]);
-    } finally {
-      setIsBotLoading(false);
+      return pendingLocationRef.current;
+    }, []);
+
+  const getRecommendationErrorMessage = (error: unknown) => {
+    if (error instanceof QuestionRecommendationError) {
+      switch (error.code) {
+        case 'FORBIDDEN_WORD_DETECTED':
+          return '죄송합니다. 부적절한 내용이 포함된 질문입니다. 다른 질문으로 시도해주세요.';
+        case 'NO_STORE_FOUND':
+          return '현재 위치 주변에 해당하는 제휴처가 없습니다. 다른 지역이나 다른 키워드로 검색해보세요.';
+        case 'AI_SERVICE_UNAVAILABLE':
+        case 'INTERNAL_SERVER_ERROR':
+          return '현재 AI 서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        default:
+          return error.message;
+      }
     }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return '죄송합니다. 현재 추천 정보를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.';
+  };
+
+  const requestRecommendation = React.useCallback(
+    async (question: string) => {
+      const trimmed = question.trim();
+      if (!trimmed || isBotLoading) return;
+
+      setMessages((prev) => [...prev, { sender: 'user', text: trimmed }]);
+      setInput('');
+      setIsBotLoading(true);
+
+      try {
+        const location = await resolveRecommendationLocation();
+        const response = await getQuestionRecommendation({
+          question: trimmed,
+          lat: location.lat,
+          lng: location.lng,
+        });
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: 'bot',
+            text: response.data.reason,
+            partners: response.data.partners,
+          },
+        ]);
+      } catch (error) {
+        console.error('추천 정보를 가져오는 중 오류가 발생했습니다:', error);
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: 'bot',
+            text: getRecommendationErrorMessage(error),
+          },
+        ]);
+      } finally {
+        setIsBotLoading(false);
+      }
+    },
+    [isBotLoading, resolveRecommendationLocation]
+  );
+
+  const handleSend = () => {
+    void requestRecommendation(input);
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
       e.preventDefault(); // 기본 동작 방지
-      void handleSend();
+      void requestRecommendation(input);
     }
   };
 
   // 예시 질문 버튼 클릭 처리 (바로 전송)
-  const handleExampleClick = async (question: string) => {
-    if (isBotLoading) return; // 로딩 중이면 실행 방지
-
-    // 사용자 메시지 추가
-    setMessages((prev) => [...prev, { sender: 'user', text: question }]);
-    setInput(''); // 입력창 비우기
-    setIsBotLoading(true);
-
-    try {
-      // 현재 위치 가져오기 (실패 시 기본 위치 사용)
-      let location;
-      try {
-        location = await getCurrentLocation();
-      } catch (locationError) {
-        console.warn('위치 정보를 가져올 수 없어 기본 위치를 사용합니다:', locationError);
-        // 기본 위치: 서울시청
-        location = { lat: 37.5665, lng: 126.978 };
-      }
-
-      // API 호출
-      const response = await getQuestionRecommendation({
-        question,
-        lat: location.lat,
-        lng: location.lng,
-      });
-
-      // 봇 응답 추가
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: 'bot',
-          text: response.data.reason,
-          partners: response.data.partners,
-        },
-      ]);
-    } catch (error) {
-      console.error('추천 정보를 가져오는 중 오류가 발생했습니다:', error);
-
-      let errorMessage =
-        '죄송합니다. 현재 추천 정보를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.';
-
-      // 구체적인 오류 처리
-      if (error instanceof QuestionRecommendationError) {
-        switch (error.code) {
-          case 'FORBIDDEN_WORD_DETECTED':
-            errorMessage =
-              '죄송합니다. 부적절한 내용이 포함된 질문입니다. 다른 질문으로 시도해주세요.';
-            break;
-          case 'NO_STORE_FOUND':
-            errorMessage =
-              '현재 위치 주변에 해당하는 제휴처가 없습니다. 다른 지역이나 다른 키워드로 검색해보세요.';
-            break;
-          case 'INTERNAL_SERVER_ERROR':
-            errorMessage =
-              '현재 AI 서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
-            break;
-          default:
-            errorMessage = error.message;
-        }
-      } else if (error instanceof Error) {
-        // 일반 Error 객체 처리
-        errorMessage = error.message;
-      }
-
-      // 오류 발생 시 기본 응답
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: 'bot',
-          text: errorMessage,
-        },
-      ]);
-    } finally {
-      setIsBotLoading(false);
-    }
+  const handleExampleClick = (question: string) => {
+    void requestRecommendation(question);
   };
 
   // 예시 질문들
