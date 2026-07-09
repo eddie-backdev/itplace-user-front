@@ -1,6 +1,14 @@
 export interface QuestionRecommendationPartner {
+  partnerId?: number;
+  benefitId?: number;
   partnerName: string;
-  imgUrl: string;
+  benefitName?: string;
+  category?: string;
+  representativeStoreId?: number;
+  representativeStoreName?: string;
+  storeCount?: number;
+  benefitText?: string;
+  imgUrl?: string;
 }
 
 export interface QuestionRecommendationData {

@@ -9,6 +9,7 @@ import {
 } from '../../mainPage/api/questionRecommendationApi';
 import { getCurrentLocation } from '../../mainPage/api/storeApi';
 import { useResponsive } from '../../../hooks/useResponsive';
+import type { QuestionRecommendationPartner } from '../../../types/questionRecommendation';
 
 const QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY = 'questionRecommendationChatMessages';
 const LEGACY_CHAT_MESSAGES_KEY = 'chatMessages';
@@ -17,15 +18,10 @@ const DEFAULT_RECOMMENDATION_LOCATION = { lat: 37.5665, lng: 126.978 };
 
 type RecommendationLocation = typeof DEFAULT_RECOMMENDATION_LOCATION;
 
-interface Partner {
-  partnerName: string;
-  imgUrl: string;
-}
-
 interface Message {
   sender: 'user' | 'bot';
   text: string;
-  partners?: Partner[];
+  partners?: QuestionRecommendationPartner[];
 }
 
 interface QuestionRecommendationChatRoomProps {
@@ -348,6 +344,11 @@ const QuestionRecommendationChatRoom: React.FC<QuestionRecommendationChatRoomPro
     onClose();
   };
 
+  const recommendationMetaText = (partner: QuestionRecommendationPartner) =>
+    [partner.category, partner.storeCount ? `주변 ${partner.storeCount}곳` : null]
+      .filter(Boolean)
+      .join(' · ');
+
   // 채팅방 JSX 컴포넌트
   const chatRoomContent = (
     <div
@@ -507,21 +508,42 @@ const QuestionRecommendationChatRoom: React.FC<QuestionRecommendationChatRoomPro
                         <div className="grid grid-cols-1 gap-2">
                           {msg.partners.map((partner, partnerIdx) => (
                             <div
-                              key={partnerIdx}
+                              key={`${partner.partnerId ?? partner.partnerName}-${partner.benefitId ?? partnerIdx}`}
                               className="bg-white rounded-[10px] p-3 shadow hover:shadow-md transition-shadow cursor-pointer"
                               onClick={() => handlePartnerClick(partner.partnerName)}
                             >
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-start gap-3">
                                 <SafeImage
-                                  src={partner.imgUrl}
+                                  src={partner.imgUrl ?? ''}
                                   alt={`${partner.partnerName} 로고`}
                                   fallbackLabel={partner.partnerName}
                                   className="w-12 h-12 rounded-lg object-contain border border-grey02"
                                 />
-                                <div className="flex-1">
+                                <div className="min-w-0 flex-1">
                                   <h4 className="text-body-2-bold text-grey05">
                                     {partner.partnerName}
                                   </h4>
+                                  {partner.benefitName && (
+                                    <p className="mt-1 text-body-4 text-purple04">
+                                      {partner.benefitName}
+                                    </p>
+                                  )}
+                                  {partner.benefitText &&
+                                    partner.benefitText !== partner.benefitName && (
+                                      <p className="mt-1 text-body-4 text-grey05">
+                                        {partner.benefitText}
+                                      </p>
+                                    )}
+                                  {partner.representativeStoreName && (
+                                    <p className="mt-1 text-body-4 text-grey04">
+                                      대표 매장: {partner.representativeStoreName}
+                                    </p>
+                                  )}
+                                  {recommendationMetaText(partner) && (
+                                    <p className="mt-1 text-body-4 text-grey03">
+                                      {recommendationMetaText(partner)}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                             </div>
