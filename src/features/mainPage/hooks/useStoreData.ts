@@ -56,7 +56,10 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   // API 상태 관리
   const { data: platforms, isLoading, error, execute } = useApiCall<Platform[]>([]);
   const [mapClusters, setMapClusters] = useState<MapCluster[]>([]);
-  const clusterRequestSeqRef = useRef(0);
+  const viewportRequestSeqRef = useRef(0);
+  const viewportRequestControllerRef = useRef<AbortController | null>(null);
+  const addressRequestSeqRef = useRef(0);
+  const addressRequestControllerRef = useRef<AbortController | null>(null);
   const platformsRef = useRef<Platform[]>([]);
   platformsRef.current = platforms || [];
 
@@ -78,6 +81,58 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [currentMapLevelInHook, setCurrentMapLevelInHook] = useState<number>(2); // 지도 레벨 상태 추가
 
+  const beginViewportRequest = useCallback(() => {
+    viewportRequestControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    const requestSeq = viewportRequestSeqRef.current + 1;
+    viewportRequestControllerRef.current = controller;
+    viewportRequestSeqRef.current = requestSeq;
+
+    return { controller, requestSeq };
+  }, []);
+
+  const cancelViewportRequest = useCallback(() => {
+    viewportRequestControllerRef.current?.abort();
+    viewportRequestControllerRef.current = null;
+    viewportRequestSeqRef.current += 1;
+  }, []);
+
+  const isLatestViewportRequest = useCallback(
+    (requestSeq: number, signal: AbortSignal) =>
+      !signal.aborted && viewportRequestSeqRef.current === requestSeq,
+    []
+  );
+
+  const updateAddressLatest = useCallback(async (lat: number, lng: number) => {
+    addressRequestControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    const requestSeq = addressRequestSeqRef.current + 1;
+    addressRequestControllerRef.current = controller;
+    addressRequestSeqRef.current = requestSeq;
+
+    try {
+      const address = await getAddressFromCoordinates(lat, lng, controller.signal);
+      if (!controller.signal.aborted && addressRequestSeqRef.current === requestSeq) {
+        setCurrentLocation(address);
+      }
+    } catch {
+      // 취소되거나 주소 변환에 실패해도 지도/마커 조회에는 영향을 주지 않는다.
+    } finally {
+      if (addressRequestSeqRef.current === requestSeq) {
+        addressRequestControllerRef.current = null;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      viewportRequestControllerRef.current?.abort();
+      addressRequestControllerRef.current?.abort();
+    };
+  }, []);
+
   /**
    * 카테고리별 가맹점 데이터 로드
    * 카테고리가 '전체'이거나 null인 경우 전체 검색, 그 외에는 카테고리별 검색
@@ -89,7 +144,8 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       radius: number,
       category: string | null,
       userLat?: number,
-      userLng?: number
+      userLng?: number,
+      signal?: AbortSignal
     ) => {
       const shouldFilterByCategory = category && category !== '전체';
 
@@ -99,21 +155,27 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       const finalUserLng = userLng !== undefined ? userLng : currentUserCoords?.lng;
 
       const storeResponse = shouldFilterByCategory
-        ? await getStorePreviewListByCategory({
-            lat,
-            lng,
-            radiusMeters: radius,
-            category,
-            userLat: finalUserLat,
-            userLng: finalUserLng,
-          })
-        : await getStorePreviewList({
-            lat,
-            lng,
-            radiusMeters: radius,
-            userLat: finalUserLat,
-            userLng: finalUserLng,
-          });
+        ? await getStorePreviewListByCategory(
+            {
+              lat,
+              lng,
+              radiusMeters: radius,
+              category,
+              userLat: finalUserLat,
+              userLng: finalUserLng,
+            },
+            signal
+          )
+        : await getStorePreviewList(
+            {
+              lat,
+              lng,
+              radiusMeters: radius,
+              userLat: finalUserLat,
+              userLng: finalUserLng,
+            },
+            signal
+          );
 
       return transformMapStorePreviewsToPlatforms(storeResponse.data);
     },
@@ -128,7 +190,8 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       userLng?: number,
       limit = 500,
       includeBenefits = true,
-      boundsPaddingRatio = 0
+      boundsPaddingRatio = 0,
+      signal?: AbortSignal
     ) => {
       const currentUserCoords = userCoordsRef.current;
       const queryBounds = expandMapBounds(bounds, boundsPaddingRatio);
@@ -141,20 +204,27 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       const shouldFilterByCategory = category && category !== '전체';
 
       try {
-        const storeResponse = await getStorePreviewsInView({
-          minLat: queryBounds.minLat,
-          minLng: queryBounds.minLng,
-          maxLat: queryBounds.maxLat,
-          maxLng: queryBounds.maxLng,
-          category: shouldFilterByCategory ? category : undefined,
-          userLat: finalUserLat,
-          userLng: finalUserLng,
-          limit,
-          includeBenefits,
-        });
+        const storeResponse = await getStorePreviewsInView(
+          {
+            minLat: queryBounds.minLat,
+            minLng: queryBounds.minLng,
+            maxLat: queryBounds.maxLat,
+            maxLng: queryBounds.maxLng,
+            category: shouldFilterByCategory ? category : undefined,
+            userLat: finalUserLat,
+            userLng: finalUserLng,
+            limit,
+            includeBenefits,
+          },
+          signal
+        );
 
         return transformMapStorePreviewsToPlatforms(storeResponse.data);
-      } catch {
+      } catch (error) {
+        if (signal?.aborted) {
+          throw error;
+        }
+
         const latMeters = Math.abs(queryBounds.maxLat - queryBounds.minLat) * 111_320;
         const lngMeters =
           Math.abs(queryBounds.maxLng - queryBounds.minLng) *
@@ -166,21 +236,27 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         );
 
         const fallbackResponse = shouldFilterByCategory
-          ? await getStorePreviewListByCategory({
-              lat: boundsCenterLat,
-              lng: boundsCenterLng,
-              radiusMeters: fallbackRadius,
-              category,
-              userLat: finalUserLat,
-              userLng: finalUserLng,
-            })
-          : await getStorePreviewList({
-              lat: boundsCenterLat,
-              lng: boundsCenterLng,
-              radiusMeters: fallbackRadius,
-              userLat: finalUserLat,
-              userLng: finalUserLng,
-            });
+          ? await getStorePreviewListByCategory(
+              {
+                lat: boundsCenterLat,
+                lng: boundsCenterLng,
+                radiusMeters: fallbackRadius,
+                category,
+                userLat: finalUserLat,
+                userLng: finalUserLng,
+              },
+              signal
+            )
+          : await getStorePreviewList(
+              {
+                lat: boundsCenterLat,
+                lng: boundsCenterLng,
+                radiusMeters: fallbackRadius,
+                userLat: finalUserLat,
+                userLng: finalUserLng,
+              },
+              signal
+            );
 
         return transformMapStorePreviewsToPlatforms(fallbackResponse.data);
       }
@@ -189,16 +265,19 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   );
 
   const loadStoreClustersInBounds = useCallback(
-    async (bounds: MapBounds, category: string | null, mapLevel: number) => {
+    async (bounds: MapBounds, category: string | null, mapLevel: number, signal?: AbortSignal) => {
       const shouldFilterByCategory = category && category !== '전체';
-      const clusterResponse = await getStoreClustersInView({
-        minLat: bounds.minLat,
-        minLng: bounds.minLng,
-        maxLat: bounds.maxLat,
-        maxLng: bounds.maxLng,
-        category: shouldFilterByCategory ? category : undefined,
-        mapLevel,
-      });
+      const clusterResponse = await getStoreClustersInView(
+        {
+          minLat: bounds.minLat,
+          minLng: bounds.minLng,
+          maxLat: bounds.maxLat,
+          maxLng: bounds.maxLng,
+          category: shouldFilterByCategory ? category : undefined,
+          mapLevel,
+        },
+        signal
+      );
 
       return clusterResponse.data.map((cluster) => ({
         clusterId: cluster.clusterId,
@@ -238,25 +317,21 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       setUserCoords(coords);
       userCoordsRef.current = coords;
 
-      // 2. 주소 변환과 근처 제휴처 데이터 로드를 병렬 실행
-      const [platforms] = await Promise.all([
-        loadStoresByCategoryRef.current(
-          coords.lat,
-          coords.lng,
-          DEFAULT_RADIUS,
-          null // 초기 로드는 전체 카테고리
-        ),
-        getAddressFromCoordinates(coords.lat, coords.lng)
-          .then(setCurrentLocation)
-          .catch(() => undefined),
-      ]);
+      // 주소는 마커/플랫폼 응답을 막지 않도록 별도 최신 요청으로 갱신한다.
+      void updateAddressLatest(coords.lat, coords.lng);
+      const platforms = await loadStoresByCategoryRef.current(
+        coords.lat,
+        coords.lng,
+        DEFAULT_RADIUS,
+        null // 초기 로드는 전체 카테고리
+      );
 
       setMapClusters([]);
       return platforms; // 데이터 반환
     };
 
     executeRef.current(initializeData);
-  }, []); // 빈 의존성 배열로 초기 로드만 실행
+  }, [updateAddressLatest]);
 
   // 카테고리 변경 시에만 반응하는 useEffect (초기 로드 제외)
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -280,6 +355,8 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
     // 카테고리 변경 시에만 실행되는 재로드
     const reloadByCategory = async (): Promise<Platform[]> => {
+      const { controller, requestSeq } = beginViewportRequest();
+
       // 지도 중심이 있으면 지도 중심 사용, 없으면 사용자 위치 사용
       const coords = mapCenterRef.current || userCoordsRef.current;
 
@@ -293,9 +370,12 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         const clusters = await loadStoreClustersInBoundsRef.current(
           bounds,
           selectedCategory,
-          currentMapLevelInHook
+          currentMapLevelInHook,
+          controller.signal
         );
-        setMapClusters(clusters);
+        if (isLatestViewportRequest(requestSeq, controller.signal)) {
+          setMapClusters(clusters);
+        }
         return platformsRef.current;
       }
 
@@ -308,49 +388,61 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
             undefined,
             inViewOptions.limit,
             inViewOptions.includeBenefits,
-            inViewOptions.boundsPaddingRatio
+            inViewOptions.boundsPaddingRatio,
+            controller.signal
           )
         : await loadStoresByCategoryRef.current(
             coords.lat,
             coords.lng,
             getRadiusByMapLevel(currentMapLevelInHook),
-            selectedCategory
+            selectedCategory,
+            undefined,
+            undefined,
+            controller.signal
           );
+      if (!isLatestViewportRequest(requestSeq, controller.signal)) {
+        return platformsRef.current;
+      }
+
       setMapClusters([]);
       return platforms || []; // null/undefined 방어
     };
 
     executeRef.current(reloadByCategory);
-  }, [selectedCategory, currentMapLevelInHook]);
+  }, [beginViewportRequest, currentMapLevelInHook, isLatestViewportRequest, selectedCategory]);
 
   /**
    * 지도 중심 위치 변경 시 주소 정보만 업데이트 (사용자 위치는 유지)
    */
-  const updateLocationFromMap = useCallback(async (lat: number, lng: number) => {
-    try {
-      const address = await getAddressFromCoordinates(lat, lng);
-      setCurrentLocation(address);
-    } catch {
-      // 주소 변환 실패 시 무시
-    }
-  }, []);
+  const updateLocationFromMap = useCallback(
+    (lat: number, lng: number) => updateAddressLatest(lat, lng),
+    [updateAddressLatest]
+  );
 
   /**
    * 카테고리 필터링
    * 카테고리 변경 시 useEffect가 자동으로 새 데이터를 로드함
    */
-  const filterByCategory = useCallback((category: string | null, mapLevel: number) => {
-    setSelectedCategory(category);
-    setCurrentMapLevelInHook(mapLevel);
-  }, []);
+  const filterByCategory = useCallback(
+    (category: string | null, mapLevel: number) => {
+      cancelViewportRequest();
+      setSelectedCategory(category);
+      setCurrentMapLevelInHook(mapLevel);
+    },
+    [cancelViewportRequest]
+  );
 
   /**
    * 카테고리 상태만 설정 (useEffect 트리거하지 않음)
    */
-  const setCategoryOnly = useCallback((category: string | null, mapLevel: number) => {
-    setSelectedCategory(category);
-    setCurrentMapLevelInHook(mapLevel);
-  }, []);
+  const setCategoryOnly = useCallback(
+    (category: string | null, mapLevel: number) => {
+      cancelViewportRequest();
+      setSelectedCategory(category);
+      setCurrentMapLevelInHook(mapLevel);
+    },
+    [cancelViewportRequest]
+  );
 
   /**
    * 현재 지도 영역에서 가맹점 검색 (수동 검색)
@@ -358,6 +450,9 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
    */
   const searchInCurrentMap = useCallback(
     async (centerLat: number, centerLng: number, mapLevel: number, bounds?: MapBounds) => {
+      const { controller, requestSeq } = beginViewportRequest();
+      void updateAddressLatest(centerLat, centerLng);
+
       const searchInMap = async () => {
         const currentUserCoords = userCoordsRef.current;
         const searchBounds = bounds ?? currentMapBoundsRef.current;
@@ -366,36 +461,40 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
           const clusters = await loadStoreClustersInBoundsRef.current(
             searchBounds,
             selectedCategory,
-            mapLevel
+            mapLevel,
+            controller.signal
           );
-          setMapClusters(clusters);
+          if (isLatestViewportRequest(requestSeq, controller.signal)) {
+            setMapClusters(clusters);
+          }
           return platformsRef.current;
         }
 
         const inViewOptions = getInViewPreviewOptionsByMapLevel(mapLevel);
-        const [platforms] = await Promise.all([
-          searchBounds
-            ? loadStoresInBoundsRef.current(
-                searchBounds,
-                selectedCategory,
-                currentUserCoords?.lat,
-                currentUserCoords?.lng,
-                inViewOptions.limit,
-                inViewOptions.includeBenefits,
-                inViewOptions.boundsPaddingRatio
-              )
-            : loadStoresByCategoryRef.current(
-                centerLat,
-                centerLng,
-                getRadiusByMapLevel(mapLevel),
-                selectedCategory,
-                currentUserCoords?.lat,
-                currentUserCoords?.lng
-              ),
-          getAddressFromCoordinates(centerLat, centerLng)
-            .then(setCurrentLocation)
-            .catch(() => undefined),
-        ]);
+        const platforms = searchBounds
+          ? await loadStoresInBoundsRef.current(
+              searchBounds,
+              selectedCategory,
+              currentUserCoords?.lat,
+              currentUserCoords?.lng,
+              inViewOptions.limit,
+              inViewOptions.includeBenefits,
+              inViewOptions.boundsPaddingRatio,
+              controller.signal
+            )
+          : await loadStoresByCategoryRef.current(
+              centerLat,
+              centerLng,
+              getRadiusByMapLevel(mapLevel),
+              selectedCategory,
+              currentUserCoords?.lat,
+              currentUserCoords?.lng,
+              controller.signal
+            );
+
+        if (!isLatestViewportRequest(requestSeq, controller.signal)) {
+          return platformsRef.current;
+        }
 
         setMapClusters([]);
         return platforms;
@@ -403,7 +502,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
       await executeRef.current(searchInMap);
     },
-    [selectedCategory]
+    [beginViewportRequest, isLatestViewportRequest, selectedCategory, updateAddressLatest]
   );
 
   /**
@@ -412,33 +511,25 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   const searchInMapBounds = useCallback(
     async (bounds: MapBounds, centerLat: number, centerLng: number, mapLevel?: number) => {
       currentMapBoundsRef.current = bounds;
+      const { controller, requestSeq } = beginViewportRequest();
+      void updateAddressLatest(centerLat, centerLng);
 
       const effectiveMapLevel = mapLevel ?? currentMapLevelInHook;
 
       if (shouldUseServerClusters(effectiveMapLevel)) {
-        const requestSeq = clusterRequestSeqRef.current + 1;
-        clusterRequestSeqRef.current = requestSeq;
-
-        getAddressFromCoordinates(centerLat, centerLng)
-          .then((address) => {
-            if (clusterRequestSeqRef.current === requestSeq) {
-              setCurrentLocation(address);
-            }
-          })
-          .catch(() => undefined);
-
         try {
           const clusters = await loadStoreClustersInBoundsRef.current(
             bounds,
             selectedCategory,
-            effectiveMapLevel
+            effectiveMapLevel,
+            controller.signal
           );
 
-          if (clusterRequestSeqRef.current === requestSeq) {
+          if (isLatestViewportRequest(requestSeq, controller.signal)) {
             setMapClusters(clusters);
           }
         } catch (error) {
-          if (clusterRequestSeqRef.current === requestSeq) {
+          if (isLatestViewportRequest(requestSeq, controller.signal)) {
             console.error('지도 클러스터 조회 실패:', error);
           }
         }
@@ -447,20 +538,20 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
       const searchInBounds = async () => {
         const inViewOptions = getInViewPreviewOptionsByMapLevel(effectiveMapLevel);
-        const [platforms] = await Promise.all([
-          loadStoresInBoundsRef.current(
-            bounds,
-            selectedCategory,
-            undefined,
-            undefined,
-            inViewOptions.limit,
-            inViewOptions.includeBenefits,
-            inViewOptions.boundsPaddingRatio
-          ),
-          getAddressFromCoordinates(centerLat, centerLng)
-            .then(setCurrentLocation)
-            .catch(() => undefined),
-        ]);
+        const platforms = await loadStoresInBoundsRef.current(
+          bounds,
+          selectedCategory,
+          undefined,
+          undefined,
+          inViewOptions.limit,
+          inViewOptions.includeBenefits,
+          inViewOptions.boundsPaddingRatio,
+          controller.signal
+        );
+
+        if (!isLatestViewportRequest(requestSeq, controller.signal)) {
+          return platformsRef.current;
+        }
 
         setMapClusters([]);
         return platforms;
@@ -468,7 +559,13 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
       await executeRef.current(searchInBounds);
     },
-    [currentMapLevelInHook, selectedCategory]
+    [
+      beginViewportRequest,
+      currentMapLevelInHook,
+      isLatestViewportRequest,
+      selectedCategory,
+      updateAddressLatest,
+    ]
   );
 
   /**
@@ -476,30 +573,26 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
    */
   const updateToCurrentLocation = useCallback(
     async (lat: number, lng: number, mapLevel: number) => {
+      cancelViewportRequest();
+      void updateAddressLatest(lat, lng);
+
       const updateCurrentLocation = async () => {
-        // 사용자 좌표는 즉시 갱신하고, 주소 변환과 매장 조회는 병렬 실행
+        // 사용자 좌표는 즉시 갱신하고, 주소는 매장 조회와 독립적으로 반영한다.
         const coords = { lat, lng };
         setUserCoords(coords);
         userCoordsRef.current = coords;
 
-        const [platforms] = await Promise.all([
-          loadStoresByCategoryRef.current(
-            lat,
-            lng,
-            getRadiusByMapLevel(mapLevel),
-            selectedCategory
-          ),
-          getAddressFromCoordinates(lat, lng)
-            .then(setCurrentLocation)
-            .catch(() => undefined),
-        ]);
-
-        return platforms;
+        return loadStoresByCategoryRef.current(
+          lat,
+          lng,
+          getRadiusByMapLevel(mapLevel),
+          selectedCategory
+        );
       };
 
       await executeRef.current(updateCurrentLocation);
     },
-    [selectedCategory]
+    [cancelViewportRequest, selectedCategory, updateAddressLatest]
   );
 
   /**
@@ -508,6 +601,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
    */
   const searchByKeyword = useCallback(
     async (keyword: string, mapLevel: number, searchLat: number, searchLng: number) => {
+      cancelViewportRequest();
       setMapClusters([]);
       const keywordSearch = async () => {
         // 맵 레벨에 따른 반경 계산
@@ -556,8 +650,14 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
       await executeRef.current(keywordSearch);
     },
-    [selectedCategory]
+    [cancelViewportRequest, selectedCategory]
   );
+
+  const clearPlatforms = useCallback(() => {
+    cancelViewportRequest();
+    setMapClusters([]);
+    return executeRef.current(async () => []);
+  }, [cancelViewportRequest]);
 
   return {
     platforms: platforms || [], // null 방어
@@ -575,9 +675,6 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
     searchByKeyword,
     updateToCurrentLocation,
     currentMapLevelInHook,
-    clearPlatforms: () => {
-      setMapClusters([]);
-      return execute(async () => []);
-    }, // 즉시 빈 배열로 설정
+    clearPlatforms,
   };
 };

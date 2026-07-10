@@ -44,6 +44,7 @@ const MainPageLayout: React.FC = () => {
   const [startHeight, setStartHeight] = useState<number>(0); // 드래그 시작 시 높이
   const [isAnimating, setIsAnimating] = useState(false);
   const isMapZoomingRef = useRef(false);
+  const hasInitializedMapViewportRef = useRef(false);
   const mapViewportSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastViewportSearchKeyRef = useRef<string>('');
   const lastViewportHeightRef = useRef<number>(
@@ -114,6 +115,11 @@ const MainPageLayout: React.FC = () => {
   const mapMoveCenterLocation = useMemo(
     () => (mapMoveTarget ? { latitude: mapMoveTarget.lat, longitude: mapMoveTarget.lng } : null),
     [mapMoveTarget]
+  );
+  const currentMapCenterLocation = useMemo(
+    () =>
+      currentMapCenter ? { latitude: currentMapCenter.lat, longitude: currentMapCenter.lng } : null,
+    [currentMapCenter]
   );
 
   // 가맹점 데이터 및 API 상태 관리
@@ -192,7 +198,9 @@ const MainPageLayout: React.FC = () => {
   // 사용자 위치 변경 핸들러 (초기 위치)
   const handleLocationChange = useCallback((location: MapLocation) => {
     // 초기 지도 중심 설정
-    setCurrentMapCenter({ lat: location.latitude, lng: location.longitude });
+    setCurrentMapCenter(
+      (current) => current ?? { lat: location.latitude, lng: location.longitude }
+    );
     setFilteredPlatforms([]);
   }, []);
 
@@ -242,6 +250,7 @@ const MainPageLayout: React.FC = () => {
   // 지도 이동/줌 완료 후 현재 화면 기준 혜택 자동 재조회
   const handleMapViewportChange = useCallback(
     (bounds: MapBounds, center: MapLocation, mapLevel: number) => {
+      hasInitializedMapViewportRef.current = true;
       setMapMoveTarget(null);
       setCurrentMapCenter({ lat: center.latitude, lng: center.longitude });
       setCurrentMapLevel(mapLevel);
@@ -636,33 +645,39 @@ const MainPageLayout: React.FC = () => {
 
         {/* 맵 영역 */}
         <div className="flex-1 h-full transition-all duration-300 ease-in-out">
-          <MapSection
-            platforms={stablePlatforms}
-            clusters={
-              activeTab === 'nearby' && !isShowingRecommendationStoreResults && !searchQuery.trim()
-                ? mapClusters
-                : []
-            }
-            useServerClusters={
-              activeTab === 'nearby' &&
-              !isShowingRecommendationStoreResults &&
-              !searchQuery.trim() &&
-              currentMapLevel >= 5
-            }
-            selectedPlatform={selectedPlatform}
-            onPlatformSelect={handlePlatformSelect}
-            onLocationChange={handleLocationChange}
-            onMapCenterChange={handleMapCenterChange}
-            onLocationMove={handleLocationMove}
-            categories={CATEGORIES}
-            selectedCategory={selectedCategory || '전체'}
-            onCategorySelect={handleCategorySelect}
-            onSearchInMap={handleSearchInMap}
-            centerLocation={mapMoveCenterLocation}
-            onMapLevelChange={handleMapLevelChange}
-            onViewportChange={handleMapViewportChange}
-            activeTab={activeTab}
-          />
+          {!isMobile && (
+            <MapSection
+              platforms={stablePlatforms}
+              clusters={
+                activeTab === 'nearby' &&
+                !isShowingRecommendationStoreResults &&
+                !searchQuery.trim()
+                  ? mapClusters
+                  : []
+              }
+              useServerClusters={
+                activeTab === 'nearby' &&
+                !isShowingRecommendationStoreResults &&
+                !searchQuery.trim() &&
+                currentMapLevel >= 5
+              }
+              selectedPlatform={selectedPlatform}
+              onPlatformSelect={handlePlatformSelect}
+              onLocationChange={handleLocationChange}
+              onMapCenterChange={handleMapCenterChange}
+              onLocationMove={handleLocationMove}
+              categories={CATEGORIES}
+              selectedCategory={selectedCategory || '전체'}
+              onCategorySelect={handleCategorySelect}
+              onSearchInMap={handleSearchInMap}
+              centerLocation={mapMoveCenterLocation}
+              initialCenterLocation={currentMapCenterLocation}
+              initialMapLevel={hasInitializedMapViewportRef.current ? currentMapLevel : undefined}
+              onMapLevelChange={handleMapLevelChange}
+              onViewportChange={handleMapViewportChange}
+              activeTab={activeTab}
+            />
+          )}
         </div>
 
         {/* 혜택 상세 카드 */}
@@ -730,33 +745,39 @@ const MainPageLayout: React.FC = () => {
 
         {/* 지도 - 전체 화면 */}
         <div className="absolute inset-0">
-          <MapSection
-            platforms={stablePlatforms}
-            clusters={
-              activeTab === 'nearby' && !isShowingRecommendationStoreResults && !searchQuery.trim()
-                ? mapClusters
-                : []
-            }
-            useServerClusters={
-              activeTab === 'nearby' &&
-              !isShowingRecommendationStoreResults &&
-              !searchQuery.trim() &&
-              currentMapLevel >= 5
-            }
-            selectedPlatform={selectedPlatform}
-            onPlatformSelect={handlePlatformSelect}
-            onLocationChange={handleLocationChange}
-            onMapCenterChange={handleMapCenterChange}
-            onLocationMove={handleLocationMove}
-            categories={CATEGORIES}
-            selectedCategory={selectedCategory || '전체'}
-            onCategorySelect={handleCategorySelect}
-            onSearchInMap={handleSearchInMap}
-            centerLocation={mapMoveCenterLocation}
-            onMapLevelChange={handleMapLevelChange}
-            onViewportChange={handleMapViewportChange}
-            activeTab={activeTab}
-          />
+          {isMobile && (
+            <MapSection
+              platforms={stablePlatforms}
+              clusters={
+                activeTab === 'nearby' &&
+                !isShowingRecommendationStoreResults &&
+                !searchQuery.trim()
+                  ? mapClusters
+                  : []
+              }
+              useServerClusters={
+                activeTab === 'nearby' &&
+                !isShowingRecommendationStoreResults &&
+                !searchQuery.trim() &&
+                currentMapLevel >= 5
+              }
+              selectedPlatform={selectedPlatform}
+              onPlatformSelect={handlePlatformSelect}
+              onLocationChange={handleLocationChange}
+              onMapCenterChange={handleMapCenterChange}
+              onLocationMove={handleLocationMove}
+              categories={CATEGORIES}
+              selectedCategory={selectedCategory || '전체'}
+              onCategorySelect={handleCategorySelect}
+              onSearchInMap={handleSearchInMap}
+              centerLocation={mapMoveCenterLocation}
+              initialCenterLocation={currentMapCenterLocation}
+              initialMapLevel={hasInitializedMapViewportRef.current ? currentMapLevel : undefined}
+              onMapLevelChange={handleMapLevelChange}
+              onViewportChange={handleMapViewportChange}
+              activeTab={activeTab}
+            />
+          )}
 
           {/* 바텀시트 */}
           <div

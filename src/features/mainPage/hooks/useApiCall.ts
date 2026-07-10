@@ -32,7 +32,11 @@ export const useApiCall = <T = unknown>(initialData: T | null = null): UseApiCal
         setData(result);
       }
     } catch (err) {
-      if (requestSeqRef.current === requestSeq) {
+      const isCanceledRequest =
+        err instanceof Error &&
+        (err.name === 'AbortError' || err.name === 'CanceledError' || err.message === 'canceled');
+
+      if (requestSeqRef.current === requestSeq && !isCanceledRequest) {
         setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
       }
     } finally {

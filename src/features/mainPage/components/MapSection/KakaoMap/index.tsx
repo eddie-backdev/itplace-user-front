@@ -7,6 +7,7 @@ import {
   KakaoMarkerClusterer,
   KakaoCustomOverlay,
   KakaoMouseEvent,
+  KakaoLatLng,
 } from '../../../types/kakao';
 import CustomMarker from './CustomMarker';
 import { installCustomMarkerImageFallback } from './customMarkerFallback';
@@ -20,6 +21,8 @@ interface KakaoMapProps {
   onLocationChange?: (location: MapLocation) => void;
   onMapCenterChange?: (location: MapLocation) => void;
   centerLocation?: { latitude: number; longitude: number } | null;
+  initialCenterLocation?: { latitude: number; longitude: number } | null;
+  initialMapLevel?: number;
   onMapLevelChange?: (mapLevel: number) => void;
   onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
   isRoadviewMode?: boolean;
@@ -31,12 +34,48 @@ interface MarkerDisplayPosition {
   longitude: number;
 }
 
+interface CustomMarkerRegistryEntry {
+  overlay: KakaoCustomOverlay;
+  element: HTMLDivElement;
+  platform: Platform;
+  positionKey: string;
+  contentKey: string;
+  clickHandler: () => void;
+  isAttached: boolean;
+}
+
+interface ClusterMarkerRegistryEntry {
+  marker: KakaoMarker;
+  positionKey: string;
+  isAttached: boolean;
+}
+
+interface ServerClusterRegistryEntry {
+  overlay: KakaoCustomOverlay;
+  element: HTMLButtonElement;
+  cluster: MapCluster;
+  positionKey: string;
+  contentKey: string;
+  clickHandler: () => void;
+}
+
+interface ReconcileMetrics {
+  added: number;
+  updated: number;
+  removed: number;
+  count: number;
+  durationMs: number;
+}
+
 const EARTH_METERS_PER_DEGREE = 111_320;
 const DUPLICATE_MARKER_RADIUS_METERS = 9;
 const DUPLICATE_MARKER_RING_SIZE = 8;
 
 const coordinateKey = (platform: Platform): string =>
   `${Number(platform.latitude).toFixed(12)}:${Number(platform.longitude).toFixed(12)}`;
+
+const markerRegistryKey = (platform: Platform): string =>
+  `${platform.id}:${platform.partnerId}:${platform.carrier ?? 'ALL'}`;
 
 const resolveServerClusterStyle = (count: number) => {
   if (count <= 1) {
@@ -79,11 +118,9 @@ const resolveServerClusterStyle = (count: number) => {
   };
 };
 
-const createServerClusterElement = (cluster: MapCluster) => {
-  const element = document.createElement('button');
+const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapCluster) => {
   const style = resolveServerClusterStyle(cluster.count);
 
-  element.type = 'button';
   element.setAttribute('aria-label', `${cluster.count}개 혜택 클러스터`);
   element.style.cssText = [
     `width:${style.size}px`,
@@ -104,8 +141,23 @@ const createServerClusterElement = (cluster: MapCluster) => {
   element.innerHTML = style.showCount
     ? `<span style="font-size:${style.fontSize}px">${cluster.count}</span>`
     : '<span style="width:8px;height:8px;border-radius:9999px;background:#FFFFFF;opacity:0.92"></span>';
+};
+
+const createServerClusterElement = (cluster: MapCluster) => {
+  const element = document.createElement('button');
+  element.type = 'button';
+  updateServerClusterElement(element, cluster);
   return element;
 };
+
+const logReconcileMetrics = (mode: 'custom' | 'cluster' | 'server', metrics: ReconcileMetrics) => {
+  if (!import.meta.env.DEV) return;
+
+  console.debug(`[KakaoMap] ${mode} marker reconcile`, metrics);
+};
+
+const getReconcileDuration = (startedAt: number) =>
+  import.meta.env.DEV ? performance.now() - startedAt : 0;
 
 const toDisplayPositionMap = (platforms: Platform[]): Map<string, MarkerDisplayPosition> => {
   const groups = new Map<string, Platform[]>();
@@ -128,14 +180,19 @@ const toDisplayPositionMap = (platforms: Platform[]): Map<string, MarkerDisplayP
   groups.forEach((group) => {
     if (group.length === 1) {
       const [platform] = group;
-      displayPositions.set(platform.id, {
+      displayPositions.set(markerRegistryKey(platform), {
         latitude: platform.latitude,
         longitude: platform.longitude,
       });
       return;
     }
 
-    const orderedGroup = [...group].sort((first, second) => first.storeId - second.storeId);
+    const orderedGroup = [...group].sort((first, second) => {
+      const storeOrder = first.storeId - second.storeId;
+      return storeOrder !== 0
+        ? storeOrder
+        : markerRegistryKey(first).localeCompare(markerRegistryKey(second));
+    });
     orderedGroup.forEach((platform, index) => {
       const ring = Math.floor(index / DUPLICATE_MARKER_RING_SIZE);
       const indexInRing = index % DUPLICATE_MARKER_RING_SIZE;
@@ -150,7 +207,7 @@ const toDisplayPositionMap = (platforms: Platform[]): Map<string, MarkerDisplayP
         (Math.cos(angle) * radiusMeters) /
         (EARTH_METERS_PER_DEGREE * Math.cos((platform.latitude * Math.PI) / 180));
 
-      displayPositions.set(platform.id, {
+      displayPositions.set(markerRegistryKey(platform), {
         latitude: platform.latitude + latitudeOffset,
         longitude: platform.longitude + longitudeOffset,
       });
@@ -169,6 +226,8 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   onLocationChange,
   onMapCenterChange,
   centerLocation,
+  initialCenterLocation,
+  initialMapLevel,
   onMapLevelChange,
   onViewportChange,
   isRoadviewMode = false,
@@ -176,10 +235,10 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMapType | null>(null);
-  const markersRef = useRef<KakaoCustomOverlay[]>([]);
-  const clusterMarkersRef = useRef<KakaoMarker[]>([]);
+  const customMarkerRegistryRef = useRef(new Map<string, CustomMarkerRegistryEntry>());
+  const clusterMarkerRegistryRef = useRef(new Map<string, ClusterMarkerRegistryEntry>());
   const clustererRef = useRef<KakaoMarkerClusterer | null>(null);
-  const serverClusterOverlaysRef = useRef<KakaoCustomOverlay[]>([]);
+  const serverClusterRegistryRef = useRef(new Map<string, ServerClusterRegistryEntry>());
   const isAnimatingRef = useRef<boolean>(false);
   const isZoomingRef = useRef<boolean>(false);
   const isClusterModeRef = useRef<boolean>(false);
@@ -187,11 +246,27 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const markerRevealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const zoomSettledTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suppressDragEndUntilRef = useRef<number>(0);
+  const platformsRef = useRef(platforms);
+  const onPlatformSelectRef = useRef(onPlatformSelect);
+  const onLocationChangeRef = useRef(onLocationChange);
+  const onMapCenterChangeRef = useRef(onMapCenterChange);
+  const onMapLevelChangeRef = useRef(onMapLevelChange);
+  const onViewportChangeRef = useRef(onViewportChange);
+  const initialCenterLocationRef = useRef(initialCenterLocation);
+  const initialMapLevelRef = useRef(initialMapLevel);
+  platformsRef.current = platforms;
+  onPlatformSelectRef.current = onPlatformSelect;
+  onLocationChangeRef.current = onLocationChange;
+  onMapCenterChangeRef.current = onMapCenterChange;
+  onMapLevelChangeRef.current = onMapLevelChange;
+  onViewportChangeRef.current = onViewportChange;
+  initialCenterLocationRef.current = initialCenterLocation;
+  initialMapLevelRef.current = initialMapLevel;
   const [userLocation, setUserLocation] = useState<MapLocation | null>(null);
+  const [mapInitializationVersion, setMapInitializationVersion] = useState(0);
   const [isClusterMode, setIsClusterMode] = useState<boolean>(false);
-  const [isMapInitialized, setIsMapInitialized] = useState<boolean>(false);
-  const [visiblePlatforms, setVisiblePlatforms] = useState<Platform[]>([]);
-  const displayPositionByPlatformId = useMemo(
+  const [visiblePlatforms, setVisiblePlatforms] = useState<Platform[] | null>(null);
+  const displayPositionByMarkerKey = useMemo(
     () =>
       isClusterMode ? new Map<string, MarkerDisplayPosition>() : toDisplayPositionMap(platforms),
     [isClusterMode, platforms]
@@ -200,8 +275,8 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const setCustomMarkersVisibility = useCallback((visibility: 'visible' | 'hidden') => {
     areMarkersHiddenRef.current = visibility === 'hidden';
 
-    markersRef.current.forEach((marker) => {
-      const content = marker.getContent();
+    customMarkerRegistryRef.current.forEach(({ overlay }) => {
+      const content = overlay.getContent();
       const markerElement =
         content.querySelector<HTMLElement>('[data-itplace-map-marker="true"]') ?? content;
 
@@ -236,6 +311,10 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   }, [notifyMapZoomState]);
 
   useEffect(() => {
+    const customMarkerRegistry = customMarkerRegistryRef.current;
+    const clusterMarkerRegistry = clusterMarkerRegistryRef.current;
+    const serverClusterRegistry = serverClusterRegistryRef.current;
+
     return () => {
       if (markerRevealTimerRef.current) {
         clearTimeout(markerRevealTimerRef.current);
@@ -243,13 +322,22 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       if (zoomSettledTimerRef.current) {
         clearTimeout(zoomSettledTimerRef.current);
       }
-      serverClusterOverlaysRef.current.forEach((overlay) => overlay.setMap(null));
-      serverClusterOverlaysRef.current = [];
+      customMarkerRegistry.forEach(({ overlay, element, clickHandler }) => {
+        element.removeEventListener('click', clickHandler);
+        overlay.setMap(null);
+      });
+      customMarkerRegistry.clear();
+      clusterMarkerRegistry.clear();
+      serverClusterRegistry.forEach(({ overlay, element, clickHandler }) => {
+        element.removeEventListener('click', clickHandler);
+        overlay.setMap(null);
+      });
+      serverClusterRegistry.clear();
     };
   }, []);
 
   const notifyViewportChange = useCallback(() => {
-    if (!mapRef.current || !onViewportChange) {
+    if (!mapRef.current || !onViewportChangeRef.current) {
       return;
     }
 
@@ -259,7 +347,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     const northEast = bounds.getNorthEast();
     const center = map.getCenter();
 
-    onViewportChange(
+    onViewportChangeRef.current(
       {
         minLat: southWest.getLat(),
         minLng: southWest.getLng(),
@@ -272,7 +360,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       },
       map.getLevel()
     );
-  }, [onViewportChange]);
+  }, []);
 
   // Viewport 내 플랫폼 필터링 함수
   const updateVisiblePlatforms = useCallback(() => {
@@ -281,8 +369,10 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       return;
     }
 
+    const latestPlatforms = platformsRef.current;
+
     // platforms가 빈 배열이면 visiblePlatforms도 빈 배열로 설정
-    if (!platforms.length) {
+    if (!latestPlatforms.length) {
       setVisiblePlatforms([]);
       return;
     }
@@ -295,7 +385,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     const maxLat = northEast.getLat();
     const maxLng = northEast.getLng();
 
-    const filtered = platforms.filter((platform) => {
+    const filtered = latestPlatforms.filter((platform) => {
       // 좌표가 없는 플랫폼은 제외
       if (
         !platform.latitude ||
@@ -315,36 +405,65 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     });
 
     setVisiblePlatforms(filtered);
-  }, [platforms]);
+  }, []);
 
   // 사용자 현재 위치 가져오기
   useEffect(() => {
+    let isCanceled = false;
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          if (isCanceled) return;
+
           const location = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           };
           setUserLocation(location);
-          onLocationChange?.(location);
+          onLocationChangeRef.current?.(location);
         },
         () => {
+          if (isCanceled) return;
+
           // 기본 위치 (서울시청)
           const defaultLocation = { latitude: 37.5665, longitude: 126.978 };
           setUserLocation(defaultLocation);
-          onLocationChange?.(defaultLocation);
+          onLocationChangeRef.current?.(defaultLocation);
         }
       );
     }
-  }, [onLocationChange]);
+
+    return () => {
+      isCanceled = true;
+    };
+  }, []);
 
   // 카카오맵 초기화
   useEffect(() => {
-    if (!userLocation || !mapContainer.current || isMapInitialized) return;
+    if (!userLocation || !mapContainer.current || mapRef.current) return;
+
+    let isDisposed = false;
+    let initializeRetryTimer: ReturnType<typeof setTimeout> | null = null;
+    let initialViewportTimer: ReturnType<typeof setTimeout> | null = null;
+    let kakaoMapsCheckInterval: ReturnType<typeof setInterval> | null = null;
+    let initializedMap: KakaoMapType | null = null;
+    const mapEventListeners: Array<{
+      type: string;
+      handler: (...args: unknown[]) => void;
+    }> = [];
+
+    const addMapEventListener = (
+      map: KakaoMapType,
+      type: string,
+      handler: (...args: unknown[]) => void
+    ) => {
+      window.kakao.maps.event.addListener(map, type, handler);
+      mapEventListeners.push({ type, handler });
+    };
 
     const initializeMap = () => {
-      if (!window.kakao || !window.kakao.maps) {
+      if (isDisposed || mapRef.current || !window.kakao || !window.kakao.maps) {
         return;
       }
 
@@ -353,17 +472,23 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       const containerHeight = mapContainer.current?.offsetHeight;
 
       if (!containerWidth || !containerHeight) {
-        setTimeout(initializeMap, 100);
+        if (initializeRetryTimer) {
+          clearTimeout(initializeRetryTimer);
+        }
+        initializeRetryTimer = setTimeout(initializeMap, 100);
         return;
       }
 
+      const initialCenter = initialCenterLocationRef.current ?? userLocation;
       const options = {
-        center: new window.kakao.maps.LatLng(userLocation.latitude, userLocation.longitude),
-        level: 3,
+        center: new window.kakao.maps.LatLng(initialCenter.latitude, initialCenter.longitude),
+        level: initialMapLevelRef.current ?? 3,
       };
 
       const map = new window.kakao.maps.Map(mapContainer.current!, options);
+      initializedMap = map;
       mapRef.current = map;
+      setMapInitializationVersion((version) => version + 1);
 
       // 클러스터러 초기화
       if (window.kakao.maps.MarkerClusterer) {
@@ -429,8 +554,12 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         clustererRef.current = clusterer;
       }
 
+      const initialIsClusterMode = Boolean(map.getLevel() >= 5 && clustererRef.current);
+      isClusterModeRef.current = initialIsClusterMode;
+      setIsClusterMode(initialIsClusterMode);
+
       // 줌 시작 - 애니메이션 상태 시작
-      window.kakao.maps.event.addListener(map, 'zoom_start', () => {
+      addMapEventListener(map, 'zoom_start', () => {
         isAnimatingRef.current = true;
         isZoomingRef.current = true;
         suppressDragEndUntilRef.current = Date.now() + 700;
@@ -439,13 +568,16 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
         if (isClusterModeRef.current) {
           clustererRef.current?.clear();
+          clusterMarkerRegistryRef.current.forEach((entry) => {
+            entry.isAttached = false;
+          });
         }
       });
 
       // 줌 변경 완료 - UI 레이아웃 변경은 최소화하고 마커 모드 전환이 필요할 때만 갱신
-      window.kakao.maps.event.addListener(map, 'zoom_changed', () => {
+      addMapEventListener(map, 'zoom_changed', () => {
         const level = map.getLevel();
-        onMapLevelChange?.(level);
+        onMapLevelChangeRef.current?.(level);
 
         isAnimatingRef.current = false;
         suppressDragEndUntilRef.current = Date.now() + 700;
@@ -461,12 +593,16 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         requestAnimationFrame(() => {
           updateVisiblePlatforms();
 
-          if (
-            nextIsClusterMode &&
-            !shouldSwitchMarkerMode &&
-            clusterMarkersRef.current.length > 0
-          ) {
-            clustererRef.current?.addMarkers(clusterMarkersRef.current);
+          if (nextIsClusterMode && !shouldSwitchMarkerMode && clustererRef.current) {
+            const detachedEntries = [...clusterMarkerRegistryRef.current.values()].filter(
+              (entry) => !entry.isAttached
+            );
+            if (detachedEntries.length > 0) {
+              clustererRef.current.addMarkers(detachedEntries.map((entry) => entry.marker));
+              detachedEntries.forEach((entry) => {
+                entry.isAttached = true;
+              });
+            }
           }
         });
 
@@ -474,7 +610,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         settleZoomStateAfterDelay();
       });
 
-      window.kakao.maps.event.addListener(map, 'idle', () => {
+      addMapEventListener(map, 'idle', () => {
         if (!isZoomingRef.current) {
           return;
         }
@@ -485,7 +621,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
         isAnimatingRef.current = false;
         isZoomingRef.current = false;
-        onMapLevelChange?.(map.getLevel());
+        onMapLevelChangeRef.current?.(map.getLevel());
         updateVisiblePlatforms();
         notifyViewportChange();
         notifyMapZoomState(false);
@@ -493,25 +629,25 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       });
 
       // 드래그 시작 - 애니메이션 상태 시작
-      window.kakao.maps.event.addListener(map, 'dragstart', () => {
+      addMapEventListener(map, 'dragstart', () => {
         isAnimatingRef.current = true;
       });
 
       // 드래그 종료 - 애니메이션 완료 후 업데이트
-      window.kakao.maps.event.addListener(map, 'dragend', () => {
+      addMapEventListener(map, 'dragend', () => {
         isAnimatingRef.current = false;
 
         const isDragEndFromZoom =
           isZoomingRef.current || Date.now() < suppressDragEndUntilRef.current;
 
         // 줌으로 인한 dragend가 아닌 실제 드래그일 때만 onMapCenterChange 호출
-        if (!isDragEndFromZoom && onMapCenterChange) {
+        if (!isDragEndFromZoom && onMapCenterChangeRef.current) {
           const center = map.getCenter();
           const centerLocation: MapLocation = {
             latitude: center.getLat(),
             longitude: center.getLng(),
           };
-          onMapCenterChange(centerLocation);
+          onMapCenterChangeRef.current(centerLocation);
         }
         if (!isDragEndFromZoom) {
           updateVisiblePlatforms();
@@ -519,14 +655,14 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         }
       });
 
-      // 지도 초기화 완료 표시
-      setIsMapInitialized(true);
-
       // 초기화 후 크기 재조정
-      setTimeout(() => {
+      initialViewportTimer = setTimeout(() => {
+        if (isDisposed) return;
+
         if (map && map.relayout) {
           map.relayout();
         }
+        updateVisiblePlatforms();
         notifyViewportChange();
       }, 100);
     };
@@ -536,44 +672,77 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       initializeMap();
     } else {
       // 카카오맵 API 로드 대기
-      const checkKakaoMaps = setInterval(() => {
+      kakaoMapsCheckInterval = setInterval(() => {
         if (window.kakao && window.kakao.maps) {
-          clearInterval(checkKakaoMaps);
+          if (kakaoMapsCheckInterval) {
+            clearInterval(kakaoMapsCheckInterval);
+            kakaoMapsCheckInterval = null;
+          }
           initializeMap();
         }
       }, 100);
-
-      return () => clearInterval(checkKakaoMaps);
     }
+
+    return () => {
+      isDisposed = true;
+
+      if (initializeRetryTimer) {
+        clearTimeout(initializeRetryTimer);
+      }
+      if (initialViewportTimer) {
+        clearTimeout(initialViewportTimer);
+      }
+      if (kakaoMapsCheckInterval) {
+        clearInterval(kakaoMapsCheckInterval);
+      }
+
+      if (initializedMap && window.kakao?.maps?.event.removeListener) {
+        mapEventListeners.forEach(({ type, handler }) => {
+          window.kakao.maps.event.removeListener?.(initializedMap!, type, handler);
+        });
+      }
+
+      if (mapRef.current === initializedMap) {
+        mapRef.current = null;
+      }
+      clustererRef.current?.clear();
+      clustererRef.current = null;
+    };
   }, [
-    userLocation,
-    onMapCenterChange,
-    onMapLevelChange,
-    isMapInitialized,
-    updateVisiblePlatforms,
     notifyViewportChange,
-    setCustomMarkersVisibility,
-    revealCustomMarkersAfterZoom,
     notifyMapZoomState,
+    revealCustomMarkersAfterZoom,
+    setCustomMarkersVisibility,
     settleZoomStateAfterDelay,
+    updateVisiblePlatforms,
+    userLocation,
   ]);
 
   // platforms 데이터가 변경되면 visiblePlatforms 업데이트 (지연 처리)
   useEffect(() => {
+    let updateTimer: ReturnType<typeof setTimeout> | null = null;
+
     // 애니메이션 중이거나 줌 중이면 잠시 후 업데이트
     if (isAnimatingRef.current || isZoomingRef.current) {
-      setTimeout(() => {
+      updateTimer = setTimeout(() => {
         updateVisiblePlatforms();
       }, 250); // 지도 이동 완료 대기
     } else {
       updateVisiblePlatforms();
     }
+
+    return () => {
+      if (updateTimer) {
+        clearTimeout(updateTimer);
+      }
+    };
   }, [platforms, updateVisiblePlatforms]);
 
   // 로드뷰 모드 클릭 이벤트 관리
   useEffect(() => {
     if (!mapRef.current || !onMapClick) return;
 
+    const map = mapRef.current;
     let clickListener: ((mouseEvent?: KakaoMouseEvent) => void) | null = null;
 
     if (isRoadviewMode) {
@@ -587,16 +756,16 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       };
 
       window.kakao.maps.event.addListener(
-        mapRef.current,
+        map,
         'click',
         clickListener as (...args: unknown[]) => void
       );
     }
 
     return () => {
-      if (clickListener && mapRef.current && window.kakao.maps.event.removeListener) {
+      if (clickListener && window.kakao.maps.event.removeListener) {
         window.kakao.maps.event.removeListener(
-          mapRef.current,
+          map,
           'click',
           clickListener as (...args: unknown[]) => void
         );
@@ -607,31 +776,103 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   useEffect(() => {
     if (!mapRef.current) return;
 
-    serverClusterOverlaysRef.current.forEach((overlay) => overlay.setMap(null));
-    serverClusterOverlaysRef.current = [];
+    const startedAt = import.meta.env.DEV ? performance.now() : 0;
+    let added = 0;
+    let updated = 0;
+    let removed = 0;
+    const registry = serverClusterRegistryRef.current;
 
-    if (useServerClusters) {
-      if (clustererRef.current) {
-        clustererRef.current.clear();
+    if (!useServerClusters) {
+      registry.forEach(({ overlay, element, clickHandler }) => {
+        element.removeEventListener('click', clickHandler);
+        overlay.setMap(null);
+        removed += 1;
+      });
+      registry.clear();
+
+      if (removed > 0) {
+        logReconcileMetrics('server', {
+          added,
+          updated,
+          removed,
+          count: 0,
+          durationMs: getReconcileDuration(startedAt),
+        });
       }
-      markersRef.current.forEach((marker) => marker.setMap(null));
-      markersRef.current = [];
-      clusterMarkersRef.current = [];
-    }
-
-    if (!useServerClusters || clusters.length === 0) {
       return;
     }
 
     const map = mapRef.current;
-    serverClusterOverlaysRef.current = clusters.map((cluster) => {
-      const element = createServerClusterElement(cluster);
-      element.addEventListener('click', () => {
-        const nextLevel = Math.max(1, map.getLevel() - 1);
-        map.setLevel(nextLevel, {
-          anchor: new window.kakao.maps.LatLng(cluster.latitude, cluster.longitude),
-        });
+    customMarkerRegistryRef.current.forEach((entry) => {
+      if (entry.isAttached) {
+        entry.overlay.setMap(null);
+        entry.isAttached = false;
+      }
+    });
+
+    const attachedClusterEntries = [...clusterMarkerRegistryRef.current.values()].filter(
+      (entry) => entry.isAttached
+    );
+    if (clustererRef.current && attachedClusterEntries.length > 0) {
+      clustererRef.current.removeMarkers(
+        attachedClusterEntries.map((entry) => entry.marker),
+        true
+      );
+      clustererRef.current.redraw();
+      attachedClusterEntries.forEach((entry) => {
+        entry.isAttached = false;
       });
+    }
+
+    const desiredClusters = new Map(clusters.map((cluster) => [cluster.clusterId, cluster]));
+
+    registry.forEach((entry, clusterId) => {
+      if (desiredClusters.has(clusterId)) return;
+
+      entry.element.removeEventListener('click', entry.clickHandler);
+      entry.overlay.setMap(null);
+      registry.delete(clusterId);
+      removed += 1;
+    });
+
+    desiredClusters.forEach((cluster, clusterId) => {
+      const positionKey = `${cluster.latitude}:${cluster.longitude}`;
+      const contentKey = `${cluster.count}`;
+      const existingEntry = registry.get(clusterId);
+
+      if (existingEntry) {
+        let didUpdate = false;
+        existingEntry.cluster = cluster;
+
+        if (existingEntry.positionKey !== positionKey) {
+          existingEntry.overlay.setPosition(
+            new window.kakao.maps.LatLng(cluster.latitude, cluster.longitude)
+          );
+          existingEntry.positionKey = positionKey;
+          didUpdate = true;
+        }
+        if (existingEntry.contentKey !== contentKey) {
+          updateServerClusterElement(existingEntry.element, cluster);
+          existingEntry.contentKey = contentKey;
+          didUpdate = true;
+        }
+
+        if (didUpdate) updated += 1;
+        return;
+      }
+
+      const element = createServerClusterElement(cluster);
+      const clickHandler = () => {
+        const latestCluster = serverClusterRegistryRef.current.get(clusterId)?.cluster;
+        const currentMap = mapRef.current;
+        if (!latestCluster || !currentMap) return;
+
+        const nextLevel = Math.max(1, currentMap.getLevel() - 1);
+        currentMap.setLevel(nextLevel, {
+          anchor: new window.kakao.maps.LatLng(latestCluster.latitude, latestCluster.longitude),
+        });
+      };
+      element.addEventListener('click', clickHandler);
 
       const overlay = new window.kakao.maps.CustomOverlay({
         position: new window.kakao.maps.LatLng(cluster.latitude, cluster.longitude),
@@ -640,126 +881,297 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         zIndex: 20,
       });
       overlay.setMap(map);
-      return overlay;
+      registry.set(clusterId, {
+        overlay,
+        element,
+        cluster,
+        positionKey,
+        contentKey,
+        clickHandler,
+      });
+      added += 1;
     });
-  }, [clusters, useServerClusters]);
+
+    logReconcileMetrics('server', {
+      added,
+      updated,
+      removed,
+      count: registry.size,
+      durationMs: getReconcileDuration(startedAt),
+    });
+  }, [clusters, mapInitializationVersion, useServerClusters]);
 
   // 마커 업데이트 useEffect
   useEffect(() => {
     if (!mapRef.current || isAnimatingRef.current || useServerClusters) return;
 
-    // 렌더링할 플랫폼 결정: visiblePlatforms가 있으면 사용, 없으면 전체 platforms 사용
-    const platformsToRender = visiblePlatforms.length > 0 ? visiblePlatforms : platforms;
+    const startedAt = import.meta.env.DEV ? performance.now() : 0;
+    const map = mapRef.current;
+    const customRegistry = customMarkerRegistryRef.current;
+    const clusterRegistry = clusterMarkerRegistryRef.current;
+    let added = 0;
+    let updated = 0;
+    let removed = 0;
 
-    if (platformsToRender.length === 0) {
-      // 데이터가 없으면 기존 마커만 제거
-      if (clustererRef.current) {
-        clustererRef.current.clear();
-      }
-      markersRef.current.forEach((marker) => marker.setMap(null));
-      markersRef.current = [];
-      clusterMarkersRef.current = [];
-      return;
-    }
+    // viewport 계산 전에는 전체 결과를 사용하고, 계산 후에는 빈 viewport도 그대로 반영한다.
+    const platformsToRender = (visiblePlatforms ?? platforms).filter((platform) =>
+      Boolean(
+        platform.latitude &&
+          platform.longitude &&
+          platform.latitude !== 0 &&
+          platform.longitude !== 0
+      )
+    );
+    const desiredPlatforms = new Map(
+      platformsToRender.map((platform) => [markerRegistryKey(platform), platform])
+    );
+    const selectedMarkerKey = (() => {
+      if (!selectedPlatform) return null;
 
-    const newMarkers: KakaoMarker[] = [];
-    const newCustomOverlays: KakaoCustomOverlay[] = [];
+      const exactKey = markerRegistryKey(selectedPlatform);
+      if (desiredPlatforms.has(exactKey)) return exactKey;
 
-    // 새로운 마커들을 먼저 생성
-    platformsToRender.forEach((platform) => {
-      // 좌표가 없는 가맹점은 마커 표시 안함
-      if (
-        !platform.latitude ||
-        !platform.longitude ||
-        platform.latitude === 0 ||
-        platform.longitude === 0
-      ) {
-        return;
-      }
+      return (
+        [...desiredPlatforms.entries()].find(
+          ([, platform]) =>
+            platform.id === selectedPlatform.id && platform.partnerId === selectedPlatform.partnerId
+        )?.[0] ?? null
+      );
+    })();
 
-      // 줌 레벨에 따라 클러스터링 또는 개별 표시
-      if (isClusterMode) {
-        // 클러스터링용 일반 마커 생성 (지도에 표시하지 않음)
-        newMarkers.push(
-          new window.kakao.maps.Marker({
+    if (isClusterMode) {
+      customRegistry.forEach((entry, platformId) => {
+        if (!desiredPlatforms.has(platformId)) {
+          entry.element.removeEventListener('click', entry.clickHandler);
+          entry.overlay.setMap(null);
+          customRegistry.delete(platformId);
+          return;
+        }
+
+        entry.platform = desiredPlatforms.get(platformId)!;
+        if (entry.isAttached) {
+          entry.overlay.setMap(null);
+          entry.isAttached = false;
+        }
+      });
+
+      const clusterer = clustererRef.current;
+      if (!clusterer) return;
+
+      const entriesToRemove = new Set<ClusterMarkerRegistryEntry>();
+      const entriesToAdd = new Set<ClusterMarkerRegistryEntry>();
+      const positionUpdates: Array<{
+        entry: ClusterMarkerRegistryEntry;
+        position: KakaoLatLng;
+        positionKey: string;
+      }> = [];
+
+      clusterRegistry.forEach((entry, platformId) => {
+        if (desiredPlatforms.has(platformId)) return;
+
+        if (entry.isAttached) entriesToRemove.add(entry);
+        clusterRegistry.delete(platformId);
+        removed += 1;
+      });
+
+      desiredPlatforms.forEach((platform, platformId) => {
+        const positionKey = `${platform.latitude}:${platform.longitude}`;
+        const existingEntry = clusterRegistry.get(platformId);
+
+        if (!existingEntry) {
+          const entry: ClusterMarkerRegistryEntry = {
+            marker: new window.kakao.maps.Marker({
+              position: new window.kakao.maps.LatLng(platform.latitude, platform.longitude),
+            }),
+            positionKey,
+            isAttached: false,
+          };
+          clusterRegistry.set(platformId, entry);
+          entriesToAdd.add(entry);
+          added += 1;
+          return;
+        }
+
+        if (existingEntry.positionKey !== positionKey) {
+          if (existingEntry.isAttached) entriesToRemove.add(existingEntry);
+          positionUpdates.push({
+            entry: existingEntry,
             position: new window.kakao.maps.LatLng(platform.latitude, platform.longitude),
-          })
-        );
-      } else {
-        const displayPosition = displayPositionByPlatformId.get(platform.id) ?? platform;
-        const markerPosition = new window.kakao.maps.LatLng(
-          displayPosition.latitude,
-          displayPosition.longitude
-        );
-        // 개별 커스텀 마커만 표시 (클러스터링 비활성화 시에만)
-        const isSelected = selectedPlatform?.id === platform.id;
+            positionKey,
+          });
+          entriesToAdd.add(existingEntry);
+          updated += 1;
+        } else if (!existingEntry.isAttached) {
+          entriesToAdd.add(existingEntry);
+          updated += 1;
+        }
+      });
 
-        // React 컴포넌트를 HTML로 렌더링
-        const markerHTML = renderToString(
+      if (entriesToRemove.size > 0) {
+        clusterer.removeMarkers(
+          [...entriesToRemove].map((entry) => entry.marker),
+          true
+        );
+        entriesToRemove.forEach((entry) => {
+          entry.isAttached = false;
+        });
+      }
+      positionUpdates.forEach(({ entry, position, positionKey }) => {
+        entry.marker.setPosition(position);
+        entry.positionKey = positionKey;
+      });
+      if (entriesToAdd.size > 0) {
+        clusterer.addMarkers(
+          [...entriesToAdd].map((entry) => entry.marker),
+          true
+        );
+        entriesToAdd.forEach((entry) => {
+          entry.isAttached = true;
+        });
+      }
+      if (entriesToRemove.size > 0 || entriesToAdd.size > 0) {
+        clusterer.redraw();
+      }
+
+      logReconcileMetrics('cluster', {
+        added,
+        updated,
+        removed,
+        count: clusterRegistry.size,
+        durationMs: getReconcileDuration(startedAt),
+      });
+    } else {
+      const attachedClusterEntries = [...clusterRegistry.values()].filter(
+        (entry) => entry.isAttached
+      );
+      if (clustererRef.current && attachedClusterEntries.length > 0) {
+        clustererRef.current.removeMarkers(
+          attachedClusterEntries.map((entry) => entry.marker),
+          true
+        );
+        clustererRef.current.redraw();
+        attachedClusterEntries.forEach((entry) => {
+          entry.isAttached = false;
+        });
+      }
+      clusterRegistry.forEach((_entry, platformId) => {
+        if (!desiredPlatforms.has(platformId)) {
+          clusterRegistry.delete(platformId);
+        }
+      });
+
+      customRegistry.forEach((entry, platformId) => {
+        if (desiredPlatforms.has(platformId)) return;
+
+        entry.element.removeEventListener('click', entry.clickHandler);
+        entry.overlay.setMap(null);
+        customRegistry.delete(platformId);
+        removed += 1;
+      });
+
+      desiredPlatforms.forEach((platform, platformId) => {
+        const displayPosition = displayPositionByMarkerKey.get(platformId) ?? platform;
+        const positionKey = `${displayPosition.latitude}:${displayPosition.longitude}`;
+        const isSelected = selectedMarkerKey === platformId;
+        const contentKey = JSON.stringify([platform.imageUrl ?? '', platform.name, isSelected]);
+        const existingEntry = customRegistry.get(platformId);
+
+        if (existingEntry) {
+          let didUpdate = false;
+          existingEntry.platform = platform;
+
+          if (existingEntry.positionKey !== positionKey) {
+            existingEntry.overlay.setPosition(
+              new window.kakao.maps.LatLng(displayPosition.latitude, displayPosition.longitude)
+            );
+            existingEntry.positionKey = positionKey;
+            didUpdate = true;
+          }
+
+          if (existingEntry.contentKey !== contentKey) {
+            existingEntry.element.innerHTML = renderToString(
+              <CustomMarker
+                imageUrl={platform.imageUrl}
+                name={platform.name}
+                isSelected={isSelected}
+              />
+            );
+            installCustomMarkerImageFallback(existingEntry.element);
+            const markerElement =
+              existingEntry.element.querySelector<HTMLElement>(
+                '[data-itplace-map-marker="true"]'
+              ) ?? existingEntry.element;
+            markerElement.style.visibility = areMarkersHiddenRef.current ? 'hidden' : 'visible';
+            markerElement.style.pointerEvents = areMarkersHiddenRef.current ? 'none' : '';
+            existingEntry.overlay.setZIndex(isSelected ? 1000 : 1);
+            existingEntry.contentKey = contentKey;
+            didUpdate = true;
+          }
+
+          if (!existingEntry.isAttached) {
+            existingEntry.overlay.setMap(map);
+            existingEntry.isAttached = true;
+            didUpdate = true;
+          }
+
+          if (didUpdate) updated += 1;
+          return;
+        }
+
+        const markerElement = document.createElement('div');
+        markerElement.innerHTML = renderToString(
           <CustomMarker imageUrl={platform.imageUrl} name={platform.name} isSelected={isSelected} />
         );
-
-        // 개별 커스텀 마커 표시
-        const customOverlay = new window.kakao.maps.CustomOverlay({
-          position: markerPosition,
-          content: markerHTML,
-          yAnchor: 1, // 삼각형 끝부분이 좌표 위치가 되도록
-          zIndex: isSelected ? 1000 : 1, // 선택된 마커가 가장 위에
-        });
-
-        // 마커 클릭 이벤트 (HTML 요소에 직접 이벤트 추가)
-        const markerElement = document.createElement('div');
-        markerElement.innerHTML = markerHTML;
         installCustomMarkerImageFallback(markerElement);
-        if (areMarkersHiddenRef.current) {
-          markerElement.style.visibility = 'hidden';
-          markerElement.style.pointerEvents = 'none';
-        }
-        markerElement.addEventListener('click', () => {
-          onPlatformSelect(platform);
+        const markerVisualElement =
+          markerElement.querySelector<HTMLElement>('[data-itplace-map-marker="true"]') ??
+          markerElement;
+        markerVisualElement.style.visibility = areMarkersHiddenRef.current ? 'hidden' : 'visible';
+        markerVisualElement.style.pointerEvents = areMarkersHiddenRef.current ? 'none' : '';
+
+        const clickHandler = () => {
+          const latestPlatform = customMarkerRegistryRef.current.get(platformId)?.platform;
+          if (latestPlatform) onPlatformSelectRef.current(latestPlatform);
+        };
+        markerElement.addEventListener('click', clickHandler);
+
+        const overlay = new window.kakao.maps.CustomOverlay({
+          position: new window.kakao.maps.LatLng(
+            displayPosition.latitude,
+            displayPosition.longitude
+          ),
+          content: markerElement,
+          yAnchor: 1,
+          zIndex: isSelected ? 1000 : 1,
         });
-
-        customOverlay.setContent(markerElement);
-        newCustomOverlays.push(customOverlay);
-      }
-    });
-
-    // 기존 마커 제거와 새 마커 추가를 동시에 처리
-    if (isClusterMode) {
-      // 클러스터링 모드: 커스텀 오버레이 제거 후 클러스터 마커 추가
-      markersRef.current.forEach((marker) => marker.setMap(null));
-      markersRef.current = [];
-      clusterMarkersRef.current = newMarkers;
-
-      if (clustererRef.current) {
-        clustererRef.current.clear();
-        if (newMarkers.length > 0) {
-          clustererRef.current.addMarkers(newMarkers);
-        }
-      }
-    } else {
-      // 커스텀 마커 모드: 클러스터 제거 후 커스텀 오버레이 추가
-      if (clustererRef.current) {
-        clustererRef.current.clear();
-      }
-      clusterMarkersRef.current = [];
-
-      markersRef.current.forEach((marker) => marker.setMap(null));
-      markersRef.current = [];
-
-      // 새로운 커스텀 오버레이들을 지도에 추가
-      newCustomOverlays.forEach((overlay) => {
-        overlay.setMap(mapRef.current);
+        overlay.setMap(map);
+        customRegistry.set(platformId, {
+          overlay,
+          element: markerElement,
+          platform,
+          positionKey,
+          contentKey,
+          clickHandler,
+          isAttached: true,
+        });
+        added += 1;
       });
-      markersRef.current = newCustomOverlays;
+
+      logReconcileMetrics('custom', {
+        added,
+        updated,
+        removed,
+        count: customRegistry.size,
+        durationMs: getReconcileDuration(startedAt),
+      });
     }
   }, [
     visiblePlatforms,
     platforms,
     selectedPlatform,
     isClusterMode,
-    onPlatformSelect,
-    displayPositionByPlatformId,
+    displayPositionByMarkerKey,
+    mapInitializationVersion,
     useServerClusters,
   ]);
 
@@ -772,7 +1184,10 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       selectedPlatform.longitude
     );
     mapRef.current.setCenter(moveLatLon);
-  }, [selectedPlatform]);
+
+    const visiblePlatformsFrame = requestAnimationFrame(updateVisiblePlatforms);
+    return () => cancelAnimationFrame(visiblePlatformsFrame);
+  }, [mapInitializationVersion, selectedPlatform, updateVisiblePlatforms]);
 
   // centerLocation prop이 변경되면 지도 중심 이동
   useEffect(() => {
@@ -804,7 +1219,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       isAnimatingRef.current = false;
       updateVisiblePlatforms();
     }, 200);
-  }, [centerLocation, updateVisiblePlatforms]);
+  }, [centerLocation, mapInitializationVersion, updateVisiblePlatforms]);
 
   return (
     <div className="w-full h-full">

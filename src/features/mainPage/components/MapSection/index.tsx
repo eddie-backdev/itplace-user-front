@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Platform, Category, MapLocation, MapBounds, MapCluster } from '../../types';
 import CategoryTabsSection from '../SidebarSection/CategoryTabsSection';
 import KakaoMap from './KakaoMap';
@@ -20,6 +20,8 @@ interface MapSectionProps {
   onCategorySelect: (categoryId: string) => void;
   onSearchInMap?: () => void;
   centerLocation?: { latitude: number; longitude: number } | null;
+  initialCenterLocation?: { latitude: number; longitude: number } | null;
+  initialMapLevel?: number;
   onMapLevelChange?: (mapLevel: number) => void;
   onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
   activeTab: string;
@@ -39,6 +41,8 @@ const MapSection: React.FC<MapSectionProps> = ({
   onCategorySelect,
   onSearchInMap,
   centerLocation,
+  initialCenterLocation,
+  initialMapLevel,
   onMapLevelChange,
   onViewportChange,
   activeTab,
@@ -51,24 +55,30 @@ const MapSection: React.FC<MapSectionProps> = ({
   } | null>(null);
 
   // 지도 중심 변경 핸들러 (드래그 감지)
-  const handleMapCenterChange = (location: MapLocation) => {
-    setShowSearchButton(activeTab !== 'nearby');
-    onMapCenterChange?.(location);
-  };
+  const handleMapCenterChange = useCallback(
+    (location: MapLocation) => {
+      setShowSearchButton(activeTab !== 'nearby');
+      onMapCenterChange?.(location);
+    },
+    [activeTab, onMapCenterChange]
+  );
 
-  const handleViewportChange = (bounds: MapBounds, center: MapLocation, mapLevel: number) => {
-    setShowSearchButton(false);
-    onViewportChange?.(bounds, center, mapLevel);
-  };
+  const handleViewportChange = useCallback(
+    (bounds: MapBounds, center: MapLocation, mapLevel: number) => {
+      setShowSearchButton(false);
+      onViewportChange?.(bounds, center, mapLevel);
+    },
+    [onViewportChange]
+  );
 
   // 검색 실행 핸들러
-  const handleSearchInMap = () => {
+  const handleSearchInMap = useCallback(() => {
     setShowSearchButton(false); // 검색하면 버튼 숨김
     onSearchInMap?.();
-  };
+  }, [onSearchInMap]);
 
   // 로드뷰 토글 핸들러
-  const handleRoadviewToggle = () => {
+  const handleRoadviewToggle = useCallback(() => {
     if (isRoadviewMode) {
       // 로드뷰 모드 끄기
       setIsRoadviewMode(false);
@@ -78,20 +88,23 @@ const MapSection: React.FC<MapSectionProps> = ({
       setIsRoadviewMode(true);
       showToast('지도를 클릭하면 로드뷰를 확인할 수 있어요!', 'info');
     }
-  };
+  }, [isRoadviewMode]);
 
   // 지도 클릭 핸들러 (로드뷰 모드일 때만)
-  const handleMapClick = (lat: number, lng: number) => {
-    if (isRoadviewMode) {
-      setRoadviewClickedLatLng({ lat, lng });
-      setIsRoadviewMode(false); // 로드뷰 표시 후 모드 해제
-    }
-  };
+  const handleMapClick = useCallback(
+    (lat: number, lng: number) => {
+      if (isRoadviewMode) {
+        setRoadviewClickedLatLng({ lat, lng });
+        setIsRoadviewMode(false); // 로드뷰 표시 후 모드 해제
+      }
+    },
+    [isRoadviewMode]
+  );
 
   // 로드뷰 닫기 핸들러
-  const handleRoadviewClose = () => {
+  const handleRoadviewClose = useCallback(() => {
     setRoadviewClickedLatLng(null);
-  };
+  }, []);
 
   return (
     <div className="relative w-full h-full">
@@ -118,6 +131,8 @@ const MapSection: React.FC<MapSectionProps> = ({
         onLocationChange={onLocationChange}
         onMapCenterChange={handleMapCenterChange}
         centerLocation={centerLocation}
+        initialCenterLocation={initialCenterLocation}
+        initialMapLevel={initialMapLevel}
         onMapLevelChange={onMapLevelChange}
         onViewportChange={handleViewportChange}
         isRoadviewMode={isRoadviewMode}

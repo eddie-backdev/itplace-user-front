@@ -14,7 +14,8 @@ import {
  * 현재 지도 화면 영역 기반 클러스터 목록 조회 - 넓은 줌 레벨 전용 경량 응답
  */
 export const getStoreClustersInView = async (
-  params: StoreClusterInViewParams
+  params: StoreClusterInViewParams,
+  signal?: AbortSignal
 ): Promise<MapStoreClusterApiResponse> => {
   const response = await api.get('/api/v1/maps/stores/in-view/clusters', {
     params: {
@@ -25,6 +26,7 @@ export const getStoreClustersInView = async (
       category: params.category,
       mapLevel: params.mapLevel,
     },
+    signal,
   });
 
   return response.data;
@@ -34,7 +36,8 @@ export const getStoreClustersInView = async (
  * 현재 지도 화면 영역 기반 지점 목록 조회 - 지도 카드 표시용 경량 응답
  */
 export const getStorePreviewsInView = async (
-  params: StoreInViewParams
+  params: StoreInViewParams,
+  signal?: AbortSignal
 ): Promise<MapStorePreviewApiResponse> => {
   const response = await api.get('/api/v1/maps/stores/in-view/previews', {
     params: {
@@ -48,6 +51,7 @@ export const getStorePreviewsInView = async (
       limit: params.limit,
       includeBenefits: params.includeBenefits,
     },
+    signal,
   });
 
   return response.data;
@@ -57,7 +61,8 @@ export const getStorePreviewsInView = async (
  * 사용자 위치 기반 전체 지점 목록 조회 - 지도 카드 표시용 경량 응답
  */
 export const getStorePreviewList = async (
-  params: StoreListParams & { userLat?: number; userLng?: number }
+  params: StoreListParams & { userLat?: number; userLng?: number },
+  signal?: AbortSignal
 ): Promise<MapStorePreviewApiResponse> => {
   const response = await api.get('/api/v1/maps/nearby/previews', {
     params: {
@@ -67,6 +72,7 @@ export const getStorePreviewList = async (
       userLat: params.userLat,
       userLng: params.userLng,
     },
+    signal,
   });
 
   return response.data;
@@ -76,7 +82,8 @@ export const getStorePreviewList = async (
  * 사용자 위치 기반 카테고리별 지점 목록 조회 - 지도 카드 표시용 경량 응답
  */
 export const getStorePreviewListByCategory = async (
-  params: StoreListParams & { category?: string; userLat?: number; userLng?: number }
+  params: StoreListParams & { category?: string; userLat?: number; userLng?: number },
+  signal?: AbortSignal
 ): Promise<MapStorePreviewApiResponse> => {
   const response = await api.get('/api/v1/maps/nearby/category/previews', {
     params: {
@@ -87,6 +94,7 @@ export const getStorePreviewListByCategory = async (
       userLat: params.userLat,
       userLng: params.userLng,
     },
+    signal,
   });
 
   return response.data;
@@ -174,14 +182,22 @@ export const searchStores = async (
 /**
  * 백엔드 프록시를 통한 좌표→주소 변환
  */
-export const getAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
+export const getAddressFromCoordinates = async (
+  lat: number,
+  lng: number,
+  signal?: AbortSignal
+): Promise<string> => {
   try {
     const response = await api.get<ReverseGeocodeApiResponse>('/api/v1/maps/address', {
       params: { lat, lng },
+      signal,
     });
 
     return response.data.data?.addressName || '현재 위치';
-  } catch {
+  } catch (error) {
+    if (signal?.aborted) {
+      throw error;
+    }
     return '현재 위치';
   }
 };

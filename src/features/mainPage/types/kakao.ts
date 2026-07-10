@@ -20,17 +20,22 @@ export interface KakaoMap {
 
 export interface KakaoMarker {
   setMap(map: KakaoMap | null): void;
+  setPosition(position: KakaoLatLng): void;
 }
 
 export interface KakaoMarkerClusterer {
   clear(): void;
-  addMarkers(markers: KakaoMarker[]): void;
+  addMarkers(markers: KakaoMarker[], nodraw?: boolean): void;
+  removeMarkers(markers: KakaoMarker[], nodraw?: boolean): void;
+  redraw(): void;
   setMinClusterSize(size: number): void;
 }
 
 export interface KakaoCustomOverlay {
   setContent(content: HTMLElement): void;
   setMap(map: KakaoMap | KakaoRoadview | null): void;
+  setPosition(position: KakaoLatLng): void;
+  setZIndex(zIndex: number): void;
   getContent(): HTMLElement;
 }
 
