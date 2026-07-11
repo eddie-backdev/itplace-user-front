@@ -43,52 +43,29 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
     currentOverlaysRef.current.forEach((overlay) => {
       const overlayElement = overlay.getContent();
       if (overlayElement) {
-        // 기존 마커에서 storeId 찾기
-        const storeIdElement = overlayElement.querySelector('[data-store-id]');
-        if (storeIdElement) {
-          const storeId = parseInt(storeIdElement.getAttribute('data-store-id') || '0');
+        const markerElement = overlayElement.querySelector<HTMLElement>('[data-store-id]');
+        if (markerElement) {
+          const storeId = parseInt(markerElement.getAttribute('data-store-id') || '0');
           const isSelected = newSelectedStoreId === storeId;
+          const accentColor = isSelected ? '#7132F5' : '#D8CBFE';
+          const markerName = markerElement.getAttribute('title') || '가맹점';
 
-          // 컨테이너 (최상위 div) 스타일 업데이트
-          overlayElement.style.zIndex = isSelected ? '1000' : '1';
-
-          // 애니메이션 강제 중지를 위한 처리
-          if (!isSelected) {
-            overlayElement.style.animation = 'none';
-            overlayElement.style.transform = 'scale(1) translateY(0px)';
-            // 강제로 reflow 발생시켜 애니메이션 즉시 중지
-            void overlayElement.offsetHeight;
-          } else {
-            overlayElement.style.animation = 'bounceScale 2s ease-in-out infinite';
-          }
-
-          overlayElement.style.transformOrigin = 'center bottom';
-          overlayElement.style.transition = 'transform 0.3s ease';
-
-          // filter 전용 래퍼 (두 번째 div) 찾아서 스타일 업데이트
-          const filterWrapper = overlayElement.querySelector('div:nth-child(2)') as HTMLElement;
-          if (filterWrapper) {
-            filterWrapper.style.filter = isSelected
-              ? 'drop-shadow(0px 0px 12px rgba(113, 50, 245, 0.78))'
-              : 'drop-shadow(2px 2px 8px rgba(16, 17, 20, 0.28))';
-          }
-
-          // 별 이미지 DOM 직접 조작으로 즉시 렌더링
-          const existingStarImg = overlayElement.querySelector('img[alt="맵 마커"]');
-
-          if (isSelected && !existingStarImg) {
-            // 별 이미지 추가 (원래대로 고정 크기)
-            const starImg = document.createElement('img');
-            starImg.src = '/images/star.png';
-            starImg.alt = '맵 마커';
-            starImg.className = 'absolute -left-2 -top-1 -translate-y-1/2 w-14';
-            starImg.style.zIndex = '20'; // 높은 z-index 설정
-
-            overlayElement.appendChild(starImg);
-          } else if (!isSelected && existingStarImg) {
-            // 별 이미지 제거
-            existingStarImg.remove();
-          }
+          overlay.setZIndex(isSelected ? 1000 : 1);
+          markerElement.style.zIndex = isSelected ? '1000' : '1';
+          markerElement.style.filter = isSelected
+            ? 'drop-shadow(0 4px 8px rgba(113, 50, 245, 0.38))'
+            : 'drop-shadow(1px 3px 5px rgba(16, 17, 20, 0.22))';
+          markerElement.style.transform = isSelected ? 'scale(1.08)' : 'none';
+          markerElement.setAttribute(
+            'aria-label',
+            `${markerName} 혜택 위치${isSelected ? ', 선택됨' : ''}`
+          );
+          markerElement
+            .querySelectorAll<SVGElement>('[data-marker-outline="true"]')
+            .forEach((outline) => {
+              outline.setAttribute('stroke', accentColor);
+              outline.setAttribute('stroke-width', isSelected ? '2' : '1.25');
+            });
         }
       }
     });
@@ -161,7 +138,9 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
         installCustomMarkerImageFallback(overlayContent);
 
         // data-store-id 속성 추가 (선택 상태 업데이트용)
-        const markerElement = overlayContent.querySelector('div');
+        const markerElement = overlayContent.querySelector<HTMLElement>(
+          '[data-itplace-map-marker="true"]'
+        );
         if (markerElement) {
           markerElement.setAttribute('data-store-id', storeInfo.storeId.toString());
         }
@@ -194,6 +173,8 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
         const overlay = new window.kakao.maps.CustomOverlay({
           position: new window.kakao.maps.LatLng(storeInfo.latitude, storeInfo.longitude),
           content: overlayContent,
+          clickable: true,
+          xAnchor: 0.5,
           yAnchor: 1,
           zIndex: isSelected ? 1000 : 1,
         });

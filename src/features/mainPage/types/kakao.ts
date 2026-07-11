@@ -23,6 +23,18 @@ export interface KakaoMarker {
   setPosition(position: KakaoLatLng): void;
 }
 
+export interface KakaoMarkerImage {
+  readonly __kakaoMarkerImageBrand?: never;
+}
+
+export interface KakaoSize {
+  readonly __kakaoSizeBrand?: never;
+}
+
+export interface KakaoPoint {
+  readonly __kakaoPointBrand?: never;
+}
+
 export interface KakaoMarkerClusterer {
   clear(): void;
   addMarkers(markers: KakaoMarker[], nodraw?: boolean): void;
@@ -74,27 +86,33 @@ export interface KakaoMaps {
     // 기본 Map API
     LatLng: new (lat: number, lng: number) => KakaoLatLng;
     Map: new (container: HTMLElement, options: { center: KakaoLatLng; level: number }) => KakaoMap;
-    Marker: new (options: { position: KakaoLatLng; map?: KakaoMap }) => KakaoMarker;
+    Marker: new (options: {
+      position: KakaoLatLng;
+      map?: KakaoMap;
+      image?: KakaoMarkerImage;
+      clickable?: boolean;
+      title?: string;
+      zIndex?: number;
+    }) => KakaoMarker;
+    MarkerImage: new (
+      src: string,
+      size: KakaoSize,
+      options?: { offset?: KakaoPoint; alt?: string }
+    ) => KakaoMarkerImage;
+    Size: new (width: number, height: number) => KakaoSize;
+    Point: new (x: number, y: number) => KakaoPoint;
     MarkerClusterer?: new (options: {
       map: KakaoMap;
       averageCenter: boolean;
       minLevel: number;
       disableClickZoom: boolean;
-      styles: Array<{
-        width: string;
-        height: string;
-        background: string;
-        borderRadius: string;
-        color: string;
-        textAlign: string;
-        lineHeight: string;
-        fontSize: string;
-        fontWeight: string;
-      }>;
+      styles: Array<Record<string, string>>;
     }) => KakaoMarkerClusterer;
     CustomOverlay: new (options: {
       position: KakaoLatLng;
       content: string | HTMLElement;
+      clickable?: boolean;
+      xAnchor?: number;
       yAnchor: number;
       zIndex?: number;
     }) => KakaoCustomOverlay;

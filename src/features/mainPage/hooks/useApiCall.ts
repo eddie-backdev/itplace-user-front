@@ -8,7 +8,7 @@ interface UseApiCallReturn<T> {
   data: T | null;
   isLoading: boolean;
   error: string | null;
-  execute: (apiCall: () => Promise<T>) => Promise<void>;
+  execute: (apiCall: () => Promise<T>, onSuccess?: (data: T) => void) => Promise<boolean>;
   setData: (data: T | null) => void;
   clearError: () => void;
 }
@@ -20,7 +20,7 @@ export const useApiCall = <T = unknown>(initialData: T | null = null): UseApiCal
   const requestSeqRef = useRef(0);
 
   // API 호출 실행 함수
-  const execute = useCallback(async (apiCall: () => Promise<T>) => {
+  const execute = useCallback(async (apiCall: () => Promise<T>, onSuccess?: (data: T) => void) => {
     const requestSeq = requestSeqRef.current + 1;
     requestSeqRef.current = requestSeq;
     setIsLoading(true);
@@ -29,8 +29,12 @@ export const useApiCall = <T = unknown>(initialData: T | null = null): UseApiCal
     try {
       const result = await apiCall();
       if (requestSeqRef.current === requestSeq) {
+        // 데이터와 연결 상태를 하나의 최신 요청 커밋으로 반영한다.
         setData(result);
+        onSuccess?.(result);
+        return true;
       }
+      return false;
     } catch (err) {
       const isCanceledRequest =
         err instanceof Error &&
@@ -39,6 +43,7 @@ export const useApiCall = <T = unknown>(initialData: T | null = null): UseApiCal
       if (requestSeqRef.current === requestSeq && !isCanceledRequest) {
         setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
       }
+      return false;
     } finally {
       if (requestSeqRef.current === requestSeq) {
         setIsLoading(false);

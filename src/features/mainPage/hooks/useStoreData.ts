@@ -56,6 +56,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   // API 상태 관리
   const { data: platforms, isLoading, error, execute } = useApiCall<Platform[]>([]);
   const [mapClusters, setMapClusters] = useState<MapCluster[]>([]);
+  const [isMapClusterSnapshotReady, setIsMapClusterSnapshotReady] = useState(false);
   const viewportRequestSeqRef = useRef(0);
   const viewportRequestControllerRef = useRef<AbortController | null>(null);
   const addressRequestSeqRef = useRef(0);
@@ -79,7 +80,17 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
   // 카테고리 필터 상태
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [currentMapLevelInHook, setCurrentMapLevelInHook] = useState<number>(2); // 지도 레벨 상태 추가
+  const [currentMapLevelInHook, setCurrentMapLevelInHook] = useState<number>(4); // 지도 레벨 상태 추가
+
+  const commitMapClusterSnapshot = useCallback((clusters: MapCluster[]) => {
+    setMapClusters(clusters);
+    setIsMapClusterSnapshotReady(true);
+  }, []);
+
+  const clearMapClusterSnapshot = useCallback(() => {
+    setMapClusters([]);
+    setIsMapClusterSnapshotReady(false);
+  }, []);
 
   const beginViewportRequest = useCallback(() => {
     viewportRequestControllerRef.current?.abort();
@@ -326,12 +337,16 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         null // 초기 로드는 전체 카테고리
       );
 
-      setMapClusters([]);
       return platforms; // 데이터 반환
     };
 
-    executeRef.current(initializeData);
-  }, [updateAddressLatest]);
+    executeRef.current(initializeData, () => {
+      // 지도 viewport 조회가 이미 시작됐다면 느린 초기 응답으로 최신 스냅샷을 지우지 않는다.
+      if (viewportRequestSeqRef.current === 0) {
+        clearMapClusterSnapshot();
+      }
+    });
+  }, [clearMapClusterSnapshot, updateAddressLatest]);
 
   // 카테고리 변경 시에만 반응하는 useEffect (초기 로드 제외)
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -374,11 +389,12 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
           controller.signal
         );
         if (isLatestViewportRequest(requestSeq, controller.signal)) {
-          setMapClusters(clusters);
+          commitMapClusterSnapshot(clusters);
         }
         return platformsRef.current;
       }
 
+      clearMapClusterSnapshot();
       const inViewOptions = getInViewPreviewOptionsByMapLevel(currentMapLevelInHook);
       const platforms = bounds
         ? await loadStoresInBoundsRef.current(
@@ -404,12 +420,18 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         return platformsRef.current;
       }
 
-      setMapClusters([]);
       return platforms || []; // null/undefined 방어
     };
 
     executeRef.current(reloadByCategory);
-  }, [beginViewportRequest, currentMapLevelInHook, isLatestViewportRequest, selectedCategory]);
+  }, [
+    beginViewportRequest,
+    clearMapClusterSnapshot,
+    commitMapClusterSnapshot,
+    currentMapLevelInHook,
+    isLatestViewportRequest,
+    selectedCategory,
+  ]);
 
   /**
    * 지도 중심 위치 변경 시 주소 정보만 업데이트 (사용자 위치는 유지)
@@ -465,7 +487,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
             controller.signal
           );
           if (isLatestViewportRequest(requestSeq, controller.signal)) {
-            setMapClusters(clusters);
+            commitMapClusterSnapshot(clusters);
           }
           return platformsRef.current;
         }
@@ -496,13 +518,31 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
           return platformsRef.current;
         }
 
-        setMapClusters([]);
         return platforms;
       };
 
-      await executeRef.current(searchInMap);
+      const shouldLoadServerSnapshot = Boolean(
+        (bounds ?? currentMapBoundsRef.current) && shouldUseServerClusters(mapLevel)
+      );
+      await executeRef.current(
+        searchInMap,
+        shouldLoadServerSnapshot
+          ? undefined
+          : () => {
+              if (isLatestViewportRequest(requestSeq, controller.signal)) {
+                clearMapClusterSnapshot();
+              }
+            }
+      );
     },
-    [beginViewportRequest, isLatestViewportRequest, selectedCategory, updateAddressLatest]
+    [
+      beginViewportRequest,
+      clearMapClusterSnapshot,
+      commitMapClusterSnapshot,
+      isLatestViewportRequest,
+      selectedCategory,
+      updateAddressLatest,
+    ]
   );
 
   /**
@@ -526,14 +566,16 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
           );
 
           if (isLatestViewportRequest(requestSeq, controller.signal)) {
-            setMapClusters(clusters);
+            commitMapClusterSnapshot(clusters);
+            return true;
           }
+          return false;
         } catch (error) {
           if (isLatestViewportRequest(requestSeq, controller.signal)) {
             console.error('지도 클러스터 조회 실패:', error);
           }
+          return false;
         }
-        return;
       }
 
       const searchInBounds = async () => {
@@ -553,14 +595,21 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
           return platformsRef.current;
         }
 
-        setMapClusters([]);
         return platforms;
       };
 
-      await executeRef.current(searchInBounds);
+      // 상세 핀 응답이 성공한 시점에만 기존 서버 클러스터를 같이 해제한다.
+      const didCommit = await executeRef.current(searchInBounds, () => {
+        if (isLatestViewportRequest(requestSeq, controller.signal)) {
+          clearMapClusterSnapshot();
+        }
+      });
+      return didCommit && isLatestViewportRequest(requestSeq, controller.signal);
     },
     [
       beginViewportRequest,
+      clearMapClusterSnapshot,
+      commitMapClusterSnapshot,
       currentMapLevelInHook,
       isLatestViewportRequest,
       selectedCategory,
@@ -574,6 +623,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   const updateToCurrentLocation = useCallback(
     async (lat: number, lng: number, mapLevel: number) => {
       cancelViewportRequest();
+      clearMapClusterSnapshot();
       void updateAddressLatest(lat, lng);
 
       const updateCurrentLocation = async () => {
@@ -592,7 +642,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
       await executeRef.current(updateCurrentLocation);
     },
-    [cancelViewportRequest, selectedCategory, updateAddressLatest]
+    [cancelViewportRequest, clearMapClusterSnapshot, selectedCategory, updateAddressLatest]
   );
 
   /**
@@ -602,7 +652,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   const searchByKeyword = useCallback(
     async (keyword: string, mapLevel: number, searchLat: number, searchLng: number) => {
       cancelViewportRequest();
-      setMapClusters([]);
+      clearMapClusterSnapshot();
       const keywordSearch = async () => {
         // 맵 레벨에 따른 반경 계산
         const radius = getRadiusByMapLevel(mapLevel);
@@ -630,7 +680,6 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
                   userLng: currentUserCoords?.lng, // 사용자 실제 위치
                 });
 
-          setMapClusters([]);
           return transformMapStorePreviewsToPlatforms(storeResponse.data);
         }
 
@@ -644,24 +693,24 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
           userLng: currentUserCoords?.lng, // 사용자 실제 위치
         });
 
-        setMapClusters([]);
         return transformMapStorePreviewsToPlatforms(storeResponse.data);
       };
 
       await executeRef.current(keywordSearch);
     },
-    [cancelViewportRequest, selectedCategory]
+    [cancelViewportRequest, clearMapClusterSnapshot, selectedCategory]
   );
 
   const clearPlatforms = useCallback(() => {
     cancelViewportRequest();
-    setMapClusters([]);
+    clearMapClusterSnapshot();
     return executeRef.current(async () => []);
-  }, [cancelViewportRequest]);
+  }, [cancelViewportRequest, clearMapClusterSnapshot]);
 
   return {
     platforms: platforms || [], // null 방어
     mapClusters,
+    isMapClusterSnapshotReady,
     currentLocation,
     userCoords,
     isLoading,

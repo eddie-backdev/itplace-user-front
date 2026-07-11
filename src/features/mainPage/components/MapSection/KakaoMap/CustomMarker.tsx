@@ -1,87 +1,117 @@
 import React from 'react';
 import { getImageFallbackText, normalizeImageSrc } from '../../../../../utils/image';
+import { CUSTOM_MARKER_METRICS, type CustomMarkerMode } from './markerMetrics';
 
 interface CustomMarkerProps {
   imageUrl?: string;
   name?: string;
   isSelected?: boolean;
   distance?: number; // 거리 추가 (미터 단위)
+  mode?: CustomMarkerMode;
+  offsetX?: number;
+  offsetY?: number;
 }
 
-const CustomMarker: React.FC<CustomMarkerProps> = ({ imageUrl, name, isSelected = false }) => {
+const CustomMarker: React.FC<CustomMarkerProps> = ({
+  imageUrl,
+  name,
+  isSelected = false,
+  mode = 'full',
+  offsetX = 0,
+  offsetY = 0,
+}) => {
   const normalizedImageUrl = normalizeImageSrc(imageUrl);
-  const fallbackLabel = getImageFallbackText(name || '가맹점');
+  const displayName = name || '가맹점';
+  const fallbackLabel = getImageFallbackText(displayName);
+  const isCompact = mode === 'compact';
+  const { width, height, imageSize } = CUSTOM_MARKER_METRICS[mode];
+  const bubbleSize = width;
+  const tailHalfWidth = isCompact ? 5 : 7;
+  const tailTipY = height - 1;
+  const accentColor = isSelected ? '#7132F5' : '#D8CBFE';
 
   return (
-    <div
+    <button
+      type="button"
+      aria-label={`${displayName} 혜택 위치${isSelected ? ', 선택됨' : ''}`}
+      title={displayName}
       data-itplace-map-marker="true"
-      className="relative cursor-pointer w-[68px] h-[84px]"
+      data-marker-mode={mode}
+      className="relative block cursor-pointer border-0 bg-transparent p-0"
       style={{
+        width,
+        height,
+        lineHeight: 0,
         zIndex: isSelected ? 1000 : 1,
-        animation: isSelected ? 'bounceScale 2s ease-in-out infinite' : 'none',
+        filter: isSelected
+          ? 'drop-shadow(0 4px 8px rgba(113, 50, 245, 0.38))'
+          : 'drop-shadow(1px 3px 5px rgba(16, 17, 20, 0.22))',
+        transform: `translate(${offsetX}px, ${offsetY}px)${isSelected ? ' scale(1.08)' : ''}`,
         transformOrigin: 'center bottom',
-        transition: 'transform 0.3s ease',
+        transition: 'filter 0.2s ease, transform 0.2s ease',
       }}
     >
-      {/* 인라인 스타일로 키프레임 정의 */}
-      {isSelected && (
-        <style>
-          {`
-            @keyframes bounceScale {
-              0%, 100% { transform: scale(1.2) translateY(0px); }
-              50% { transform: scale(1.2) translateY(-8px); }
-            }
-          `}
-        </style>
-      )}
-
-      <div
-        className="w-full h-full"
-        style={{
-          filter: isSelected
-            ? 'drop-shadow(0px 0px 12px rgba(113, 50, 245, 0.78))'
-            : 'drop-shadow(2px 2px 8px rgba(16, 17, 20, 0.28))',
-        }}
+      <svg
+        aria-hidden="true"
+        className="absolute inset-0"
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
       >
-        {/* 말풍선 SVG */}
-        <svg width="68" height="84" viewBox="0 0 68 84">
-          <rect x="0" y="0" width="68" height="68" rx="12" ry="12" fill="white" />
-          <polygon points="27,68 34,78 41,68" fill="white" />
-        </svg>
-
-        {/* 로고 이미지: renderToString으로 만든 카카오 오버레이는 React onError가 붙지 않으므로 DOM에 별도 fallback listener를 설치한다. */}
-        <div
-          className="absolute top-0 left-0 w-[68px] h-[68px] flex items-center justify-center z-10"
-          data-marker-image-wrap="true"
-        >
-          <span
-            role="img"
-            aria-label={`${name || '가맹점'} 로고`}
-            data-marker-fallback="true"
-            className={`w-[50px] h-[50px] inline-flex items-center justify-center rounded-lg bg-grey02 text-grey04 text-sm font-bold ${normalizedImageUrl ? 'hidden' : ''}`}
-          >
-            {fallbackLabel}
-          </span>
-          {normalizedImageUrl && (
-            <img
-              src={normalizedImageUrl}
-              alt={`${name || '가맹점'} 로고`}
-              className="w-[50px] h-[50px] object-contain rounded-lg"
-              data-marker-image="true"
-            />
-          )}
-        </div>
-      </div>
-
-      {/* ✅ 선택된 경우 별 이미지 (filter 적용 안됨) - 고정 크기 */}
-      {isSelected && (
-        <img
-          src="/images/star.png"
-          alt="맵 마커"
-          className="absolute -left-2 -top-1 -translate-y-1/2 w-14"
+        <path
+          data-marker-outline="true"
+          d={`M${width / 2 - tailHalfWidth} ${bubbleSize - 4} L${width / 2} ${
+            tailTipY
+          } L${width / 2 + tailHalfWidth} ${bubbleSize - 4} Z`}
+          fill="white"
+          stroke={accentColor}
+          strokeWidth={isSelected ? 2 : 1.25}
+          strokeLinejoin="round"
         />
-      )}
-    </div>
+        <rect
+          data-marker-outline="true"
+          x="1"
+          y="1"
+          width={bubbleSize - 2}
+          height={bubbleSize - 2}
+          rx={isCompact ? 9 : 11}
+          ry={isCompact ? 9 : 11}
+          fill="white"
+          stroke={accentColor}
+          strokeWidth={isSelected ? 2 : 1.25}
+        />
+      </svg>
+
+      <span
+        className="absolute z-10 inline-flex items-center justify-center overflow-hidden rounded-lg bg-grey01"
+        style={{
+          width: imageSize,
+          height: imageSize,
+          left: (bubbleSize - imageSize) / 2,
+          top: (bubbleSize - imageSize) / 2,
+        }}
+        data-marker-image-wrap="true"
+      >
+        <span
+          role="img"
+          aria-label={`${displayName} 로고`}
+          data-marker-fallback="true"
+          className={`inline-flex h-full w-full items-center justify-center bg-purple01 font-extrabold text-purple05 ${
+            isCompact ? 'text-[10px]' : 'text-xs'
+          } ${normalizedImageUrl ? 'hidden' : ''}`}
+        >
+          {fallbackLabel}
+        </span>
+        {normalizedImageUrl && (
+          <img
+            src={normalizedImageUrl}
+            alt={`${displayName} 로고`}
+            className="h-full w-full object-contain"
+            data-marker-image="true"
+          />
+        )}
+      </span>
+    </button>
   );
 };
 

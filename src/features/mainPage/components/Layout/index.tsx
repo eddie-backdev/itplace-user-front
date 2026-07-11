@@ -107,7 +107,7 @@ const MainPageLayout: React.FC = () => {
   });
 
   // 지도 관련 상태
-  const [currentMapLevel, setCurrentMapLevel] = useState<number>(2); // 지도 확대/축소 레벨
+  const [currentMapLevel, setCurrentMapLevel] = useState<number>(4); // 지도 확대/축소 레벨
   const [currentMapCenter, setCurrentMapCenter] = useState<{ lat: number; lng: number } | null>(
     null
   ); // 현재 지도 중심 좌표
@@ -126,6 +126,7 @@ const MainPageLayout: React.FC = () => {
   const {
     platforms: apiPlatforms, // API에서 가져온 가맹점 목록
     mapClusters, // 서버에서 집계한 지도 클러스터
+    isMapClusterSnapshotReady, // 최신 서버 클러스터 스냅샷 준비 여부
     currentLocation, // 현재 위치 주소 텍스트
     isLoading, // 로딩 상태
     error, // 에러 상태
@@ -159,8 +160,11 @@ const MainPageLayout: React.FC = () => {
       setIsShowingRecommendationStoreResults(false); // 추천 매장 결과 숨기기
       setRecommendationStoreResults([]); // 추천 매장 결과 초기화
 
-      // 카테고리 변경 시 즉시 마커 제거를 위해 플랫폼 데이터 초기화
-      clearPlatforms?.();
+      // 상세 핀 모드에서는 즉시 비우고, 서버 클러스터 모드에서는 이전 스냅샷을
+      // 유지해 최신 카테고리 응답과 원자적으로 교체한다.
+      if (currentMapLevel < 5) {
+        clearPlatforms?.();
+      }
 
       // API 기반 카테고리 필터링 ('전체' -> null 변환)
       const categoryValue = categoryId === '전체' ? null : categoryId;
@@ -278,13 +282,26 @@ const MainPageLayout: React.FC = () => {
 
       lastViewportSearchKeyRef.current = viewportSearchKey;
 
+      const requestViewportSnapshot = async () => {
+        const didCommit = await searchInMapBounds(
+          bounds,
+          center.latitude,
+          center.longitude,
+          mapLevel
+        );
+
+        if (!didCommit && lastViewportSearchKeyRef.current === viewportSearchKey) {
+          lastViewportSearchKeyRef.current = '';
+        }
+      };
+
       if (mapLevel >= 5) {
-        void searchInMapBounds(bounds, center.latitude, center.longitude, mapLevel);
+        void requestViewportSnapshot();
         return;
       }
 
       mapViewportSearchTimerRef.current = setTimeout(() => {
-        searchInMapBounds(bounds, center.latitude, center.longitude, mapLevel);
+        void requestViewportSnapshot();
       }, 350);
     },
     [activeTab, searchInMapBounds, searchQuery, selectedCategory]
@@ -570,6 +587,13 @@ const MainPageLayout: React.FC = () => {
     isCategoryChanging,
   ]);
 
+  // 5→4 전환 중에는 상세 핀 성공 커밋이 readiness를 해제할 때까지 기존 클러스터를 유지한다.
+  const shouldRenderServerClusterSnapshot =
+    activeTab === 'nearby' &&
+    !isShowingRecommendationStoreResults &&
+    !searchQuery.trim() &&
+    isMapClusterSnapshotReady;
+
   // 모바일에서 body 스크롤 방지
   useEffect(() => {
     if (isMobile) {
@@ -655,12 +679,7 @@ const MainPageLayout: React.FC = () => {
                   ? mapClusters
                   : []
               }
-              useServerClusters={
-                activeTab === 'nearby' &&
-                !isShowingRecommendationStoreResults &&
-                !searchQuery.trim() &&
-                currentMapLevel >= 5
-              }
+              useServerClusters={shouldRenderServerClusterSnapshot}
               selectedPlatform={selectedPlatform}
               onPlatformSelect={handlePlatformSelect}
               onLocationChange={handleLocationChange}
@@ -755,12 +774,7 @@ const MainPageLayout: React.FC = () => {
                   ? mapClusters
                   : []
               }
-              useServerClusters={
-                activeTab === 'nearby' &&
-                !isShowingRecommendationStoreResults &&
-                !searchQuery.trim() &&
-                currentMapLevel >= 5
-              }
+              useServerClusters={shouldRenderServerClusterSnapshot}
               selectedPlatform={selectedPlatform}
               onPlatformSelect={handlePlatformSelect}
               onLocationChange={handleLocationChange}
