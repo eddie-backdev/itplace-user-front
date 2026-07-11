@@ -58,7 +58,7 @@ const QuestionRecommendationChatWidget = () => {
           onClick={() => setIsOpen(false)}
           aria-label="질문형 AI 추천 닫기"
         />
-        <aside className="fixed bottom-0 left-[81px] top-0 z-[9999] w-[370px] max-w-[calc(100vw-81px)]">
+        <aside className="fixed bottom-0 left-[72px] top-0 z-[9999] w-[370px] max-w-[calc(100vw-72px)]">
           <QuestionRecommendationChatRoom onClose={() => setIsOpen(false)} presentation="drawer" />
         </aside>
       </>

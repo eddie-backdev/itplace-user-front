@@ -26,8 +26,8 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
   const isCompact = mode === 'compact';
   const { width, height, imageSize } = CUSTOM_MARKER_METRICS[mode];
   const bubbleSize = width;
-  const tailHalfWidth = isCompact ? 5 : 7;
-  const tailTipY = height - 1;
+  const center = width / 2;
+  const tipY = height - 1;
   const accentColor = isSelected ? '#7132F5' : '#D8CBFE';
 
   return (
@@ -60,30 +60,22 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
       >
         <path
           data-marker-outline="true"
-          d={`M${width / 2 - tailHalfWidth} ${bubbleSize - 4} L${width / 2} ${
-            tailTipY
-          } L${width / 2 + tailHalfWidth} ${bubbleSize - 4} Z`}
+          d={`M${center} ${tipY} C${center - 4} ${tipY - 9} 2 ${
+            bubbleSize * 0.78
+          } 2 ${bubbleSize * 0.54} C2 ${bubbleSize * 0.22} ${width * 0.24} 2 ${
+            center
+          } 2 C${width * 0.76} 2 ${width - 2} ${bubbleSize * 0.22} ${width - 2} ${
+            bubbleSize * 0.54
+          } C${width - 2} ${bubbleSize * 0.78} ${center + 4} ${tipY - 9} ${center} ${tipY} Z`}
           fill="white"
           stroke={accentColor}
           strokeWidth={isSelected ? 2 : 1.25}
           strokeLinejoin="round"
         />
-        <rect
-          data-marker-outline="true"
-          x="1"
-          y="1"
-          width={bubbleSize - 2}
-          height={bubbleSize - 2}
-          rx={isCompact ? 9 : 11}
-          ry={isCompact ? 9 : 11}
-          fill="white"
-          stroke={accentColor}
-          strokeWidth={isSelected ? 2 : 1.25}
-        />
       </svg>
 
       <span
-        className="absolute z-10 inline-flex items-center justify-center overflow-hidden rounded-lg bg-grey01"
+        className="absolute z-10 inline-flex items-center justify-center overflow-hidden rounded-full bg-grey01"
         style={{
           width: imageSize,
           height: imageSize,

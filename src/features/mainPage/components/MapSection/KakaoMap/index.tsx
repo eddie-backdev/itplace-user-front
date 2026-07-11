@@ -77,7 +77,13 @@ const DUPLICATE_MARKER_RING_SIZE = 8;
 const DEFAULT_MAP_LEVEL = 4;
 const CLIENT_CLUSTER_MIN_LEVEL = 5;
 const CLUSTER_TAIL_HEIGHT = 9;
-const SERVER_CLUSTER_STYLE_VERSION = 'location-pin-v4-light';
+const SERVER_CLUSTER_STYLE_VERSION = 'location-pin-v13-material-indigo';
+const CLUSTER_DENSITY_COLORS = {
+  low: '#7986CB',
+  medium: '#5C6BC0',
+  high: '#3949AB',
+  extreme: '#283593',
+} as const;
 
 const ITPLACE_MARKER_SVG = `
   <svg xmlns="http://www.w3.org/2000/svg" width="34" height="44" viewBox="0 0 34 44">
@@ -90,23 +96,32 @@ const ITPLACE_MARKER_DATA_URI = `data:image/svg+xml;charset=UTF-8,${encodeURICom
   ITPLACE_MARKER_SVG
 )}`;
 
-const createClusterPinBackground = (size: number, color: string) => {
+const createClusterPinBackground = (size: number, color: string, filled = true) => {
   const height = size + CLUSTER_TAIL_HEIGHT;
   const center = size / 2;
-  const cornerRadius = Math.round(size * 0.28);
+  const shoulderY = Math.round(size * 0.42);
+  const lowerCurveY = size - 7;
+  const tailStartY = size - 4;
+  const tailHalfWidth = Math.max(5, Math.round(size * 0.15));
+  const fillColor = filled ? color : '#FFFFFF';
+  const strokeColor = filled ? '#FFFFFF' : color;
+  const highlightColor = filled ? '#FFFFFF' : color;
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${height}" viewBox="0 0 ${size} ${height}">
-      <defs>
-        <linearGradient id="clusterFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#FFFFFF"/>
-          <stop offset="1" stop-color="#F5F2FF"/>
-        </linearGradient>
-      </defs>
-      <path d="M${center - 6} ${size - 4} L${center} ${height - 1} L${
-        center + 6
-      } ${size - 4} Z" fill="#F5F2FF" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
-      <rect x="1.5" y="1.5" width="${size - 3}" height="${size - 3}" rx="${cornerRadius}" fill="url(#clusterFill)" stroke="${color}" stroke-width="2.5"/>
-      <path d="M${cornerRadius} 5 H${size - cornerRadius}" stroke="${color}" stroke-opacity="0.22" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M${center} 2 C${size * 0.76} 2 ${size - 2} ${size * 0.2} ${
+        size - 2
+      } ${shoulderY} C${size - 2} ${size * 0.68} ${size * 0.78} ${lowerCurveY} ${
+        center + tailHalfWidth
+      } ${tailStartY} L${center} ${height - 1} L${center - tailHalfWidth} ${
+        tailStartY
+      } C${size * 0.22} ${lowerCurveY} 2 ${size * 0.68} 2 ${shoulderY} C2 ${
+        size * 0.2
+      } ${size * 0.24} 2 ${center} 2 Z" fill="${fillColor}" stroke="${strokeColor}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M${size * 0.31} 8 Q${center} 5 ${
+        size * 0.69
+      } 8" stroke="${highlightColor}" stroke-opacity="${
+        filled ? 0.26 : 0.18
+      }" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
   `;
   const dataUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
@@ -152,19 +167,44 @@ const getCategoryPinColor = (category?: string) => {
   const normalizedCategory = (category ?? '').toLowerCase();
   if (normalizedCategory.includes('카페') || normalizedCategory.includes('커피')) return '#7C3AED';
   if (normalizedCategory.includes('편의')) return '#2563EB';
-  if (normalizedCategory.includes('푸드') || normalizedCategory.includes('음식')) return '#16A34A';
+  if (normalizedCategory.includes('푸드') || normalizedCategory.includes('음식')) return '#C67A32';
   if (normalizedCategory.includes('영화') || normalizedCategory.includes('문화')) return '#DB2777';
   return '#7132F5';
+};
+
+const getClusterDensityColor = (count: number) => {
+  if (count < 10) return CLUSTER_DENSITY_COLORS.low;
+  if (count < 100) return CLUSTER_DENSITY_COLORS.medium;
+  if (count < 1000) return CLUSTER_DENSITY_COLORS.high;
+  return CLUSTER_DENSITY_COLORS.extreme;
+};
+
+const getClusterDensityShadows = (count: number) => {
+  if (count < 10) {
+    return { resting: 'rgba(62,72,130,0.23)', active: 'rgba(62,72,130,0.32)' };
+  }
+  if (count < 100) {
+    return { resting: 'rgba(43,53,113,0.25)', active: 'rgba(43,53,113,0.34)' };
+  }
+  if (count < 1000) {
+    return { resting: 'rgba(27,36,93,0.28)', active: 'rgba(27,36,93,0.37)' };
+  }
+  return { resting: 'rgba(18,25,74,0.3)', active: 'rgba(18,25,74,0.39)' };
 };
 
 const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapCluster) => {
   const isSingleLocation = cluster.count <= 1;
   const categoryLabel = cluster.category && cluster.category !== '전체' ? cluster.category : '혜택';
-  const accentColor = isSingleLocation ? getCategoryPinColor(cluster.category) : '#7132F5';
+  const accentColor = isSingleLocation
+    ? getCategoryPinColor(cluster.category)
+    : getClusterDensityColor(cluster.count);
   const badgeSize =
     cluster.count < 10 ? 38 : cluster.count < 100 ? 44 : cluster.count < 1000 ? 50 : 56;
   const visualSize = isSingleLocation ? 38 : badgeSize;
   const height = visualSize + CLUSTER_TAIL_HEIGHT;
+  const shadows = isSingleLocation
+    ? { resting: 'rgba(45,55,72,0.22)', active: 'rgba(45,55,72,0.31)' }
+    : getClusterDensityShadows(cluster.count);
   const ariaLabel = isSingleLocation
     ? `${categoryLabel} 혜택 위치`
     : `${categoryLabel} 혜택 ${cluster.count}곳`;
@@ -173,13 +213,15 @@ const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapClus
   element.setAttribute('title', ariaLabel);
   element.setAttribute('data-itplace-cluster-marker', 'true');
   element.setAttribute('data-cluster-size', String(visualSize));
+  element.dataset.clusterShadow = shadows.resting;
+  element.dataset.clusterShadowActive = shadows.active;
   element.style.cssText = [
     'position:relative',
     `width:${visualSize}px`,
     `height:${height}px`,
     'padding:0',
     'border:0',
-    'background:transparent',
+    `background:${createClusterPinBackground(visualSize, accentColor, !isSingleLocation)}`,
     'display:block',
     'cursor:pointer',
     'line-height:1',
@@ -187,7 +229,7 @@ const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapClus
     'font-family:inherit',
     'transform-origin:center bottom',
     'transition:transform 160ms ease,filter 160ms ease',
-    'filter:drop-shadow(0 5px 8px rgba(62,38,125,0.24))',
+    `filter:drop-shadow(0 5px 8px ${shadows.resting})`,
   ].join(';');
 
   const badge = document.createElement('span');
@@ -199,57 +241,25 @@ const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapClus
     'justify-content:center',
     'gap:1px',
     `width:${visualSize}px`,
-    `height:${visualSize}px`,
+    `height:${visualSize - 4}px`,
     'margin:0 auto',
     'box-sizing:border-box',
-    `border:2.5px solid ${accentColor}`,
-    `border-radius:${Math.round(visualSize * 0.28)}px`,
-    'background:linear-gradient(180deg,#FFFFFF 0%,#F5F2FF 100%)',
-    `color:${accentColor}`,
-    `font-size:${isSingleLocation ? 10 : cluster.count < 100 ? 13 : 14}px`,
+    'border:0',
+    'background:transparent',
+    `color:${isSingleLocation ? accentColor : '#FFFFFF'}`,
+    `font-size:${isSingleLocation ? 10 : cluster.count < 10 ? 15 : cluster.count < 100 ? 16 : 17}px`,
     'font-weight:900',
     'line-height:1',
     'text-align:center',
     'white-space:nowrap',
-    'box-shadow:inset 0 1px 0 rgba(255,255,255,0.9)',
   ].join(';');
   if (isSingleLocation) {
     badge.textContent = categoryLabel.slice(0, 2);
   } else {
-    const count = document.createElement('span');
-    count.textContent = String(cluster.count);
-    count.style.cssText = 'font:inherit;line-height:1;letter-spacing:-0.02em';
-
-    const unit = document.createElement('span');
-    unit.textContent = '곳';
-    unit.style.cssText = [
-      `font-size:${visualSize >= 50 ? 9 : 8}px`,
-      'font-weight:800',
-      'line-height:1',
-      'opacity:0.82',
-      'transform:translateY(1px)',
-    ].join(';');
-    badge.replaceChildren(count, unit);
+    badge.textContent = String(cluster.count);
   }
 
-  const pointer = document.createElement('span');
-  pointer.setAttribute('aria-hidden', 'true');
-  pointer.style.cssText = [
-    'position:absolute',
-    'left:50%',
-    'bottom:1px',
-    'z-index:1',
-    'width:12px',
-    'height:12px',
-    'box-sizing:border-box',
-    `border-right:2px solid ${accentColor}`,
-    `border-bottom:2px solid ${accentColor}`,
-    'border-radius:2px',
-    'background:#F5F2FF',
-    'transform:translateX(-50%) rotate(45deg)',
-  ].join(';');
-
-  element.replaceChildren(badge, pointer);
+  element.replaceChildren(badge);
 };
 
 const createServerClusterElement = (cluster: MapCluster) => {
@@ -259,8 +269,8 @@ const createServerClusterElement = (cluster: MapCluster) => {
   const setEmphasis = (active: boolean) => {
     element.style.transform = active ? 'translateY(-2px) scale(1.04)' : '';
     element.style.filter = active
-      ? 'drop-shadow(0 8px 12px rgba(62,38,125,0.32))'
-      : 'drop-shadow(0 5px 8px rgba(62,38,125,0.24))';
+      ? `drop-shadow(0 8px 12px ${element.dataset.clusterShadowActive})`
+      : `drop-shadow(0 5px 8px ${element.dataset.clusterShadow})`;
   };
   element.addEventListener('mouseenter', () => setEmphasis(true));
   element.addEventListener('mouseleave', () => setEmphasis(false));
@@ -407,6 +417,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const onViewportChangeRef = useRef(onViewportChange);
   const initialCenterLocationRef = useRef(initialCenterLocation);
   const initialMapLevelRef = useRef(initialMapLevel);
+  const useServerClustersRef = useRef(useServerClusters);
   platformsRef.current = platforms;
   onPlatformSelectRef.current = onPlatformSelect;
   onLocationChangeRef.current = onLocationChange;
@@ -415,6 +426,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   onViewportChangeRef.current = onViewportChange;
   initialCenterLocationRef.current = initialCenterLocation;
   initialMapLevelRef.current = initialMapLevel;
+  useServerClustersRef.current = useServerClusters;
   const [userLocation, setUserLocation] = useState<MapLocation | null>(null);
   const [mapInitializationVersion, setMapInitializationVersion] = useState(0);
   const [isClusterMode, setIsClusterMode] = useState<boolean>(false);
@@ -448,6 +460,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     }
 
     markerRevealTimerRef.current = setTimeout(() => {
+      if (isClusterModeRef.current || useServerClustersRef.current) return;
       setCustomMarkersVisibility('visible');
     }, 120);
   }, [setCustomMarkersVisibility]);
@@ -665,49 +678,49 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
               // 기본 calculator 기준 10개 미만
               width: '38px',
               height: '47px',
-              background: createClusterPinBackground(38, '#7132F5'),
-              filter: 'drop-shadow(0 3px 5px rgba(62, 38, 125, 0.16))',
-              color: '#4C2D88',
+              background: createClusterPinBackground(38, CLUSTER_DENSITY_COLORS.low),
+              filter: 'drop-shadow(0 4px 7px rgba(62, 72, 130, 0.23))',
+              color: '#FFFFFF',
               textAlign: 'center',
-              lineHeight: '38px',
-              fontSize: '12px',
-              fontWeight: 'bold',
+              lineHeight: '34px',
+              fontSize: '15px',
+              fontWeight: '900',
             },
             {
               // 기본 calculator 기준 100개 미만
               width: '44px',
               height: '53px',
-              background: createClusterPinBackground(44, '#7132F5'),
-              filter: 'drop-shadow(0 3px 6px rgba(62, 38, 125, 0.18))',
-              color: '#4C2D88',
+              background: createClusterPinBackground(44, CLUSTER_DENSITY_COLORS.medium),
+              filter: 'drop-shadow(0 5px 8px rgba(43, 53, 113, 0.25))',
+              color: '#FFFFFF',
               textAlign: 'center',
-              lineHeight: '44px',
-              fontSize: '13px',
-              fontWeight: 'bold',
+              lineHeight: '40px',
+              fontSize: '16px',
+              fontWeight: '900',
             },
             {
               // 기본 calculator 기준 1,000개 미만
               width: '50px',
               height: '59px',
-              background: createClusterPinBackground(50, '#7132F5'),
-              filter: 'drop-shadow(0 4px 7px rgba(62, 38, 125, 0.2))',
-              color: '#4C2D88',
+              background: createClusterPinBackground(50, CLUSTER_DENSITY_COLORS.high),
+              filter: 'drop-shadow(0 6px 9px rgba(27, 36, 93, 0.28))',
+              color: '#FFFFFF',
               textAlign: 'center',
-              lineHeight: '50px',
-              fontSize: '14px',
-              fontWeight: 'bold',
+              lineHeight: '46px',
+              fontSize: '17px',
+              fontWeight: '900',
             },
             {
               // 기본 calculator 기준 1,000개 이상
               width: '56px',
               height: '65px',
-              background: createClusterPinBackground(56, '#5741D8'),
-              filter: 'drop-shadow(0 4px 8px rgba(62, 38, 125, 0.22))',
-              color: '#3F2B75',
+              background: createClusterPinBackground(56, CLUSTER_DENSITY_COLORS.extreme),
+              filter: 'drop-shadow(0 7px 11px rgba(18, 25, 74, 0.3))',
+              color: '#FFFFFF',
               textAlign: 'center',
-              lineHeight: '56px',
-              fontSize: '14px',
-              fontWeight: 'bold',
+              lineHeight: '52px',
+              fontSize: '18px',
+              fontWeight: '900',
             },
           ],
         });
@@ -756,6 +769,14 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         if (shouldSwitchMarkerMode) {
           isClusterModeRef.current = nextIsClusterMode;
           setIsClusterMode(nextIsClusterMode);
+        }
+
+        if (nextIsClusterMode) {
+          customMarkerRegistryRef.current.forEach((entry) => {
+            if (!entry.isAttached) return;
+            entry.overlay.setMap(null);
+            entry.isAttached = false;
+          });
         }
 
         requestAnimationFrame(() => {
