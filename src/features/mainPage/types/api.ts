@@ -24,10 +24,15 @@ export interface MapStoreClusterApiResponse {
 export interface MapStoreClusterData {
   clusterId: string;
   category: string;
+  administrativeUnitType?: MapAdministrativeUnitType | null;
+  administrativeUnitName?: string | null;
+  targetMapLevel?: number | null;
   latitude: number;
   longitude: number;
   count: number;
 }
+
+export type MapAdministrativeUnitType = 'LEGAL_DONG' | 'TOWN' | 'CITY' | 'GRID';
 
 export interface MapStorePreviewData {
   storeId: number;

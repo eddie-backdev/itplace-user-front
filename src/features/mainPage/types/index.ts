@@ -56,6 +56,9 @@ export interface MapBounds {
 export interface MapCluster {
   clusterId: string;
   category: string;
+  administrativeUnitType?: 'LEGAL_DONG' | 'TOWN' | 'CITY' | 'GRID' | null;
+  administrativeUnitName?: string | null;
+  targetMapLevel?: number | null;
   latitude: number;
   longitude: number;
   count: number;

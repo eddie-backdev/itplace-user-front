@@ -77,13 +77,14 @@ const DUPLICATE_MARKER_RING_SIZE = 8;
 const DEFAULT_MAP_LEVEL = 4;
 const CLIENT_CLUSTER_MIN_LEVEL = 5;
 const CLUSTER_TAIL_HEIGHT = 9;
-const SERVER_CLUSTER_STYLE_VERSION = 'location-pin-v13-material-indigo';
+const SERVER_CLUSTER_STYLE_VERSION = 'administrative-pin-v14';
 const CLUSTER_DENSITY_COLORS = {
   low: '#7986CB',
   medium: '#5C6BC0',
   high: '#3949AB',
   extreme: '#283593',
 } as const;
+const administrativeClusterBackgroundCache = new Map<string, string>();
 
 const ITPLACE_MARKER_SVG = `
   <svg xmlns="http://www.w3.org/2000/svg" width="34" height="44" viewBox="0 0 34 44">
@@ -126,6 +127,32 @@ const createClusterPinBackground = (size: number, color: string, filled = true) 
   `;
   const dataUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
   return `url("${dataUri}") center top / ${size}px ${height}px no-repeat`;
+};
+
+const createAdministrativeClusterBackground = (width: number, color: string) => {
+  const cacheKey = `${width}:${color}`;
+  const cachedBackground = administrativeClusterBackgroundCache.get(cacheKey);
+  if (cachedBackground) return cachedBackground;
+
+  const bodyHeight = 40;
+  const height = 49;
+  const center = width / 2;
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <path d="M14 1 H${width - 14} Q${width - 1} 1 ${width - 1} 14 V${
+        bodyHeight - 13
+      } Q${width - 1} ${bodyHeight - 1} ${width - 14} ${bodyHeight - 1} H${
+        center + 8
+      } L${center} ${height - 1} L${center - 8} ${bodyHeight - 1} H14 Q1 ${
+        bodyHeight - 1
+      } 1 ${bodyHeight - 13} V14 Q1 1 14 1 Z" fill="#FEFDFF" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M14 5 H${width - 14}" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+    </svg>
+  `;
+  const dataUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  const background = `url("${dataUri}") center top / ${width}px ${height}px no-repeat`;
+  administrativeClusterBackgroundCache.set(cacheKey, background);
+  return background;
 };
 
 const coordinateKey = (platform: Platform): string =>
@@ -192,7 +219,128 @@ const getClusterDensityShadows = (count: number) => {
   return { resting: 'rgba(18,25,74,0.3)', active: 'rgba(18,25,74,0.39)' };
 };
 
+const getAdministrativeClusterColor = (unitType?: MapCluster['administrativeUnitType']) => {
+  if (unitType === 'CITY') return '#493D9B';
+  if (unitType === 'TOWN') return '#6253C5';
+  if (unitType === 'LEGAL_DONG') return '#7865D8';
+  return '#5C6BC0';
+};
+
+const updateAdministrativeClusterElement = (
+  element: HTMLButtonElement,
+  cluster: MapCluster,
+  administrativeUnitName: string
+) => {
+  const accentColor = getAdministrativeClusterColor(cluster.administrativeUnitType);
+  const countLabel = String(cluster.count);
+  const labelLength = Array.from(administrativeUnitName).length;
+  const visualWidth = Math.min(156, Math.max(86, labelLength * 13 + countLabel.length * 7 + 42));
+  const shadows = {
+    resting: 'rgba(56, 46, 118, 0.2)',
+    active: 'rgba(56, 46, 118, 0.3)',
+  };
+  const ariaLabel = `${administrativeUnitName} 혜택 ${countLabel}곳`;
+
+  element.setAttribute('aria-label', ariaLabel);
+  element.setAttribute('title', ariaLabel);
+  element.setAttribute('data-itplace-cluster-marker', 'true');
+  element.setAttribute('data-cluster-size', String(visualWidth));
+  element.dataset.clusterShadow = shadows.resting;
+  element.dataset.clusterShadowActive = shadows.active;
+  element.style.cssText = [
+    'position:relative',
+    `width:${visualWidth}px`,
+    'height:49px',
+    'padding:0',
+    'border:0',
+    `background:${createAdministrativeClusterBackground(visualWidth, accentColor)}`,
+    'display:block',
+    'cursor:pointer',
+    'overflow:visible',
+    'font-family:inherit',
+    'transform-origin:center bottom',
+    'transition:transform 160ms ease,filter 160ms ease',
+    `filter:drop-shadow(0 5px 8px ${shadows.resting})`,
+  ].join(';');
+
+  const existingContent = element.querySelector<HTMLSpanElement>(
+    '[data-administrative-cluster-content="true"]'
+  );
+  if (existingContent) {
+    const existingName = existingContent.querySelector<HTMLSpanElement>(
+      '[data-administrative-cluster-name="true"]'
+    );
+    const existingCount = existingContent.querySelector<HTMLSpanElement>(
+      '[data-administrative-cluster-count="true"]'
+    );
+    if (existingName && existingCount) {
+      existingName.textContent = administrativeUnitName;
+      existingCount.textContent = countLabel;
+      existingCount.style.background = accentColor;
+      return;
+    }
+  }
+
+  const content = document.createElement('span');
+  content.dataset.administrativeClusterContent = 'true';
+  content.style.cssText = [
+    'position:absolute',
+    'inset:0 0 auto 0',
+    'height:40px',
+    'padding:0 9px',
+    'display:flex',
+    'align-items:center',
+    'justify-content:center',
+    'gap:6px',
+    'box-sizing:border-box',
+  ].join(';');
+
+  const name = document.createElement('span');
+  name.dataset.administrativeClusterName = 'true';
+  name.textContent = administrativeUnitName;
+  name.style.cssText = [
+    'min-width:0',
+    'overflow:hidden',
+    'text-overflow:ellipsis',
+    'white-space:nowrap',
+    'color:#352E5D',
+    'font-size:13px',
+    'font-weight:800',
+    'line-height:1',
+    'letter-spacing:-0.02em',
+  ].join(';');
+
+  const count = document.createElement('span');
+  count.dataset.administrativeClusterCount = 'true';
+  count.textContent = countLabel;
+  count.style.cssText = [
+    'flex:0 0 auto',
+    'min-width:22px',
+    'height:22px',
+    'padding:0 6px',
+    'border-radius:999px',
+    `background:${accentColor}`,
+    'display:inline-flex',
+    'align-items:center',
+    'justify-content:center',
+    'box-sizing:border-box',
+    'color:#FFFFFF',
+    'font-size:11px',
+    'font-weight:900',
+    'line-height:1',
+  ].join(';');
+
+  content.replaceChildren(name, count);
+  element.replaceChildren(content);
+};
+
 const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapCluster) => {
+  const administrativeUnitName = cluster.administrativeUnitName?.trim();
+  if (administrativeUnitName) {
+    updateAdministrativeClusterElement(element, cluster, administrativeUnitName);
+    return;
+  }
+
   const isSingleLocation = cluster.count <= 1;
   const categoryLabel = cluster.category && cluster.category !== '전체' ? cluster.category : '혜택';
   const accentColor = isSingleLocation
@@ -1038,6 +1186,9 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         SERVER_CLUSTER_STYLE_VERSION,
         cluster.category,
         cluster.count,
+        cluster.administrativeUnitType,
+        cluster.administrativeUnitName,
+        cluster.targetMapLevel,
       ]);
       const existingEntry = registry.get(clusterId);
 
@@ -1068,7 +1219,12 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         const currentMap = mapRef.current;
         if (!latestCluster || !currentMap) return;
 
-        const nextLevel = Math.max(1, currentMap.getLevel() - 1);
+        const currentLevel = currentMap.getLevel();
+        const requestedTargetLevel = latestCluster.targetMapLevel;
+        const nextLevel =
+          typeof requestedTargetLevel === 'number' && requestedTargetLevel < currentLevel
+            ? Math.max(1, requestedTargetLevel)
+            : Math.max(1, currentLevel - 1);
         currentMap.setLevel(nextLevel, {
           anchor: new window.kakao.maps.LatLng(latestCluster.latitude, latestCluster.longitude),
         });

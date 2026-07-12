@@ -293,6 +293,9 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       return clusterResponse.data.map((cluster) => ({
         clusterId: cluster.clusterId,
         category: cluster.category,
+        administrativeUnitType: cluster.administrativeUnitType,
+        administrativeUnitName: cluster.administrativeUnitName,
+        targetMapLevel: cluster.targetMapLevel,
         latitude: cluster.latitude,
         longitude: cluster.longitude,
         count: cluster.count,
