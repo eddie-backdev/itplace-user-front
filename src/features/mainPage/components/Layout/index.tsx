@@ -18,6 +18,7 @@ const BOTTOM_SHEET_MIN_HEIGHT = 150;
 const BOTTOM_SHEET_MID_HEIGHT = 300;
 const MOBILE_APP_TAB_BAR_HEIGHT = 64;
 const BOTTOM_SHEET_VIEWPORT_OFFSET = 105 + MOBILE_APP_TAB_BAR_HEIGHT;
+const MOBILE_MAP_CONTROLS_GAP = 12;
 
 /**
  * 메인페이지 레이아웃 컴포넌트
@@ -790,6 +791,10 @@ const MainPageLayout: React.FC = () => {
               onMapLevelChange={handleMapLevelChange}
               onViewportChange={handleMapViewportChange}
               activeTab={activeTab}
+              mobileControlsBottomOffset={
+                MOBILE_APP_TAB_BAR_HEIGHT + bottomSheetHeight + MOBILE_MAP_CONTROLS_GAP
+              }
+              mobileControlsTransitionEnabled={isAnimating}
             />
           )}
 

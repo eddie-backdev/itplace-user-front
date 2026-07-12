@@ -10,6 +10,8 @@ interface MapControlsProps {
   showSearchButton?: boolean;
   isRoadviewMode?: boolean;
   onRoadviewToggle?: () => void;
+  mobileBottomOffset?: number;
+  mobileBottomTransitionEnabled?: boolean;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -19,7 +21,14 @@ const MapControls: React.FC<MapControlsProps> = ({
   showSearchButton = false,
   isRoadviewMode = false,
   onRoadviewToggle,
+  mobileBottomOffset = 160,
+  mobileBottomTransitionEnabled = false,
 }) => {
+  const mobileControlStyle = {
+    '--mobile-map-controls-bottom': `${mobileBottomOffset}px`,
+    transition: mobileBottomTransitionEnabled ? 'bottom 300ms ease-out' : 'none',
+  } as React.CSSProperties;
+
   return (
     <>
       {/* 현재 지도에서 검색 버튼 */}
@@ -32,7 +41,10 @@ const MapControls: React.FC<MapControlsProps> = ({
       )}
 
       {/* 로드뷰 버튼과 현재 위치 버튼 */}
-      <div className="absolute bottom-6 max-md:bottom-[160px] right-6 max-md:right-4 z-[9997] pointer-events-none">
+      <div
+        className="absolute bottom-6 right-6 z-[9997] pointer-events-none max-md:bottom-[var(--mobile-map-controls-bottom)] max-md:right-4"
+        style={mobileControlStyle}
+      >
         <div className="pointer-events-auto flex flex-col gap-3 max-md:flex-row max-md:gap-2">
           {/* 로드뷰 버튼 */}
           {onRoadviewToggle && (

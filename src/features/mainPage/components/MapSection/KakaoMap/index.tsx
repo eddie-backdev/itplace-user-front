@@ -981,6 +981,12 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       });
       registry.clear();
 
+      // 5→4 전환에서 서버 클러스터가 해제된 뒤 새 상세 마커가 hidden 상태를
+      // 상속하지 않도록 visibility 기준을 먼저 복구한다.
+      if (!isClusterModeRef.current) {
+        setCustomMarkersVisibility('visible');
+      }
+
       if (removed > 0) {
         logReconcileMetrics('server', {
           added,
@@ -1096,7 +1102,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       count: registry.size,
       durationMs: getReconcileDuration(startedAt),
     });
-  }, [clusters, mapInitializationVersion, useServerClusters]);
+  }, [clusters, mapInitializationVersion, setCustomMarkersVisibility, useServerClusters]);
 
   // 마커 업데이트 useEffect
   useEffect(() => {

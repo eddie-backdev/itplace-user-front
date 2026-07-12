@@ -25,6 +25,8 @@ interface MapSectionProps {
   onMapLevelChange?: (mapLevel: number) => void;
   onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
   activeTab: string;
+  mobileControlsBottomOffset?: number;
+  mobileControlsTransitionEnabled?: boolean;
 }
 
 const MapSection: React.FC<MapSectionProps> = ({
@@ -46,6 +48,8 @@ const MapSection: React.FC<MapSectionProps> = ({
   onMapLevelChange,
   onViewportChange,
   activeTab,
+  mobileControlsBottomOffset,
+  mobileControlsTransitionEnabled,
 }) => {
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [isRoadviewMode, setIsRoadviewMode] = useState(false);
@@ -145,6 +149,8 @@ const MapSection: React.FC<MapSectionProps> = ({
         showSearchButton={showSearchButton}
         isRoadviewMode={isRoadviewMode}
         onRoadviewToggle={handleRoadviewToggle}
+        mobileBottomOffset={mobileControlsBottomOffset}
+        mobileBottomTransitionEnabled={mobileControlsTransitionEnabled}
       />
 
       {/* 로드뷰 컨테이너 */}
