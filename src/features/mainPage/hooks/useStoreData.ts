@@ -314,6 +314,31 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   const loadStoreClustersInBoundsRef = useRef(loadStoreClustersInBounds);
   loadStoreClustersInBoundsRef.current = loadStoreClustersInBounds;
 
+  const requestMapClusterSnapshot = useCallback(
+    async (
+      bounds: MapBounds,
+      category: string | null,
+      mapLevel: number,
+      requestSeq: number,
+      controller: AbortController
+    ) => {
+      const clusters = await loadStoreClustersInBoundsRef.current(
+        bounds,
+        category,
+        mapLevel,
+        controller.signal
+      );
+
+      if (!isLatestViewportRequest(requestSeq, controller.signal)) {
+        return false;
+      }
+
+      commitMapClusterSnapshot(clusters);
+      return true;
+    },
+    [commitMapClusterSnapshot, isLatestViewportRequest]
+  );
+
   // 초기 데이터 로드 (컴포넌트 마운트 시에만)
   useEffect(() => {
     const initializeData = async () => {
@@ -385,15 +410,13 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
       const bounds = currentMapBoundsRef.current;
       if (bounds && shouldUseServerClusters(currentMapLevelInHook)) {
-        const clusters = await loadStoreClustersInBoundsRef.current(
+        await requestMapClusterSnapshot(
           bounds,
           selectedCategory,
           currentMapLevelInHook,
-          controller.signal
+          requestSeq,
+          controller
         );
-        if (isLatestViewportRequest(requestSeq, controller.signal)) {
-          commitMapClusterSnapshot(clusters);
-        }
         return platformsRef.current;
       }
 
@@ -430,9 +453,9 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   }, [
     beginViewportRequest,
     clearMapClusterSnapshot,
-    commitMapClusterSnapshot,
     currentMapLevelInHook,
     isLatestViewportRequest,
+    requestMapClusterSnapshot,
     selectedCategory,
   ]);
 
@@ -483,15 +506,13 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         const searchBounds = bounds ?? currentMapBoundsRef.current;
 
         if (searchBounds && shouldUseServerClusters(mapLevel)) {
-          const clusters = await loadStoreClustersInBoundsRef.current(
+          await requestMapClusterSnapshot(
             searchBounds,
             selectedCategory,
             mapLevel,
-            controller.signal
+            requestSeq,
+            controller
           );
-          if (isLatestViewportRequest(requestSeq, controller.signal)) {
-            commitMapClusterSnapshot(clusters);
-          }
           return platformsRef.current;
         }
 
@@ -541,8 +562,8 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
     [
       beginViewportRequest,
       clearMapClusterSnapshot,
-      commitMapClusterSnapshot,
       isLatestViewportRequest,
+      requestMapClusterSnapshot,
       selectedCategory,
       updateAddressLatest,
     ]
@@ -561,18 +582,13 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
       if (shouldUseServerClusters(effectiveMapLevel)) {
         try {
-          const clusters = await loadStoreClustersInBoundsRef.current(
+          return await requestMapClusterSnapshot(
             bounds,
             selectedCategory,
             effectiveMapLevel,
-            controller.signal
+            requestSeq,
+            controller
           );
-
-          if (isLatestViewportRequest(requestSeq, controller.signal)) {
-            commitMapClusterSnapshot(clusters);
-            return true;
-          }
-          return false;
         } catch (error) {
           if (isLatestViewportRequest(requestSeq, controller.signal)) {
             console.error('지도 클러스터 조회 실패:', error);
@@ -612,9 +628,9 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
     [
       beginViewportRequest,
       clearMapClusterSnapshot,
-      commitMapClusterSnapshot,
       currentMapLevelInHook,
       isLatestViewportRequest,
+      requestMapClusterSnapshot,
       selectedCategory,
       updateAddressLatest,
     ]

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { renderToString } from 'react-dom/server';
 import { MapBounds, Platform, MapLocation, MapCluster } from '../../../types';
 import {
@@ -1112,7 +1112,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     };
   }, [isRoadviewMode, onMapClick]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!mapRef.current) return;
 
     const startedAt = import.meta.env.DEV ? performance.now() : 0;

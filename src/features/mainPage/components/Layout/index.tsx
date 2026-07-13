@@ -588,12 +588,13 @@ const MainPageLayout: React.FC = () => {
     isCategoryChanging,
   ]);
 
-  // 5→4 전환 중에는 상세 핀 성공 커밋이 readiness를 해제할 때까지 기존 클러스터를 유지한다.
-  const shouldRenderServerClusterSnapshot =
-    activeTab === 'nearby' &&
-    !isShowingRecommendationStoreResults &&
-    !searchQuery.trim() &&
-    isMapClusterSnapshotReady;
+  const isServerClusterContext =
+    activeTab === 'nearby' && !isShowingRecommendationStoreResults && !searchQuery.trim();
+
+  // 4→5 진입 시에는 응답을 기다리지 않고 즉시 client cluster를 차단한다.
+  // 5→4 전환 중에는 상세 핀 커밋이 readiness를 해제할 때까지 기존 서버 스냅샷을 유지한다.
+  const shouldUseServerClusterMode =
+    isServerClusterContext && (currentMapLevel >= 5 || isMapClusterSnapshotReady);
 
   // 모바일에서 body 스크롤 방지
   useEffect(() => {
@@ -673,14 +674,8 @@ const MainPageLayout: React.FC = () => {
           {!isMobile && (
             <MapSection
               platforms={stablePlatforms}
-              clusters={
-                activeTab === 'nearby' &&
-                !isShowingRecommendationStoreResults &&
-                !searchQuery.trim()
-                  ? mapClusters
-                  : []
-              }
-              useServerClusters={shouldRenderServerClusterSnapshot}
+              clusters={isServerClusterContext ? mapClusters : []}
+              useServerClusters={shouldUseServerClusterMode}
               selectedPlatform={selectedPlatform}
               onPlatformSelect={handlePlatformSelect}
               onLocationChange={handleLocationChange}
@@ -768,14 +763,8 @@ const MainPageLayout: React.FC = () => {
           {isMobile && (
             <MapSection
               platforms={stablePlatforms}
-              clusters={
-                activeTab === 'nearby' &&
-                !isShowingRecommendationStoreResults &&
-                !searchQuery.trim()
-                  ? mapClusters
-                  : []
-              }
-              useServerClusters={shouldRenderServerClusterSnapshot}
+              clusters={isServerClusterContext ? mapClusters : []}
+              useServerClusters={shouldUseServerClusterMode}
               selectedPlatform={selectedPlatform}
               onPlatformSelect={handlePlatformSelect}
               onLocationChange={handleLocationChange}
