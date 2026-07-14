@@ -18,31 +18,6 @@ export interface KakaoMap {
   relayout(): void;
 }
 
-export interface KakaoMarker {
-  setMap(map: KakaoMap | null): void;
-  setPosition(position: KakaoLatLng): void;
-}
-
-export interface KakaoMarkerImage {
-  readonly __kakaoMarkerImageBrand?: never;
-}
-
-export interface KakaoSize {
-  readonly __kakaoSizeBrand?: never;
-}
-
-export interface KakaoPoint {
-  readonly __kakaoPointBrand?: never;
-}
-
-export interface KakaoMarkerClusterer {
-  clear(): void;
-  addMarkers(markers: KakaoMarker[], nodraw?: boolean): void;
-  removeMarkers(markers: KakaoMarker[], nodraw?: boolean): void;
-  redraw(): void;
-  setMinClusterSize(size: number): void;
-}
-
 export interface KakaoCustomOverlay {
   setContent(content: HTMLElement): void;
   setMap(map: KakaoMap | KakaoRoadview | null): void;
@@ -66,12 +41,12 @@ export interface KakaoRoadviewClient {
 
 export interface KakaoEvent {
   addListener(
-    target: KakaoMap | KakaoMarker | KakaoRoadview,
+    target: KakaoMap | KakaoRoadview,
     type: string,
     handler: (...args: unknown[]) => void
   ): void;
   removeListener?(
-    target: KakaoMap | KakaoMarker | KakaoRoadview,
+    target: KakaoMap | KakaoRoadview,
     type: string,
     handler: (...args: unknown[]) => void
   ): void;
@@ -86,28 +61,6 @@ export interface KakaoMaps {
     // 기본 Map API
     LatLng: new (lat: number, lng: number) => KakaoLatLng;
     Map: new (container: HTMLElement, options: { center: KakaoLatLng; level: number }) => KakaoMap;
-    Marker: new (options: {
-      position: KakaoLatLng;
-      map?: KakaoMap;
-      image?: KakaoMarkerImage;
-      clickable?: boolean;
-      title?: string;
-      zIndex?: number;
-    }) => KakaoMarker;
-    MarkerImage: new (
-      src: string,
-      size: KakaoSize,
-      options?: { offset?: KakaoPoint; alt?: string }
-    ) => KakaoMarkerImage;
-    Size: new (width: number, height: number) => KakaoSize;
-    Point: new (x: number, y: number) => KakaoPoint;
-    MarkerClusterer?: new (options: {
-      map: KakaoMap;
-      averageCenter: boolean;
-      minLevel: number;
-      disableClickZoom: boolean;
-      styles: Array<Record<string, string>>;
-    }) => KakaoMarkerClusterer;
     CustomOverlay: new (options: {
       position: KakaoLatLng;
       content: string | HTMLElement;
