@@ -1,0 +1,145 @@
+name: Cloudflare Pages Deploy Notification
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: user-front-cloudflare-notify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+      checks: read
+
+    steps:
+      - name: Wait for Cloudflare Pages deployment result
+        id: cloudflare
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          conclusion="timed_out"
+          check_status="not_found"
+          details_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}/checks"
+
+          for attempt in {1..60}; do
+            echo "Waiting for Cloudflare Pages check (${attempt}/60)"
+
+            if ! response="$(curl -fsS \
+              --connect-timeout 5 \
+              --max-time 15 \
+              -H 'Accept: application/vnd.github+json' \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs?per_page=100")"; then
+              echo "::warning::Unable to read GitHub check runs; retrying"
+              sleep 10
+              continue
+            fi
+
+            check_run="$(jq -c '
+              [
+                .check_runs[]
+                | select(.app.name == "Cloudflare Workers and Pages")
+                | select(.name | startswith("Cloudflare Pages"))
+              ]
+              | sort_by(.started_at // .completed_at // "")
+              | last // empty
+            ' <<< "${response}")"
+
+            if [[ -z "${check_run}" ]]; then
+              sleep 10
+              continue
+            fi
+
+            check_status="$(jq -r '.status // "unknown"' <<< "${check_run}")"
+            candidate_details_url="$(jq -r '.details_url // empty' <<< "${check_run}")"
+            if [[ -n "${candidate_details_url}" ]]; then
+              details_url="${candidate_details_url}"
+            fi
+
+            if [[ "${check_status}" == "completed" ]]; then
+              conclusion="$(jq -r '.conclusion // "unknown"' <<< "${check_run}")"
+              break
+            fi
+
+            sleep 10
+          done
+
+          echo "status=${check_status}" >> "${GITHUB_OUTPUT}"
+          echo "conclusion=${conclusion}" >> "${GITHUB_OUTPUT}"
+          echo "details_url=${details_url}" >> "${GITHUB_OUTPUT}"
+
+      - name: Notify Cloudflare deployment result to Discord
+        if: ${{ always() }}
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_DEPLOY_WEBHOOK_URL }}
+          DEPLOY_STATUS: ${{ steps.cloudflare.outputs.conclusion }}
+          SERVICE_NAME: user-front
+          REPOSITORY: ${{ github.repository }}
+          BRANCH_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          DETAILS_URL: ${{ steps.cloudflare.outputs.details_url }}
+        run: |
+          if [[ -z "${DISCORD_WEBHOOK_URL}" ]]; then
+            echo "::warning::DISCORD_DEPLOY_WEBHOOK_URL secret is not configured"
+            exit 0
+          fi
+
+          python3 <<'PY' > discord-payload.json
+          import json
+          import os
+          import sys
+          from datetime import datetime, timezone
+
+          status = os.environ.get("DEPLOY_STATUS") or "unknown"
+          icon, label, color = {
+              "success": ("✅", "성공", 0x57F287),
+              "failure": ("❌", "실패", 0xED4245),
+              "cancelled": ("⚠️", "취소", 0xFEE75C),
+              "timed_out": ("⏱️", "확인 시간 초과", 0xF39C12),
+          }.get(status, ("ℹ️", status, 0x5865F2))
+
+          payload = {
+              "username": "ITPLACE Deploy",
+              "allowed_mentions": {"parse": []},
+              "embeds": [{
+                  "title": f"{icon} [{os.environ['SERVICE_NAME']}] Cloudflare 운영 배포 {label}",
+                  "url": os.environ["DETAILS_URL"],
+                  "color": color,
+                  "description": "Cloudflare Pages의 실제 배포 결과입니다.",
+                  "fields": [
+                      {"name": "저장소", "value": f"`{os.environ['REPOSITORY']}`", "inline": False},
+                      {"name": "브랜치", "value": f"`{os.environ['BRANCH_NAME']}`", "inline": True},
+                      {"name": "커밋", "value": f"`{os.environ['COMMIT_SHA'][:7]}`", "inline": True},
+                      {"name": "실행자", "value": os.environ["ACTOR"], "inline": True},
+                  ],
+                  "footer": {"text": "Cloudflare Pages · 상세 내용은 제목을 누르세요"},
+                  "timestamp": datetime.now(timezone.utc).isoformat(),
+              }],
+          }
+          json.dump(payload, sys.stdout, ensure_ascii=False)
+          PY
+
+          curl -fsS \
+            --connect-timeout 5 \
+            --max-time 15 \
+            -H 'Content-Type: application/json' \
+            --data @discord-payload.json \
+            "${DISCORD_WEBHOOK_URL}"
+
+      - name: Fail when Cloudflare deployment did not succeed
+        if: ${{ always() && steps.cloudflare.outputs.conclusion != 'success' }}
+        env:
+          DEPLOY_STATUS: ${{ steps.cloudflare.outputs.conclusion }}
+        run: |
+          echo "Cloudflare Pages deployment result: ${DEPLOY_STATUS:-unknown}"
+          exit 1
