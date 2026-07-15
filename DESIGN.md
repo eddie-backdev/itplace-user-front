@@ -1,6 +1,7 @@
 # ITPLACE Design
 
 ## Source of truth
+
 - Status: Active — Kraken 기반 색상 체계를 ITPLACE 의미 체계로 채택, 화면별 적용은 점진 리팩토링
 - Last refreshed: 2026-06-16
 - Primary product surfaces:
@@ -15,13 +16,14 @@
   - `tailwind.config.js` — 기존 색상/타이포그래피/브레이크포인트 토큰
   - `src/index.css` — NanumBarunGothic, datepicker, 전역 CSS
   - `src/components/*` — 공통 버튼, 검색, 모달, 탭, 결과 없음 상태
-  - `src/features/allBenefitsPage/*` — 혜택 목록/상세/랭킹 카드
+  - `src/features/allBenefitsPage/*` — 제휴처 목록/통신사별 혜택 상세
   - `src/features/mainPage/*` — 지도, 추천, 매장 탐색 도메인
   - `src/features/loginPage/*` — 인증/회원가입 전환 흐름
   - `src/features/myPage/*` — 마이페이지 사이드바/카드/히스토리
   - `src/pages/*` — 랜딩, 모바일 홈, 정책 문서, NotFound
 
 ## Brand
+
 - Personality:
   - 신뢰감 있는 purple-first 서비스
   - 생활 밀착형 혜택 탐색 도구
@@ -38,6 +40,7 @@
   - `Kraken` 명칭, 전용 폰트명, 외부 브랜드 표현을 코드/문서/UX에 노출하지 않는다.
 
 ## Product goals
+
 - Goals:
   - 사용자가 주변 멤버십 혜택을 빠르게 발견하고 비교한다.
   - 통신사, 카테고리, 위치, 검색어 기반으로 혜택 탐색 경로를 단순화한다.
@@ -49,11 +52,13 @@
   - 시각적 참신함을 이유로 기존 컴포넌트/토큰 체계를 우회한다.
 - Success signals:
   - 첫 진입 후 지도/혜택 목록까지의 인지 비용이 낮다.
-  - 혜택 카드에서 브랜드, 조건, 통신사, 관심 등록 여부가 빠르게 읽힌다.
+  - 전체 혜택 카드에서 제휴처와 혜택 제공 통신사가 빠르게 읽힌다.
+  - 제휴처 상세에서 통신사를 전환하며 등급별 조건과 이용 방법을 비교할 수 있다.
   - 모바일 주요 액션은 한 손 조작 가능한 위치와 크기를 가진다.
   - 새 UI 작업에서 하드코딩 색상 대신 토큰을 재사용한다.
 
 ## Personas and jobs
+
 - Primary personas:
   - 외출 중 주변 멤버십 제휴처를 찾는 사용자
   - 특정 브랜드/카테고리 혜택을 비교하는 사용자
@@ -72,6 +77,7 @@
   - 느린 네트워크나 위치 권한 거부 상태에서도 다음 행동 필요
 
 ## Information architecture
+
 - Primary navigation:
   - 모바일: 홈, 지도, 혜택, 저장, 마이
   - 데스크톱: 랜딩/지도/전체 혜택/마이페이지 중심
@@ -84,11 +90,12 @@
   - `/privacy-policy`, `/account-deletion` 정책/계정 안내
 - Content hierarchy:
   - 1순위: 현재 위치/검색어/필터 맥락
-  - 2순위: 혜택 카드의 브랜드, 통신사, 조건, 액션
-  - 3순위: 추천/랭킹/보조 탐색
+  - 2순위: 제휴처 카드의 브랜드와 혜택 제공 통신사
+  - 3순위: 상세 모달의 선택 통신사별 혜택 조건과 액션
   - 4순위: 설명 문구, 일러스트, 장식
 
 ## Design principles
+
 - Principle 1: 혜택 정보와 지도 탐색이 장식보다 우선한다.
 - Principle 2: 색상은 Kraken 팔레트 값을 그대로 쓰되, 이름과 의미는 ITPLACE로 정의한다.
 - Principle 3: 새 화면은 기존 토큰/컴포넌트를 먼저 확장하고, 새 하드코딩 색상은 금지한다.
@@ -100,6 +107,7 @@
   - 기존 화면의 급격한 시각 파손을 피하기 위해 토큰값 교체 후 화면별 컴포넌트를 점진 정리한다.
 
 ## Visual language
+
 - Color:
   - ITPLACE는 Kraken 참조 팔레트의 색상값을 채택한다.
   - 코드/문서에서는 외부 브랜드명을 쓰지 않고 ITPLACE 역할명으로 부른다.
@@ -141,6 +149,7 @@
   - 아이콘은 stroke weight와 크기를 모바일 탭/버튼별로 일관되게 유지한다.
 
 ## Components
+
 - Existing components to reuse:
   - `src/components/SearchBar.tsx`
   - `src/components/ActionButton.tsx`
@@ -150,9 +159,17 @@
   - `src/components/MobileHeader.tsx`
   - `src/components/BenefitFilterToggle.tsx`
   - `src/features/allBenefitsPage/components/BenefitDetailModal.tsx`
-  - `src/features/allBenefitsPage/components/SimpleRanking.tsx`
   - `src/features/loginPage/layouts/AuthLayout.tsx`
 - New/changed components:
+  - 전체 혜택 목록은 `partnerId` 기준으로 제휴처당 카드 한 장만 표시한다.
+  - 제휴처 카드 외부에는 제휴처명, 로고, 카테고리, 혜택 제공 통신사만 표시한다.
+  - 등급별 할인, 이용 제한, 이용 방법, 관심 등록, 외부 링크는 상세 모달 안에서만 제공한다.
+  - 상세 모달은 해당 제휴처에 실제 혜택이 있는 통신사만 compact pill 선택기로 표시하고, 선택한 통신사의 혜택 목록만 보여준다. 통신사 선택기가 혜택 카드보다 넓거나 강하게 보이지 않도록 전체 폭 분배를 사용하지 않는다.
+  - 지원 통신사가 하나뿐이면 선택형 탭을 만들지 않고 통신사명만 담은 compact 배지로 표시한다. 통신사가 2개 이상이면 같은 크기와 시각 언어의 compact pill 탭으로 전환한다.
+  - 상세 모달의 등급별 혜택 문구가 같으면 문구는 한 번만 표시하고 적용 등급을 배지로 묶어 반복을 줄인다. 문구가 다를 때만 조건별 블록을 나눈다.
+  - 상세 혜택 카드는 `혜택명/이용 유형 → 적용 등급/핵심 혜택 → 이용 제한/방법` 순서로 읽히게 구성한다.
+  - 전체 혜택 데스크톱은 잇플 맵과 동일한 370px sticky 좌측 탐색 패널을 전역 내비게이션 바로 옆에 두고, 우측 결과 영역을 2~4열 카드로 사용한다.
+  - 전체 혜택 모바일은 좁은 화면에서 좌우 분할을 강제하지 않고 필터를 목록 위에 유지한다.
   - 신규 버튼/카드/배지는 먼저 기존 컴포넌트 확장 가능성을 확인한다.
   - 새 색상 token은 `tailwind.config.js`와 이 문서를 함께 갱신할 때만 추가한다.
 - Variants and states:
@@ -165,6 +182,7 @@
   - `orange*`, `pink*` 클래스명은 legacy alias이며 신규 사용 금지.
 
 ## Accessibility
+
 - Target standard:
   - WCAG 2.1 AA 지향
 - Keyboard/focus behavior:
@@ -182,6 +200,7 @@
   - 자동 재생 영상/커서 장식은 핵심 탐색을 방해하지 않게 한다.
 
 ## Responsive behavior
+
 - Supported breakpoints/devices:
   - `sm: 640px`, `md: 768px`, `lg: 1024px`, `xl: 1280px`, `2xl: 1536px`
   - custom max breakpoints: `max-sm: 500px`, `max-md: 767px`, `max-lg: 1023px`, `max-xlg: 1250px`, `max-xl: 1536px`
@@ -194,6 +213,7 @@
   - 터치 타겟은 최소 40px 이상을 지향한다.
 
 ## Interaction states
+
 - Loading:
   - 지도/혜택/추천 데이터는 spinner 또는 skeleton과 짧은 상태 문구를 제공한다.
 - Empty:
@@ -209,6 +229,7 @@
   - 추천/지도 API 실패 시 재시도 또는 대체 탐색 경로를 제공한다.
 
 ## Content voice
+
 - Tone:
   - 친근하지만 과장하지 않는다.
   - 혜택 조건은 광고 문구보다 정보 정확성을 우선한다.
@@ -220,6 +241,7 @@
   - 빈 상태는 감정적으로 부드럽게, CTA는 명확하게 작성한다.
 
 ## Implementation constraints
+
 - Framework/styling system:
   - React 19, TypeScript, Vite, Tailwind CSS
   - `npm run lint`는 `--fix`를 실행하므로 검증에는 `npx eslint . --config eslint.config.js`를 사용한다.
@@ -238,6 +260,7 @@
   - 주요 화면은 가능하면 모바일/데스크톱 screenshot으로 시각 회귀를 확인한다.
 
 ## Open questions
+
 - [ ] `orange*`, `pink*` legacy token 이름을 언제 의미 기반 이름으로 제거할지 결정 필요 / owner: frontend / impact: class rename 규모
 - [ ] 랜딩의 full-black section과 purple-first 시스템의 균형을 어디까지 유지할지 결정 필요 / owner: product-design / impact: 브랜드 첫인상
 - [ ] 지도 marker/cluster 색상이 새 palette와 충돌하는지 실제 지도 화면에서 확인 필요 / owner: frontend / impact: 지도 탐색 가독성

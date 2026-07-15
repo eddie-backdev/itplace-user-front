@@ -7,10 +7,13 @@ interface PaginationProps {
   onPageChange: (pageNumber: number) => void;
   pageRangeDisplayed?: number;
   width?: number | string;
+  compact?: boolean;
 }
 
 const itemClass =
   'px-3 py-2 text-body-2 text-grey05 hover:bg-grey02 rounded-lg cursor-pointer transition-colors duration-150 max-xl:text-body-4 max-xl:px-2 max-xl:py-1';
+const compactItemClass =
+  'flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-body-4 font-medium text-grey05 hover:bg-grey02 cursor-pointer transition-colors duration-150';
 const activeClass = 'bg-purple04 text-white hover:bg-purple04';
 const disabledClass = 'opacity-50 cursor-not-allowed';
 
@@ -28,6 +31,7 @@ const Pagination: React.FC<PaginationProps> = ({
   onPageChange,
   pageRangeDisplayed = 5,
   width,
+  compact = false,
 }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -48,7 +52,7 @@ const Pagination: React.FC<PaginationProps> = ({
   ) => (
     <button
       type="button"
-      className={`${itemClass} ${options.active ? activeClass : ''} ${options.disabled ? disabledClass : ''}`}
+      className={`${compact ? compactItemClass : itemClass} ${options.active ? activeClass : ''} ${options.disabled ? disabledClass : ''}`}
       disabled={options.disabled}
       onClick={() => goToPage(page)}
     >
@@ -58,10 +62,13 @@ const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div
-      className="flex w-full items-center justify-center mt-[20px]"
+      className={`flex w-full items-center justify-center ${compact ? '' : 'mt-[20px]'}`}
       style={width ? { width } : undefined}
     >
-      <nav className="flex items-center space-x-2" aria-label="페이지네이션">
+      <nav
+        className={`flex items-center ${compact ? 'gap-1' : 'space-x-2'}`}
+        aria-label="페이지네이션"
+      >
         {renderButton('<<', 1, { disabled: currentPage === 1 })}
         {renderButton('<', currentPage - 1, { disabled: currentPage === 1 })}
         {pages.map((page) => (

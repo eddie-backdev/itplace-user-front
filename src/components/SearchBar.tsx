@@ -26,7 +26,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
         <TbSearch size={18} className="text-purple04" />
       </div>
       <input
-        type="search"
+        type="text"
+        role="searchbox"
+        enterKeyHint="search"
         placeholder={placeholder}
         value={value}
         onChange={onChange}

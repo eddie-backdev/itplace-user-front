@@ -1,27 +1,23 @@
-import React from 'react';
-import SimpleRanking from './components/SimpleRanking';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { debounce } from 'lodash';
 import SearchBar from '../../components/SearchBar';
 import Pagination from '../../components/Pagination';
-import LoadingSpinner from '../../components/LoadingSpinner';
 import NoResult from '../../components/NoResult';
 import SafeImage from '../../components/SafeImage';
-import { TbStar, TbStarFilled } from 'react-icons/tb';
+import { TbChevronRight } from 'react-icons/tb';
 import { showToast } from '../../utils/toast';
 import {
-  getBenefits,
-  addFavorite,
-  removeFavorite,
-  BenefitItem,
-  TierBenefit,
-  BenefitApiParams,
+  getPartnerBenefits,
+  PartnerBenefitItem,
+  PartnerBenefitApiParams,
 } from './apis/allBenefitsApi';
 import BenefitDetailModal from './components/BenefitDetailModal';
 import MobileHeader from '../../components/MobileHeader';
 import { useResponsive } from '../../hooks/useResponsive';
 import { CARRIER_OPTIONS, CarrierCode, getCarrierLabel } from '../../utils/membership';
 import { CATEGORIES } from '../mainPage/constants';
+
+const ITEMS_PER_PAGE = 15;
 
 const AllBenefitsLayout: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,28 +26,27 @@ const AllBenefitsLayout: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('전체');
   const [selectedCarriers, setSelectedCarriers] = useState<CarrierCode[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [benefits, setBenefits] = useState<BenefitItem[]>([]);
+  const [partners, setPartners] = useState<PartnerBenefitItem[]>([]);
   const [totalElements, setTotalElements] = useState(0);
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [selectedBenefit, setSelectedBenefit] = useState<BenefitItem | null>(null);
+  const [hasNext, setHasNext] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState<PartnerBenefitItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const { isMobile } = useResponsive();
+  const latestRequestIdRef = useRef(0);
 
   // API 호출 함수
   const fetchBenefits = useCallback(
-    async (page: number = 0, keyword?: string, category?: string) => {
+    async (page: number = 0, keyword?: string, category?: string, append = false) => {
+      const requestId = ++latestRequestIdRef.current;
       setIsLoading(true);
       setLoadError(false);
-      // 로딩 시작 시 기존 결과를 유지하지 않고 초기화
-      setBenefits([]);
-      setTotalElements(0);
 
       try {
-        const params: BenefitApiParams = {
+        const params: PartnerBenefitApiParams = {
           mainCategory: 'BASIC_BENEFIT',
           page: page,
-          size: 9, // 3x3 그리드
+          size: ITEMS_PER_PAGE,
         };
 
         if (keyword) params.keyword = keyword;
@@ -60,71 +55,39 @@ const AllBenefitsLayout: React.FC = () => {
           params.category = category;
         }
 
-        const data = await getBenefits(params);
+        const data = await getPartnerBenefits(params);
 
-        setBenefits(data.content);
+        if (requestId !== latestRequestIdRef.current) return;
+
+        setPartners((previousPartners) =>
+          append ? [...previousPartners, ...data.content] : data.content
+        );
         setTotalElements(data.totalElements);
+        setHasNext(data.hasNext);
         setCurrentPage(data.currentPage + 1); // API는 0부터 시작, UI는 1부터 시작
-
-        // 초기 즐겨찾기 상태 설정 (API에서 받아온 데이터 기준)
-        const favoriteIds = data.content
-          .filter((benefit: BenefitItem) => benefit.isFavorite)
-          .map((benefit: BenefitItem) => benefit.benefitId);
-        setFavorites(favoriteIds);
       } catch {
+        if (requestId !== latestRequestIdRef.current) return;
         showToast('혜택 데이터를 불러오는 중 오류가 발생했습니다', 'error');
         setLoadError(true);
-        setBenefits([]);
-        setTotalElements(0);
       } finally {
-        setIsLoading(false);
+        if (requestId === latestRequestIdRef.current) {
+          setIsLoading(false);
+        }
       }
     },
     [selectedCarriers]
   );
 
-  // 즐겨찾기 토글 함수
-  const toggleFavorite = useCallback(
-    async (benefitId: number) => {
-      try {
-        const isCurrentlyFavorite = favorites.includes(benefitId);
-        if (isCurrentlyFavorite) {
-          // 즐겨찾기 삭제
-          await removeFavorite(benefitId);
-          setFavorites((prev) => prev.filter((id) => id !== benefitId));
-          showToast('관심 혜택에서 삭제되었습니다', 'info');
-        } else {
-          // 즐겨찾기 추가
-          await addFavorite(benefitId);
-          setFavorites((prev) => [...prev, benefitId]);
-          showToast('관심 혜택에 추가되었습니다', 'success');
-        }
-
-        // 혜택 목록의 즐겨찾기 상태도 업데이트
-        setBenefits((prev) =>
-          prev.map((benefit) =>
-            benefit.benefitId === benefitId
-              ? { ...benefit, isFavorite: !benefit.isFavorite }
-              : benefit
-          )
-        );
-      } catch {
-        showToast('관심 혜택 처리 중 오류가 발생했습니다', 'error');
-      }
-    },
-    [favorites]
-  );
-
   // 카드 클릭 핸들러
-  const handleCardClick = (benefit: BenefitItem) => {
-    setSelectedBenefit(benefit);
+  const handleCardClick = (partner: PartnerBenefitItem) => {
+    setSelectedPartner(partner);
     setIsModalOpen(true);
   };
 
   // 모달 닫기 핸들러
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedBenefit(null);
+    setSelectedPartner(null);
   };
 
   // 모달이 열릴 때 뒷배경 스크롤 방지
@@ -214,296 +177,291 @@ const AllBenefitsLayout: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, benefit: BenefitItem) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      handleCardClick(benefit);
-    }
-  };
-
   // 페이지네이션 로직
-  const itemsPerPage = 9;
-
   // 페이지 변경 핸들러
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
     fetchBenefits(pageNumber - 1, debouncedSearchTerm, selectedCategory);
   };
 
-  // 혜택 설명 표시를 위한 헬퍼 함수
-  const getBenefitDescription = (tierBenefits: TierBenefit[]) => {
-    // 가장 적절한 등급의 혜택을 선택 (예: BASIC 등급)
-    const basicBenefit = tierBenefits.find((benefit) => benefit.grade === 'BASIC');
-    return basicBenefit ? basicBenefit.context : tierBenefits[0]?.context || '';
+  const handleLoadMore = () => {
+    fetchBenefits(currentPage, debouncedSearchTerm, selectedCategory, true);
   };
 
   const carrierFilters: Array<{ code: CarrierCode | 'ALL'; label: string }> = [
-    { code: 'ALL', label: '통신 3사 전체' },
+    { code: 'ALL', label: '전체' },
     ...CARRIER_OPTIONS,
   ];
 
   const activeFilterCount = (selectedCategory !== '전체' ? 1 : 0) + selectedCarriers.length;
 
+  const resetFilters = () => {
+    setSelectedCategory('전체');
+    setSelectedCarriers([]);
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    setCurrentPage(1);
+  };
+
   return (
-    <div className="overflow-x-hidden bg-white pt-[54px] md:pt-0">
+    <div className="min-h-screen overflow-x-hidden bg-grey01/70 pb-5 pt-[54px] md:min-h-0 md:flex-1 md:overflow-y-auto md:bg-white md:pb-0 md:pt-0">
       {/* 모바일 헤더 */}
       <div className="fixed top-0 left-0 w-full z-[9999] max-md:block hidden">
         <MobileHeader title="전체 혜택" />
       </div>
 
       {/* 전체 레이아웃 컨테이너 */}
-      <div className="mx-auto w-full max-w-[1280px] px-5 pb-10 pt-6 md:px-7 md:pb-14 md:pt-10">
-        <section className="mb-7 md:mb-8">
-          <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-body-3 font-medium text-purple04">혜택 탐색</p>
-              <h1 className="mt-2 text-title-2 text-black max-md:text-title-4">전체 혜택</h1>
-              <p className="mt-3 max-w-[560px] text-body-2 leading-7 text-grey05 max-md:text-body-3">
-                검색어와 필터를 조합해 통신사별 멤버십 혜택을 빠르게 좁혀보세요.
+      <div className="w-full px-4 pb-8 pt-4 md:p-0">
+        <div className="md:grid md:min-h-full md:grid-cols-[370px_minmax(0,1fr)] md:items-stretch">
+          <aside
+            className="md:sticky md:top-0 md:h-full md:overflow-y-auto md:border-r md:border-grey02 md:bg-white md:px-5 md:py-8"
+            aria-label="혜택 탐색 패널"
+          >
+            <header className="mb-5 hidden md:block">
+              <p className="text-body-3 font-bold text-purple04">혜택 탐색</p>
+              <h1 className="mt-2 text-title-3 font-bold text-grey07">전체 혜택</h1>
+              <p className="mt-2 break-keep text-body-3 leading-6 text-grey05">
+                제휴처를 찾고 통신사별 멤버십 혜택을 확인해보세요.
               </p>
-            </div>
-            <div className="flex flex-wrap gap-2 md:justify-end">
-              <span className="rounded-full bg-grey01 px-3 py-1 text-body-4 text-grey05">
-                {totalElements.toLocaleString()}개 혜택
-              </span>
-              {activeFilterCount > 0 && (
-                <span className="rounded-full bg-purple01 px-3 py-1 text-body-4 text-purple04">
-                  필터 {activeFilterCount}개 적용
-                </span>
-              )}
-            </div>
-          </div>
+            </header>
 
-          <div className="rounded-[24px] border border-grey01 bg-grey01 p-4 md:p-5">
-            <div>
-              <label className="mb-2 block text-body-4 font-medium text-grey04">제휴처 검색</label>
+            <section
+              aria-label="혜택 검색 및 필터"
+              className="rounded-[22px] border border-grey02 bg-white p-4 shadow-[0_10px_28px_rgba(16,17,20,0.04)] md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
+            >
               <SearchBar
-                placeholder="브랜드명, 혜택명으로 검색"
+                placeholder="제휴처명으로 검색"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 onClear={() => setSearchTerm('')}
-                className="h-[48px] w-full"
-                backgroundColor="bg-white"
+                className="h-[48px] w-full border border-grey02"
+                backgroundColor="bg-grey01/70"
               />
-            </div>
 
-            <div className="mt-5 grid gap-4 border-t border-grey01 pt-5 xl:grid-cols-[minmax(250px,330px)_minmax(0,1fr)]">
-              <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <p className="text-body-4 font-medium text-grey04">통신사</p>
-                  {selectedCarriers.length > 0 && (
-                    <span className="rounded-full bg-purple01 px-2.5 py-1 text-[12px] font-semibold leading-none text-purple04">
-                      {selectedCarriers.map((carrier) => getCarrierLabel(carrier)).join(' · ')}
-                    </span>
+              <div className="mt-4 border-t border-grey02 pt-4 md:mt-5 md:pt-5">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-body-4 font-bold text-grey06">통신사</p>
+                  {activeFilterCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="min-h-10 rounded-lg px-2 text-body-4 font-bold text-purple04 transition-colors hover:bg-purple01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                    >
+                      필터 초기화
+                    </button>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {carrierFilters.map((carrier) => (
-                    <button
-                      key={carrier.code}
-                      type="button"
-                      onClick={() => handleCarrierChange(carrier.code)}
-                      className={`rounded-full border px-3.5 py-1.5 text-body-4 transition-colors md:px-4 ${
-                        (
-                          carrier.code === 'ALL'
-                            ? selectedCarriers.length === 0
-                            : selectedCarriers.includes(carrier.code)
-                        )
-                          ? 'border-purple04 bg-purple01 text-purple04'
-                          : 'border-grey02 bg-white text-grey04 hover:border-purple02 hover:text-purple04'
-                      }`}
-                    >
-                      {carrier.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <p className="text-body-4 font-medium text-grey04">카테고리</p>
-                  {selectedCategory !== '전체' && (
-                    <span className="rounded-full bg-purple01 px-2.5 py-1 text-[12px] font-semibold leading-none text-purple04">
-                      {selectedCategory}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => handleCategoryChange(category.id)}
-                      className={`rounded-full border px-3.5 py-1.5 text-body-4 transition-colors md:px-4 ${
-                        selectedCategory === category.id
-                          ? 'border-purple04 bg-purple01 text-purple04'
-                          : 'border-grey02 bg-white text-grey04 hover:border-purple02 hover:text-purple04'
-                      }`}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-7 md:mt-8">
-          <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col gap-2">
-              <p className="text-body-4 font-medium text-purple04">혜택 목록</p>
-              <h2 className="text-title-5 text-black">조건에 맞는 혜택을 비교해보세요.</h2>
-            </div>
-
-            <p className="text-body-3 text-grey04 lg:self-center">
-              총 {totalElements.toLocaleString()}개 혜택
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-5">
-            {isLoading ? (
-              <div className="col-span-1 flex h-[320px] items-center justify-center md:col-span-2 xl:col-span-3">
-                <LoadingSpinner />
-              </div>
-            ) : benefits.length > 0 ? (
-              benefits.map((benefit) => (
                 <div
-                  key={benefit.benefitId}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`${benefit.benefitName} 혜택 상세 보기`}
-                  className="group relative flex min-h-[196px] cursor-pointer flex-col justify-between rounded-[20px] border border-grey01 bg-white p-5 transition-all hover:border-purple02 hover:shadow-[0_12px_28px_rgba(16,17,20,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 md:min-h-[208px]"
-                  onClick={() => handleCardClick(benefit)}
-                  onKeyDown={(event) => handleCardKeyDown(event, benefit)}
+                  className="scrollbar-hide -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0"
+                  aria-label="통신사 필터"
                 >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(benefit.benefitId);
-                    }}
-                    aria-label={
-                      benefit.isFavorite || favorites.includes(benefit.benefitId)
-                        ? '관심 혜택에서 제거'
-                        : '관심 혜택에 추가'
-                    }
-                    className="absolute right-5 top-5 rounded-full p-1.5 text-orange03 transition-colors hover:bg-orange01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                  {carrierFilters.map((carrier) => {
+                    const isSelected =
+                      carrier.code === 'ALL'
+                        ? selectedCarriers.length === 0
+                        : selectedCarriers.includes(carrier.code);
+
+                    return (
+                      <button
+                        key={carrier.code}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => handleCarrierChange(carrier.code)}
+                        className={`min-h-10 shrink-0 rounded-full border px-4 text-body-4 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
+                          isSelected
+                            ? 'border-purple04 bg-purple04 text-white'
+                            : 'border-grey02 bg-white text-grey06 hover:border-purple03 hover:text-purple05'
+                        }`}
+                      >
+                        {carrier.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-4 border-t border-grey02 pt-4 md:mt-5 md:pt-5">
+                <p className="mb-2 text-body-4 font-bold text-grey06">카테고리</p>
+                <div
+                  className="scrollbar-hide -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0"
+                  aria-label="카테고리 필터"
+                >
+                  {categories.map((category) => {
+                    const isSelected = selectedCategory === category.id;
+
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => handleCategoryChange(category.id)}
+                        className={`min-h-10 shrink-0 rounded-full border px-3 text-body-4 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
+                          isSelected
+                            ? 'border-purple04 bg-purple04 text-white'
+                            : 'border-grey02 bg-white text-grey06 hover:border-purple03 hover:text-purple05'
+                        }`}
+                      >
+                        {category.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          </aside>
+
+          <section
+            className="mt-10 min-w-0 md:mt-0 md:px-6 md:pb-14 md:pt-24 xl:px-8 2xl:px-10"
+            aria-labelledby="benefit-results-title"
+          >
+            <div className="mb-3 flex min-h-10 items-center justify-between gap-3 md:mb-4">
+              <div className="flex min-w-0 items-center gap-2">
+                <h2
+                  id="benefit-results-title"
+                  className="text-title-6 font-bold text-grey07 md:text-title-5"
+                >
+                  혜택 제휴처
+                </h2>
+                <span className="shrink-0 text-body-4 font-medium text-grey05">
+                  {totalElements.toLocaleString()}개
+                </span>
+              </div>
+              {isLoading && partners.length > 0 && (
+                <span className="shrink-0 text-body-4 font-medium text-purple04" role="status">
+                  목록 업데이트 중
+                </span>
+              )}
+            </div>
+
+            <div
+              className={`grid grid-cols-1 gap-3 transition-opacity md:gap-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 ${
+                isLoading && partners.length > 0 ? 'opacity-60' : 'opacity-100'
+              }`}
+              aria-busy={isLoading}
+            >
+              {isLoading && partners.length === 0 ? (
+                Array.from({ length: ITEMS_PER_PAGE }, (_, index) => (
+                  <div
+                    key={index}
+                    className="min-h-[116px] animate-pulse rounded-[18px] border border-grey02 bg-white p-3.5 md:min-h-[148px] md:p-4"
+                    aria-hidden="true"
                   >
-                    {benefit.isFavorite || favorites.includes(benefit.benefitId) ? (
-                      <TbStarFilled className="h-6 w-6" />
-                    ) : (
-                      <TbStar className="h-6 w-6" />
-                    )}
-                  </button>
-
-                  <div className="pr-11">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-purple01 px-2.5 py-1 text-[12px] font-semibold leading-none text-purple04">
-                        {getCarrierLabel(benefit.carrier)}
-                      </span>
-                      <span className="text-body-4 text-grey04">
-                        {benefit.usageType === 'ONLINE' ? '온라인' : '오프라인'} ·{' '}
-                        {benefit.category}
-                      </span>
-                    </div>
-
-                    <div className="mt-4 flex items-start gap-4">
-                      <div className="flex h-[64px] w-[64px] flex-shrink-0 items-center justify-center rounded-[16px] bg-grey01 p-2 md:h-[72px] md:w-[72px]">
-                        <SafeImage
-                          src={benefit.image}
-                          alt={`${benefit.benefitName} 로고`}
-                          fallbackLabel={benefit.benefitName}
-                          className="h-full w-full object-contain"
-                        />
-                      </div>
-
-                      <div className="min-w-0 flex-1 pt-0.5">
-                        <h3 className="line-clamp-2 text-title-5 leading-tight text-black md:text-title-6">
-                          {benefit.benefitName}
-                        </h3>
-                        <p
-                          className="mt-3 overflow-hidden text-body-3 leading-6 text-grey05 md:text-body-4"
-                          style={{
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                          }}
-                        >
-                          {getBenefitDescription(benefit.tierBenefits)}
-                        </p>
+                    <div className="flex gap-4">
+                      <div className="h-14 w-14 shrink-0 rounded-[14px] bg-grey02 md:h-16 md:w-16" />
+                      <div className="flex-1 space-y-3 pt-1">
+                        <div className="h-5 w-3/4 rounded bg-grey02" />
+                        <div className="h-4 w-full rounded bg-grey01" />
+                        <div className="h-4 w-2/3 rounded bg-grey01" />
                       </div>
                     </div>
                   </div>
+                ))
+              ) : partners.length > 0 ? (
+                partners.map((partner) => (
+                  <article
+                    key={partner.partnerId}
+                    className="group relative min-w-0 overflow-hidden rounded-[18px] border border-grey02 bg-white transition-all hover:border-purple02 hover:shadow-[0_10px_24px_rgba(16,17,20,0.06)]"
+                  >
+                    <button
+                      type="button"
+                      aria-label={`${partner.partnerName} 통신사별 혜택 보기`}
+                      className="flex min-h-[112px] w-full items-center gap-3 p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple02 md:min-h-[132px] md:gap-4 md:p-4"
+                      onClick={() => handleCardClick(partner)}
+                    >
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] bg-grey01 p-2 md:h-16 md:w-16">
+                        <SafeImage
+                          src={partner.image}
+                          alt={`${partner.partnerName} 로고`}
+                          fallbackLabel={partner.partnerName}
+                          className="h-full w-full object-contain"
+                        />
+                      </span>
 
-                  <p className="mt-5 line-clamp-1 text-body-4 text-grey04">
-                    상세 조건은 카드 클릭 후 확인할 수 있어요
-                  </p>
+                      <span className="min-w-0 flex-1">
+                        <span className="block line-clamp-1 text-[15px] font-bold leading-[1.4] text-grey07 md:text-[16px]">
+                          {partner.partnerName}
+                        </span>
+                        <span className="mt-1 block text-body-4 font-medium text-grey05">
+                          {partner.category || '카테고리 미분류'}
+                        </span>
+                        <span className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                          {partner.carriers.map((carrier) => (
+                            <span
+                              key={carrier}
+                              className="rounded-full bg-purple01 px-2.5 py-1 text-[11px] font-bold leading-none text-purple05"
+                            >
+                              {getCarrierLabel(carrier)}
+                            </span>
+                          ))}
+                        </span>
+                      </span>
+                      <TbChevronRight
+                        className="h-5 w-5 shrink-0 text-grey04 transition-transform group-hover:translate-x-0.5 group-hover:text-purple04"
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </article>
+                ))
+              ) : loadError ? (
+                <div className="col-span-1 flex h-[320px] items-center justify-center lg:col-span-2 xl:col-span-3 2xl:col-span-4">
+                  <NoResult
+                    variant="error"
+                    message1="혜택 제휴처를 불러오지 못했어요"
+                    message2="잠시 후 다시 시도하거나 필터를 초기화한 뒤 확인해 주세요."
+                    buttonText="다시 시도"
+                    onButtonClick={() =>
+                      fetchBenefits(currentPage - 1, debouncedSearchTerm, selectedCategory)
+                    }
+                    secondaryButtonText="필터 초기화"
+                    onSecondaryButtonClick={resetFilters}
+                    message1FontSize="text-title-4 max-xl:text-title-6"
+                    message2FontSize="text-body-1 max-xl:text-body-3"
+                  />
                 </div>
-              ))
-            ) : loadError ? (
-              <div className="col-span-1 flex h-[320px] items-center justify-center md:col-span-2 xl:col-span-3">
-                <NoResult
-                  variant="error"
-                  message1="혜택 목록을 불러오지 못했어요"
-                  message2="잠시 후 다시 시도하거나 필터를 초기화한 뒤 확인해 주세요."
-                  buttonText="다시 시도"
-                  onButtonClick={() =>
-                    fetchBenefits(currentPage - 1, debouncedSearchTerm, selectedCategory)
-                  }
-                  secondaryButtonText="필터 초기화"
-                  onSecondaryButtonClick={() => {
-                    setSelectedCategory('전체');
-                    setSelectedCarriers([]);
-                    setSearchTerm('');
-                    setDebouncedSearchTerm('');
-                    setCurrentPage(1);
-                  }}
-                  message1FontSize="text-title-4 max-xl:text-title-6"
-                  message2FontSize="text-body-1 max-xl:text-body-3"
-                />
-              </div>
+              ) : (
+                <div className="col-span-1 flex h-[320px] items-center justify-center lg:col-span-2 xl:col-span-3 2xl:col-span-4">
+                  <NoResult
+                    message1="앗! 일치하는 결과를 찾을 수 없어요!"
+                    message2="다른 제휴처명이나 카테고리로 다시 찾아보세요."
+                    message1FontSize="text-title-4 max-xl:text-title-6"
+                    message2FontSize="text-body-1 max-xl:text-body-3"
+                  />
+                </div>
+              )}
+            </div>
+
+            {isMobile ? (
+              hasNext && partners.length > 0 ? (
+                <div className="mt-5 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={handleLoadMore}
+                    disabled={isLoading}
+                    className="min-h-12 w-full rounded-[14px] border border-purple02 bg-white px-5 text-body-3 font-bold text-purple05 transition-colors hover:bg-purple01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {isLoading ? '혜택을 불러오는 중' : '혜택 더 보기'}
+                  </button>
+                </div>
+              ) : null
             ) : (
-              <div className="col-span-1 flex h-[320px] items-center justify-center md:col-span-2 xl:col-span-3">
-                <NoResult
-                  message1="앗! 일치하는 결과를 찾을 수 없어요!"
-                  message2="다른 키워드나 혜택으로 다시 찾아보세요."
-                  message1FontSize="text-title-4 max-xl:text-title-6"
-                  message2FontSize="text-body-1 max-xl:text-body-3"
+              <div className="mt-8 flex justify-center md:mt-10">
+                <Pagination
+                  currentPage={currentPage}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  totalItems={totalElements}
+                  onPageChange={handlePageChange}
+                  compact
                 />
               </div>
             )}
-          </div>
-
-          <div className="mt-8 flex justify-center md:mt-10">
-            <Pagination
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              totalItems={totalElements}
-              onPageChange={handlePageChange}
-              width={isMobile ? 'calc(100vw - 40px)' : '100%'}
-            />
-          </div>
-        </section>
-
-        <section className="mt-12 space-y-5 md:mt-14 md:space-y-6">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-body-4 font-medium text-purple04">추가 탐색</p>
-              <h2 className="mt-1 text-title-5 text-black">인기 혜택을 함께 살펴보세요.</h2>
-            </div>
-            <p className="text-body-3 text-grey04">
-              메인 목록 확인 후 참고할 수 있는 보조 콘텐츠예요.
-            </p>
-          </div>
-
-          <SimpleRanking />
-        </section>
+          </section>
+        </div>
       </div>
 
       {/* 상세 모달 */}
       <BenefitDetailModal
         isOpen={isModalOpen}
-        benefit={selectedBenefit}
+        partner={selectedPartner}
         onClose={handleCloseModal}
       />
     </div>

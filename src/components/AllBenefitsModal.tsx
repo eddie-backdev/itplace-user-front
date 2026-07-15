@@ -55,28 +55,26 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded-[20px] relative overflow-hidden w-full h-full max-w-[800px] max-h-[664px] max-md:max-w-[340px] max-md:max-h-[80vh] max-md:rounded-[16px]"
+        className="relative flex h-full max-h-[560px] w-full max-w-[680px] flex-col overflow-hidden rounded-[18px] bg-white max-md:max-h-[68vh] max-md:max-w-[328px] max-md:rounded-[16px]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 모달 헤더 */}
-        <div className="bg-grey01 rounded-t-[20px] max-md:rounded-t-[16px] flex items-center justify-between pl-8 max-md:pl-4 pt-6 max-md:pt-4 pb-4 max-md:pb-3 pr-4 max-md:pr-3">
-          <h3 id={titleId} className="text-title-5 max-md:text-title-7">
+        <div className="flex shrink-0 items-center justify-between rounded-t-[18px] bg-grey01 py-3 pl-5 pr-3 max-md:rounded-t-[16px] max-md:pl-4 max-md:pr-2">
+          <h3 id={titleId} className="text-title-7 font-bold text-grey07 max-md:text-title-8">
             {title}
           </h3>
           <button
             ref={closeButtonRef}
             onClick={onClose}
             aria-label="모달 닫기"
-            className="rounded-full text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
           >
-            <TbX size={36} className="max-md:w-8 max-md:h-8" />
+            <TbX className="h-7 w-7 max-md:h-6 max-md:w-6" />
           </button>
         </div>
 
         {/* 모달 내용 */}
-        <div className="bg-white overflow-y-auto" style={{ height: 'calc(100% - 88px)' }}>
-          {children}
-        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto bg-white">{children}</div>
       </div>
     </div>
   );

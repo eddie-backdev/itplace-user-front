@@ -1,4 +1,5 @@
 import axiosInstance from '../../../apis/axiosInstance';
+import { CarrierCode } from '../../../utils/membership';
 
 // API 응답 타입 정의
 export interface TierBenefit {
@@ -40,6 +41,50 @@ export interface BenefitApiParams {
   carriers?: string[];
 }
 
+export interface PartnerBenefitItem {
+  partnerId: number;
+  partnerName: string;
+  category: string | null;
+  image: string | null;
+  carriers: CarrierCode[];
+}
+
+export interface PartnerBenefitResponse {
+  content: PartnerBenefitItem[];
+  currentPage: number;
+  totalPages: number;
+  totalElements: number;
+  hasNext: boolean;
+}
+
+export type PartnerBenefitApiParams = BenefitApiParams;
+
+export interface CarrierBenefitDetail {
+  benefitId: number;
+  benefitName: string;
+  description?: string | null;
+  benefitLimit?: string | null;
+  manual?: string | null;
+  url?: string | null;
+  usageType: 'ONLINE' | 'OFFLINE' | 'BOTH';
+  tierBenefits: TierBenefit[];
+  isFavorite: boolean;
+  favoriteCount: number;
+}
+
+export interface CarrierBenefitGroup {
+  carrier: CarrierCode;
+  benefits: CarrierBenefitDetail[];
+}
+
+export interface PartnerBenefitDetailResponse {
+  partnerId: number;
+  partnerName: string;
+  category: string | null;
+  image: string | null;
+  carrierGroups: CarrierBenefitGroup[];
+}
+
 // 즐겨찾기 요청 타입
 export interface FavoriteRequest {
   benefitId: number;
@@ -64,29 +109,6 @@ export interface BenefitDetailResponse {
   tierBenefits: TierBenefit[];
 }
 
-// 제휴처 검색 순위 관련 타입
-export interface PartnerSearchRankingItem {
-  partnerName: string;
-  searchCount: number;
-  rank: number;
-  previousRank: number;
-  rankChange: number;
-  changeDerection: 'UP' | 'DOWN' | 'SAME' | 'NEW';
-}
-
-export interface PartnerSearchRankingResponse {
-  data: PartnerSearchRankingItem[];
-}
-
-// API 응답 타입
-export interface ApiResponse<T = unknown> {
-  code: string;
-  status: string;
-  message: string;
-  data: T;
-  timestamp: string;
-}
-
 // 혜택 목록 조회 API
 export const getBenefits = async (params: BenefitApiParams): Promise<BenefitResponse> => {
   // 기본값 설정
@@ -102,6 +124,24 @@ export const getBenefits = async (params: BenefitApiParams): Promise<BenefitResp
   };
 
   const response = await axiosInstance.get('/api/v1/benefits', { params: queryParams });
+  return response.data.data;
+};
+
+export const getPartnerBenefits = async (
+  params: PartnerBenefitApiParams
+): Promise<PartnerBenefitResponse> => {
+  const queryParams = {
+    mainCategory: params.mainCategory,
+    page: params.page ?? 0,
+    size: params.size ?? 15,
+    sort: params.sort ?? 'POPULARITY',
+    ...(params.category && { category: params.category }),
+    ...(params.filter && { filter: params.filter }),
+    ...(params.keyword && { keyword: params.keyword }),
+    ...(params.carriers && params.carriers.length > 0 && { carriers: params.carriers.join(',') }),
+  };
+
+  const response = await axiosInstance.get('/api/v1/benefits/partners', { params: queryParams });
   return response.data.data;
 };
 
@@ -128,16 +168,11 @@ export const getBenefitDetail = async (benefitId: number): Promise<BenefitDetail
   return response.data.data;
 };
 
-// 제휴처 검색 순위 조회 API
-export const getPartnersSearchRanking = async (
-  recentDay: number = 2,
-  prevDay: number = 3
-): Promise<ApiResponse<PartnerSearchRankingItem[]>> => {
-  const params = new URLSearchParams({
-    recentDay: recentDay.toString(),
-    prevDay: prevDay.toString(),
+export const getPartnerBenefitDetail = async (
+  partnerId: number
+): Promise<PartnerBenefitDetailResponse> => {
+  const response = await axiosInstance.get(`/api/v1/benefits/partners/${partnerId}`, {
+    params: { mainCategory: 'BASIC_BENEFIT' },
   });
-
-  const response = await axiosInstance.get(`/api/v1/partners/search-ranking?${params}`);
-  return response.data;
+  return response.data.data;
 };
