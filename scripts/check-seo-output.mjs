@@ -1,6 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { getPartnerBenefitPath, readCachedPartnerCatalog } from './seo-partners.mjs';
+import {
+  getPartnerBenefitPath,
+  readCachedPartnerCatalog,
+  readCachedPartnerDetails,
+} from './seo-partners.mjs';
 
 const DIST_DIR = path.resolve('dist');
 const failures = [];
@@ -61,6 +65,18 @@ check(
   samplePartnerHtml.includes(new URL(samplePartnerPath, 'https://itplace.click').href),
   'partner canonical URL is missing'
 );
+check(
+  samplePartnerHtml.includes('data-prerender-seo="true"') &&
+    samplePartnerHtml.includes('"mainEntity":{"@type":"ItemList"'),
+  'partner benefit ItemList structured data is missing'
+);
+if (samplePartner.partnerName === 'GS25') {
+  check(samplePartnerHtml.includes('GS25 할인형'), 'GS25 actual benefit content is missing');
+  check(
+    [...samplePartnerHtml.matchAll(/data-benefit-id="502"/g)].length === 1,
+    'duplicate GS25 KT benefit was not normalized'
+  );
+}
 
 const sitemap = await readDist('sitemap.xml');
 const sitemapUrls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
@@ -83,11 +99,32 @@ check(
   'robots.txt sitemap declaration is missing'
 );
 
+const redirects = await readDist('_redirects');
+check(
+  redirects.trim().split('\n').length <= 2_000,
+  'Cloudflare static redirect limit was exceeded'
+);
+check(redirects.includes('/membership/ /membership 301'), 'membership slash redirect is missing');
+check(
+  redirects.includes(`${samplePartnerPath}/ ${samplePartnerPath} 301`),
+  'partner slash redirect is missing'
+);
+check(
+  redirects.includes(`${samplePartnerPath}.html ${samplePartnerPath} 301`),
+  'partner html redirect is missing'
+);
+
+const cachedPartnerDetails = await readCachedPartnerDetails();
+check(
+  cachedPartnerDetails.length >= cachedPartners.length,
+  `cached partner detail count is too small: ${cachedPartnerDetails.length}`
+);
+
 if (failures.length > 0) {
   failures.forEach((failure) => console.error(`SEO check failed: ${failure}`));
   process.exitCode = 1;
 } else {
   console.log(
-    `SEO output verified: ${sitemapUrls.length} sitemap URLs, ${cachedPartners.length} cached partners, unique membership titles`
+    `SEO output verified: ${sitemapUrls.length} sitemap URLs, ${cachedPartners.length} partners with actual benefit content, canonical redirects, unique membership titles`
   );
 }

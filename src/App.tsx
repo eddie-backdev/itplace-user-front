@@ -3,13 +3,16 @@ import './App.css';
 import { RouterProvider } from 'react-router-dom';
 import router from './routes';
 import ToastProvider from './components/ToastProvider';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './store';
 import { logout } from './store/authSlice';
 import { persistor } from './store';
 import { refreshToken } from './features/loginPage/apis/auth';
-import QuestionRecommendationChatWidget from './features/questionRecommendationChat/components/QuestionRecommendationChatWidget';
+
+const QuestionRecommendationChatWidget = lazy(
+  () => import('./features/questionRecommendationChat/components/QuestionRecommendationChatWidget')
+);
 
 const App = () => {
   const dispatch = useDispatch();
@@ -39,7 +42,9 @@ const App = () => {
     <>
       <RouterProvider router={router} />
       <ToastProvider />
-      <QuestionRecommendationChatWidget />
+      <Suspense fallback={null}>
+        <QuestionRecommendationChatWidget />
+      </Suspense>
     </>
   );
 };

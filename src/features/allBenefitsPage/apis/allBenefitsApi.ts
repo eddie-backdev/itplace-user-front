@@ -85,6 +85,71 @@ export interface PartnerBenefitDetailResponse {
   carrierGroups: CarrierBenefitGroup[];
 }
 
+const textRichness = (value?: string | null) => value?.trim().length ?? 0;
+
+const getBenefitRichness = (benefit: CarrierBenefitDetail) =>
+  textRichness(benefit.description) +
+  textRichness(benefit.benefitLimit) * 2 +
+  textRichness(benefit.manual) * 3 +
+  textRichness(benefit.url) +
+  benefit.tierBenefits.length * 20;
+
+const mergeTierBenefits = (
+  primary: CarrierBenefitDetail['tierBenefits'],
+  secondary: CarrierBenefitDetail['tierBenefits']
+) => {
+  const uniqueTierBenefits = new Map<string, TierBenefit>();
+  [...primary, ...secondary].forEach((tierBenefit) => {
+    const key = [
+      tierBenefit.carrier ?? '',
+      tierBenefit.grade,
+      tierBenefit.context,
+      tierBenefit.isAll,
+    ].join('|');
+    uniqueTierBenefits.set(key, tierBenefit);
+  });
+  return [...uniqueTierBenefits.values()];
+};
+
+const mergeDuplicateBenefit = (
+  current: CarrierBenefitDetail,
+  candidate: CarrierBenefitDetail
+): CarrierBenefitDetail => {
+  const [primary, secondary] =
+    getBenefitRichness(candidate) > getBenefitRichness(current)
+      ? [candidate, current]
+      : [current, candidate];
+
+  return {
+    ...secondary,
+    ...primary,
+    description: primary.description?.trim() ? primary.description : secondary.description,
+    benefitLimit: primary.benefitLimit?.trim() ? primary.benefitLimit : secondary.benefitLimit,
+    manual: primary.manual?.trim() ? primary.manual : secondary.manual,
+    url: primary.url?.trim() ? primary.url : secondary.url,
+    tierBenefits: mergeTierBenefits(primary.tierBenefits, secondary.tierBenefits),
+    isFavorite: primary.isFavorite || secondary.isFavorite,
+    favoriteCount: Math.max(primary.favoriteCount, secondary.favoriteCount),
+  };
+};
+
+export const normalizePartnerBenefitDetail = (
+  detail: PartnerBenefitDetailResponse
+): PartnerBenefitDetailResponse => ({
+  ...detail,
+  carrierGroups: detail.carrierGroups.map((group) => {
+    const benefitsById = new Map<number, CarrierBenefitDetail>();
+    group.benefits.forEach((benefit) => {
+      const current = benefitsById.get(benefit.benefitId);
+      benefitsById.set(
+        benefit.benefitId,
+        current ? mergeDuplicateBenefit(current, benefit) : benefit
+      );
+    });
+    return { ...group, benefits: [...benefitsById.values()] };
+  }),
+});
+
 // 즐겨찾기 요청 타입
 export interface FavoriteRequest {
   benefitId: number;
@@ -174,5 +239,5 @@ export const getPartnerBenefitDetail = async (
   const response = await axiosInstance.get(`/api/v1/benefits/partners/${partnerId}`, {
     params: { mainCategory: 'BASIC_BENEFIT' },
   });
-  return response.data.data;
+  return normalizePartnerBenefitDetail(response.data.data);
 };

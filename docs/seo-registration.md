@@ -11,7 +11,12 @@
 - 제휴처 상세: `/benefits/partners/{partnerId}/{partnerSlug}`
 - 지도 탐색: `/map`
 
-프론트 빌드는 운영 사용자 API에서 제휴처 목록을 가져와 제휴처별 HTML과 `sitemap.xml`을 생성합니다. API 연결이 일시적으로 실패하면 `scripts/data/partner-catalog.json`의 마지막 정상 스냅샷을 사용합니다.
+프론트 빌드는 운영 사용자 API에서 제휴처 목록과 통신사별 실제 혜택 내용을 가져와 제휴처별 HTML, `sitemap.xml`, `_redirects`를 생성합니다. API 연결이 일시적으로 실패하면 `scripts/data/partner-catalog.json`과 `scripts/data/partner-benefit-details.json`의 마지막 정상 스냅샷을 사용합니다.
+
+- 제휴처 HTML에는 혜택명, 이용 채널, 등급별 조건, 이용 제한, 이용 방법이 포함됩니다.
+- 같은 통신사 응답에 동일 `benefitId`가 중복되면 정보가 더 풍부한 항목으로 합칩니다.
+- `/membership/`, `*.html` 같은 중복 URL은 canonical URL로 301 이동합니다.
+- 페이지 컴포넌트는 경로별로 분리해 첫 화면에서 불필요한 지도·혜택·로그인 코드를 받지 않습니다.
 
 ## 로컬 검증
 
@@ -23,7 +28,9 @@ npm run build
 
 - 브랜드 홈 title, canonical, WebSite 구조화 데이터
 - 통신사 랜딩 페이지별 고유 title과 프리렌더 본문
-- 제휴처별 canonical URL과 프리렌더 본문
+- 제휴처별 canonical URL, 실제 혜택 본문과 ItemList 구조화 데이터
+- 동일 `benefitId` 중복 제거
+- trailing slash와 `.html` URL의 301 redirect 규칙
 - sitemap URL 중복, 제휴처 누락, noindex 페이지 유출 여부
 - robots.txt의 sitemap 선언
 
@@ -33,7 +40,23 @@ npm run build
 npm run seo:refresh
 ```
 
-새 제휴처가 추가되거나 제휴처명이 바뀐 뒤에는 사용자 프론트를 다시 배포해야 새 URL과 sitemap이 운영 사이트에 반영됩니다. 혜택 상세 내용만 바뀐 경우에는 상세 페이지가 API에서 최신 정보를 조회하므로 프론트 재배포가 필수는 아닙니다.
+새 제휴처가 추가되거나 제휴처명·혜택 내용이 바뀐 뒤에는 사용자 프론트를 다시 배포해야 검색엔진이 읽는 HTML과 sitemap이 최신화됩니다. 브라우저 화면은 API에서 최신 정보를 조회하지만, JavaScript를 실행하지 않는 검색 수집기는 마지막 배포 시점의 프리렌더 HTML을 읽습니다.
+
+## 대표 도메인 통일
+
+코드가 생성하는 canonical URL은 모두 `https://itplace.click`입니다. Cloudflare Pages의 `_redirects`는 같은 도메인의 경로만 처리하므로 `www.itplace.click`을 apex 도메인으로 보내는 규칙은 Cloudflare 대시보드에서 한 번 설정해야 합니다.
+
+1. Cloudflare에서 **Bulk Redirects → Redirect Lists**로 이동합니다.
+2. Source URL을 `https://www.itplace.click/`, Target URL을 `https://itplace.click/`로 입력합니다.
+3. 상태 코드는 `301`, **Preserve query string**은 켭니다.
+4. **Subpath matching**과 **Preserve path suffix**를 켜서 모든 하위 경로를 같은 경로로 보냅니다.
+5. 규칙을 활성화한 뒤 아래 명령으로 확인합니다.
+
+```zsh
+curl -I https://www.itplace.click/membership
+```
+
+응답의 상태가 `301`이고 `location: https://itplace.click/membership`이면 정상입니다.
 
 ## 배포 후 확인 URL
 

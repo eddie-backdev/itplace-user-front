@@ -1,68 +1,74 @@
-// src/routes/index.tsx
+import { lazy, Suspense, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import ResponsiveLayout from '../layouts/ResponsiveLayout';
-import MainPage from '../pages/MainPage';
-import HomeRoute from '../pages/HomeRoute';
-import MyPageLayout from '../layouts/MyPageLayout';
-import MyInfoPage from '../pages/myPage/MyInfoPage';
-import MyFavoritesPage from '../pages/myPage/MyFavoritesPage';
-import AllBenefitsPage from '../pages/AllBenefitsPage';
-import LoginPage from '../pages/LoginPage';
-import NotFoundPage from '../pages/NotFoundPage';
-import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
-import AccountDeletionPage from '../pages/AccountDeletionPage';
-import AboutPage from '../pages/AboutPage';
-import TermsPage from '../pages/TermsPage';
-import ContactPage from '../pages/ContactPage';
-import FaqPage from '../pages/FaqPage';
-import MembershipGuidePage from '../pages/MembershipGuidePage';
-import MembershipLandingPage from '../pages/MembershipLandingPage';
-import PartnerBenefitPage from '../pages/PartnerBenefitPage';
-import OAuthRedirectHandler from '../features/loginPage/layouts/OAuthRedirectHandler';
-import PublicRoute from '../features/loginPage/layouts/PublicRoute'; // PublicRoute import
+import PublicRoute from '../features/loginPage/layouts/PublicRoute';
+import RouteLoadingFallback from '../components/RouteLoadingFallback';
+
+const MainPage = lazy(() => import('../pages/MainPage'));
+const HomeRoute = lazy(() => import('../pages/HomeRoute'));
+const MyPageLayout = lazy(() => import('../layouts/MyPageLayout'));
+const MyInfoPage = lazy(() => import('../pages/myPage/MyInfoPage'));
+const MyFavoritesPage = lazy(() => import('../pages/myPage/MyFavoritesPage'));
+const AllBenefitsPage = lazy(() => import('../pages/AllBenefitsPage'));
+const LoginPage = lazy(() => import('../pages/LoginPage'));
+const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
+const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage'));
+const AccountDeletionPage = lazy(() => import('../pages/AccountDeletionPage'));
+const AboutPage = lazy(() => import('../pages/AboutPage'));
+const TermsPage = lazy(() => import('../pages/TermsPage'));
+const ContactPage = lazy(() => import('../pages/ContactPage'));
+const FaqPage = lazy(() => import('../pages/FaqPage'));
+const MembershipGuidePage = lazy(() => import('../pages/MembershipGuidePage'));
+const MembershipLandingPage = lazy(() => import('../pages/MembershipLandingPage'));
+const PartnerBenefitPage = lazy(() => import('../pages/PartnerBenefitPage'));
+const OAuthRedirectHandler = lazy(
+  () => import('../features/loginPage/layouts/OAuthRedirectHandler')
+);
+
+const withRouteLoading = (element: ReactNode) => (
+  <Suspense fallback={<RouteLoadingFallback />}>{element}</Suspense>
+);
 
 const router = createBrowserRouter([
-  { path: '/oauth/callback/kakao', element: <OAuthRedirectHandler /> }, // 카카오 콜백 (독립 라우트)
+  { path: '/oauth/callback/kakao', element: withRouteLoading(<OAuthRedirectHandler />) },
   {
-    element: <ResponsiveLayout />, // DefaultLayout 대신 ResponsiveLayout 사용
+    element: <ResponsiveLayout />,
     children: [
       {
-        // 로그인된 사용자는 접근 불가
         path: '/login',
-        element: (
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        ),
+        element: <PublicRoute>{withRouteLoading(<LoginPage />)}</PublicRoute>,
       },
-      { path: '/', element: <HomeRoute /> },
+      { path: '/', element: withRouteLoading(<HomeRoute />) },
       { path: '/main', element: <Navigate to="/" replace /> },
-      { path: '/map', element: <MainPage /> },
+      { path: '/map', element: withRouteLoading(<MainPage />) },
       {
         path: '/mypage',
-        element: <MyPageLayout />,
+        element: withRouteLoading(<MyPageLayout />),
         children: [
-          { path: 'info', element: <MyInfoPage /> },
-          { path: 'favorites', element: <MyFavoritesPage /> },
+          { path: 'info', element: withRouteLoading(<MyInfoPage />) },
+          { path: 'favorites', element: withRouteLoading(<MyFavoritesPage />) },
           { path: 'history', element: <Navigate to="/mypage/favorites" replace /> },
         ],
       },
-      { path: '/benefits', element: <AllBenefitsPage /> },
-      { path: '/benefits/partners/:partnerId/:partnerSlug', element: <PartnerBenefitPage /> },
-      { path: '/membership', element: <MembershipLandingPage /> },
-      { path: '/membership/:carrierSlug', element: <MembershipLandingPage /> },
-      { path: '/about', element: <AboutPage /> },
-      { path: '/guide', element: <MembershipGuidePage /> },
-      { path: '/faq', element: <FaqPage /> },
-      { path: '/contact', element: <ContactPage /> },
-      { path: '/terms', element: <TermsPage /> },
-      { path: '/privacy', element: <PrivacyPolicyPage /> },
-      { path: '/account-deletion', element: <AccountDeletionPage /> },
+      { path: '/benefits', element: withRouteLoading(<AllBenefitsPage />) },
+      {
+        path: '/benefits/partners/:partnerId/:partnerSlug',
+        element: withRouteLoading(<PartnerBenefitPage />),
+      },
+      { path: '/membership', element: withRouteLoading(<MembershipLandingPage />) },
+      { path: '/membership/:carrierSlug', element: withRouteLoading(<MembershipLandingPage />) },
+      { path: '/about', element: withRouteLoading(<AboutPage />) },
+      { path: '/guide', element: withRouteLoading(<MembershipGuidePage />) },
+      { path: '/faq', element: withRouteLoading(<FaqPage />) },
+      { path: '/contact', element: withRouteLoading(<ContactPage />) },
+      { path: '/terms', element: withRouteLoading(<TermsPage />) },
+      { path: '/privacy', element: withRouteLoading(<PrivacyPolicyPage />) },
+      { path: '/account-deletion', element: withRouteLoading(<AccountDeletionPage />) },
     ],
   },
   {
     path: '*',
-    element: <NotFoundPage />,
+    element: withRouteLoading(<NotFoundPage />),
   },
 ]);
 

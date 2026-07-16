@@ -1,6 +1,10 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { getPartnerBenefitPath, loadPartnerCatalog } from './seo-partners.mjs';
+import {
+  getPartnerBenefitPath,
+  loadPartnerCatalog,
+  loadPartnerDetails,
+} from './seo-partners.mjs';
 
 const SITE_ORIGIN = 'https://itplace.click';
 const DIST_DIR = path.resolve('dist');
@@ -231,6 +235,25 @@ const carrierPaths = {
   LGU: '/membership/lguplus',
 };
 
+const gradeLabels = {
+  SKT_VIP: 'VIP',
+  SKT_GOLD: 'GOLD',
+  SKT_SILVER: 'SILVER',
+  KT_VVIP: 'VVIP',
+  KT_VIP: 'VIP',
+  KT_GOLD: 'GOLD',
+  KT_GENERAL: '일반',
+  VVIP: 'VVIP',
+  VIP: 'VIP',
+  BASIC: '우수',
+};
+
+const usageTypeLabels = {
+  ONLINE: '온라인',
+  OFFLINE: '오프라인',
+  BOTH: '온라인 · 오프라인',
+};
+
 const escapeHtml = (value) =>
   String(value)
     .replaceAll('&', '&amp;')
@@ -238,6 +261,93 @@ const escapeHtml = (value) =>
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+
+const compactText = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
+
+const truncateText = (value, maxLength = 700) => {
+  const compacted = compactText(value);
+  return compacted.length > maxLength ? compacted.slice(0, maxLength).trim() + '…' : compacted;
+};
+
+const renderBenefitSections = (sections = []) =>
+  sections
+    .map((section) => {
+      const carrierId = escapeHtml(section.carrier);
+      const benefitsHtml = section.benefits
+        .map((benefit) => {
+          const lines = [
+            '        <article id="benefit-' +
+              benefit.benefitId +
+              '" data-benefit-id="' +
+              benefit.benefitId +
+              '">',
+            '          <h3>' + escapeHtml(benefit.benefitName) + '</h3>',
+            '          <p><strong>이용 채널:</strong> ' +
+              escapeHtml(usageTypeLabels[benefit.usageType] ?? benefit.usageType) +
+              '</p>',
+          ];
+          if (compactText(benefit.description)) {
+            lines.push(
+              '          <p><strong>혜택:</strong> ' +
+                escapeHtml(compactText(benefit.description)) +
+                '</p>'
+            );
+          }
+          if (compactText(benefit.benefitLimit)) {
+            lines.push(
+              '          <p><strong>이용 제한:</strong> ' +
+                escapeHtml(compactText(benefit.benefitLimit)) +
+                '</p>'
+            );
+          }
+
+          const tierConditions = (benefit.tierBenefits ?? []).filter((tierBenefit) =>
+            compactText(tierBenefit.context)
+          );
+          if (tierConditions.length > 0) {
+            lines.push('          <ul aria-label="등급별 혜택">');
+            tierConditions.forEach((tierBenefit) => {
+              lines.push(
+                '            <li><strong>' +
+                  escapeHtml(gradeLabels[tierBenefit.grade] ?? tierBenefit.grade) +
+                  ':</strong> ' +
+                  escapeHtml(compactText(tierBenefit.context)) +
+                  '</li>'
+              );
+            });
+            lines.push('          </ul>');
+          }
+
+          const manual = truncateText(benefit.manual);
+          if (manual) {
+            lines.push(
+              '          <p><strong>이용 방법:</strong> ' + escapeHtml(manual) + '</p>'
+            );
+          }
+          if (benefit.url) {
+            lines.push(
+              '          <p><a href="' +
+                escapeHtml(benefit.url) +
+                '" rel="nofollow noopener">공식 안내 확인</a></p>'
+            );
+          }
+          lines.push('        </article>');
+          return lines.join('\n');
+        })
+        .join('\n');
+
+      return [
+        '      <section aria-labelledby="carrier-' + carrierId + '">',
+        '        <h2 id="carrier-' +
+          carrierId +
+          '">' +
+          escapeHtml(section.carrierLabel) +
+          ' 멤버십 혜택</h2>',
+        benefitsHtml,
+        '      </section>',
+      ].join('\n');
+    })
+    .join('\n');
 
 const replaceOrInsertMeta = (html, selectorPattern, tag) => {
   if (selectorPattern.test(html)) {
@@ -328,10 +438,11 @@ const renderFallback = (page) => {
   ];
 
   const relatedLinks = page.relatedLinks ?? [];
+  const benefitSections = renderBenefitSections(page.benefitSections);
 
   return `    <main data-prerender-fallback="true" style="max-width: 840px; margin: 0 auto; padding: 48px 20px; font-family: sans-serif; line-height: 1.7; color: #101114;">\n      <p style="font-weight: 700; color: #7132f5;">잇플레이스 · IT:PLACE</p>\n      <h1>${escapeHtml(page.heading)}</h1>\n${page.paragraphs
     .map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`)
-    .join('\n')}${
+    .join('\n')}${benefitSections ? `\n${benefitSections}` : ''}${
     relatedLinks.length > 0
       ? `\n      <section>\n        <h2>관련 멤버십 혜택</h2>\n        <ul>\n${relatedLinks
           .map(
@@ -382,6 +493,24 @@ const injectStructuredData = (html, page) => {
         },
       ],
     },
+    ...(page.structuredItems?.length
+      ? {
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: page.structuredItems.length,
+            itemListElement: page.structuredItems.map((item, index) => ({
+              '@type': 'ListItem',
+              position: index + 1,
+              item: {
+                '@type': 'Thing',
+                name: item.name,
+                description: item.description,
+                url: `${canonicalUrl}#benefit-${item.benefitId}`,
+              },
+            })),
+          },
+        }
+      : {}),
   };
   const json = JSON.stringify(structuredData).replaceAll('<', '\\u003c');
   return html.replace(
@@ -408,9 +537,30 @@ const writeRouteHtml = async (html, page) => {
 };
 
 const { partners, source: partnerSource } = await loadPartnerCatalog();
+const { details: partnerDetails, source: partnerDetailSource } = await loadPartnerDetails(partners);
+const partnerDetailsById = new Map(
+  partnerDetails.map((partnerDetail) => [partnerDetail.partnerId, partnerDetail])
+);
 const partnerPages = partners.map((partner) => {
-  const carrierNames = partner.carriers.map((carrier) => carrierLabels[carrier] ?? carrier);
+  const detail = partnerDetailsById.get(partner.partnerId);
+  const carrierGroups = detail?.carrierGroups ?? [];
+  const carriers = carrierGroups.length
+    ? carrierGroups.map((group) => group.carrier)
+    : partner.carriers;
+  const carrierNames = carriers.map((carrier) => carrierLabels[carrier] ?? carrier);
   const path = getPartnerBenefitPath(partner);
+  const benefitSections = carrierGroups.map((group) => ({
+    carrier: group.carrier,
+    carrierLabel: carrierLabels[group.carrier] ?? group.carrier,
+    benefits: group.benefits,
+  }));
+  const structuredItems = carrierGroups.flatMap((group) =>
+    group.benefits.map((benefit) => ({
+      benefitId: benefit.benefitId,
+      name: `${carrierLabels[group.carrier] ?? group.carrier} ${benefit.benefitName}`,
+      description: compactText(benefit.description || benefit.tierBenefits?.[0]?.context),
+    }))
+  );
   return {
     path,
     title: `${partner.partnerName} 통신사 멤버십 혜택 | 잇플레이스`,
@@ -423,10 +573,12 @@ const partnerPages = partners.map((partner) => {
       '혜택 상세에서 통신사별 조건, 이용 제한과 이용 방법을 비교하고 실제 결제 전 통신사 공식 안내에서 최신 정보를 확인해 주세요.',
     ],
     breadcrumbs: [{ name: '전체 멤버십 혜택', path: '/benefits' }],
-    relatedLinks: partner.carriers.map((carrier) => [
+    relatedLinks: carriers.map((carrier) => [
       carrierPaths[carrier],
       `${carrierLabels[carrier] ?? carrier} 멤버십 혜택`,
     ]),
+    benefitSections,
+    structuredItems,
   };
 });
 
@@ -463,6 +615,14 @@ const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://w
   .join('\n')}\n</urlset>\n`;
 await writeFile(path.join(DIST_DIR, 'sitemap.xml'), sitemap, 'utf8');
 
+const redirectLines = new Set(['/index.html / 301', '/main / 301', '/main/ / 301']);
+knownRoutes.forEach((page) => {
+  const canonicalPath = new URL(page.path, SITE_ORIGIN).pathname;
+  redirectLines.add(`${canonicalPath}/ ${canonicalPath} 301`);
+  redirectLines.add(`${canonicalPath}.html ${canonicalPath} 301`);
+});
+await writeFile(path.join(DIST_DIR, '_redirects'), `${[...redirectLines].join('\n')}\n`, 'utf8');
+
 console.log(
-  `prerendered ${knownRoutes.length} known routes and 404 page; sitemap has ${uniqueSitemapUrls.length} URLs (${partnerSource})`
+  `prerendered ${knownRoutes.length} known routes and 404 page; sitemap has ${uniqueSitemapUrls.length} URLs (${partnerSource}; details: ${partnerDetailSource})`
 );
