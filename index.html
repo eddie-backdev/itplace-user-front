@@ -2,7 +2,10 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/itPlace.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta
       name="viewport"
@@ -59,7 +62,12 @@
             "name": "ITPLACE",
             "alternateName": "잇플레이스",
             "url": "https://itplace.click/",
-            "logo": "https://itplace.click/itPlace.svg"
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://itplace.click/pwa-512x512.png",
+              "width": 512,
+              "height": 512
+            }
           },
           {
             "@type": "WebSite",
