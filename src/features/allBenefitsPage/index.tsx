@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { debounce } from 'lodash';
+import { Link, useSearchParams } from 'react-router-dom';
 import SearchBar from '../../components/SearchBar';
 import Pagination from '../../components/Pagination';
 import NoResult from '../../components/NoResult';
@@ -11,26 +12,34 @@ import {
   PartnerBenefitItem,
   PartnerBenefitApiParams,
 } from './apis/allBenefitsApi';
-import BenefitDetailModal from './components/BenefitDetailModal';
 import MobileHeader from '../../components/MobileHeader';
 import { useResponsive } from '../../hooks/useResponsive';
-import { CARRIER_OPTIONS, CarrierCode, getCarrierLabel } from '../../utils/membership';
+import {
+  CARRIER_OPTIONS,
+  CarrierCode,
+  getCarrierLabel,
+  isCarrierCode,
+} from '../../utils/membership';
 import { CATEGORIES } from '../mainPage/constants';
+import { getPartnerBenefitPath } from '../../utils/partnerSeo';
 
 const ITEMS_PER_PAGE = 15;
 
 const AllBenefitsLayout: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [searchParams] = useSearchParams();
+  const initialSearchTerm = searchParams.get('q')?.trim() ?? '';
+  const initialCarrier = searchParams.get('carrier');
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearchTerm);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('전체');
-  const [selectedCarriers, setSelectedCarriers] = useState<CarrierCode[]>([]);
+  const [selectedCarriers, setSelectedCarriers] = useState<CarrierCode[]>(() =>
+    isCarrierCode(initialCarrier) ? [initialCarrier] : []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [partners, setPartners] = useState<PartnerBenefitItem[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [hasNext, setHasNext] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<PartnerBenefitItem | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const { isMobile } = useResponsive();
   const latestRequestIdRef = useRef(0);
@@ -77,54 +86,6 @@ const AllBenefitsLayout: React.FC = () => {
     },
     [selectedCarriers]
   );
-
-  // 카드 클릭 핸들러
-  const handleCardClick = (partner: PartnerBenefitItem) => {
-    setSelectedPartner(partner);
-    setIsModalOpen(true);
-  };
-
-  // 모달 닫기 핸들러
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedPartner(null);
-  };
-
-  // 모달이 열릴 때 뒷배경 스크롤 방지
-  useEffect(() => {
-    if (isModalOpen) {
-      // 현재 스크롤 위치 저장
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-      document.body.setAttribute('data-scroll-y', scrollY.toString());
-    } else {
-      // 스크롤 위치 복원
-      const scrollY = document.body.getAttribute('data-scroll-y');
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
-      document.body.removeAttribute('data-scroll-y');
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY));
-      }
-    }
-    return () => {
-      // 컴포넌트 언마운트 시 정리
-      const scrollY = document.body.getAttribute('data-scroll-y');
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
-      document.body.removeAttribute('data-scroll-y');
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY));
-      }
-    };
-  }, [isModalOpen]);
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -362,11 +323,10 @@ const AllBenefitsLayout: React.FC = () => {
                     key={partner.partnerId}
                     className="group relative min-w-0 overflow-hidden rounded-[18px] border border-grey02 bg-white transition-all hover:border-purple02 hover:shadow-[0_10px_24px_rgba(16,17,20,0.06)]"
                   >
-                    <button
-                      type="button"
+                    <Link
+                      to={getPartnerBenefitPath(partner.partnerId, partner.partnerName)}
                       aria-label={`${partner.partnerName} 통신사별 혜택 보기`}
                       className="flex min-h-[112px] w-full items-center gap-3 p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple02 md:min-h-[132px] md:gap-4 md:p-4"
-                      onClick={() => handleCardClick(partner)}
                     >
                       <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] bg-grey01 p-2 md:h-16 md:w-16">
                         <SafeImage
@@ -399,7 +359,7 @@ const AllBenefitsLayout: React.FC = () => {
                         className="h-5 w-5 shrink-0 text-grey04 transition-transform group-hover:translate-x-0.5 group-hover:text-purple04"
                         aria-hidden="true"
                       />
-                    </button>
+                    </Link>
                   </article>
                 ))
               ) : loadError ? (
@@ -457,13 +417,6 @@ const AllBenefitsLayout: React.FC = () => {
           </section>
         </div>
       </div>
-
-      {/* 상세 모달 */}
-      <BenefitDetailModal
-        isOpen={isModalOpen}
-        partner={selectedPartner}
-        onClose={handleCloseModal}
-      />
     </div>
   );
 };

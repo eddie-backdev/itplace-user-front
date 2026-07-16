@@ -1,0 +1,2435 @@
+{
+  "generatedAt": "2026-07-16T15:12:18.468Z",
+  "source": "https://userapi.itplace.click/api/v1/benefits/partners",
+  "partners": [
+    {
+      "partnerId": 5,
+      "partnerName": "굽네치킨",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/goobne.jpg",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 112,
+      "partnerName": "GS25",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/gs25.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 287,
+      "partnerName": "공차",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EA%B3%B5%EC%B0%A8.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 286,
+      "partnerName": "꾸까",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EA%BE%B8%EA%B9%8C.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 8,
+      "partnerName": "다락",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/dalock.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 309,
+      "partnerName": "달콤",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%8B%AC%EC%BD%A4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 290,
+      "partnerName": "던킨",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%8D%98%ED%82%A8.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 363,
+      "partnerName": "미몽",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/%EB%AF%B8%EB%AA%BD.jpg",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 259,
+      "partnerName": "스몹",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/%EC%8A%A4%EB%AA%B9.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 226,
+      "partnerName": "아떼",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%95%84%EB%96%BC.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 335,
+      "partnerName": "오붓",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%98%A4%EB%B6%93.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 407,
+      "partnerName": "위피",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/partner-b07521eb777b84e8/logo-8b98b0892497f3f4.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 218,
+      "partnerName": "쿤달",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%BF%A4%EB%8B%AC.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 86,
+      "partnerName": "클룩",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/klook.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 102,
+      "partnerName": "필리",
+      "category": "뷰티/건강",
+      "image": "https://images.itplace.click/img/pilly.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 158,
+      "partnerName": "핏펫",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%95%8F%ED%8E%AB.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 310,
+      "partnerName": "핫딜",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%95%AB%EB%94%9C.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 201,
+      "partnerName": "허닭",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%97%88%EB%8B%AD.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 162,
+      "partnerName": "그리팅",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/%EA%B7%B8%EB%A6%AC%ED%8C%85.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 334,
+      "partnerName": "김캐디",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EA%B9%80%EC%BA%90%EB%94%94.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 260,
+      "partnerName": "노트미",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%85%B8%ED%8A%B8%EB%AF%B8.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 206,
+      "partnerName": "더벤티",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%8D%94%EB%B2%A4%ED%8B%B0.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 349,
+      "partnerName": "데이팩",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%8D%B0%EC%9D%B4%ED%8C%A9.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 171,
+      "partnerName": "동구밭",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%8F%99%EA%B5%AC%EB%B0%AD.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 191,
+      "partnerName": "동원몰",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%8F%99%EC%9B%90%EB%AA%B0.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 144,
+      "partnerName": "드롭탑",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%93%9C%EB%A1%AD%ED%83%91.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 203,
+      "partnerName": "로렌츠",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A1%9C%EB%A0%8C%EC%B8%A0.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 368,
+      "partnerName": "무브제",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/%EB%AC%B4%EB%B8%8C%EC%A0%9C.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 361,
+      "partnerName": "바잇미",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/%EB%B0%94%EC%9E%87%EB%AF%B8.ico",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 143,
+      "partnerName": "백미당",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/%EB%B0%B1%EB%AF%B8%EB%8B%B9.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 31,
+      "partnerName": "베베쿡",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/bebecook.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 331,
+      "partnerName": "볼록북",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%B3%BC%EB%A1%9D%EB%B6%81.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 160,
+      "partnerName": "빌리카",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%B9%8C%EB%A6%AC%EC%B9%B4.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 182,
+      "partnerName": "사보텐",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%82%AC%EB%B3%B4%ED%85%90.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 275,
+      "partnerName": "샐러디",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%83%90%EB%9F%AC%EB%94%94.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 42,
+      "partnerName": "세빛섬",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/sevitsome.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 420,
+      "partnerName": "수공당",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/partner-e7ebce606dd434e6/logo-d808614cd013e86c.ico",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 294,
+      "partnerName": "스노우",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%8A%A4%EB%85%B8%EC%9A%B0.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 230,
+      "partnerName": "스코피",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%8A%A4%EC%BD%94%ED%94%BC.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 51,
+      "partnerName": "싱카이",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/xingkai.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 304,
+      "partnerName": "아고다",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%95%84%EA%B3%A0%EB%8B%A4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 288,
+      "partnerName": "아웃백",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%95%84%EC%9B%83%EB%B0%B1.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 152,
+      "partnerName": "아티제",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%95%84%ED%8B%B0%EC%A0%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 325,
+      "partnerName": "에듀윌",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%90%EB%93%80%EC%9C%8C.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 161,
+      "partnerName": "에버온",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%90%EB%B2%84%EC%98%A8.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 233,
+      "partnerName": "위미트",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%9C%84%EB%AF%B8%ED%8A%B8.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 430,
+      "partnerName": "이마트",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-d62bbcc4cb70deaf/logo-781c9785db514a51.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 69,
+      "partnerName": "이월드",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/eworld.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 71,
+      "partnerName": "자란다",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/jaranda.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 344,
+      "partnerName": "지니팩",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%A7%80%EB%8B%88%ED%8C%A9.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 315,
+      "partnerName": "차방정",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%B0%A8%EB%B0%A9%EC%A0%95.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 328,
+      "partnerName": "차일디",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%B0%A8%EC%9D%BC%EB%94%94.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 79,
+      "partnerName": "카모아",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/kamoa.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 231,
+      "partnerName": "컨티뉴",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%BB%A8%ED%8B%B0%EB%89%B4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 88,
+      "partnerName": "키사라",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/kisara.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 193,
+      "partnerName": "타코벨",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%83%80%EC%BD%94%EB%B2%A8.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 90,
+      "partnerName": "투루카",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/turucar.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 409,
+      "partnerName": "파고다",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-570adfb198ee5b7d/logo-e7ca62e28cb3b521.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 97,
+      "partnerName": "펫생각",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/petsaenggak.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 400,
+      "partnerName": "폴바셋",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-962d56c61f5592be/logo-6992ba854655f0a9.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 163,
+      "partnerName": "풀무원",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/%ED%92%80%EB%AC%B4%EC%9B%90.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 101,
+      "partnerName": "피자헛",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/pizzahut.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 306,
+      "partnerName": "필수팩",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%95%84%EC%88%98%ED%8C%A9.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 104,
+      "partnerName": "할리스",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/hollys.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 426,
+      "partnerName": "해커스",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-c6751adc72e5d739/logo-8811ce1757c468f5.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 216,
+      "partnerName": "헉슬리",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%97%89%EC%8A%AC%EB%A6%AC.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 241,
+      "partnerName": "히바린",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%9E%88%EB%B0%94%EB%A6%B0.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 3,
+      "partnerName": "광동상회",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/kwangdongmart.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 242,
+      "partnerName": "국개대표",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EA%B5%AD%EA%B0%9C%EB%8C%80%ED%91%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 317,
+      "partnerName": "기프티쇼",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EA%B8%B0%ED%94%84%ED%8B%B0%EC%87%BC.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 136,
+      "partnerName": "기프티콘",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EA%B8%B0%ED%94%84%ED%8B%B0%EC%BD%98.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 189,
+      "partnerName": "뉴퍼마켓",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%89%B4%ED%8D%BC%EB%A7%88%EC%BC%93.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 360,
+      "partnerName": "닥터피엘",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/%EB%8B%A5%ED%84%B0%ED%94%BC%EC%97%98.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 254,
+      "partnerName": "더라운지",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%8D%94%EB%9D%BC%EC%9A%B4%EC%A7%80.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 213,
+      "partnerName": "디자인밀",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%94%94%EC%9E%90%EC%9D%B8%EB%B0%80.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 17,
+      "partnerName": "뚜레쥬르",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/touslesjours.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 249,
+      "partnerName": "런드리고",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%9F%B0%EB%93%9C%EB%A6%AC%EA%B3%A0.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 222,
+      "partnerName": "로봇랜드",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A1%9C%EB%B4%87%EB%9E%9C%EB%93%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 431,
+      "partnerName": "롯데리아",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-cf8b448ab4e9382c/logo-29f736b0210bf473.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 22,
+      "partnerName": "롯데월드",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/lotteworldadventure.jpg",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 264,
+      "partnerName": "루덴시아",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A3%A8%EB%8D%B4%EC%8B%9C%EC%95%84.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 232,
+      "partnerName": "리바이북",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A6%AC%EB%B0%94%EC%9D%B4%EB%B6%81.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 341,
+      "partnerName": "리뷰노트",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A6%AC%EB%B7%B0%EB%85%B8%ED%8A%B8.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 24,
+      "partnerName": "메가박스",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/megabox.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 139,
+      "partnerName": "멕시카나",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A9%95%EC%8B%9C%EC%B9%B4%EB%82%98.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 27,
+      "partnerName": "뮤직벨링",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/musicbellring.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 211,
+      "partnerName": "반려생활",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/%EB%B0%98%EB%A0%A4%EC%83%9D%ED%99%9C.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 209,
+      "partnerName": "보리보리",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/%EB%B3%B4%EB%A6%AC%EB%B3%B4%EB%A6%AC.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 34,
+      "partnerName": "브레댄코",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/brandandco.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 318,
+      "partnerName": "블루보틀",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%B8%94%EB%A3%A8%EB%B3%B4%ED%8B%80.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 314,
+      "partnerName": "비트커피",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%B9%84%ED%8A%B8%EC%BB%A4%ED%94%BC.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 359,
+      "partnerName": "비플레인",
+      "category": "뷰티/건강",
+      "image": "https://images.itplace.click/img/%EB%B9%84%ED%94%8C%EB%A0%88%EC%9D%B8.ico",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 156,
+      "partnerName": "빌리엔젤",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%B9%8C%EB%A6%AC%EC%97%94%EC%A0%A4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 362,
+      "partnerName": "삼산회관",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/%EC%82%BC%EC%82%B0%ED%9A%8C%EA%B4%80.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 41,
+      "partnerName": "서울랜드",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/seoulland.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 424,
+      "partnerName": "설성갈비",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/partner-313016b329e5de2b/logo-d808614cd013e86c.ico",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 219,
+      "partnerName": "셀퓨전씨",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%85%80%ED%93%A8%EC%A0%84%EC%94%A8.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 210,
+      "partnerName": "슈퍼키친",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%8A%88%ED%8D%BC%ED%82%A4%EC%B9%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 284,
+      "partnerName": "스타벅스",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/%EC%8A%A4%ED%83%80%EB%B2%85%EC%8A%A4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 46,
+      "partnerName": "스파랜드",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/spaland.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 220,
+      "partnerName": "스피쿠스",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/%EC%8A%A4%ED%94%BC%EC%BF%A0%EC%8A%A4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 52,
+      "partnerName": "씨네폭스",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/cinefox.jpg",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 366,
+      "partnerName": "아워홈몰",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/%EC%95%84%EC%9B%8C%ED%99%88%EB%AA%B0.jpg",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 248,
+      "partnerName": "아이피아",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%95%84%EC%9D%B4%ED%94%BC%EC%95%84.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 252,
+      "partnerName": "어떠케어",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%96%B4%EB%96%A0%EC%BC%80%EC%96%B4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 56,
+      "partnerName": "어바웃펫",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/aboutpet.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 57,
+      "partnerName": "에버랜드",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/everland.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 215,
+      "partnerName": "에필로우",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%90%ED%95%84%EB%A1%9C%EC%9A%B0.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 369,
+      "partnerName": "엘리하이",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/%EC%97%98%EB%A6%AC%ED%95%98%EC%9D%B4.jpg",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 371,
+      "partnerName": "엠베스트",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/%EC%97%A0%EB%B2%A0%EC%8A%A4%ED%8A%B8.jpg",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 319,
+      "partnerName": "여기어때",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%AC%EA%B8%B0%EC%96%B4%EB%95%8C.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 357,
+      "partnerName": "오뚜기몰",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/%EC%98%A4%EB%9A%9C%EA%B8%B0%EB%AA%B0.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 247,
+      "partnerName": "오토카지",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%98%A4%ED%86%A0%EC%B9%B4%EC%A7%80.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 60,
+      "partnerName": "온더보더",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/ontheborder.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 63,
+      "partnerName": "원더파크",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/wonderpark.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 169,
+      "partnerName": "원스토리",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%9B%90%EC%8A%A4%ED%86%A0%EB%A6%AC.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 64,
+      "partnerName": "원스토어",
+      "category": "APP/기기",
+      "image": "https://images.itplace.click/img/onestore.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 142,
+      "partnerName": "이랜드몰",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%9D%B4%EB%9E%9C%EB%93%9C%EB%AA%B0.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 72,
+      "partnerName": "전자랜드",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/eletricland.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 172,
+      "partnerName": "제오헤어",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%A0%9C%EC%98%A4%ED%97%A4%EC%96%B4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 135,
+      "partnerName": "제주항공",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%A0%9C%EC%A3%BC%ED%95%AD%EA%B3%B5.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 180,
+      "partnerName": "주렁주렁",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/%EC%A3%BC%EB%A0%81%EC%A3%BC%EB%A0%81.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 76,
+      "partnerName": "지니뮤직",
+      "category": "APP/기기",
+      "image": "https://images.itplace.click/img/genie.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 351,
+      "partnerName": "집업페이",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%A7%91%EC%97%85%ED%8E%98%EC%9D%B4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 340,
+      "partnerName": "착한의사",
+      "category": "뷰티/건강",
+      "image": "https://images.itplace.click/img/%EC%B0%A9%ED%95%9C%EC%9D%98%EC%82%AC.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 308,
+      "partnerName": "카페베네",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%B9%B4%ED%8E%98%EB%B2%A0%EB%84%A4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 258,
+      "partnerName": "캐리마켓",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%BA%90%EB%A6%AC%EB%A7%88%EC%BC%93.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 150,
+      "partnerName": "컬쳐랜드",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%BB%AC%EC%B3%90%EB%9E%9C%EB%93%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 263,
+      "partnerName": "코드모스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%BD%94%EB%93%9C%EB%AA%A8%EC%8A%A4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 297,
+      "partnerName": "퀴즈노스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%80%B4%EC%A6%88%EB%85%B8%EC%8A%A4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 87,
+      "partnerName": "키디키디",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/kidikidi.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 148,
+      "partnerName": "키자니아",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%82%A4%EC%9E%90%EB%8B%88%EC%95%84.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 146,
+      "partnerName": "텐바이텐",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%85%90%EB%B0%94%EC%9D%B4%ED%85%90.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 205,
+      "partnerName": "투어비스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%88%AC%EC%96%B4%EB%B9%84%EC%8A%A4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 91,
+      "partnerName": "트립닷컴",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/tripdotcom.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 238,
+      "partnerName": "파고다원",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/%ED%8C%8C%EA%B3%A0%EB%8B%A4%EC%9B%90.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 173,
+      "partnerName": "파스쿠찌",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%8C%8C%EC%8A%A4%EC%BF%A0%EC%B0%8C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 95,
+      "partnerName": "파파존스",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/papajohns.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 153,
+      "partnerName": "퍼블로그",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%8D%BC%EB%B8%94%EB%A1%9C%EA%B7%B8.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 96,
+      "partnerName": "페인터즈",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/painters.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 98,
+      "partnerName": "포쉬네일",
+      "category": "뷰티/건강",
+      "image": "https://images.itplace.click/img/forsynail.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 394,
+      "partnerName": "포텔리어",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/%ED%8F%AC%ED%85%94%EB%A6%AC%EC%96%B4.ico",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 99,
+      "partnerName": "포토블루",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/photoblue.jpeg",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 207,
+      "partnerName": "하프클럽",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/%ED%95%98%ED%94%84%ED%81%B4%EB%9F%BD.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 200,
+      "partnerName": "해피오더",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%95%B4%ED%94%BC%EC%98%A4%EB%8D%94.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 280,
+      "partnerName": "핸들대리",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%95%B8%EB%93%A4%EB%8C%80%EB%A6%AC.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 214,
+      "partnerName": "후디스몰",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%9B%84%EB%94%94%EC%8A%A4%EB%AA%B0.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 324,
+      "partnerName": "히트조명",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%9E%88%ED%8A%B8%EC%A1%B0%EB%AA%85.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 12,
+      "partnerName": "더플레이스",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/theplace.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 14,
+      "partnerName": "도미노피자",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/domino.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 253,
+      "partnerName": "도원스타일",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%8F%84%EC%9B%90%EC%8A%A4%ED%83%80%EC%9D%BC.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 18,
+      "partnerName": "라그릴리아",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/lagrillia.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 19,
+      "partnerName": "롯데렌터카",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/lotteRentalcar.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 20,
+      "partnerName": "롯데면세점",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/lottedfs.jpg",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 21,
+      "partnerName": "롯데시네마",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/lottecinema.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 147,
+      "partnerName": "매드포갈릭",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/%EB%A7%A4%EB%93%9C%ED%8F%AC%EA%B0%88%EB%A6%AD.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 239,
+      "partnerName": "멍타냥택시",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A9%8D%ED%83%80%EB%83%A5%ED%83%9D%EC%8B%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 405,
+      "partnerName": "모던하우스",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/partner-22b9f76c7b554269/logo-e195b60b57166c5b.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 301,
+      "partnerName": "모두의충전",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%AA%A8%EB%91%90%EC%9D%98%EC%B6%A9%EC%A0%84.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 28,
+      "partnerName": "미스터피자",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/mrpizza.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 168,
+      "partnerName": "미스터힐링",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%AF%B8%EC%8A%A4%ED%84%B0%ED%9E%90%EB%A7%81.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 29,
+      "partnerName": "반올림피자",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/banolim.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 365,
+      "partnerName": "비타브릿지",
+      "category": "뷰티/건강",
+      "image": "https://images.itplace.click/img/%EB%B9%84%ED%83%80%EB%B8%8C%EB%A6%BF%EC%A7%80.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 39,
+      "partnerName": "뽀로로파크",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/pororopark.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 337,
+      "partnerName": "서울스카이",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/seoulsky.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 432,
+      "partnerName": "세븐일레븐",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-703dd89d74b27b9f/logo-1540632e82ce374e.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 296,
+      "partnerName": "쇼핑라운지",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%87%BC%ED%95%91%EB%9D%BC%EC%9A%B4%EC%A7%80.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 47,
+      "partnerName": "신라면세점",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/theShillaDutyfree.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 225,
+      "partnerName": "아로마티카",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%95%84%EB%A1%9C%EB%A7%88%ED%8B%B0%EC%B9%B4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 262,
+      "partnerName": "아이러브탠",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%95%84%EC%9D%B4%EB%9F%AC%EB%B8%8C%ED%83%A0.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 54,
+      "partnerName": "아쿠아필드",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/aquafield.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 177,
+      "partnerName": "안경매니저",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%95%88%EA%B2%BD%EB%A7%A4%EB%8B%88%EC%A0%80.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 278,
+      "partnerName": "어플레이즈",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%96%B4%ED%94%8C%EB%A0%88%EC%9D%B4%EC%A6%88.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 323,
+      "partnerName": "에어클래스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%90%EC%96%B4%ED%81%B4%EB%9E%98%EC%8A%A4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 132,
+      "partnerName": "엔제리너스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%94%EC%A0%9C%EB%A6%AC%EB%84%88%EC%8A%A4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 208,
+      "partnerName": "여행가자고",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%AC%ED%96%89%EA%B0%80%EC%9E%90%EA%B3%A0.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 364,
+      "partnerName": "오피스디포",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/%EC%98%A4%ED%94%BC%EC%8A%A4%EB%94%94%ED%8F%AC.ico",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 62,
+      "partnerName": "원더빌리지",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/wondervillage.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 406,
+      "partnerName": "유니스터디",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/partner-5d4e273919dd4c39/logo-1d352b1a2487d793.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 145,
+      "partnerName": "이니스프리",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%9D%B4%EB%8B%88%EC%8A%A4%ED%94%84%EB%A6%AC.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 227,
+      "partnerName": "인터뷰박스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%9D%B8%ED%84%B0%EB%B7%B0%EB%B0%95%EC%8A%A4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 73,
+      "partnerName": "제일제면소",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/jeiljemyeonso.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 74,
+      "partnerName": "제주민속촌",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/jejufolk.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 175,
+      "partnerName": "제주삼다수",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%A0%9C%EC%A3%BC%EC%82%BC%EB%8B%A4%EC%88%98.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 77,
+      "partnerName": "청소연구소",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/cleaninglab.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 82,
+      "partnerName": "케이팝머치",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/kpopmerch.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 92,
+      "partnerName": "티웨이항공",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/tway.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 196,
+      "partnerName": "파고다인강",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/%ED%8C%8C%EA%B3%A0%EB%8B%A4%EC%9D%B8%EA%B0%95.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 245,
+      "partnerName": "파고다토쿨",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/%ED%8C%8C%EA%B3%A0%EB%8B%A4%ED%86%A0%EC%BF%A8.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 93,
+      "partnerName": "파리바게뜨",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/parisbaguette.jpg",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 94,
+      "partnerName": "파리크라상",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/pariscroissant.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 179,
+      "partnerName": "피자알볼로",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%94%BC%EC%9E%90%EC%95%8C%EB%B3%BC%EB%A1%9C.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 346,
+      "partnerName": "한화리조트",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%95%9C%ED%99%94%EB%A6%AC%EC%A1%B0%ED%8A%B8.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 106,
+      "partnerName": "현대면세점",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/hyundaiDutyfree.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 418,
+      "partnerName": "후지필름몰",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-31bf6e5438d07522/logo-9af95d36581fa6ea.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 1,
+      "partnerName": "가연결혼정보",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/gayeon.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 2,
+      "partnerName": "곤지암리조트",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/konjiamresort.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 13,
+      "partnerName": "데이원클리닉",
+      "category": "뷰티/건강",
+      "image": "https://images.itplace.click/img/dayone.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 356,
+      "partnerName": "롯데백화점몰",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/%EB%A1%AF%EB%8D%B0%EB%B0%B1%ED%99%94%EC%A0%90%EB%AA%B0.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 30,
+      "partnerName": "배스킨라빈스",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/%EB%B0%B0%EC%8A%A4%ED%82%A8%EB%9D%BC%EB%B9%88%EC%8A%A4%EA%B3%A0%EA%B0%9D%EB%B3%B4%EB%8B%B5.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 159,
+      "partnerName": "설악워터피아",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%84%A4%EC%95%85%EC%9B%8C%ED%84%B0%ED%94%BC%EC%95%84.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 367,
+      "partnerName": "스와로브스키",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/%EC%8A%A4%EC%99%80%EB%A1%9C%EB%B8%8C%EC%8A%A4%ED%82%A4.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 133,
+      "partnerName": "스피드메이트",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/%EC%8A%A4%ED%94%BC%EB%93%9C%EB%A9%94%EC%9D%B4%ED%8A%B8.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 50,
+      "partnerName": "신세계면세점",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/shinsegae.jpg",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 316,
+      "partnerName": "아르떼뮤지엄",
+      "category": null,
+      "image": "https://images.itplace.click/img/arte.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 53,
+      "partnerName": "아쿠아플라넷",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/aquaPlanet.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 199,
+      "partnerName": "열린베이커리",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%B4%EB%A6%B0%EB%B2%A0%EC%9D%B4%EC%BB%A4%EB%A6%AC.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 59,
+      "partnerName": "오토오아시스",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/autoOasis.jpg",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 66,
+      "partnerName": "유가네닭갈비",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/yugane.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 157,
+      "partnerName": "제주신화월드",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%A0%9C%EC%A3%BC%EC%8B%A0%ED%99%94%EC%9B%94%EB%93%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 80,
+      "partnerName": "캐리비안베이",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/caribbeanbay.jpg",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 178,
+      "partnerName": "타요키즈카페",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%83%80%EC%9A%94%ED%82%A4%EC%A6%88%EC%B9%B4%ED%8E%98.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 155,
+      "partnerName": "티맵모빌리티",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%8B%B0%EB%A7%B5%EB%AA%A8%EB%B9%8C%EB%A6%AC%ED%8B%B0.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 184,
+      "partnerName": "파고다어학원",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/%ED%8C%8C%EA%B3%A0%EB%8B%A4%EC%96%B4%ED%95%99%EC%9B%90.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 289,
+      "partnerName": "파파존스피자",
+      "category": null,
+      "image": "https://images.itplace.click/img/papajohns.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 100,
+      "partnerName": "푸드엠파이어",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/foodempire.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 276,
+      "partnerName": "핑크퐁플러스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%95%91%ED%81%AC%ED%90%81%ED%94%8C%EB%9F%AC%EC%8A%A4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 229,
+      "partnerName": "허그맘허그인",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/hugmom.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 10,
+      "partnerName": "대구아쿠아리움",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/daeguaqua.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 274,
+      "partnerName": "어니스트플라워",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%96%B4%EB%8B%88%EC%8A%A4%ED%8A%B8%ED%94%8C%EB%9D%BC%EC%9B%8C.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 255,
+      "partnerName": "웅진플레이도시",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/%EC%9B%85%EC%A7%84%ED%94%8C%EB%A0%88%EC%9D%B4%EB%8F%84%EC%8B%9C.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 78,
+      "partnerName": "초심스터디카페",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/chosim.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 81,
+      "partnerName": "컬리너리스퀘어",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/culinarysquare.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 185,
+      "partnerName": "크래버대게나라",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%81%AC%EB%9E%98%EB%B2%84%EB%8C%80%EA%B2%8C%EB%82%98%EB%9D%BC.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 89,
+      "partnerName": "통인익스프레스",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/tonginexpress.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 393,
+      "partnerName": "폴라리스오피스",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/%ED%8F%B4%EB%9D%BC%EB%A6%AC%EC%8A%A4%EC%98%A4%ED%94%BC%EC%8A%A4.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 419,
+      "partnerName": "프린트베이커리",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/partner-61d2c9a7a151f1ef/logo-54d1dbda56b429eb.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 33,
+      "partnerName": "부산엑스더스카이",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/busanXTheSky.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 49,
+      "partnerName": "신라인터넷면세점",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/theShillaDutyfree.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 322,
+      "partnerName": "제주인터넷면세점",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%A0%9C%EC%A3%BC%EC%9D%B8%ED%84%B0%EB%84%B7%EB%A9%B4%EC%84%B8%EC%A0%90.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 38,
+      "partnerName": "뽀로로아쿠아빌리지",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/bbororoaqua.jpg",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 48,
+      "partnerName": "신라아이파크면세점",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/shillaIpark.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 151,
+      "partnerName": "워커힐호텔앤리조트",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%9B%8C%EC%BB%A4%ED%9E%90%ED%98%B8%ED%85%94%EC%95%A4%EB%A6%AC%EC%A1%B0%ED%8A%B8.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 68,
+      "partnerName": "유앤아이피부과의원",
+      "category": "뷰티/건강",
+      "image": "https://images.itplace.click/img/youandi.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 164,
+      "partnerName": "파라다이스스파도고",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4%EC%8A%A4%ED%8C%8C%EB%8F%84%EA%B3%A0.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 423,
+      "partnerName": "히키니쿠토코메 도산",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/partner-0d3524931debbf5a/logo-d808614cd013e86c.ico",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 202,
+      "partnerName": "네이처스케이프 플러스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%84%A4%EC%9D%B4%EC%B2%98%EC%8A%A4%EC%BC%80%EC%9D%B4%ED%94%84%ED%94%8C%EB%9F%AC%EC%8A%A4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 195,
+      "partnerName": "파라다이스시티 씨메르",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4%EC%8B%9C%ED%8B%B0%EC%94%A8%EB%A9%94%EB%A5%B4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 223,
+      "partnerName": "파라다이스시티 원더박스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4%EC%8B%9C%ED%8B%B0%EC%9B%90%EB%8D%94%EB%B0%95%EC%8A%A4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 194,
+      "partnerName": "제주관광공사 인터넷면세점",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%A0%9C%EC%A3%BC%EA%B4%80%EA%B4%91%EA%B3%B5%EC%82%AC%EC%9D%B8%ED%84%B0%EB%84%B7%EB%A9%B4%EC%84%B8%EC%A0%90.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 374,
+      "partnerName": "와이페이모어(국내선)",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/%EC%99%80%EC%9D%B4%ED%8E%98%EC%9D%B4%EB%AA%A8%EC%96%B4%EA%B5%AD%EB%82%B4%EC%84%A0.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 267,
+      "partnerName": "배스킨라빈스(고객 보답)",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%B0%B0%EC%8A%A4%ED%82%A8%EB%9D%BC%EB%B9%88%EC%8A%A4%EA%B3%A0%EA%B0%9D%EB%B3%B4%EB%8B%B5.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 127,
+      "partnerName": "스카이라인 루지",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/skyLine.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 237,
+      "partnerName": "월스트리트 잉글리시",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/wallStreetEnglish.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 383,
+      "partnerName": "한강유람선 이크루즈",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/elandcruise.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 277,
+      "partnerName": "롯데면세점 동경긴자점",
+      "category": null,
+      "image": "https://images.itplace.click/img/lottedfs.jpg",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 192,
+      "partnerName": "티니핑월드 인 판교",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%8B%B0%EB%8B%88%ED%95%91%EC%9B%94%EB%93%9C%EC%9D%B8%ED%8C%90%EA%B5%90.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 302,
+      "partnerName": "플레이타임(키즈카페)",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%94%8C%EB%A0%88%EC%9D%B4%ED%83%80%EC%9E%84%ED%82%A4%EC%A6%88%EC%B9%B4%ED%8E%98.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 372,
+      "partnerName": "트래블버킷(국내선)",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/%ED%8A%B8%EB%9E%98%EB%B8%94%EB%B2%84%ED%82%B7%EA%B5%AD%EB%82%B4%EC%84%A0.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 266,
+      "partnerName": "쇼핑라운지(고객 보답)",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%87%BC%ED%95%91%EB%9D%BC%EC%9A%B4%EC%A7%80%EA%B3%A0%EA%B0%9D%EB%B3%B4%EB%8B%B5.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 281,
+      "partnerName": "온누리시장(몰)",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%98%A8%EB%88%84%EB%A6%AC%EC%8B%9C%EC%9E%A5%EB%AA%B0.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 378,
+      "partnerName": "동아제약 디몰",
+      "category": "뷰티/건강",
+      "image": "https://images.itplace.click/img/dmall.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 326,
+      "partnerName": "리프레쉬 골프",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A6%AC%ED%94%84%EB%A0%88%EC%89%AC%EA%B3%A8%ED%94%84.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 370,
+      "partnerName": "엘리하이 키즈",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/%EC%97%98%EB%A6%AC%ED%95%98%EC%9D%B4%ED%82%A4%EC%A6%88.jpg",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 427,
+      "partnerName": "플래시백 계림",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-1f6b3db7703bf3f4/logo-4fc2c129806f055f.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 429,
+      "partnerName": "크리스탈 제이드",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-a114433407ffbf94/logo-23bbe05d012e167e.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 176,
+      "partnerName": "노랑풍선 시티버스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%85%B8%EB%9E%91%ED%92%8D%EC%84%A0%EC%8B%9C%ED%8B%B0%EB%B2%84%EC%8A%A4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 141,
+      "partnerName": "롯데월드 서울스카이",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/seoulsky.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 129,
+      "partnerName": "롯데월드 아이스링크",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/lotteworldIcerink.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 128,
+      "partnerName": "롯데월드 아쿠아리움",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/lotteworldAquarium.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 425,
+      "partnerName": "설성마켓 스마트팩토리점",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/partner-f8d047718e534cc2/logo-d808614cd013e86c.ico",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 391,
+      "partnerName": "오가나셀 피부과의원 청담점",
+      "category": "뷰티/건강",
+      "image": "https://images.itplace.click/img/oganacell.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 130,
+      "partnerName": "롯데월드 어드벤처 부산",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/lotteworldadventurebusan.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 174,
+      "partnerName": "아시아나 인터넷 면세점",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%95%84%EC%8B%9C%EC%95%84%EB%82%98%EC%9D%B8%ED%84%B0%EB%84%B7%EB%A9%B4%EC%84%B8%EC%A0%90.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 329,
+      "partnerName": "씨라이프 코엑스 아쿠아리움",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/coexaqua.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 380,
+      "partnerName": "씨라이프 부산 아쿠아리움",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/busanAquarium.jpg",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 376,
+      "partnerName": "그래비티 조선 서울 판교",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/%EA%B7%B8%EB%9E%98%EB%B9%84%ED%8B%B0%EC%A1%B0%EC%84%A0%EC%84%9C%EC%9A%B8%ED%8C%90%EA%B5%90.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 421,
+      "partnerName": "설성목장(온라인)",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/partner-f2724b6736153a85/logo-2b8ad2d33455a8f7.ico",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 256,
+      "partnerName": "엘리하이/엠베스트",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%98%EB%A6%AC%ED%95%98%EC%9D%B4%EC%97%A0%EB%B2%A0%EC%8A%A4%ED%8A%B8.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 244,
+      "partnerName": "원더파크/원더빌리지",
+      "category": null,
+      "image": "https://images.itplace.click/img/wondervillage.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 25,
+      "partnerName": "뮤지엄 원",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/museum1.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 342,
+      "partnerName": "밀리의 서재",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%B0%80%EB%A6%AC%EC%9D%98%EC%84%9C%EC%9E%AC.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 170,
+      "partnerName": "여행자 보험",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%AC%ED%96%89%EC%9E%90%EB%B3%B4%ED%97%98.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 279,
+      "partnerName": "와플랫 체크",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%99%80%ED%94%8C%EB%9E%AB%EC%B2%B4%ED%81%AC.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 140,
+      "partnerName": "마티나 라운지",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A7%88%ED%8B%B0%EB%82%98%EB%9D%BC%EC%9A%B4%EC%A7%80.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 382,
+      "partnerName": "대관령 하늘목장",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/skyranch.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 293,
+      "partnerName": "서울형 키즈카페",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%84%9C%EC%9A%B8%ED%98%95%ED%82%A4%EC%A6%88%EC%B9%B4%ED%8E%98.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 85,
+      "partnerName": "클럽디 오아시스",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/clubdoasis.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 212,
+      "partnerName": "사람인 멘토링매치",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%82%AC%EB%9E%8C%EC%9D%B8%EB%A9%98%ED%86%A0%EB%A7%81%EB%A7%A4%EC%B9%98.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 119,
+      "partnerName": "아르떼 키즈파크 제주",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/arte.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 332,
+      "partnerName": "노보텔 앰배서더 동대문",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%85%B8%EB%B3%B4%ED%85%94%EC%95%B0%EB%B0%B0%EC%84%9C%EB%8D%94%EB%8F%99%EB%8C%80%EB%AC%B8.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 330,
+      "partnerName": "추억의 국민학교 떡볶이",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%B6%94%EC%96%B5%EC%9D%98%EA%B5%AD%EB%AF%BC%ED%95%99%EA%B5%90%EB%96%A1%EB%B3%B6%EC%9D%B4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 240,
+      "partnerName": "여수 유월드",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%97%AC%EC%88%98%EC%9C%A0%EC%9B%94%EB%93%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 347,
+      "partnerName": "공항 스카이허브 라운지",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EA%B3%B5%ED%95%AD%EC%8A%A4%EC%B9%B4%EC%9D%B4%ED%97%88%EB%B8%8C%EB%9D%BC%EC%9A%B4%EC%A7%80.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 392,
+      "partnerName": "청연(구.청소연구소)",
+      "category": null,
+      "image": "https://images.itplace.click/img/cleaninglab.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 236,
+      "partnerName": "르 스페이스",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A5%B4%EC%8A%A4%ED%8E%98%EC%9D%B4%EC%8A%A4.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 428,
+      "partnerName": "더 키친 일뽀르노",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-120c337c90577829/logo-1fe19b0f9b56c585.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 433,
+      "partnerName": "11번가",
+      "category": null,
+      "image": "https://images.itplace.click/img/11-4fe3399128001aee/logo-7a757cde4c314b5e.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 246,
+      "partnerName": "21그램",
+      "category": null,
+      "image": "https://images.itplace.click/img/21%EA%B7%B8%EB%9E%A8.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 285,
+      "partnerName": "이마트24",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/%EC%9D%B4%EB%A7%88%ED%8A%B824.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 165,
+      "partnerName": "톤28",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%86%A428.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 295,
+      "partnerName": "5G 데이터충전",
+      "category": null,
+      "image": "https://images.itplace.click/img/5g%EB%8D%B0%EC%9D%B4%ED%84%B0%EC%B6%A9%EC%A0%84.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 320,
+      "partnerName": "AICE",
+      "category": null,
+      "image": "https://images.itplace.click/img/aice.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 327,
+      "partnerName": "A/S수리비 할인",
+      "category": null,
+      "image": "https://images.itplace.click/img/as%EC%88%98%EB%A6%AC%EB%B9%84%ED%95%A0%EC%9D%B8.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 408,
+      "partnerName": "B1불스원카케어",
+      "category": "생활/편의",
+      "image": "https://images.itplace.click/img/b1-d773186fcff08def/logo-8c568c6472ab1d86.ico",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 134,
+      "partnerName": "bhc",
+      "category": null,
+      "image": "https://images.itplace.click/img/bhc.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 181,
+      "partnerName": "B tv cable",
+      "category": null,
+      "image": "https://images.itplace.click/img/btvcable.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 108,
+      "partnerName": "CGV",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/cgv.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 305,
+      "partnerName": "CJ더마켓",
+      "category": null,
+      "image": "https://images.itplace.click/img/cj%EB%8D%94%EB%A7%88%EC%BC%93.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 291,
+      "partnerName": "CU",
+      "category": null,
+      "image": "https://images.itplace.click/img/cu.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 109,
+      "partnerName": "DBR동아비즈니스리뷰",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/dbr.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 313,
+      "partnerName": "정원e샵",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%A0%95%EC%9B%90e%EC%83%B5.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 131,
+      "partnerName": "FLO",
+      "category": null,
+      "image": "https://images.itplace.click/img/flo.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 298,
+      "partnerName": "롯데렌터카 G car",
+      "category": null,
+      "image": "https://images.itplace.click/img/lotteRentalcar.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 138,
+      "partnerName": "G car",
+      "category": null,
+      "image": "https://images.itplace.click/img/lotteRentalcar.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 307,
+      "partnerName": "genie",
+      "category": null,
+      "image": "https://images.itplace.click/img/genie.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 312,
+      "partnerName": "GS25편의점택배",
+      "category": null,
+      "image": "https://images.itplace.click/img/gspostbox.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 110,
+      "partnerName": "GS THE FRESH",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/gsthefresh.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 113,
+      "partnerName": "HBR하버드비즈니스리뷰",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/hbr.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 348,
+      "partnerName": "현대Hmall",
+      "category": null,
+      "image": "https://images.itplace.click/img/%ED%98%84%EB%8C%80hmall.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 114,
+      "partnerName": "IPTV",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/iptv.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 333,
+      "partnerName": "KKday",
+      "category": null,
+      "image": "https://images.itplace.click/img/kkday.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 345,
+      "partnerName": "클룩(KLOOK)",
+      "category": null,
+      "image": "https://images.itplace.click/img/klook.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 300,
+      "partnerName": "KT멤버십 공연예매",
+      "category": null,
+      "image": "https://images.itplace.click/img/kt%EB%A9%A4%EB%B2%84%EC%8B%AD%EA%B3%B5%EC%97%B0%EC%98%88%EB%A7%A4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 311,
+      "partnerName": "KT닷컴 액세서리 할인",
+      "category": null,
+      "image": "https://images.itplace.click/img/kt%EB%8B%B7%EC%BB%B4%EC%95%A1%EC%84%B8%EC%84%9C%EB%A6%AC%ED%95%A0%EC%9D%B8.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 292,
+      "partnerName": "KT알파 쇼핑(구. K쇼핑)",
+      "category": null,
+      "image": "https://images.itplace.click/img/kt%EC%95%8C%ED%8C%8C%EC%87%BC%ED%95%91%EA%B5%ACk%EC%87%BC%ED%95%91.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 336,
+      "partnerName": "kt wiz 프로야구",
+      "category": null,
+      "image": "https://images.itplace.click/img/ktwiz%ED%94%84%EB%A1%9C%EC%95%BC%EA%B5%AC.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 381,
+      "partnerName": "LG트윈스 경기 티켓 할인",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/lgtwins.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 386,
+      "partnerName": "LG생활건강샵 U+패밀리샵",
+      "category": "뷰티/건강",
+      "image": "https://images.itplace.click/img/lghhshop.jpg",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 299,
+      "partnerName": "LTE데이터 룰렛",
+      "category": null,
+      "image": "https://images.itplace.click/img/lte%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%A3%B0%EB%A0%9B.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 303,
+      "partnerName": "LTE 데이터충전",
+      "category": null,
+      "image": "https://images.itplace.click/img/lte%EB%8D%B0%EC%9D%B4%ED%84%B0%EC%B6%A9%EC%A0%84.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 282,
+      "partnerName": "메가MGC커피",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EB%A9%94%EA%B0%80mgc%EC%BB%A4%ED%94%BC.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 343,
+      "partnerName": "MOVV",
+      "category": null,
+      "image": "https://images.itplace.click/img/movv.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 187,
+      "partnerName": "씨네Q",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/%EC%94%A8%EB%84%A4q.png",
+      "carriers": ["SKT", "LGU"]
+    },
+    {
+      "partnerId": 352,
+      "partnerName": "QED",
+      "category": "엑티비티",
+      "image": "https://images.itplace.click/img/qed.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 166,
+      "partnerName": "SEA LIFE 부산아쿠아리움",
+      "category": null,
+      "image": "https://images.itplace.click/img/busanAquarium.jpg",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 221,
+      "partnerName": "SK매직",
+      "category": null,
+      "image": "https://images.itplace.click/img/sk%EB%A7%A4%EC%A7%81.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 121,
+      "partnerName": "SK렌터카",
+      "category": "여행/교통",
+      "image": "https://images.itplace.click/img/skrentacar.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 154,
+      "partnerName": "SK스토아",
+      "category": null,
+      "image": "https://images.itplace.click/img/sk%EC%8A%A4%ED%86%A0%EC%95%84.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 235,
+      "partnerName": "SK국제전화 00700",
+      "category": null,
+      "image": "https://images.itplace.click/img/sk%EA%B5%AD%EC%A0%9C%EC%A0%84%ED%99%9400700.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 137,
+      "partnerName": "SK브로드밴드 B tv",
+      "category": null,
+      "image": "https://images.itplace.click/img/sk%EB%B8%8C%EB%A1%9C%EB%93%9C%EB%B0%B4%EB%93%9Cbtv.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 257,
+      "partnerName": "밀크T",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/%EB%B0%80%ED%81%ACt.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 265,
+      "partnerName": "T 다이렉트 샵",
+      "category": null,
+      "image": "https://images.itplace.click/img/t%EB%8B%A4%EC%9D%B4%EB%A0%89%ED%8A%B8%EC%83%B5.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 224,
+      "partnerName": "T 멤버십 라이프 신한카드",
+      "category": null,
+      "image": "https://images.itplace.click/img/t%EB%A9%A4%EB%B2%84%EC%8B%AD%EB%9D%BC%EC%9D%B4%ED%94%84%EC%8B%A0%ED%95%9C%EC%B9%B4%EB%93%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 197,
+      "partnerName": "T 멤버십 더블 체크카드(하나)",
+      "category": null,
+      "image": "https://images.itplace.click/img/t%EB%A9%A4%EB%B2%84%EC%8B%AD%EB%8D%94%EB%B8%94%EC%B2%B4%ED%81%AC%EC%B9%B4%EB%93%9C%ED%95%98%EB%82%98.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 234,
+      "partnerName": "T 멤버십 더블 롯데 카드",
+      "category": null,
+      "image": "https://images.itplace.click/img/t%EB%A9%A4%EB%B2%84%EC%8B%AD%EB%8D%94%EB%B8%94%EB%A1%AF%EB%8D%B0%EC%B9%B4%EB%93%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 251,
+      "partnerName": "T 멤버십 더블 롯데 체크카드",
+      "category": null,
+      "image": "https://images.itplace.click/img/t%EB%A9%A4%EB%B2%84%EC%8B%AD%EB%8D%94%EB%B8%94%EB%A1%AF%EB%8D%B0%EC%B2%B4%ED%81%AC%EC%B9%B4%EB%93%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 188,
+      "partnerName": "T 우주 신한카드",
+      "category": null,
+      "image": "https://images.itplace.click/img/t%EC%9A%B0%EC%A3%BC%EC%8B%A0%ED%95%9C%EC%B9%B4%EB%93%9C.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 228,
+      "partnerName": "Touch1카드(하나)",
+      "category": null,
+      "image": "https://images.itplace.click/img/touch1%EC%B9%B4%EB%93%9C%ED%95%98%EB%82%98.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 283,
+      "partnerName": "지니 TV",
+      "category": null,
+      "image": "https://images.itplace.click/img/%EC%A7%80%EB%8B%88tv.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 124,
+      "partnerName": "V컬러링",
+      "category": "APP/기기",
+      "image": "https://images.itplace.click/img/vcoloring.png",
+      "carriers": ["KT", "LGU"]
+    },
+    {
+      "partnerId": 125,
+      "partnerName": "VIPS",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/vips.png",
+      "carriers": ["SKT", "KT", "LGU"]
+    },
+    {
+      "partnerId": 217,
+      "partnerName": "VOG Hair",
+      "category": null,
+      "image": "https://images.itplace.click/img/voghair.png",
+      "carriers": ["SKT", "KT"]
+    },
+    {
+      "partnerId": 321,
+      "partnerName": "VOG Hair(보그헤어)",
+      "category": null,
+      "image": "https://images.itplace.click/img/voghair%EB%B3%B4%EA%B7%B8%ED%97%A4%EC%96%B4.png",
+      "carriers": ["KT"]
+    },
+    {
+      "partnerId": 355,
+      "partnerName": "VYVY",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/vyvy.png",
+      "carriers": ["LGU"]
+    },
+    {
+      "partnerId": 204,
+      "partnerName": "YBM 전화화상",
+      "category": null,
+      "image": "https://images.itplace.click/img/ybmnet.png",
+      "carriers": ["SKT"]
+    },
+    {
+      "partnerId": 126,
+      "partnerName": "YBM NET",
+      "category": "교육",
+      "image": "https://images.itplace.click/img/ybmnet.png",
+      "carriers": ["LGU"]
+    }
+  ]
+}

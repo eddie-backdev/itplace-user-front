@@ -53,13 +53,13 @@ const AboutPage = () => {
   return (
     <>
       <PageSeo
-        title="서비스 소개 | ITPLACE"
-        description="ITPLACE는 SKT, KT, LG U+ 통신사 멤버십 혜택과 제휴처를 지도 기반으로 찾을 수 있는 혜택 검색 서비스입니다."
+        title="서비스 소개 | 잇플레이스"
+        description="잇플레이스(ITPLACE, 잇플)는 SKT, KT, LG U+ 통신사 멤버십 혜택과 제휴처를 지도 기반으로 찾을 수 있는 혜택 검색 서비스입니다."
         path="/about"
       />
       <InfoPageShell
         title="서비스 소개"
-        description="ITPLACE는 흩어져 있는 통신 3사 멤버십 혜택을 사용자가 실제로 찾고 비교할 수 있도록 지도, 목록, 검색, 추천 기능으로 정리하는 서비스입니다."
+        description="잇플레이스(ITPLACE, 잇플)는 흩어져 있는 통신 3사 멤버십 혜택을 사용자가 실제로 찾고 비교할 수 있도록 지도, 목록, 검색, 추천 기능으로 정리하는 서비스입니다."
       >
         <section>
           <h2 className="text-xl font-black tracking-[-0.02em] text-purple06">안내 바로가기</h2>

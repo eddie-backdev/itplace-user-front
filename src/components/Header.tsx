@@ -29,7 +29,7 @@ const menus = [
   { id: 'mypage', label: '마이페이지', icon: TbUser, path: '/mypage/info' },
 ];
 
-const supportPaths = ['/about', '/guide', '/faq', '/contact', '/terms', '/privacy'];
+const supportPaths = ['/about', '/guide', '/faq', '/contact', '/terms', '/privacy', '/membership'];
 
 const primaryNavItemClass =
   'relative flex h-[60px] w-full flex-col items-center justify-center rounded-xl border border-[#CEC5E2] bg-[#E5DFF2] text-[11px] font-bold leading-tight text-[#514B60] shadow-[0_3px_8px_rgba(62,47,91,0.10),inset_0_1px_0_rgba(255,255,255,0.58)] transition-[background-color,border-color,color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[#BCAAF0] hover:bg-[#DCD3EF] hover:text-purple06 hover:shadow-[0_6px_13px_rgba(62,47,91,0.15),inset_0_1px_0_rgba(255,255,255,0.62)] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple03 focus-visible:ring-offset-1 focus-visible:ring-offset-purple01';
@@ -47,7 +47,8 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
 
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const [isQuestionRecommendationOpen, setIsQuestionRecommendationOpen] = useState(false);
-  const isSupportActive = supportPaths.includes(location.pathname);
+  const isSupportActive =
+    supportPaths.includes(location.pathname) || location.pathname.startsWith('/membership/');
 
   useEffect(() => {
     return addQuestionRecommendationChatStateListener(setIsQuestionRecommendationOpen);
@@ -108,7 +109,9 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
             const isActive =
               m.id === 'mypage'
                 ? location.pathname.startsWith('/mypage')
-                : location.pathname === m.path;
+                : m.id === 'benefits'
+                  ? location.pathname.startsWith('/benefits')
+                  : location.pathname === m.path;
             return (
               <Link
                 to={m.path}

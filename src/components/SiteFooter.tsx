@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 const footerLinks = [
+  { label: '통신사 멤버십', to: '/membership' },
   { label: '서비스 소개', to: '/about' },
   { label: '혜택 이용 가이드', to: '/guide' },
   { label: 'FAQ', to: '/faq' },

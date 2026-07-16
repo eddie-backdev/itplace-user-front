@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { getPartnerBenefitPath, loadPartnerCatalog } from './seo-partners.mjs';
 
 const SITE_ORIGIN = 'https://itplace.click';
 const DIST_DIR = path.resolve('dist');
@@ -7,19 +8,19 @@ const DIST_DIR = path.resolve('dist');
 const publicPages = [
   {
     path: '/about',
-    title: '서비스 소개 | ITPLACE',
+    title: '서비스 소개 | 잇플레이스',
     description:
-      'ITPLACE는 SKT, KT, LG U+ 통신사 멤버십 혜택과 제휴처를 지도 기반으로 찾을 수 있는 혜택 검색 서비스입니다.',
+      '잇플레이스(ITPLACE, 잇플)는 SKT, KT, LG U+ 통신사 멤버십 혜택과 제휴처를 지도 기반으로 찾을 수 있는 혜택 검색 서비스입니다.',
     heading: '서비스 소개',
     paragraphs: [
-      'ITPLACE는 흩어져 있는 통신 3사 멤버십 혜택을 사용자가 실제로 찾고 비교할 수 있도록 지도, 목록, 검색, 추천 기능으로 정리하는 서비스입니다.',
+      '잇플레이스(ITPLACE, 잇플)는 흩어져 있는 통신 3사 멤버십 혜택을 사용자가 실제로 찾고 비교할 수 있도록 지도, 목록, 검색, 추천 기능으로 정리하는 서비스입니다.',
       '통신사 멤버십 제휴처를 지도와 목록에서 탐색하고, 온라인과 오프라인 혜택 조건, 이용 채널, 멤버십 등급별 혜택을 구분해 확인할 수 있습니다.',
       '혜택 정보나 제휴처 정보가 실제와 다를 경우 문의 페이지를 통해 제보할 수 있으며, 확인 후 정보를 개선합니다.',
     ],
   },
   {
     path: '/guide',
-    title: '통신사 멤버십 혜택 이용 가이드 | ITPLACE',
+    title: '통신사 멤버십 혜택 이용 가이드 | 잇플레이스',
     description:
       'SKT, KT, LG U+ 멤버십 혜택을 지도에서 찾고 온라인·오프라인 이용 조건을 확인하는 방법을 안내합니다.',
     heading: '통신사 멤버십 혜택 이용 가이드',
@@ -30,8 +31,56 @@ const publicPages = [
     ],
   },
   {
+    path: '/membership',
+    title: '통신 3사 멤버십 혜택 비교 | 잇플레이스',
+    description:
+      'SKT, KT, LG U+ 통신 3사 멤버십 제휴처를 한곳에서 찾고 통신사별 할인, 등급, 이용 조건을 비교합니다.',
+    heading: '통신사 멤버십 혜택',
+    paragraphs: [
+      '잇플레이스에서는 SKT T 멤버십, KT 멤버십, LG U+ 멤버십 제휴처를 같은 기준으로 찾아보고 통신사별 이용 조건을 비교할 수 있습니다.',
+      '같은 브랜드도 통신사, 멤버십 등급, 온라인·오프라인 이용 채널에 따라 혜택이 달라질 수 있으므로 제휴처 상세 페이지에서 통신사별 조건을 확인해 주세요.',
+      '통신사 멤버십 혜택은 기간과 운영 정책에 따라 바뀔 수 있으므로 실제 결제 전 통신사 공식 안내에서 최신 조건을 재확인하는 것이 안전합니다.',
+    ],
+  },
+  {
+    path: '/membership/skt',
+    title: 'SKT 멤버십 혜택·제휴처 | 잇플레이스',
+    description:
+      'SKT T 멤버십 제휴처를 브랜드와 카테고리별로 찾고 등급별 할인·적립 조건과 이용 채널을 비교하세요.',
+    heading: 'SKT 멤버십 혜택',
+    paragraphs: [
+      'SKT T 멤버십 제휴처를 브랜드와 카테고리별로 살펴보고 등급별 할인·적립 조건, 온라인·오프라인 이용 여부를 비교할 수 있습니다.',
+      '제휴처 상세에서는 이용 가능한 등급, 혜택 내용, 월별 횟수와 한도, 실제 이용 방법을 확인할 수 있습니다.',
+      '혜택 조건은 변경될 수 있으므로 실제 이용 시점에는 연결된 SKT 공식 혜택 페이지의 최신 안내를 확인해 주세요.',
+    ],
+  },
+  {
+    path: '/membership/kt',
+    title: 'KT 멤버십 혜택·제휴처 | 잇플레이스',
+    description:
+      'KT 멤버십 제휴처를 브랜드와 카테고리별로 찾고 등급별 혜택, 이용 횟수와 한도를 비교하세요.',
+    heading: 'KT 멤버십 혜택',
+    paragraphs: [
+      'KT 멤버십 제휴처를 브랜드와 카테고리별로 살펴보고 등급별 혜택, 포인트 사용 조건, 온라인·오프라인 이용 여부를 비교할 수 있습니다.',
+      '제휴처 상세에서는 적용 멤버십 등급, 할인 내용, 이용 횟수와 한도, 현장 결제 또는 온라인 이용 방법을 확인할 수 있습니다.',
+      '혜택 조건은 변경될 수 있으므로 실제 이용 시점에는 연결된 KT 공식 혜택 페이지의 최신 안내를 확인해 주세요.',
+    ],
+  },
+  {
+    path: '/membership/lguplus',
+    title: 'LG U+ 멤버십 혜택·제휴처 | 잇플레이스',
+    description:
+      'LG U+ 멤버십 제휴처를 브랜드와 카테고리별로 찾고 우수·VIP·VVIP 등급별 혜택과 이용 조건을 비교하세요.',
+    heading: 'LG U+ 멤버십 혜택',
+    paragraphs: [
+      'LG U+ 멤버십 제휴처를 브랜드와 카테고리별로 살펴보고 우수·VIP·VVIP 등급별 혜택과 온라인·오프라인 이용 여부를 비교할 수 있습니다.',
+      '제휴처 상세에서는 적용 멤버십 등급, 할인과 라이프스타일 혜택, 앱 인증과 현장 결제 등 실제 이용 방법을 확인할 수 있습니다.',
+      '혜택 조건은 변경될 수 있으므로 실제 이용 시점에는 연결된 LG U+ 공식 혜택 페이지의 최신 안내를 확인해 주세요.',
+    ],
+  },
+  {
     path: '/faq',
-    title: '자주 묻는 질문 | ITPLACE',
+    title: '자주 묻는 질문 | 잇플레이스',
     description:
       'ITPLACE 통신사 멤버십 혜택 검색, 온라인·오프라인 혜택 구분, 지도 검색, 문의 방법에 대한 자주 묻는 질문입니다.',
     heading: '자주 묻는 질문',
@@ -43,7 +92,7 @@ const publicPages = [
   },
   {
     path: '/contact',
-    title: '문의 | ITPLACE',
+    title: '문의 | 잇플레이스',
     description:
       'ITPLACE 서비스 오류, 혜택 정보 수정, 제휴 문의, 개인정보 관련 문의 접수 방법을 안내합니다.',
     heading: '문의',
@@ -55,7 +104,7 @@ const publicPages = [
   },
   {
     path: '/terms',
-    title: '이용약관 | ITPLACE',
+    title: '이용약관 | 잇플레이스',
     description:
       'ITPLACE 통신사 멤버십 혜택 검색 서비스의 이용 조건, 혜택 정보 안내 기준, 계정 및 문의 절차를 안내합니다.',
     heading: '이용약관',
@@ -67,7 +116,7 @@ const publicPages = [
   },
   {
     path: '/privacy',
-    title: '개인정보처리방침 | ITPLACE',
+    title: '개인정보처리방침 | 잇플레이스',
     description:
       'ITPLACE 웹 및 모바일 서비스의 개인정보 수집, 이용 목적, 위치정보 처리, 보관 및 파기, 이용자 권리를 안내합니다.',
     heading: '개인정보처리방침',
@@ -79,7 +128,7 @@ const publicPages = [
   },
   {
     path: '/account-deletion',
-    title: '계정 및 데이터 삭제 안내 | ITPLACE',
+    title: '계정 및 데이터 삭제 안내 | 잇플레이스',
     description:
       'ITPLACE 계정 삭제 요청 방법, 삭제되는 데이터, 보관될 수 있는 데이터와 처리 절차를 안내합니다.',
     heading: '계정 및 데이터 삭제 요청',
@@ -94,7 +143,7 @@ const publicPages = [
 const appShellPages = [
   {
     path: '/map',
-    title: 'ITPLACE',
+    title: '통신사 멤버십 혜택 지도 | 잇플레이스',
     description:
       'SKT, KT, LG U+ 멤버십 제휴처와 주변 혜택을 지도에서 검색하고 온라인·오프라인 이용 조건을 확인하세요.',
     heading: '통신사 멤버십 혜택 지도',
@@ -105,7 +154,7 @@ const appShellPages = [
   },
   {
     path: '/benefits',
-    title: '전체 멤버십 혜택 | ITPLACE',
+    title: '전체 통신사 멤버십 혜택 | 잇플레이스',
     description:
       'SKT, KT, LG U+ 통신사 멤버십 제휴 혜택을 브랜드, 카테고리, 통신사별로 검색하고 비교하세요.',
     heading: '전체 멤버십 혜택',
@@ -116,7 +165,7 @@ const appShellPages = [
   },
   {
     path: '/login',
-    title: '로그인 | ITPLACE',
+    title: '로그인 | 잇플레이스',
     description:
       'ITPLACE 로그인 페이지입니다. 로그인 후 즐겨찾기와 맞춤 추천 기능을 이용할 수 있습니다.',
     heading: '로그인',
@@ -125,7 +174,7 @@ const appShellPages = [
   },
   {
     path: '/oauth/callback/kakao',
-    title: '카카오 로그인 처리 중 | ITPLACE',
+    title: '카카오 로그인 처리 중 | 잇플레이스',
     description: 'ITPLACE 카카오 로그인 콜백 처리 페이지입니다.',
     heading: '카카오 로그인 처리 중',
     paragraphs: ['카카오 로그인 처리를 완료하려면 브라우저에서 JavaScript가 활성화되어야 합니다.'],
@@ -133,7 +182,7 @@ const appShellPages = [
   },
   {
     path: '/mypage/info',
-    title: '마이페이지 | ITPLACE',
+    title: '마이페이지 | 잇플레이스',
     description: 'ITPLACE 회원 정보와 멤버십 정보를 관리하는 마이페이지입니다.',
     heading: '마이페이지',
     paragraphs: ['회원 정보와 저장한 혜택은 로그인 후 확인할 수 있습니다.'],
@@ -141,7 +190,7 @@ const appShellPages = [
   },
   {
     path: '/mypage/favorites',
-    title: '저장한 혜택 | ITPLACE',
+    title: '저장한 혜택 | 잇플레이스',
     description: 'ITPLACE에서 저장한 멤버십 혜택을 확인하는 페이지입니다.',
     heading: '저장한 혜택',
     paragraphs: ['저장한 혜택 목록은 로그인 후 확인할 수 있습니다.'],
@@ -149,7 +198,7 @@ const appShellPages = [
   },
   {
     path: '/mypage/history',
-    title: '저장한 혜택 | ITPLACE',
+    title: '저장한 혜택 | 잇플레이스',
     description: 'ITPLACE에서 저장한 멤버십 혜택을 확인하는 페이지입니다.',
     heading: '저장한 혜택',
     paragraphs: ['저장한 혜택 목록은 로그인 후 확인할 수 있습니다.'],
@@ -159,7 +208,7 @@ const appShellPages = [
 
 const notFoundPage = {
   path: '/404',
-  title: '페이지를 찾을 수 없습니다 | ITPLACE',
+  title: '페이지를 찾을 수 없습니다 | 잇플레이스',
   description:
     '요청한 ITPLACE 페이지를 찾을 수 없습니다. 주요 페이지에서 혜택을 다시 확인해 주세요.',
   heading: '페이지를 찾을 수 없습니다',
@@ -170,8 +219,20 @@ const notFoundPage = {
   noIndex: true,
 };
 
+const carrierLabels = {
+  SKT: 'SKT',
+  KT: 'KT',
+  LGU: 'LG U+',
+};
+
+const carrierPaths = {
+  SKT: '/membership/skt',
+  KT: '/membership/kt',
+  LGU: '/membership/lguplus',
+};
+
 const escapeHtml = (value) =>
-  value
+  String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -189,7 +250,8 @@ const stripRobotsMeta = (html) =>
   html.replace(/\s*<meta\s+name="robots"\s+content="[^"]*"\s*\/>/g, '');
 
 const updateHead = (html, page) => {
-  const canonicalUrl = `${SITE_ORIGIN}${page.path}`;
+  const canonicalUrl = new URL(page.path, SITE_ORIGIN).href;
+  const imageUrl = page.image || `${SITE_ORIGIN}/images/thumbnail.png`;
   let next = stripRobotsMeta(html)
     .replace(/<title>.*?<\/title>/s, `<title>${escapeHtml(page.title)}</title>`)
     .replace(
@@ -226,6 +288,16 @@ const updateHead = (html, page) => {
     /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/>/s,
     `<meta name="twitter:description" content="${escapeHtml(page.description)}" />`
   );
+  next = replaceOrInsertMeta(
+    next,
+    /<meta\s+property="og:image"\s+content="[^"]*"\s*\/>/s,
+    `<meta property="og:image" content="${escapeHtml(imageUrl)}" />`
+  );
+  next = replaceOrInsertMeta(
+    next,
+    /<meta\s+name="twitter:image"\s+content="[^"]*"\s*\/>/s,
+    `<meta name="twitter:image" content="${escapeHtml(imageUrl)}" />`
+  );
 
   if (page.noIndex) {
     next = replaceOrInsertMeta(
@@ -243,6 +315,10 @@ const renderFallback = (page) => {
     ['/', '홈'],
     ['/map', '지도에서 혜택 찾기'],
     ['/benefits', '전체 혜택 보기'],
+    ['/membership', '통신사 멤버십 비교'],
+    ['/membership/skt', 'SKT 멤버십'],
+    ['/membership/kt', 'KT 멤버십'],
+    ['/membership/lguplus', 'LG U+ 멤버십'],
     ['/about', '서비스 소개'],
     ['/guide', '혜택 이용 가이드'],
     ['/faq', '자주 묻는 질문'],
@@ -251,11 +327,20 @@ const renderFallback = (page) => {
     ['/privacy', '개인정보처리방침'],
   ];
 
-  return `    <main data-prerender-fallback="true" style="max-width: 840px; margin: 0 auto; padding: 48px 20px; font-family: sans-serif; line-height: 1.7; color: #101114;">\n      <p style="font-weight: 700; color: #7132f5;">IT:PLACE</p>\n      <h1>${escapeHtml(page.heading)}</h1>\n${page.paragraphs
+  const relatedLinks = page.relatedLinks ?? [];
+
+  return `    <main data-prerender-fallback="true" style="max-width: 840px; margin: 0 auto; padding: 48px 20px; font-family: sans-serif; line-height: 1.7; color: #101114;">\n      <p style="font-weight: 700; color: #7132f5;">잇플레이스 · IT:PLACE</p>\n      <h1>${escapeHtml(page.heading)}</h1>\n${page.paragraphs
     .map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`)
-    .join(
-      '\n'
-    )}\n      <nav aria-label="ITPLACE 주요 페이지" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px;">\n${links
+    .join('\n')}${
+    relatedLinks.length > 0
+      ? `\n      <section>\n        <h2>관련 멤버십 혜택</h2>\n        <ul>\n${relatedLinks
+          .map(
+            ([href, label]) =>
+              `          <li><a href="${escapeHtml(href)}">${escapeHtml(label)}</a></li>`
+          )
+          .join('\n')}\n        </ul>\n      </section>`
+      : ''
+  }\n      <nav aria-label="잇플레이스 주요 페이지" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px;">\n${links
     .map(
       ([href, label]) =>
         `        <a href="${href}" style="color: #7132f5; font-weight: 700;">${escapeHtml(label)}</a>`
@@ -265,9 +350,53 @@ const renderFallback = (page) => {
     )}\n      </nav>\n    </main>\n    <script>document.querySelector('[data-prerender-fallback="true"]')?.remove();</script>`;
 };
 
+const injectStructuredData = (html, page) => {
+  const canonicalUrl = new URL(page.path, SITE_ORIGIN).href;
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': page.path.startsWith('/benefits/partners/') ? 'WebPage' : 'CollectionPage',
+    name: page.heading,
+    description: page.description,
+    url: canonicalUrl,
+    isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: '홈',
+          item: `${SITE_ORIGIN}/`,
+        },
+        ...(page.breadcrumbs ?? []).map((item, index) => ({
+          '@type': 'ListItem',
+          position: index + 2,
+          name: item.name,
+          item: new URL(item.path, SITE_ORIGIN).href,
+        })),
+        {
+          '@type': 'ListItem',
+          position: (page.breadcrumbs?.length ?? 0) + 2,
+          name: page.heading,
+          item: canonicalUrl,
+        },
+      ],
+    },
+  };
+  const json = JSON.stringify(structuredData).replaceAll('<', '\\u003c');
+  return html.replace(
+    '</head>',
+    `    <script type="application/ld+json" data-prerender-seo="true">${json}</script>\n  </head>`
+  );
+};
+
 const injectFallback = (html, page) => {
   const fallback = renderFallback(page);
-  return html.replace('    <div id="root"></div>', `    <div id="root"></div>\n${fallback}`);
+  const withoutRootNoscript = html.replace(/\s*<noscript>[\s\S]*?<\/noscript>/, '');
+  return withoutRootNoscript.replace(
+    '    <div id="root"></div>',
+    `    <div id="root"></div>\n${fallback}`
+  );
 };
 
 const writeRouteHtml = async (html, page) => {
@@ -278,15 +407,62 @@ const writeRouteHtml = async (html, page) => {
   await writeFile(path.join(DIST_DIR, `${slug}.html`), html, 'utf8');
 };
 
+const { partners, source: partnerSource } = await loadPartnerCatalog();
+const partnerPages = partners.map((partner) => {
+  const carrierNames = partner.carriers.map((carrier) => carrierLabels[carrier] ?? carrier);
+  const path = getPartnerBenefitPath(partner);
+  return {
+    path,
+    title: `${partner.partnerName} 통신사 멤버십 혜택 | 잇플레이스`,
+    description: `${partner.partnerName}에서 이용할 수 있는 ${carrierNames.join(', ')} 멤버십 혜택의 등급별 조건, 이용 방법과 제한 사항을 비교하세요.`,
+    heading: `${partner.partnerName} 멤버십 혜택`,
+    image: partner.image,
+    paragraphs: [
+      `${partner.partnerName}에서는 ${carrierNames.join(', ')} 멤버십 혜택을 확인할 수 있습니다.`,
+      `제휴처 카테고리는 ${partner.category || '미분류'}이며, 통신사별 멤버십 등급과 이용 채널에 따라 혜택 내용이 달라질 수 있습니다.`,
+      '혜택 상세에서 통신사별 조건, 이용 제한과 이용 방법을 비교하고 실제 결제 전 통신사 공식 안내에서 최신 정보를 확인해 주세요.',
+    ],
+    breadcrumbs: [{ name: '전체 멤버십 혜택', path: '/benefits' }],
+    relatedLinks: partner.carriers.map((carrier) => [
+      carrierPaths[carrier],
+      `${carrierLabels[carrier] ?? carrier} 멤버십 혜택`,
+    ]),
+  };
+});
+
+for (const page of publicPages.filter((item) => item.path.startsWith('/membership'))) {
+  const carrier = Object.entries(carrierPaths).find(
+    ([, carrierPath]) => carrierPath === page.path
+  )?.[0];
+  const relatedPartners = partners
+    .filter((partner) => !carrier || partner.carriers.includes(carrier))
+    .slice(0, 16)
+    .map((partner) => [getPartnerBenefitPath(partner), `${partner.partnerName} 혜택`]);
+  page.relatedLinks = relatedPartners;
+  page.breadcrumbs =
+    page.path === '/membership' ? [] : [{ name: '통신사 멤버십', path: '/membership' }];
+}
+
 const template = await readFile(path.join(DIST_DIR, 'index.html'), 'utf8');
-const knownRoutes = [...publicPages, ...appShellPages];
+const knownRoutes = [...publicPages, ...appShellPages, ...partnerPages];
 
 for (const page of knownRoutes) {
-  const html = injectFallback(updateHead(template, page), page);
+  const html = injectFallback(injectStructuredData(updateHead(template, page), page), page);
   await writeRouteHtml(html, page);
 }
 
 const notFoundHtml = injectFallback(updateHead(template, notFoundPage), notFoundPage);
 await writeFile(path.join(DIST_DIR, '404.html'), notFoundHtml, 'utf8');
 
-console.log(`prerendered ${knownRoutes.length} known routes and 404 page`);
+const sitemapPages = [{ path: '/' }, ...knownRoutes.filter((page) => !page.noIndex)];
+const uniqueSitemapUrls = [
+  ...new Set(sitemapPages.map((page) => new URL(page.path, SITE_ORIGIN).href)),
+];
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${uniqueSitemapUrls
+  .map((url) => `  <url><loc>${escapeHtml(url)}</loc></url>`)
+  .join('\n')}\n</urlset>\n`;
+await writeFile(path.join(DIST_DIR, 'sitemap.xml'), sitemap, 'utf8');
+
+console.log(
+  `prerendered ${knownRoutes.length} known routes and 404 page; sitemap has ${uniqueSitemapUrls.length} URLs (${partnerSource})`
+);

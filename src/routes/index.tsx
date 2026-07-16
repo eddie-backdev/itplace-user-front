@@ -16,6 +16,8 @@ import TermsPage from '../pages/TermsPage';
 import ContactPage from '../pages/ContactPage';
 import FaqPage from '../pages/FaqPage';
 import MembershipGuidePage from '../pages/MembershipGuidePage';
+import MembershipLandingPage from '../pages/MembershipLandingPage';
+import PartnerBenefitPage from '../pages/PartnerBenefitPage';
 import OAuthRedirectHandler from '../features/loginPage/layouts/OAuthRedirectHandler';
 import PublicRoute from '../features/loginPage/layouts/PublicRoute'; // PublicRoute import
 
@@ -46,6 +48,9 @@ const router = createBrowserRouter([
         ],
       },
       { path: '/benefits', element: <AllBenefitsPage /> },
+      { path: '/benefits/partners/:partnerId/:partnerSlug', element: <PartnerBenefitPage /> },
+      { path: '/membership', element: <MembershipLandingPage /> },
+      { path: '/membership/:carrierSlug', element: <MembershipLandingPage /> },
       { path: '/about', element: <AboutPage /> },
       { path: '/guide', element: <MembershipGuidePage /> },
       { path: '/faq', element: <FaqPage /> },

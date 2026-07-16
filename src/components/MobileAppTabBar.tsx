@@ -4,7 +4,12 @@ import { TbGift, TbHeart, TbHome, TbMap2, TbUserCircle } from 'react-icons/tb';
 const tabs = [
   { to: '/', label: '홈', icon: TbHome, match: (path: string) => path === '/' },
   { to: '/map', label: '지도', icon: TbMap2, match: (path: string) => path === '/map' },
-  { to: '/benefits', label: '혜택', icon: TbGift, match: (path: string) => path === '/benefits' },
+  {
+    to: '/benefits',
+    label: '혜택',
+    icon: TbGift,
+    match: (path: string) => path.startsWith('/benefits'),
+  },
   {
     to: '/mypage/favorites',
     label: '저장',

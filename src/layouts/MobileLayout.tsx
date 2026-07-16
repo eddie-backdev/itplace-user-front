@@ -5,7 +5,7 @@ import MobileAppTabBar from '../components/MobileAppTabBar';
 const isAppTabPath = (pathname: string) =>
   pathname === '/' ||
   pathname === '/map' ||
-  pathname === '/benefits' ||
+  pathname.startsWith('/benefits') ||
   pathname.startsWith('/mypage');
 
 const MobileLayout = () => {

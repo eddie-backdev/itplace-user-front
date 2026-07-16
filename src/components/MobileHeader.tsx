@@ -24,6 +24,7 @@ const menus = [
 ];
 
 const supportMenus = [
+  { label: '통신사 멤버십', path: '/membership' },
   { label: '서비스 소개', path: '/about' },
   { label: '혜택 이용 가이드', path: '/guide' },
   { label: 'FAQ', path: '/faq' },
