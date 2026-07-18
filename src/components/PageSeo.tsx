@@ -5,6 +5,7 @@ const DEFAULT_SOCIAL_IMAGE = `${SITE_ORIGIN}/images/thumbnail.png`;
 
 type PageSeoProps = {
   title: string;
+  browserTitle?: string;
   description: string;
   path?: string;
   noIndex?: boolean;
@@ -43,6 +44,7 @@ const setCanonical = (href: string) => {
 
 const PageSeo = ({
   title,
+  browserTitle,
   description,
   path = '/',
   noIndex = false,
@@ -65,7 +67,7 @@ const PageSeo = ({
       );
 
   useEffect(() => {
-    document.title = title;
+    document.title = browserTitle ?? title;
     setCanonical(canonicalUrl);
     setMetaTag('meta[name="description"]', { content: description });
     setMetaTag('meta[property="og:title"]', { property: 'og:title', content: title });
@@ -103,7 +105,7 @@ const PageSeo = ({
       const robots = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
       robots?.remove();
     }
-  }, [canonicalUrl, description, image, noIndex, structuredDataJson, title]);
+  }, [browserTitle, canonicalUrl, description, image, noIndex, structuredDataJson, title]);
 
   return null;
 };

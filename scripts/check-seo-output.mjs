@@ -18,8 +18,8 @@ const getTitle = (html) => html.match(/<title>(.*?)<\/title>/s)?.[1] ?? '';
 
 const homeHtml = await readDist('index.html');
 check(
-  getTitle(homeHtml) === '잇플레이스 | 통신 3사 멤버십 혜택 검색',
-  'home title is not the branded search title'
+  getTitle(homeHtml) === 'ITPLACE',
+  'home browser title is not the ITPLACE brand name'
 );
 check(homeHtml.includes('"name": "잇플레이스"'), 'home WebSite/Organization name is missing');
 check(
