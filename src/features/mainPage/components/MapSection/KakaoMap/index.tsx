@@ -1235,20 +1235,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     useServerClusters,
   ]);
 
-  // 선택된 플랫폼으로 지도 중심 이동
-  useEffect(() => {
-    if (!mapRef.current || !selectedPlatform) return;
-
-    const moveLatLon = new window.kakao.maps.LatLng(
-      selectedPlatform.latitude,
-      selectedPlatform.longitude
-    );
-    mapRef.current.setCenter(moveLatLon);
-
-    const visiblePlatformsFrame = requestAnimationFrame(updateVisiblePlatforms);
-    return () => cancelAnimationFrame(visiblePlatformsFrame);
-  }, [mapInitializationVersion, selectedPlatform, updateVisiblePlatforms]);
-
   // centerLocation prop이 변경되면 지도 중심 이동
   useEffect(() => {
     if (!mapRef.current || !centerLocation) {

@@ -234,12 +234,6 @@ const MainPageLayout: React.FC = () => {
     [updateToCurrentLocation, currentMapLevel]
   );
 
-  // 지도 중심 이동 핸들러 (사이드바에서 호출)
-  const handleMapCenterMove = useCallback((latitude: number, longitude: number) => {
-    setCurrentMapCenter({ lat: latitude, lng: longitude });
-    setMapMoveTarget({ lat: latitude, lng: longitude });
-  }, []);
-
   // 현 지도에서 검색 핸들러
   const handleSearchInMap = useCallback(() => {
     if (currentMapCenter && searchInCurrentMap) {
@@ -641,7 +635,6 @@ const MainPageLayout: React.FC = () => {
               onActiveTabChange={setActiveTab}
               onKeywordSearch={handleKeywordSearch}
               searchQuery={searchQuery}
-              onMapCenterMove={handleMapCenterMove}
               onBenefitDetailRequest={handleBenefitDetailRequest}
               onShowSpeechBubble={handleShowSpeechBubble}
               userCoords={userCoords}
@@ -841,7 +834,6 @@ const MainPageLayout: React.FC = () => {
                 onActiveTabChange={setActiveTab}
                 onKeywordSearch={handleKeywordSearch}
                 searchQuery={searchQuery}
-                onMapCenterMove={handleMapCenterMove}
                 onBenefitDetailRequest={handleBenefitDetailRequest}
                 onShowSpeechBubble={handleShowSpeechBubble}
                 userCoords={userCoords}

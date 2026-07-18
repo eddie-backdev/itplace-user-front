@@ -37,7 +37,6 @@ interface SidebarSectionProps {
   onActiveTabChange: (tab: string) => void;
   onKeywordSearch?: (keyword: string) => void;
   searchQuery?: string;
-  onMapCenterMove?: (latitude: number, longitude: number) => void;
   onBenefitDetailRequest?: (benefitIds: number[]) => void;
   onShowSpeechBubble?: (message: string, partnerName: string) => void;
   userCoords?: { lat: number; lng: number } | null;
@@ -62,7 +61,6 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   onActiveTabChange,
   onKeywordSearch,
   searchQuery,
-  onMapCenterMove,
   onBenefitDetailRequest,
   onShowSpeechBubble,
   userCoords,
@@ -219,12 +217,10 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
     }
   }, [activeTab]);
 
-  // 카드 클릭 시 상세보기로 전환 + 지도 중심 이동
+  // 카드 클릭 시 상세보기로 전환
   const handleCardClick = (platform: Platform) => {
     onPlatformSelect(platform);
     setViewMode('detail');
-    // 해당 가맹점 위치로 지도 중심 이동
-    onMapCenterMove?.(platform.latitude, platform.longitude);
   };
 
   // 상세보기에서 닫기
@@ -307,12 +303,6 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
 
         setFavoriteStoreResults(transformedData);
 
-        // 첫 번째 매장 위치로 지도 중심 이동 (마커가 보이도록)
-        if (transformedData.length > 0) {
-          const firstStore = transformedData[0];
-          onMapCenterMove?.(firstStore.latitude, firstStore.longitude);
-        }
-
         // 지도에 마커 표시 (KakaoMap에서 타이밍 처리)
         onRecommendationStoreResults?.(transformedData, true);
       } else {
@@ -386,12 +376,6 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
         }));
 
         setRecommendationStoreResults(transformedData);
-
-        // 첫 번째 매장 위치로 지도 중심 이동 (마커가 보이도록)
-        if (transformedData.length > 0) {
-          const firstStore = transformedData[0];
-          onMapCenterMove?.(firstStore.latitude, firstStore.longitude);
-        }
 
         // 지도에 마커 표시 (KakaoMap에서 타이밍 처리)
         onRecommendationStoreResults?.(transformedData, true);
