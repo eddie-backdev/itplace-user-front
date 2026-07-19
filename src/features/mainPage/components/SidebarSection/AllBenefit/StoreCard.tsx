@@ -78,7 +78,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
     <div
       role="button"
       tabIndex={0}
-      aria-label={`${platform.name} 상세 보기`}
+      aria-label={`${platform.name} 혜택 새 탭에서 보기`}
       className="group cursor-pointer transition-colors duration-200 w-full px-5 bg-white hover:bg-grey01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-md:px-4 max-sm:px-3"
       onClick={() => onSelect(platform)}
       onKeyDown={(event) => {
@@ -163,7 +163,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
                 key={group.key}
                 role={isCarrierCode(group.key) ? 'button' : undefined}
                 tabIndex={isCarrierCode(group.key) ? 0 : undefined}
-                aria-label={`${group.label} 혜택으로 ${platform.name} 상세 보기`}
+                aria-label={`${group.label} 혜택으로 ${platform.name} 새 탭에서 보기`}
                 onClick={(event) => selectPlatformWithCarrier(event, group.key)}
                 onKeyDown={(event) => {
                   if ((event.key === 'Enter' || event.key === ' ') && isCarrierCode(group.key)) {

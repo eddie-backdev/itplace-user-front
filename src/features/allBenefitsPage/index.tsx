@@ -325,7 +325,9 @@ const AllBenefitsLayout: React.FC = () => {
                   >
                     <Link
                       to={getPartnerBenefitPath(partner.partnerId, partner.partnerName)}
-                      aria-label={`${partner.partnerName} 통신사별 혜택 보기`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${partner.partnerName} 통신사별 혜택 새 탭에서 보기`}
                       className="flex min-h-[112px] w-full items-center gap-3 p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple02 md:min-h-[132px] md:gap-4 md:p-4"
                     >
                       <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] bg-grey01 p-2 md:h-16 md:w-16">

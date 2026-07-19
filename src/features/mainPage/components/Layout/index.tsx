@@ -13,6 +13,7 @@ import { useLocation } from 'react-router-dom';
 import { useLayoutEffect } from 'react';
 import { useResponsive } from '../../../../hooks/useResponsive';
 import { disableScroll, enableScroll } from '../../../../utils/scrollLock';
+import { getPartnerBenefitPath } from '../../../../utils/partnerSeo';
 
 const BOTTOM_SHEET_MIN_HEIGHT = 150;
 const BOTTOM_SHEET_MID_HEIGHT = 300;
@@ -177,28 +178,19 @@ const MainPageLayout: React.FC = () => {
   );
 
   // 플랫폼 선택 핸들러
-  const handlePlatformSelect = useCallback(
-    (platform: Platform | null) => {
-      setSelectedPlatform(platform);
+  const handlePlatformSelect = useCallback((platform: Platform | null) => {
+    if (!platform) {
+      setSelectedPlatform(null);
+      return;
+    }
 
-      // 마커 클릭 시 동작
-      if (platform) {
-        // 모바일에서 마커 클릭 시 바텀시트 자동으로 올리기
-        if (window.innerWidth < 768) {
-          animateTo(300); // 중간 높이로 올리기
-        }
-        // 데스크톱에서 마커 클릭 시 사이드바가 접혀있으면 펼치기
-        else if (isSidebarCollapsed) {
-          setIsSidebarCollapsed(false);
-          // 지도 리사이즈를 위한 지연 처리
-          setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-          }, 300);
-        }
-      }
-    },
-    [isSidebarCollapsed, animateTo]
-  );
+    const partnerName = platform.partnerName?.trim() || platform.name;
+    window.open(
+      getPartnerBenefitPath(platform.partnerId, partnerName),
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }, []);
 
   // 사용자 위치 변경 핸들러 (초기 위치)
   const handleLocationChange = useCallback((location: MapLocation) => {

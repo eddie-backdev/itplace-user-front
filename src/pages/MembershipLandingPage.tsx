@@ -282,6 +282,9 @@ const MembershipLandingPage = () => {
                 <Link
                   key={partner.partnerId}
                   to={getPartnerBenefitPath(partner.partnerId, partner.partnerName)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${partner.partnerName} 통신사별 혜택 새 탭에서 보기`}
                   className="group flex min-w-0 items-center gap-3 rounded-2xl border border-grey02 bg-white p-3.5 transition hover:-translate-y-0.5 hover:border-purple02 hover:shadow-[0_10px_24px_rgba(113,50,245,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
                 >
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-grey01 p-2">

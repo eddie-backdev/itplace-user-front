@@ -217,10 +217,9 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
     }
   }, [activeTab]);
 
-  // 카드 클릭 시 상세보기로 전환
+  // 혜택 상세는 현재 화면을 유지한 채 새 탭에서 연다.
   const handleCardClick = (platform: Platform) => {
     onPlatformSelect(platform);
-    setViewMode('detail');
   };
 
   // 상세보기에서 닫기
