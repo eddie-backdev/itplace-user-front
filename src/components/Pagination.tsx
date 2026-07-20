@@ -19,9 +19,10 @@ const disabledClass = 'opacity-50 cursor-not-allowed';
 
 function getVisiblePages(currentPage: number, totalPages: number, pageRangeDisplayed: number) {
   const range = Math.max(1, Math.min(pageRangeDisplayed, totalPages));
-  const half = Math.floor(range / 2);
-  const start = Math.max(1, Math.min(currentPage - half, totalPages - range + 1));
-  return Array.from({ length: range }, (_, index) => start + index);
+  const groupStart = Math.floor((currentPage - 1) / range) * range + 1;
+  const groupEnd = Math.min(groupStart + range - 1, totalPages);
+
+  return Array.from({ length: groupEnd - groupStart + 1 }, (_, index) => groupStart + index);
 }
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -54,6 +55,7 @@ const Pagination: React.FC<PaginationProps> = ({
       type="button"
       className={`${compact ? compactItemClass : itemClass} ${options.active ? activeClass : ''} ${options.disabled ? disabledClass : ''}`}
       disabled={options.disabled}
+      aria-current={options.active ? 'page' : undefined}
       onClick={() => goToPage(page)}
     >
       {label}
