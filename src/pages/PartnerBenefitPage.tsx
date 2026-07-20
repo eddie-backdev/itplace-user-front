@@ -210,8 +210,8 @@ const PartnerBenefitPage = () => {
         noIndex={!Number.isInteger(partnerId) || partnerId <= 0}
         structuredData={structuredData}
       />
-      <div className="min-h-screen bg-purple01/35 text-grey07">
-        <main className="px-4 py-5 md:px-8 md:py-7">
+      <div className="flex min-h-screen flex-col bg-purple01/35 text-grey07">
+        <main className="flex-1 px-4 py-5 md:px-8 md:py-7">
           <div className="mx-auto max-w-7xl">
             <Link
               to="/benefits"
