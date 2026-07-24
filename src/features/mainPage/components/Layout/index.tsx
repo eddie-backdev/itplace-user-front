@@ -13,7 +13,6 @@ import { useLocation } from 'react-router-dom';
 import { useLayoutEffect } from 'react';
 import { useResponsive } from '../../../../hooks/useResponsive';
 import { disableScroll, enableScroll } from '../../../../utils/scrollLock';
-import { getPartnerBenefitPath } from '../../../../utils/partnerSeo';
 
 const BOTTOM_SHEET_MIN_HEIGHT = 150;
 const BOTTOM_SHEET_MID_HEIGHT = 300;
@@ -178,19 +177,30 @@ const MainPageLayout: React.FC = () => {
   );
 
   // 플랫폼 선택 핸들러
-  const handlePlatformSelect = useCallback((platform: Platform | null) => {
-    if (!platform) {
-      setSelectedPlatform(null);
-      return;
-    }
+  const handlePlatformSelect = useCallback(
+    (platform: Platform | null) => {
+      setSelectedPlatform(platform);
 
-    const partnerName = platform.partnerName?.trim() || platform.name;
-    window.open(
-      getPartnerBenefitPath(platform.partnerId, partnerName),
-      '_blank',
-      'noopener,noreferrer'
-    );
-  }, []);
+      if (!platform) {
+        return;
+      }
+
+      // 모바일에서는 선택한 혜택 상세가 보이도록 바텀시트를 중간 높이로 올린다.
+      if (window.innerWidth < 768) {
+        animateTo(BOTTOM_SHEET_MID_HEIGHT);
+        return;
+      }
+
+      // 데스크톱에서는 접힌 좌측 패널을 펼친 뒤 상세 정보를 표시한다.
+      if (isSidebarCollapsed) {
+        setIsSidebarCollapsed(false);
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, 300);
+      }
+    },
+    [animateTo, isSidebarCollapsed]
+  );
 
   // 사용자 위치 변경 핸들러 (초기 위치)
   const handleLocationChange = useCallback((location: MapLocation) => {

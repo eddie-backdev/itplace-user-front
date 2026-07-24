@@ -217,7 +217,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
     }
   }, [activeTab]);
 
-  // 혜택 상세는 현재 화면을 유지한 채 새 탭에서 연다.
+  // 선택한 혜택 상세를 현재 사이드바 안에서 연다.
   const handleCardClick = (platform: Platform) => {
     onPlatformSelect(platform);
   };
