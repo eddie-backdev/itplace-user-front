@@ -11,6 +11,7 @@ interface SearchSectionProps {
 const SearchSection: React.FC<SearchSectionProps> = React.memo(
   ({ onSearchChange, onKeywordSearch, defaultValue }) => {
     const [searchQuery, setSearchQuery] = useState(defaultValue || '');
+    const isComposingRef = useRef(false);
 
     // 1초 디바운스 적용
     const debouncedSearchQuery = useDebounce(searchQuery, 1000);
@@ -62,6 +63,10 @@ const SearchSection: React.FC<SearchSectionProps> = React.memo(
     const handleSearchSubmit = useCallback(
       (e: React.FormEvent) => {
         e.preventDefault();
+        if (isComposingRef.current) {
+          return;
+        }
+
         if (searchQuery.trim() && searchQuery.trim() !== lastSearchedQuery.current) {
           lastSearchedQuery.current = searchQuery.trim();
           onKeywordSearchRef.current?.(searchQuery.trim());
@@ -72,17 +77,38 @@ const SearchSection: React.FC<SearchSectionProps> = React.memo(
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-          // 모바일에서 키패드 내리기
-          (e.target as HTMLInputElement).blur();
+        if (
+          e.key !== 'Enter' ||
+          e.nativeEvent.isComposing ||
+          e.keyCode === 229 ||
+          isComposingRef.current
+        ) {
+          return;
+        }
 
-          if (searchQuery.trim() && searchQuery.trim() !== lastSearchedQuery.current) {
-            lastSearchedQuery.current = searchQuery.trim();
-            onKeywordSearchRef.current?.(searchQuery.trim());
-          }
+        e.preventDefault();
+        e.currentTarget.blur();
+
+        if (searchQuery.trim() && searchQuery.trim() !== lastSearchedQuery.current) {
+          lastSearchedQuery.current = searchQuery.trim();
+          onKeywordSearchRef.current?.(searchQuery.trim());
         }
       },
       [searchQuery]
+    );
+
+    const handleCompositionStart = useCallback(() => {
+      isComposingRef.current = true;
+    }, []);
+
+    const handleCompositionEnd = useCallback(
+      (e: React.CompositionEvent<HTMLInputElement>) => {
+        isComposingRef.current = false;
+        const query = e.currentTarget.value;
+        setSearchQuery(query);
+        onSearchChange?.(query);
+      },
+      [onSearchChange]
     );
 
     return (
@@ -96,6 +122,8 @@ const SearchSection: React.FC<SearchSectionProps> = React.memo(
             backgroundColor="bg-grey01"
             className="w-full h-[50px] max-md:h-[40px] max-md:ml-1"
             onKeyDown={handleKeyDown}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
           />
         </form>
       </div>
