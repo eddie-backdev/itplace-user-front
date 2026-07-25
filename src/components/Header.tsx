@@ -24,7 +24,7 @@ import {
 } from '../features/questionRecommendationChat/utils/questionRecommendationChatEvents';
 
 const menus = [
-  { id: 'map', label: '잇플 맵', icon: TbMap2, path: '/' },
+  { id: 'map', label: '잇플 맵', icon: TbMap2, path: '/map' },
   { id: 'benefits', label: '전체 혜택', icon: TbLayoutList, path: '/benefits' },
   { id: 'mypage', label: '마이페이지', icon: TbUser, path: '/mypage/info' },
 ];
@@ -107,11 +107,13 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
           {menus.map((m) => {
             const Icon = m.icon;
             const isActive =
-              m.id === 'mypage'
-                ? location.pathname.startsWith('/mypage')
-                : m.id === 'benefits'
-                  ? location.pathname.startsWith('/benefits')
-                  : location.pathname === m.path;
+              m.id === 'map'
+                ? location.pathname === '/' || location.pathname === '/map'
+                : m.id === 'mypage'
+                  ? location.pathname.startsWith('/mypage')
+                  : m.id === 'benefits'
+                    ? location.pathname.startsWith('/benefits')
+                    : location.pathname === m.path;
             return (
               <Link
                 to={m.path}

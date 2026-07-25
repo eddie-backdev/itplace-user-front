@@ -246,7 +246,10 @@ export default function MyFavoritesPage() {
 
       {/* ✅ 모바일에서만, 편집 모드일 때 하단 고정 버튼 */}
       {isMobile && isEditing && (
-        <div className="fixed bottom-0 left-0 w-full bg-white p-4 flex border-grey03 z-[9999]">
+        <div
+          className="fixed left-0 z-[9999] flex w-full border-grey03 bg-white p-4"
+          style={{ bottom: 'var(--itplace-mobile-tab-bar-offset, 64px)' }}
+        >
           <button
             onClick={() => {
               setIsEditing(false);

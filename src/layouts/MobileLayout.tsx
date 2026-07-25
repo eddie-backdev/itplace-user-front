@@ -19,7 +19,10 @@ const MobileLayout = () => {
       className={`${showTabBar ? 'bg-purple01/60' : 'bg-white'} max-md:block hidden min-h-screen`}
     >
       <main
-        className={`${isFullBleedPage || isAuthPage ? '' : 'px-0'} ${showTabBar ? 'pb-[64px]' : ''}`}
+        className={isFullBleedPage || isAuthPage ? '' : 'px-0'}
+        style={
+          showTabBar ? { paddingBottom: 'var(--itplace-mobile-tab-bar-offset, 64px)' } : undefined
+        }
       >
         <Outlet />
       </main>

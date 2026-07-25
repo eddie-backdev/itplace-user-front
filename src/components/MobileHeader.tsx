@@ -18,7 +18,7 @@ interface MobileHeaderProps {
 }
 
 const menus = [
-  { label: '잇플 맵', path: '/' },
+  { label: '잇플 맵', path: '/map' },
   { label: '전체 혜택', path: '/benefits' },
   { label: '마이페이지', path: '/mypage/info', match: '/mypage' },
 ];

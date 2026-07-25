@@ -25,7 +25,7 @@ interface MapSectionProps {
   onMapLevelChange?: (mapLevel: number) => void;
   onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
   activeTab: string;
-  mobileControlsBottomOffset?: number;
+  mobileControlsBottomOffset?: number | string;
   mobileControlsTransitionEnabled?: boolean;
 }
 

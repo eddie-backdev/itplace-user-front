@@ -391,7 +391,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
           <button
             type="button"
             onClick={() => {
-              navigate(`/?search=${encodeURIComponent(partner.partnerName)}`);
+              navigate(`/map?search=${encodeURIComponent(partner.partnerName)}`);
               showToast(`${partner.partnerName} 매장을 검색합니다`, 'info');
               onClose();
             }}

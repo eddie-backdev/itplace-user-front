@@ -13,6 +13,10 @@
   --itplace-color-text: #101114;
   --itplace-color-border: #dedee5;
   --itplace-shadow-soft: 0 4px 24px rgba(16, 17, 20, 0.06);
+  --itplace-mobile-tab-bar-height: 64px;
+  --itplace-mobile-tab-bar-offset: calc(
+    var(--itplace-mobile-tab-bar-height) + env(safe-area-inset-bottom, 0px)
+  );
 }
 
 @font-face {

@@ -286,7 +286,7 @@ const PartnerBenefitPage = () => {
                           </h2>
                         </div>
                         <Link
-                          to={`/?search=${encodeURIComponent(detail.partnerName)}`}
+                          to={`/map?search=${encodeURIComponent(detail.partnerName)}`}
                           className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-purple05 px-4 text-sm font-bold text-white shadow-[0_8px_20px_rgba(113,50,245,0.18)] transition hover:bg-purple04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple03"
                         >
                           <TbMapPin className="h-5 w-5" aria-hidden="true" />

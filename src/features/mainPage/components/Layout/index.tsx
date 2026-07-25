@@ -775,9 +775,9 @@ const MainPageLayout: React.FC = () => {
               onMapLevelChange={handleMapLevelChange}
               onViewportChange={handleMapViewportChange}
               activeTab={activeTab}
-              mobileControlsBottomOffset={
-                MOBILE_APP_TAB_BAR_HEIGHT + bottomSheetHeight + MOBILE_MAP_CONTROLS_GAP
-              }
+              mobileControlsBottomOffset={`calc(var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px) + ${
+                bottomSheetHeight + MOBILE_MAP_CONTROLS_GAP
+              }px)`}
               mobileControlsTransitionEnabled={isAnimating}
             />
           )}
@@ -789,7 +789,7 @@ const MainPageLayout: React.FC = () => {
             }`}
             style={{
               height: `${bottomSheetHeight}px`,
-              bottom: `${MOBILE_APP_TAB_BAR_HEIGHT}px`,
+              bottom: `var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px)`,
               minHeight: `${BOTTOM_SHEET_MIN_HEIGHT}px`,
               maxHeight: `${getMaxHeight()}px`,
               overflow: 'hidden',

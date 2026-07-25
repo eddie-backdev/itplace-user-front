@@ -10,7 +10,7 @@ interface MapControlsProps {
   showSearchButton?: boolean;
   isRoadviewMode?: boolean;
   onRoadviewToggle?: () => void;
-  mobileBottomOffset?: number;
+  mobileBottomOffset?: number | string;
   mobileBottomTransitionEnabled?: boolean;
 }
 
@@ -24,8 +24,10 @@ const MapControls: React.FC<MapControlsProps> = ({
   mobileBottomOffset = 160,
   mobileBottomTransitionEnabled = false,
 }) => {
+  const normalizedMobileBottomOffset =
+    typeof mobileBottomOffset === 'number' ? `${mobileBottomOffset}px` : mobileBottomOffset;
   const mobileControlStyle = {
-    '--mobile-map-controls-bottom': `${mobileBottomOffset}px`,
+    '--mobile-map-controls-bottom': normalizedMobileBottomOffset,
     transition: mobileBottomTransitionEnabled ? 'bottom 300ms ease-out' : 'none',
   } as React.CSSProperties;
 
