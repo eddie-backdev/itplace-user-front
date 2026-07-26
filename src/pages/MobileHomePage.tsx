@@ -1,27 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { TbGift, TbMapPin, TbSparkles, TbStar } from 'react-icons/tb';
+import { Link, useNavigate } from 'react-router-dom';
+import { TbGift, TbMapPin, TbStar } from 'react-icons/tb';
 import SafeImage from '../components/SafeImage';
 import {
-  getBenefits,
-  BenefitItem,
-  BenefitApiParams,
+  getPartnerBenefits,
+  PartnerBenefitItem,
+  PartnerBenefitApiParams,
 } from '../features/allBenefitsPage/apis/allBenefitsApi';
 import { CARRIER_OPTIONS, CarrierCode, getCarrierLabel } from '../utils/membership';
-
-const getBenefitDescription = (benefit: BenefitItem) =>
-  benefit.tierBenefits?.[0]?.context || '상세 혜택 조건은 카드에서 확인해보세요.';
+import { getPartnerBenefitPath } from '../utils/partnerSeo';
 
 const MobileHomePage = () => {
   const navigate = useNavigate();
   const [selectedCarrier, setSelectedCarrier] = useState<CarrierCode | 'ALL'>('ALL');
-  const [popularBenefits, setPopularBenefits] = useState<BenefitItem[]>([]);
+  const [popularPartners, setPopularPartners] = useState<PartnerBenefitItem[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
-  const loadPopularBenefits = useCallback(async () => {
+  const loadPopularPartners = useCallback(async () => {
     setStatus('loading');
     try {
-      const params: BenefitApiParams = {
+      const params: PartnerBenefitApiParams = {
         mainCategory: 'BASIC_BENEFIT',
         page: 0,
         size: 8,
@@ -32,18 +30,18 @@ const MobileHomePage = () => {
         params.carriers = [selectedCarrier];
       }
 
-      const data = await getBenefits(params);
-      setPopularBenefits(data.content ?? []);
+      const data = await getPartnerBenefits(params);
+      setPopularPartners(data.content ?? []);
       setStatus('ready');
     } catch {
-      setPopularBenefits([]);
+      setPopularPartners([]);
       setStatus('error');
     }
   }, [selectedCarrier]);
 
   useEffect(() => {
-    void loadPopularBenefits();
-  }, [loadPopularBenefits]);
+    void loadPopularPartners();
+  }, [loadPopularPartners]);
 
   return (
     <div className="min-h-screen bg-purple01/60 px-5 pb-[96px] pt-[calc(env(safe-area-inset-top)+18px)] text-black">
@@ -75,32 +73,7 @@ const MobileHomePage = () => {
         </div>
       </section>
 
-      <section className="mt-4 grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={() => navigate('/benefits')}
-          className="rounded-[22px] bg-white p-4 text-left shadow-[0_10px_28px_rgba(16,17,20,0.06)] active:scale-[0.98]"
-        >
-          <span className="flex h-10 w-10 items-center justify-center rounded-[15px] bg-orange01 text-[20px]">
-            🎁
-          </span>
-          <span className="mt-3 block text-body-2 font-bold text-grey06">인기 혜택</span>
-          <span className="mt-1 block text-body-4 text-grey04">지금 많이 보는 혜택</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/map')}
-          className="rounded-[22px] bg-white p-4 text-left shadow-[0_10px_28px_rgba(16,17,20,0.06)] active:scale-[0.98]"
-        >
-          <span className="flex h-10 w-10 items-center justify-center rounded-[15px] bg-purple01 text-purple05">
-            <TbSparkles className="h-6 w-6" aria-hidden="true" />
-          </span>
-          <span className="mt-3 block text-body-2 font-bold text-grey06">주변 탐색</span>
-          <span className="mt-1 block text-body-4 text-grey04">내 위치 근처 제휴처</span>
-        </button>
-      </section>
-
-      <section className="mt-7">
+      <section className="mt-6">
         <div className="mb-3 flex items-end justify-between">
           <div>
             <p className="text-body-4 font-bold text-purple04">통신사별 인기 혜택</p>
@@ -151,24 +124,24 @@ const MobileHomePage = () => {
         {status === 'error' ? (
           <button
             type="button"
-            onClick={() => void loadPopularBenefits()}
+            onClick={() => void loadPopularPartners()}
             className="mt-4 w-full rounded-[22px] bg-white p-5 text-left text-body-3 font-bold text-purple04"
           >
             혜택을 불러오지 못했어요. 다시 시도
           </button>
         ) : null}
-        {status === 'ready' && popularBenefits.length === 0 ? (
+        {status === 'ready' && popularPartners.length === 0 ? (
           <div className="mt-4 rounded-[22px] bg-white p-5 text-body-3 text-grey04">
             표시할 혜택이 없어요.
           </div>
         ) : null}
 
         <div className="mt-4 space-y-3">
-          {popularBenefits.map((benefit, index) => (
-            <button
-              key={benefit.benefitId}
-              type="button"
-              onClick={() => navigate('/benefits')}
+          {popularPartners.map((partner, index) => (
+            <Link
+              key={partner.partnerId}
+              to={getPartnerBenefitPath(partner.partnerId, partner.partnerName)}
+              aria-label={`${partner.partnerName} 혜택 상세 보기`}
               className="flex w-full items-center gap-3 rounded-[22px] bg-white p-4 text-left shadow-[0_10px_26px_rgba(16,17,20,0.06)] active:scale-[0.99]"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple01 text-body-4 font-extrabold text-purple05">
@@ -176,26 +149,26 @@ const MobileHomePage = () => {
               </span>
               <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-grey01 p-2">
                 <SafeImage
-                  src={benefit.image}
-                  alt={`${benefit.benefitName} 로고`}
-                  fallbackLabel={benefit.benefitName}
+                  src={partner.image}
+                  alt={`${partner.partnerName} 로고`}
+                  fallbackLabel={partner.partnerName}
                   className="h-full w-full object-contain text-body-4"
                 />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="line-clamp-2 text-body-2 font-bold leading-5 text-grey06">
-                  {benefit.benefitName}
+                  {partner.partnerName}
                 </span>
                 <span className="mt-1 line-clamp-1 text-body-4 text-grey04">
-                  {getCarrierLabel(benefit.carrier)} ·{' '}
-                  {benefit.usageType === 'ONLINE' ? '온라인' : '오프라인'} · {benefit.category}
+                  {partner.carriers.map(getCarrierLabel).join(' · ') || '통신사 정보 없음'} ·{' '}
+                  {partner.category || '카테고리 미분류'}
                 </span>
                 <span className="mt-1 line-clamp-1 text-body-5 text-grey04">
-                  {getBenefitDescription(benefit)}
+                  통신사별 상세 혜택과 이용 조건 확인
                 </span>
               </span>
               <TbStar className="h-5 w-5 shrink-0 text-orange03" aria-hidden="true" />
-            </button>
+            </Link>
           ))}
         </div>
       </section>
