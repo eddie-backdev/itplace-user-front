@@ -1,7 +1,9 @@
-import MainPage from './MainPage';
-import MobileHomePage from './MobileHomePage';
+import { lazy } from 'react';
 import { useResponsive } from '../hooks/useResponsive';
 import PageSeo from '../components/PageSeo';
+
+const MainPage = lazy(() => import('./MainPage'));
+const MobileHomePage = lazy(() => import('./MobileHomePage'));
 
 const HomeRoute = () => {
   const { isMobile } = useResponsive();
