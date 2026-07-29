@@ -146,7 +146,6 @@ export default function MyFavoritesPage() {
                   isEditing={isEditing}
                   selectedItems={selectedItems}
                   setSelectedItems={setSelectedItems}
-                  onRemove={handleRemoveFavorite}
                   onRequestDelete={(id: number) => {
                     setPendingDeleteId(id);
                     setIsDeleteModalOpen(true);
@@ -182,7 +181,6 @@ export default function MyFavoritesPage() {
                 isEditing={isEditing}
                 selectedItems={selectedItems}
                 setSelectedItems={setSelectedItems}
-                onRemove={handleRemoveFavorite}
                 onRequestDelete={(id: number) => {
                   setPendingDeleteId(id);
                   setIsDeleteModalOpen(true);

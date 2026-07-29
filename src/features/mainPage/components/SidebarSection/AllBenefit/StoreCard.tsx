@@ -22,7 +22,7 @@ interface StoreCardProps {
   onSelect: (platform: Platform) => void;
 }
 
-const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
+const StoreCard: React.FC<StoreCardProps> = ({ platform, isSelected, onSelect }) => {
   // Redux에서 사용자 등급 가져오기
   const user = useSelector((state: RootState) => state.auth.user);
 
@@ -30,13 +30,9 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
   const getGradeDisplayName = (grade: string) => getMembershipGradeLabel(grade);
 
   const benefitGroups = groupPlatformBenefitsByCarrier(platform);
-  const selectPlatformWithCarrier = (
-    event: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>,
-    carrier: string
-  ) => {
+  const selectPlatformWithCarrier = (carrier: string) => {
     if (!isCarrierCode(carrier)) return;
 
-    event.stopPropagation();
     onSelect({
       ...platform,
       carrier,
@@ -75,20 +71,16 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
   }, [showAddressTooltip]);
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label={`${platform.name} 혜택 새 탭에서 보기`}
-      className="group cursor-pointer transition-colors duration-200 w-full px-5 bg-white hover:bg-grey01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-md:px-4 max-sm:px-3"
-      onClick={() => onSelect(platform)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onSelect(platform);
-        }
-      }}
-    >
-      <div className="py-4 max-md:py-3 w-[330px] max-md:w-full">
+    <article className="group relative w-full bg-white px-5 transition-colors duration-200 hover:bg-grey01 max-md:px-4 max-sm:px-3">
+      <button
+        type="button"
+        aria-label={`${platform.name} 혜택 보기`}
+        aria-expanded={isSelected}
+        className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple02"
+        onClick={() => onSelect(platform)}
+      />
+
+      <div className="pointer-events-none relative z-10 w-[330px] py-4 max-md:w-full max-md:py-3">
         {/* 상단부: 가맹점 정보 + 로고 */}
         <div className="flex justify-between items-start mb-4 max-md:mb-3">
           {/* 왼쪽: 가맹점 정보 2줄 */}
@@ -111,12 +103,13 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
                 {platform.roadName}
               </span>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                type="button"
+                onClick={() => {
                   setShowAddressTooltip(!showAddressTooltip);
                 }}
                 aria-label={showAddressTooltip ? '주소 접기' : '주소 펼치기'}
-                className="rounded-full hover:text-grey05 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                aria-expanded={showAddressTooltip}
+                className="pointer-events-auto rounded-full transition-colors hover:text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
               >
                 {showAddressTooltip ? (
                   <TbChevronUp size={16} className="text-grey04 max-md:w-4 max-md:h-4" />
@@ -127,7 +120,10 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
 
               {/* 주소 툴팁 */}
               {showAddressTooltip && (
-                <div ref={tooltipRef} className="absolute top-full left-0 mt-2 z-50">
+                <div
+                  ref={tooltipRef}
+                  className="pointer-events-auto absolute left-0 top-full z-50 mt-2"
+                >
                   <AddressTooltip
                     roadAddress={platform.roadAddress}
                     lotAddress={platform.address}
@@ -158,78 +154,90 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, onSelect }) => {
           </div>
 
           <div className="space-y-2 max-md:space-y-1.5">
-            {benefitGroups.map((group) => (
-              <section
-                key={group.key}
-                role={isCarrierCode(group.key) ? 'button' : undefined}
-                tabIndex={isCarrierCode(group.key) ? 0 : undefined}
-                aria-label={`${group.label} 혜택으로 ${platform.name} 새 탭에서 보기`}
-                onClick={(event) => selectPlatformWithCarrier(event, group.key)}
-                onKeyDown={(event) => {
-                  if ((event.key === 'Enter' || event.key === ' ') && isCarrierCode(group.key)) {
-                    event.preventDefault();
-                    selectPlatformWithCarrier(event, group.key);
-                  }
-                }}
-                className="rounded-xl border border-grey02 bg-white/70 px-2.5 py-2 transition-colors hover:border-purple02 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-md:px-2 max-md:py-1.5"
-              >
-                <div className="mb-1.5 flex items-center gap-1.5">
-                  <span className="rounded-full bg-purple01 px-2 py-0.5 text-body-5 font-bold text-purple04 max-md:text-body-6">
-                    {group.label}
-                  </span>
-                  <span className="text-body-6 text-grey04">{group.benefits.length}개</span>
-                </div>
+            {benefitGroups.map((group) => {
+              const content = (
+                <>
+                  <div className="mb-1.5 flex items-center gap-1.5">
+                    <span className="rounded-full bg-purple01 px-2 py-0.5 text-body-5 font-bold text-purple04 max-md:text-body-6">
+                      {group.label}
+                    </span>
+                    <span className="text-body-6 text-grey04">{group.benefits.length}개</span>
+                  </div>
 
-                <div className="space-y-1 max-md:space-y-0.5">
-                  {group.benefits.map((benefit, index) => {
-                    const isMatchedGrade =
-                      benefit.grades.some((grade) =>
-                        isGradeApplicableToProfile({
-                          benefitCarrier: benefit.carrier,
-                          benefitGrade: grade,
-                          userCarrier: user?.carrier,
-                          userGrade: user?.membershipGradeCode ?? user?.membershipGrade,
-                        })
-                      ) && benefit.context !== '-';
+                  <div className="space-y-1 max-md:space-y-0.5">
+                    {group.benefits.map((benefit, index) => {
+                      const isMatchedGrade =
+                        benefit.grades.some((grade) =>
+                          isGradeApplicableToProfile({
+                            benefitCarrier: benefit.carrier,
+                            benefitGrade: grade,
+                            userCarrier: user?.carrier,
+                            userGrade: user?.membershipGradeCode ?? user?.membershipGrade,
+                          })
+                        ) && benefit.context !== '-';
 
-                    return (
-                      <div
-                        key={`${group.key}-${benefit.channel}-${benefit.grades.join('-')}-${index}`}
-                        className="grid grid-cols-[20px_68px_minmax(0,1fr)] gap-2 items-start max-md:grid-cols-[16px_56px_minmax(0,1fr)] max-md:gap-1.5"
-                      >
-                        <TbCheck
-                          size={16}
-                          className={`mt-0.5 max-md:w-4 max-md:h-4 ${
-                            isMatchedGrade ? 'text-orange04' : 'text-grey04'
-                          }`}
-                        />
-                        <span
-                          className={`text-body-4 max-md:text-body-5 ${
-                            isMatchedGrade ? 'text-orange04 font-bold' : 'text-grey05 font-medium'
-                          }`}
+                      return (
+                        <div
+                          key={`${group.key}-${benefit.channel}-${benefit.grades.join('-')}-${index}`}
+                          className="grid grid-cols-[20px_68px_minmax(0,1fr)] gap-2 items-start max-md:grid-cols-[16px_56px_minmax(0,1fr)] max-md:gap-1.5"
                         >
-                          {benefit.grades.map(getGradeDisplayName).join(', ')}
-                        </span>
-                        <span
-                          className={`min-w-0 whitespace-pre-line break-words text-body-4 leading-relaxed max-md:text-body-5 ${
-                            isMatchedGrade ? 'text-orange04 font-bold' : 'text-grey05'
-                          }`}
-                        >
-                          <span className="mr-1 inline-flex rounded-full bg-grey01 px-1.5 py-0.5 text-body-6 font-bold text-purple04">
-                            {BENEFIT_USAGE_CHANNEL_LABELS[benefit.channel]}
+                          <TbCheck
+                            size={16}
+                            className={`mt-0.5 max-md:w-4 max-md:h-4 ${
+                              isMatchedGrade ? 'text-orange04' : 'text-grey04'
+                            }`}
+                          />
+                          <span
+                            className={`text-body-4 max-md:text-body-5 ${
+                              isMatchedGrade ? 'text-orange04 font-bold' : 'text-grey05 font-medium'
+                            }`}
+                          >
+                            {benefit.grades.map(getGradeDisplayName).join(', ')}
                           </span>
-                          {benefit.context}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+                          <span
+                            className={`min-w-0 whitespace-pre-line break-words text-body-4 leading-relaxed max-md:text-body-5 ${
+                              isMatchedGrade ? 'text-orange04 font-bold' : 'text-grey05'
+                            }`}
+                          >
+                            <span className="mr-1 inline-flex rounded-full bg-grey01 px-1.5 py-0.5 text-body-6 font-bold text-purple04">
+                              {BENEFIT_USAGE_CHANNEL_LABELS[benefit.channel]}
+                            </span>
+                            {benefit.context}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+
+              if (!isCarrierCode(group.key)) {
+                return (
+                  <div
+                    key={group.key}
+                    className="rounded-xl border border-grey02 bg-white/70 px-2.5 py-2 max-md:px-2 max-md:py-1.5"
+                  >
+                    {content}
+                  </div>
+                );
+              }
+
+              return (
+                <button
+                  key={group.key}
+                  type="button"
+                  aria-label={`${group.label} 혜택으로 ${platform.name} 보기`}
+                  onClick={() => selectPlatformWithCarrier(group.key)}
+                  className="pointer-events-auto w-full rounded-xl border border-grey02 bg-white/70 px-2.5 py-2 text-left transition-colors hover:border-purple02 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-md:px-2 max-md:py-1.5"
+                >
+                  {content}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
