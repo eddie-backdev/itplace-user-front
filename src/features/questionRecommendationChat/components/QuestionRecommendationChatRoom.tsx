@@ -352,6 +352,7 @@ const QuestionRecommendationChatRoom: React.FC<QuestionRecommendationChatRoomPro
   // 채팅방 JSX 컴포넌트
   const chatRoomContent = (
     <div
+      data-itplace-transient-layer={isMobile || isTablet ? 'open' : undefined}
       className={`bg-white p-0 flex flex-col items-center z-[9999] ${
         isDrawer
           ? 'h-full w-full overflow-hidden border-r border-grey02 shadow-[4px_0_18px_rgba(16,17,20,0.08)]'
@@ -370,7 +371,7 @@ const QuestionRecommendationChatRoom: React.FC<QuestionRecommendationChatRoomPro
               maxHeight: '600px',
               minHeight: '400px',
               overflow: 'hidden',
-              zIndex: 9999,
+              zIndex: 'var(--itplace-layer-transient-surface)',
               boxShadow:
                 '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
             }

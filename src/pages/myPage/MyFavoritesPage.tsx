@@ -278,7 +278,8 @@ export default function MyFavoritesPage() {
       {/* ✅ 모바일에서만 모달로 BenefitDetailTabs */}
       {isMobile && selectedId && (
         <div
-          className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-5"
+          data-itplace-transient-layer="open"
+          className="fixed inset-0 z-[var(--itplace-layer-transient-backdrop)] flex items-center justify-center bg-black/50 p-5"
           onClick={() => setSelectedId(null)}
         >
           <div

@@ -17,6 +17,15 @@
   --itplace-mobile-tab-bar-offset: calc(
     var(--itplace-mobile-tab-bar-height) + env(safe-area-inset-bottom, 0px)
   );
+  --itplace-layer-app-tab-bar: 20000;
+  --itplace-layer-transient-backdrop: 30000;
+  --itplace-layer-transient-surface: 30001;
+  --itplace-layer-toast: 50000;
+}
+
+body:has([data-itplace-transient-layer='open']) .itplace-mobile-app-tab-bar {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 @font-face {

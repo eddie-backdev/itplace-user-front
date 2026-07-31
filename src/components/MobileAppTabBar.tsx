@@ -30,7 +30,7 @@ const MobileAppTabBar = () => {
   return (
     <nav
       aria-label="모바일 주요 탭"
-      className="fixed bottom-0 left-0 right-0 z-[20000] border-t border-black/5 bg-white/95 px-3 pt-1.5 shadow-[0_-8px_24px_rgba(16,17,20,0.08)] backdrop-blur md:hidden"
+      className="itplace-mobile-app-tab-bar fixed bottom-0 left-0 right-0 z-[var(--itplace-layer-app-tab-bar)] border-t border-black/5 bg-white/95 px-3 pt-1.5 shadow-[0_-8px_24px_rgba(16,17,20,0.08)] backdrop-blur md:hidden"
       style={{
         height: 'var(--itplace-mobile-tab-bar-offset, 64px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',

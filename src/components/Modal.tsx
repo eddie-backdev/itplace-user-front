@@ -109,7 +109,8 @@ const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/40"
+      data-itplace-transient-layer="open"
+      className="fixed inset-0 z-[var(--itplace-layer-transient-backdrop)] flex items-center justify-center bg-black/40"
       onPointerDown={handleOverlayPointerDown}
       onClick={handleOverlayClick}
     >

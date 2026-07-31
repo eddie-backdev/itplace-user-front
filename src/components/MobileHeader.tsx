@@ -1,5 +1,5 @@
 // src/components/MobileHeader.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TbMenu2, TbX } from 'react-icons/tb';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
@@ -34,6 +34,15 @@ const supportMenus = [
   { label: '계정 삭제 안내', path: '/account-deletion' },
 ];
 
+const FOCUSABLE_ELEMENT_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
 const MobileHeader = ({
   title,
   backgroundColor = 'bg-white',
@@ -42,6 +51,9 @@ const MobileHeader = ({
   iconColor,
 }: MobileHeaderProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -83,19 +95,61 @@ const MobileHeader = ({
     if (!isSidebarOpen) return;
 
     const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const fallbackFocus = menuButtonRef.current;
     document.body.style.overflow = 'hidden';
+
+    const focusTimer = window.setTimeout(() => {
+      closeButtonRef.current?.focus();
+    }, 0);
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        closeSidebar();
+        event.preventDefault();
+        setIsSidebarOpen(false);
+        return;
+      }
+
+      if (event.key !== 'Tab') {
+        return;
+      }
+
+      const sidebar = sidebarRef.current;
+      if (!sidebar) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        sidebar.querySelectorAll<HTMLElement>(FOCUSABLE_ELEMENT_SELECTOR)
+      ).filter((element) => !element.hasAttribute('disabled'));
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        sidebar.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (event.shiftKey && (activeElement === firstElement || !sidebar.contains(activeElement))) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      window.clearTimeout(focusTimer);
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKeyDown);
+      const focusTarget = previousFocus?.isConnected ? previousFocus : fallbackFocus;
+      focusTarget?.focus();
     };
   }, [isSidebarOpen]);
 
@@ -109,6 +163,7 @@ const MobileHeader = ({
       >
         <div className="flex flex-row items-center h-full w-full">
           <button
+            ref={menuButtonRef}
             className="w-8 flex items-center justify-center mr-3 h-full flex-shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
             aria-label="메뉴"
             aria-expanded={isSidebarOpen}
@@ -128,16 +183,26 @@ const MobileHeader = ({
 
       {/* 오버레이 */}
       {isSidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[10000]" onClick={closeSidebar} />
+        <div
+          aria-hidden="true"
+          data-itplace-transient-layer="open"
+          className="fixed inset-0 z-[var(--itplace-layer-transient-backdrop)] bg-black bg-opacity-50"
+          onClick={closeSidebar}
+        />
       )}
 
       {/* 사이드바 */}
       <div
+        ref={sidebarRef}
         id="mobile-navigation-drawer"
         role="dialog"
-        aria-modal="true"
+        aria-modal={isSidebarOpen ? true : undefined}
+        aria-hidden={!isSidebarOpen}
         aria-label="모바일 메뉴"
-        className={`fixed top-0 left-0 h-full w-[280px] bg-white z-[10001] transform transition-transform duration-300 ease-in-out ${
+        data-itplace-transient-layer={isSidebarOpen ? 'open' : undefined}
+        inert={!isSidebarOpen}
+        tabIndex={-1}
+        className={`fixed left-0 top-0 z-[var(--itplace-layer-transient-surface)] flex h-full w-[280px] flex-col overflow-hidden bg-white transform transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -145,16 +210,20 @@ const MobileHeader = ({
         <div className="flex items-center justify-between p-4 border-b border-grey01">
           <h2 className="text-body-0-bold items-center text-purple04 mt-1">IT: PLACE</h2>
           <button
-            className="w-6 h-6 flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+            ref={closeButtonRef}
+            className="flex h-10 w-10 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
             onClick={closeSidebar}
-            aria-label="닫기"
+            aria-label="모바일 메뉴 닫기"
           >
             <TbX className="w-6 h-6 text-black" />
           </button>
         </div>
 
         {/* 메뉴 항목들 */}
-        <nav className="p-4">
+        <nav
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4"
+          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+        >
           <ul className="space-y-6">
             {menus.map((menu) => {
               const isActive =

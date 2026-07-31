@@ -44,7 +44,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[10000] bg-black bg-opacity-50 flex items-center justify-center p-4 max-md:p-2"
+      data-itplace-transient-layer="open"
+      className="fixed inset-0 z-[var(--itplace-layer-transient-backdrop)] bg-black bg-opacity-50 flex items-center justify-center p-4 max-md:p-2"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();

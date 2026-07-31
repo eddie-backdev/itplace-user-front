@@ -734,7 +734,7 @@ const MainPageLayout: React.FC = () => {
         <style>
           {`
             .Toastify__toast-container {
-              z-index: 50000 !important;
+              z-index: var(--itplace-layer-toast) !important;
             }
           `}
         </style>
