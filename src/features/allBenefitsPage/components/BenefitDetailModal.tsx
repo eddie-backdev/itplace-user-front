@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { TbExternalLink, TbMapPin, TbStar, TbStarFilled } from 'react-icons/tb';
-import Modal from '../../../components/AllBenefitsModal';
+import Modal from '../../../components/DetailModal';
 import NoResult from '../../../components/NoResult';
 import SafeImage from '../../../components/SafeImage';
 import { RootState } from '../../../store';

@@ -1,5 +1,7 @@
 import React, { useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { TbX } from 'react-icons/tb';
+import { disableScroll, enableScroll } from '../utils/scrollLock';
 
 interface ModalProps {
   isOpen: boolean;
@@ -8,17 +10,31 @@ interface ModalProps {
   children: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+const FOCUSABLE_ELEMENT_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+const DetailModal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
   const titleId = useId();
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     previousFocusRef.current = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    disableScroll();
 
     const timer = window.setTimeout(() => {
       closeButtonRef.current?.focus();
@@ -26,7 +42,43 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+
+      if (event.key !== 'Tab') {
+        return;
+      }
+
+      const modal = modalRef.current;
+      if (!modal) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        modal.querySelectorAll<HTMLElement>(FOCUSABLE_ELEMENT_SELECTOR)
+      ).filter((element) => !element.hasAttribute('disabled'));
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        modal.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (event.shiftKey && (activeElement === firstElement || !modal.contains(activeElement))) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (
+        !event.shiftKey &&
+        (activeElement === lastElement || !modal.contains(activeElement))
+      ) {
+        event.preventDefault();
+        firstElement.focus();
       }
     };
 
@@ -35,14 +87,16 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
     return () => {
       window.clearTimeout(timer);
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      previousFocusRef.current?.focus?.();
+      enableScroll();
+      if (previousFocusRef.current?.isConnected) {
+        previousFocusRef.current.focus();
+      }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       data-itplace-transient-layer="open"
       className="fixed inset-0 z-[var(--itplace-layer-transient-backdrop)] bg-black bg-opacity-50 flex items-center justify-center p-4 max-md:p-2"
@@ -53,9 +107,11 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
       }}
     >
       <div
+        ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         className="relative flex h-full max-h-[560px] w-full max-w-[680px] flex-col overflow-hidden rounded-[18px] bg-white max-md:max-h-[68vh] max-md:max-w-[328px] max-md:rounded-[16px]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -77,8 +133,9 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
         {/* 모달 내용 */}
         <div className="min-h-0 flex-1 overflow-y-auto bg-white">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
-export default Modal;
+export default DetailModal;

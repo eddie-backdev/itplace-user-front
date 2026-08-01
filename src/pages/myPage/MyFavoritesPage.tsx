@@ -11,8 +11,8 @@ import FavoritesAside from '../../features/myPage/components/Favorites/Favorites
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import BenefitDetailTabs from '../../features/myPage/components/Favorites/BenefitDetailTabs';
-import { IoCloseOutline } from 'react-icons/io5';
 import { useResponsive } from '../../hooks/useResponsive';
+import DetailModal from '../../components/DetailModal';
 
 export default function MyFavoritesPage() {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -48,6 +48,10 @@ export default function MyFavoritesPage() {
     reloadFavorites,
     hasMembershipProfile,
   } = useFavorites(4, userCarrier, userGrade);
+  const selectedFavorite =
+    selectedId === null
+      ? undefined
+      : allFavorites.find((favorite) => favorite.benefitId === selectedId);
 
   return (
     <div className="flex h-[640px] flex-row items-stretch gap-4 w-full max-lg:h-auto max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-3">
@@ -275,35 +279,23 @@ export default function MyFavoritesPage() {
         </div>
       )}
 
-      {/* ✅ 모바일에서만 모달로 BenefitDetailTabs */}
-      {isMobile && selectedId && (
-        <div
-          data-itplace-transient-layer="open"
-          className="fixed inset-0 z-[var(--itplace-layer-transient-backdrop)] flex items-center justify-center bg-black/50 p-5"
-          onClick={() => setSelectedId(null)}
-        >
-          <div
-            className="bg-white rounded-[18px] w-full max-w-[calc(100%-10px)] max-h-[80vh] overflow-y-auto p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center mb-6">
-              <h1 className="flex-1 text-center text-black text-title-5 font-semibold">
-                상세 혜택
-              </h1>
-              <button className=" text-grey05 -mt-2 -ml-6" onClick={() => setSelectedId(null)}>
-                <IoCloseOutline size={26} />
-              </button>
-            </div>
+      <DetailModal
+        isOpen={isMobile && selectedId !== null}
+        onClose={() => setSelectedId(null)}
+        title="상세 혜택"
+      >
+        {selectedId !== null && (
+          <div className="p-5 max-md:p-4">
             <BenefitDetailTabs
               benefitId={selectedId}
-              image={allFavorites.find((f) => f.benefitId === selectedId)?.partnerImage ?? ''}
-              name={allFavorites.find((f) => f.benefitId === selectedId)?.benefitName ?? ''}
+              image={selectedFavorite?.partnerImage ?? ''}
+              name={selectedFavorite?.benefitName ?? ''}
               userCarrier={userCarrier}
               userGrade={userGrade}
             />
           </div>
-        </div>
-      )}
+        )}
+      </DetailModal>
     </div>
   );
 }

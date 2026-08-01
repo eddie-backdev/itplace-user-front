@@ -1,7 +1,7 @@
 export { default as SearchBar } from './SearchBar';
 export { default as ActionButton } from './ActionButton';
 export { default as Pagination } from './Pagination';
-export { default as AllBenefitsModal } from './AllBenefitsModal';
+export { default as DetailModal } from './DetailModal';
 export { default as BenefitFilterToggle } from './BenefitFilterToggle';
 export { default as Header } from './Header';
 export { default as LoadingSpinner } from './LoadingSpinner';
