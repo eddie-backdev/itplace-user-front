@@ -1,9 +1,9 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { TbGift, TbHeart, TbHome, TbMap2, TbUserCircle } from 'react-icons/tb';
+import { TbGift, TbHeart, TbHome, TbMap, TbUser } from 'react-icons/tb';
 
 const tabs = [
   { to: '/', label: '홈', icon: TbHome, match: (path: string) => path === '/' },
-  { to: '/map', label: '지도', icon: TbMap2, match: (path: string) => path === '/map' },
+  { to: '/map', label: '지도', icon: TbMap, match: (path: string) => path === '/map' },
   {
     to: '/benefits',
     label: '혜택',
@@ -12,14 +12,14 @@ const tabs = [
   },
   {
     to: '/mypage/favorites',
-    label: '저장',
+    label: '즐겨찾기',
     icon: TbHeart,
     match: (path: string) => path.startsWith('/mypage/favorites'),
   },
   {
     to: '/mypage/info',
     label: '마이',
-    icon: TbUserCircle,
+    icon: TbUser,
     match: (path: string) => path.startsWith('/mypage') && !path.startsWith('/mypage/favorites'),
   },
 ];
@@ -30,7 +30,7 @@ const MobileAppTabBar = () => {
   return (
     <nav
       aria-label="모바일 주요 탭"
-      className="itplace-mobile-app-tab-bar fixed bottom-0 left-0 right-0 z-[var(--itplace-layer-app-tab-bar)] border-t border-black/5 bg-white/95 px-3 pt-1.5 shadow-[0_-8px_24px_rgba(16,17,20,0.08)] backdrop-blur md:hidden"
+      className="itplace-mobile-app-tab-bar fixed bottom-0 left-0 right-0 z-[var(--itplace-layer-app-tab-bar)] border-t border-warmBorder bg-warmSurface/95 px-3 pt-1 shadow-[0_-6px_18px_rgba(36,35,33,0.06)] backdrop-blur md:hidden"
       style={{
         height: 'var(--itplace-mobile-tab-bar-offset, 64px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -47,12 +47,14 @@ const MobileAppTabBar = () => {
               to={tab.to}
               aria-label={`${tab.label} 탭으로 이동`}
               aria-current={selected ? 'page' : undefined}
-              className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[14px] px-1 py-1.5 transition active:scale-[0.98] ${
-                selected ? 'text-purple05' : 'text-grey04'
+              className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[14px] px-1 py-1.5 transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                selected ? 'text-brandStrong' : 'text-grey04'
               }`}
             >
               <Icon
-                className={`h-[22px] w-[22px] ${selected ? 'stroke-[2.5]' : 'stroke-[2.1]'}`}
+                className={`h-[22px] w-[22px] transition-transform ${
+                  selected ? 'scale-105 stroke-[2.8]' : 'stroke-[1.9]'
+                }`}
                 aria-hidden="true"
               />
               <span

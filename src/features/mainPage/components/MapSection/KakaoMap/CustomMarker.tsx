@@ -28,7 +28,10 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
   const bubbleSize = width;
   const center = width / 2;
   const tipY = height - 1;
-  const accentColor = isSelected ? '#7132F5' : '#D8CBFE';
+  const outerRadius = center - 2;
+  const tailShoulderY = bubbleSize - Math.max(9, Math.round(bubbleSize * 0.18));
+  const tailHalfWidth = Math.max(5, Math.round(bubbleSize * 0.12));
+  const accentColor = isSelected ? '#115C3A' : '#4EA77A';
 
   return (
     <button
@@ -44,9 +47,9 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
         lineHeight: 0,
         zIndex: isSelected ? 1000 : 1,
         filter: isSelected
-          ? 'drop-shadow(0 4px 8px rgba(113, 50, 245, 0.38))'
-          : 'drop-shadow(1px 3px 5px rgba(16, 17, 20, 0.22))',
-        transform: `translate(${offsetX}px, ${offsetY}px)${isSelected ? ' scale(1.08)' : ''}`,
+          ? 'drop-shadow(0 5px 9px rgba(17, 92, 58, 0.32))'
+          : 'drop-shadow(1px 3px 5px rgba(36, 35, 33, 0.20))',
+        transform: `translate(${offsetX}px, ${offsetY}px)${isSelected ? ' scale(1.06)' : ''}`,
         transformOrigin: 'center bottom',
         transition: 'filter 0.2s ease, transform 0.2s ease',
       }}
@@ -59,18 +62,22 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
         viewBox={`0 0 ${width} ${height}`}
       >
         <path
+          data-marker-tail="true"
+          d={`M${center - tailHalfWidth} ${tailShoulderY} Q${center - tailHalfWidth * 0.55} ${
+            bubbleSize + 3
+          } ${center} ${tipY} Q${center + tailHalfWidth * 0.55} ${bubbleSize + 3} ${
+            center + tailHalfWidth
+          } ${tailShoulderY} Z`}
+          fill={accentColor}
+        />
+        <circle
           data-marker-outline="true"
-          d={`M${center} ${tipY} C${center - 4} ${tipY - 9} 2 ${
-            bubbleSize * 0.78
-          } 2 ${bubbleSize * 0.54} C2 ${bubbleSize * 0.22} ${width * 0.24} 2 ${
-            center
-          } 2 C${width * 0.76} 2 ${width - 2} ${bubbleSize * 0.22} ${width - 2} ${
-            bubbleSize * 0.54
-          } C${width - 2} ${bubbleSize * 0.78} ${center + 4} ${tipY - 9} ${center} ${tipY} Z`}
+          cx={center}
+          cy={center}
+          r={outerRadius}
           fill="white"
           stroke={accentColor}
-          strokeWidth={isSelected ? 2 : 1.25}
-          strokeLinejoin="round"
+          strokeWidth={isSelected ? 2.5 : 1.5}
         />
       </svg>
 
@@ -88,7 +95,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
           role="img"
           aria-label={`${displayName} 로고`}
           data-marker-fallback="true"
-          className={`inline-flex h-full w-full items-center justify-center bg-purple01 font-extrabold text-purple05 ${
+          className={`inline-flex h-full w-full items-center justify-center bg-brandSoft font-extrabold text-brandStrong ${
             isCompact ? 'text-[10px]' : 'text-xs'
           } ${normalizedImageUrl ? 'hidden' : ''}`}
         >

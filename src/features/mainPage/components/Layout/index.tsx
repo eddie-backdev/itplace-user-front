@@ -4,7 +4,6 @@ import MapSection from '../MapSection';
 import SearchSection from '../SidebarSection/SearchSection';
 import SpeechBubble from '../SidebarSection/PersonalizedRecommendationList/SpeechBubble';
 import BenefitDetailCard from '../SidebarSection/PersonalizedRecommendationList/BenefitDetailCard';
-import MobileHeader from '../../../../components/MobileHeader';
 import { Platform, MapLocation, MapBounds } from '../../types';
 import { CATEGORIES, LAYOUT } from '../../constants';
 import { useStoreData } from '../../hooks/useStoreData';
@@ -14,8 +13,8 @@ import { useLayoutEffect } from 'react';
 import { useResponsive } from '../../../../hooks/useResponsive';
 import { disableScroll, enableScroll } from '../../../../utils/scrollLock';
 
-const BOTTOM_SHEET_MIN_HEIGHT = 150;
-const BOTTOM_SHEET_MID_HEIGHT = 300;
+const BOTTOM_SHEET_MIN_HEIGHT = 300;
+const BOTTOM_SHEET_MID_HEIGHT = 430;
 const MOBILE_APP_TAB_BAR_HEIGHT = 64;
 const BOTTOM_SHEET_VIEWPORT_OFFSET = 105 + MOBILE_APP_TAB_BAR_HEIGHT;
 const MOBILE_MAP_CONTROLS_GAP = 12;
@@ -54,13 +53,6 @@ const MainPageLayout: React.FC = () => {
   const { isMobile } = useResponsive();
 
   const location = useLocation();
-
-  const mobileGuideMessage =
-    activeTab === 'ai'
-      ? '아래 시트를 올려 맞춤 AI 추천과 질문형 AI 추천을 확인해보세요.'
-      : activeTab === 'favorites'
-        ? '아래 시트를 올려 저장한 혜택을 빠르게 확인해보세요.'
-        : '아래 시트를 올려 주변 혜택과 검색 결과를 확인해보세요.';
 
   const getMaxHeight = useCallback(() => maxBottomSheetHeight, [maxBottomSheetHeight]);
 
@@ -608,7 +600,7 @@ const MainPageLayout: React.FC = () => {
   return (
     <>
       {/* 데스크톱 레이아웃 */}
-      <div className="hidden md:flex h-screen bg-white relative overflow-hidden">
+      <div className="relative hidden h-screen overflow-hidden bg-warmSurface md:flex">
         {/* 사이드바 컨테이너 */}
         <div
           className="flex-shrink-0 h-full transition-all duration-300 ease-in-out"
@@ -653,9 +645,8 @@ const MainPageLayout: React.FC = () => {
           onClick={handleSidebarToggle}
           aria-expanded={!isSidebarCollapsed}
           aria-label={isSidebarCollapsed ? '검색 패널 열기' : '검색 패널 접기'}
-          className={`absolute top-1/2 z-40 flex h-16 w-7 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-grey02 bg-white text-grey04 shadow-[4px_0_14px_rgba(16,17,20,0.12)] transition-all duration-300 ease-in-out hover:bg-purple01 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple03 ${
-            isSidebarCollapsed ? 'left-0' : 'left-[370px]'
-          }`}
+          className="absolute top-1/2 z-40 flex h-14 w-6 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-warmBorder bg-warmSurface text-grey04 shadow-[3px_0_12px_rgba(36,35,33,0.08)] transition-all duration-300 ease-in-out hover:bg-brandSoft hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          style={{ left: isSidebarCollapsed ? 0 : LAYOUT.SIDEBAR_WIDTH }}
         >
           {isSidebarCollapsed ? (
             <TbChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
@@ -729,7 +720,7 @@ const MainPageLayout: React.FC = () => {
       </div>
 
       {/* 모바일 레이아웃 */}
-      <div className="flex md:hidden flex-col h-screen bg-grey01 overflow-hidden">
+      <div className="flex h-screen flex-col overflow-hidden bg-warmCanvas md:hidden">
         {/* 토스트 컨테이너 z-index 조정 */}
         <style>
           {`
@@ -739,17 +730,12 @@ const MainPageLayout: React.FC = () => {
           `}
         </style>
 
-        {/* 투명 MobileHeader with SearchSection */}
-        <div className="absolute top-0 left-0 right-0 z-[10000]">
-          <MobileHeader
-            backgroundColor="bg-transparent"
-            rightContent={
-              <SearchSection
-                onSearchChange={(query) => setSearchQuery(query)}
-                onKeywordSearch={handleKeywordSearch}
-                defaultValue={searchQuery}
-              />
-            }
+        {/* 지도 탐색의 첫 행동인 검색을 상단에 고정한다. */}
+        <div className="absolute left-3 right-3 top-3 z-[10000] rounded-xl shadow-[0_5px_18px_rgba(36,35,33,0.10)]">
+          <SearchSection
+            onSearchChange={(query) => setSearchQuery(query)}
+            onKeywordSearch={handleKeywordSearch}
+            defaultValue={searchQuery}
           />
         </div>
 
@@ -784,7 +770,7 @@ const MainPageLayout: React.FC = () => {
 
           {/* 바텀시트 */}
           <div
-            className={`fixed left-0 right-0 bg-white rounded-t-[18px] shadow-lg z-[9998] flex flex-col ${
+            className={`fixed left-0 right-0 z-[9998] flex flex-col rounded-t-[24px] border-t border-warmBorder bg-warmSurface shadow-[0_-10px_30px_rgba(36,35,33,0.10)] ${
               isAnimating ? 'transition-all duration-300 ease-out' : ''
             }`}
             style={{
@@ -801,22 +787,14 @@ const MainPageLayout: React.FC = () => {
           >
             {/* 드래그 핸들 */}
             <div
-              className="w-full h-6 flex items-center justify-center cursor-grab active:cursor-grabbing"
+              className="flex h-5 w-full cursor-grab items-center justify-center active:cursor-grabbing"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               onMouseDown={handleMouseDown}
             >
-              <div className="w-8 h-1 bg-grey03 rounded-full" />
+              <div className="h-1 w-9 rounded-full bg-grey03" />
             </div>
-
-            {isMobile && (
-              <div className="px-5 pb-2 text-body-4 text-grey04">
-                {bottomSheetHeight <= BOTTOM_SHEET_MIN_HEIGHT + 24
-                  ? mobileGuideMessage
-                  : '탭을 바꿔 주변 혜택, 관심 혜택, 맞춤 AI 추천을 살펴보세요.'}
-              </div>
-            )}
 
             {/* 사이드바 콘텐츠 */}
             <div

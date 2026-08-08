@@ -2,17 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-
 :root {
-  --itplace-color-brand: #7132f5;
-  --itplace-color-brand-hover: #5741d8;
-  --itplace-color-brand-light: #855bfb;
-  --itplace-color-brand-subtle: #ede7fe;
-  --itplace-color-surface: #ffffff;
-  --itplace-color-surface-subtle: #f8f8fa;
-  --itplace-color-text: #101114;
-  --itplace-color-border: #dedee5;
-  --itplace-shadow-soft: 0 4px 24px rgba(16, 17, 20, 0.06);
+  --itplace-color-brand: #167a4c;
+  --itplace-color-brand-hover: #115c3a;
+  --itplace-color-brand-light: #39a66f;
+  --itplace-color-brand-subtle: #edf8f2;
+  --itplace-color-benefit: #ffd75a;
+  --itplace-color-surface: #fffefb;
+  --itplace-color-surface-subtle: #f9f8f5;
+  --itplace-color-text: #242321;
+  --itplace-color-text-secondary: #6f6a60;
+  --itplace-color-border: #e4e1d8;
+  --itplace-shadow-soft: 0 4px 24px rgba(36, 35, 33, 0.06);
   --itplace-mobile-tab-bar-height: 64px;
   --itplace-mobile-tab-bar-offset: calc(
     var(--itplace-mobile-tab-bar-height) + env(safe-area-inset-bottom, 0px)
@@ -21,6 +22,14 @@
   --itplace-layer-transient-backdrop: 30000;
   --itplace-layer-transient-surface: 30001;
   --itplace-layer-toast: 50000;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: var(--itplace-color-surface-subtle);
+  color: var(--itplace-color-text);
 }
 
 body:has([data-itplace-transient-layer='open']) .itplace-mobile-app-tab-bar {
@@ -355,7 +364,6 @@ body:has([data-itplace-transient-layer='open']) .itplace-mobile-app-tab-bar {
   white-space: normal !important;
   min-width: 0 !important;
 }
-
 
 .Toastify__toast.custom-toast .Toastify__toast-body > div:last-child {
   min-width: 0 !important;

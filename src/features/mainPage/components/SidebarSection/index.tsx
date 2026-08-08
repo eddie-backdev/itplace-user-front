@@ -462,13 +462,13 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   };
 
   return (
-    <div className="bg-white flex flex-col overflow-hidden w-full h-full border-r border-grey02 shadow-[4px_0_18px_rgba(16,17,20,0.08)] max-md:border-r-0 max-md:bg-transparent max-md:rounded-none max-md:drop-shadow-none max-md:shadow-none max-md:overflow-visible">
+    <div className="flex h-full w-full flex-col overflow-hidden border-r border-warmBorder bg-warmSurface max-md:overflow-visible max-md:border-r-0 max-md:bg-transparent max-md:shadow-none">
       {viewMode === 'list' ? (
         // 리스트 모드: 기존 UI
-        <div className="flex flex-col mx-5 mt-[15px] mb-[18px] w-[330px] max-md:mx-0 max-md:w-full flex-1 min-h-0">
+        <div className="mx-5 mb-4 mt-4 flex min-h-0 flex-1 flex-col max-md:mx-0 max-md:mb-0 max-md:mt-0 max-md:w-full">
           {/* 검색 영역 - 데스크톱에서만 표시 */}
           <div
-            className="pb-8 flex-shrink-0 max-md:touch-manipulation"
+            className="flex-shrink-0 pb-4 max-md:touch-manipulation max-md:pb-2"
             // 모바일과 태블릿에서만 터치 이벤트 적용 (탭 및 헤더 영역)
             onTouchStart={isMobile || isTablet ? onTouchStart : undefined}
             onTouchMove={isMobile || isTablet ? onTouchMove : undefined}
@@ -482,7 +482,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
               />
             </div>
 
-            <div className={`mb-4 ${searchQuery ? 'md:mt-0 mt-0' : 'md:mt-0 mt-0'} max-md:mx-0`}>
+            <div className="mb-3 max-md:mx-0 max-md:mb-2">
               <NavigationTabsSection
                 tabs={mainTabs}
                 activeTab={activeTab}
@@ -506,7 +506,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
               currentLocation={currentLocation}
               isLoading={isLoading || isRecommendationStoreLoading}
               error={error || recommendationStoreError}
-              displayMode={searchQuery?.trim() ? 'list' : 'summary'}
+              displayMode="list"
             />
           )}
 

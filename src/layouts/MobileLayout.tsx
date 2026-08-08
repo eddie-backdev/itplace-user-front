@@ -16,7 +16,7 @@ const MobileLayout = () => {
 
   return (
     <div
-      className={`${showTabBar ? 'bg-purple01/60' : 'bg-white'} max-md:block hidden min-h-screen`}
+      className={`${showTabBar ? 'bg-warmCanvas' : 'bg-warmSurface'} max-md:block hidden min-h-screen`}
     >
       <main
         className={isFullBleedPage || isAuthPage ? '' : 'px-0'}

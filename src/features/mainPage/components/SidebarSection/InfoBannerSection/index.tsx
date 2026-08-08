@@ -11,8 +11,7 @@ const InfoBannerSection: React.FC<InfoBannerSectionProps> = ({
   variant = 'primary',
   highlightText,
 }) => {
-  const borderColor = variant === 'primary' ? 'border-purple04' : 'border-grey02';
-  const textColor = variant === 'primary' ? 'text-purple04' : 'text-grey05';
+  const textColor = variant === 'primary' ? 'text-brandStrong' : 'text-grey05';
 
   // 강조 텍스트가 있으면 해당 부분을 분리하여 렌더링
   const renderMessage = () => {
@@ -29,9 +28,7 @@ const InfoBannerSection: React.FC<InfoBannerSectionProps> = ({
           <React.Fragment key={index}>
             {part}
             {index < parts.length - 1 && (
-              <span className="text-purple05 text-body-2-bold max-md:text-body-3-bold">
-                {highlightText}
-              </span>
+              <span className="font-bold text-brandStrong">{highlightText}</span>
             )}
           </React.Fragment>
         ))}
@@ -40,10 +37,8 @@ const InfoBannerSection: React.FC<InfoBannerSectionProps> = ({
   };
 
   return (
-    <div
-      className={`w-[330px] border ${borderColor} rounded-[10px] mt-5 max-md:mt-3 max-md:w-auto max-md:mx-4 max-sm:mx-3`}
-    >
-      <div className="py-3 text-center max-md:py-2 max-sm:py-1.5">{renderMessage()}</div>
+    <div className="mt-2 hidden w-full md:block">
+      <div className="text-left">{renderMessage()}</div>
     </div>
   );
 };

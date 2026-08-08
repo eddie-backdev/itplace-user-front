@@ -47,15 +47,15 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
         if (markerElement) {
           const storeId = parseInt(markerElement.getAttribute('data-store-id') || '0');
           const isSelected = newSelectedStoreId === storeId;
-          const accentColor = isSelected ? '#7132F5' : '#D8CBFE';
+          const accentColor = isSelected ? '#115C3A' : '#4EA77A';
           const markerName = markerElement.getAttribute('title') || '가맹점';
 
           overlay.setZIndex(isSelected ? 1000 : 1);
           markerElement.style.zIndex = isSelected ? '1000' : '1';
           markerElement.style.filter = isSelected
-            ? 'drop-shadow(0 4px 8px rgba(113, 50, 245, 0.38))'
-            : 'drop-shadow(1px 3px 5px rgba(16, 17, 20, 0.22))';
-          markerElement.style.transform = isSelected ? 'scale(1.08)' : 'none';
+            ? 'drop-shadow(0 5px 9px rgba(17, 92, 58, 0.32))'
+            : 'drop-shadow(1px 3px 5px rgba(36, 35, 33, 0.20))';
+          markerElement.style.transform = isSelected ? 'scale(1.06)' : 'none';
           markerElement.setAttribute(
             'aria-label',
             `${markerName} 혜택 위치${isSelected ? ', 선택됨' : ''}`
@@ -64,8 +64,11 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
             .querySelectorAll<SVGElement>('[data-marker-outline="true"]')
             .forEach((outline) => {
               outline.setAttribute('stroke', accentColor);
-              outline.setAttribute('stroke-width', isSelected ? '2' : '1.25');
+              outline.setAttribute('stroke-width', isSelected ? '2.5' : '1.5');
             });
+          markerElement
+            .querySelectorAll<SVGElement>('[data-marker-tail="true"]')
+            .forEach((tail) => tail.setAttribute('fill', accentColor));
         }
       }
     });

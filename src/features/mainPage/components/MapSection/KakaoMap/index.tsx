@@ -64,41 +64,31 @@ interface ReconcileMetrics {
 const DUPLICATE_MARKER_RING_SIZE = 8;
 const DEFAULT_MAP_LEVEL = 4;
 const CLUSTER_TAIL_HEIGHT = 9;
-const SERVER_CLUSTER_STYLE_VERSION = 'administrative-pin-v14';
+const SERVER_CLUSTER_STYLE_VERSION = 'warm-green-pin-v16';
 const CLUSTER_DENSITY_COLORS = {
-  low: '#7986CB',
-  medium: '#5C6BC0',
-  high: '#3949AB',
-  extreme: '#283593',
+  low: '#4EA77A',
+  medium: '#23865A',
+  high: '#167A4C',
+  extreme: '#0B452B',
 } as const;
 const administrativeClusterBackgroundCache = new Map<string, string>();
 
 const createClusterPinBackground = (size: number, color: string, filled = true) => {
   const height = size + CLUSTER_TAIL_HEIGHT;
   const center = size / 2;
-  const shoulderY = Math.round(size * 0.42);
-  const lowerCurveY = size - 7;
-  const tailStartY = size - 4;
-  const tailHalfWidth = Math.max(5, Math.round(size * 0.15));
+  const radius = center - 2;
+  const tailStartY = size - Math.max(8, Math.round(size * 0.2));
+  const tailHalfWidth = Math.max(5, Math.round(size * 0.14));
   const fillColor = filled ? color : '#FFFFFF';
   const strokeColor = filled ? '#FFFFFF' : color;
-  const highlightColor = filled ? '#FFFFFF' : color;
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${height}" viewBox="0 0 ${size} ${height}">
-      <path d="M${center} 2 C${size * 0.76} 2 ${size - 2} ${size * 0.2} ${
-        size - 2
-      } ${shoulderY} C${size - 2} ${size * 0.68} ${size * 0.78} ${lowerCurveY} ${
-        center + tailHalfWidth
-      } ${tailStartY} L${center} ${height - 1} L${center - tailHalfWidth} ${
-        tailStartY
-      } C${size * 0.22} ${lowerCurveY} 2 ${size * 0.68} 2 ${shoulderY} C2 ${
-        size * 0.2
-      } ${size * 0.24} 2 ${center} 2 Z" fill="${fillColor}" stroke="${strokeColor}" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M${size * 0.31} 8 Q${center} 5 ${
-        size * 0.69
-      } 8" stroke="${highlightColor}" stroke-opacity="${
-        filled ? 0.26 : 0.18
-      }" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M${center - tailHalfWidth} ${tailStartY} Q${
+        center - tailHalfWidth * 0.55
+      } ${size + 1} ${center} ${height - 1} Q${center + tailHalfWidth * 0.55} ${
+        size + 1
+      } ${center + tailHalfWidth} ${tailStartY} Z" fill="${fillColor}" stroke="${strokeColor}" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="${center}" cy="${center}" r="${radius}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="3"/>
     </svg>
   `;
   const dataUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
@@ -139,11 +129,11 @@ const markerRegistryKey = (platform: Platform): string =>
 
 const getCategoryPinColor = (category?: string) => {
   const normalizedCategory = (category ?? '').toLowerCase();
-  if (normalizedCategory.includes('카페') || normalizedCategory.includes('커피')) return '#7C3AED';
-  if (normalizedCategory.includes('편의')) return '#2563EB';
-  if (normalizedCategory.includes('푸드') || normalizedCategory.includes('음식')) return '#C67A32';
-  if (normalizedCategory.includes('영화') || normalizedCategory.includes('문화')) return '#DB2777';
-  return '#7132F5';
+  if (normalizedCategory.includes('카페') || normalizedCategory.includes('커피')) return '#167A4C';
+  if (normalizedCategory.includes('편의')) return '#33856A';
+  if (normalizedCategory.includes('푸드') || normalizedCategory.includes('음식')) return '#115C3A';
+  if (normalizedCategory.includes('영화') || normalizedCategory.includes('문화')) return '#4A946E';
+  return '#167A4C';
 };
 
 const getClusterDensityColor = (count: number) => {
@@ -155,22 +145,22 @@ const getClusterDensityColor = (count: number) => {
 
 const getClusterDensityShadows = (count: number) => {
   if (count < 10) {
-    return { resting: 'rgba(62,72,130,0.23)', active: 'rgba(62,72,130,0.32)' };
+    return { resting: 'rgba(17,92,58,0.20)', active: 'rgba(17,92,58,0.30)' };
   }
   if (count < 100) {
-    return { resting: 'rgba(43,53,113,0.25)', active: 'rgba(43,53,113,0.34)' };
+    return { resting: 'rgba(17,92,58,0.23)', active: 'rgba(17,92,58,0.33)' };
   }
   if (count < 1000) {
-    return { resting: 'rgba(27,36,93,0.28)', active: 'rgba(27,36,93,0.37)' };
+    return { resting: 'rgba(11,69,43,0.26)', active: 'rgba(11,69,43,0.36)' };
   }
-  return { resting: 'rgba(18,25,74,0.3)', active: 'rgba(18,25,74,0.39)' };
+  return { resting: 'rgba(11,69,43,0.29)', active: 'rgba(11,69,43,0.39)' };
 };
 
 const getAdministrativeClusterColor = (unitType?: MapCluster['administrativeUnitType']) => {
-  if (unitType === 'CITY') return '#493D9B';
-  if (unitType === 'TOWN') return '#6253C5';
-  if (unitType === 'LEGAL_DONG') return '#7865D8';
-  return '#5C6BC0';
+  if (unitType === 'CITY') return '#0B452B';
+  if (unitType === 'TOWN') return '#115C3A';
+  if (unitType === 'LEGAL_DONG') return '#23865A';
+  return '#167A4C';
 };
 
 const updateAdministrativeClusterElement = (
@@ -183,8 +173,8 @@ const updateAdministrativeClusterElement = (
   const labelLength = Array.from(administrativeUnitName).length;
   const visualWidth = Math.min(156, Math.max(86, labelLength * 13 + countLabel.length * 7 + 42));
   const shadows = {
-    resting: 'rgba(56, 46, 118, 0.2)',
-    active: 'rgba(56, 46, 118, 0.3)',
+    resting: 'rgba(17, 92, 58, 0.20)',
+    active: 'rgba(17, 92, 58, 0.30)',
   };
   const ariaLabel = `${administrativeUnitName} 혜택 ${countLabel}곳`;
 
@@ -250,7 +240,7 @@ const updateAdministrativeClusterElement = (
     'overflow:hidden',
     'text-overflow:ellipsis',
     'white-space:nowrap',
-    'color:#352E5D',
+    'color:#24352C',
     'font-size:13px',
     'font-weight:800',
     'line-height:1',

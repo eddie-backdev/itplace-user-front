@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import {
-  TbMap2,
+  TbMap,
   TbUser,
   TbLogout,
   TbLogin,
-  TbMapPin,
-  TbLayoutList,
+  TbTicket,
   TbSparkles,
   TbInfoCircle,
+  TbBookmark,
 } from 'react-icons/tb';
 import clsx from 'clsx';
 import { useLocation, Link } from 'react-router-dom';
@@ -24,21 +24,21 @@ import {
 } from '../features/questionRecommendationChat/utils/questionRecommendationChatEvents';
 
 const menus = [
-  { id: 'map', label: '잇플 맵', icon: TbMap2, path: '/map' },
-  { id: 'benefits', label: '전체 혜택', icon: TbLayoutList, path: '/benefits' },
-  { id: 'mypage', label: '마이페이지', icon: TbUser, path: '/mypage/info' },
+  { id: 'map', label: '지도', icon: TbMap, path: '/map' },
+  { id: 'benefits', label: '혜택', icon: TbTicket, path: '/benefits' },
+  { id: 'favorites', label: '즐겨찾기', icon: TbBookmark, path: '/mypage/favorites' },
+  { id: 'mypage', label: '마이', icon: TbUser, path: '/mypage/info' },
 ];
 
 const supportPaths = ['/about', '/guide', '/faq', '/contact', '/terms', '/privacy', '/membership'];
 
 const primaryNavItemClass =
-  'relative flex h-[60px] w-full flex-col items-center justify-center rounded-xl border border-[#CEC5E2] bg-[#E5DFF2] text-[11px] font-bold leading-tight text-[#514B60] shadow-[0_3px_8px_rgba(62,47,91,0.10),inset_0_1px_0_rgba(255,255,255,0.58)] transition-[background-color,border-color,color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[#BCAAF0] hover:bg-[#DCD3EF] hover:text-purple06 hover:shadow-[0_6px_13px_rgba(62,47,91,0.15),inset_0_1px_0_rgba(255,255,255,0.62)] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple03 focus-visible:ring-offset-1 focus-visible:ring-offset-purple01';
+  'group relative flex h-[58px] w-full flex-col items-center justify-center rounded-2xl text-[11px] font-bold leading-tight text-grey05 transition-[color,transform] hover:text-grey06 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav';
 
 const utilityNavItemClass =
-  'relative flex h-[52px] w-full flex-col items-center justify-center rounded-xl border border-[#D3CBE3] bg-[#E8E3F2] text-[11px] font-bold leading-tight text-[#5D576A] shadow-[0_2px_7px_rgba(62,47,91,0.09),inset_0_1px_0_rgba(255,255,255,0.54)] transition-[background-color,border-color,color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[#BCAAF0] hover:bg-[#DED5EF] hover:text-purple06 hover:shadow-[0_5px_11px_rgba(62,47,91,0.14),inset_0_1px_0_rgba(255,255,255,0.60)] active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple03 focus-visible:ring-offset-1 focus-visible:ring-offset-purple01';
+  'group relative flex h-[48px] w-full flex-col items-center justify-center rounded-2xl text-[10px] font-bold leading-tight text-grey05 transition-[color,transform] hover:text-grey06 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav';
 
-const activeNavClass =
-  '!border-[#7565E6] !bg-purple05 !text-white !shadow-[0_8px_18px_rgba(48,30,105,0.28),0_2px_5px_rgba(48,30,105,0.18),inset_0_2px_0_rgba(255,255,255,0.28),inset_0_-4px_0_rgba(45,27,113,0.34)] hover:!-translate-y-0.5 hover:!border-[#806EF0] hover:!bg-purple05 hover:!text-white hover:!shadow-[0_10px_20px_rgba(48,30,105,0.30),0_3px_6px_rgba(48,30,105,0.18),inset_0_2px_0_rgba(255,255,255,0.32),inset_0_-4px_0_rgba(45,27,113,0.36)] active:!translate-y-px active:!shadow-[0_4px_10px_rgba(48,30,105,0.24),0_1px_3px_rgba(48,30,105,0.16),inset_0_1px_0_rgba(255,255,255,0.22),inset_0_-2px_0_rgba(45,27,113,0.30)]';
+const activeNavClass = '!text-grey07';
 
 export default function Header({ variant = 'default' }: { variant?: 'default' | 'glass' }) {
   const location = useLocation();
@@ -88,32 +88,34 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
     <>
       <aside
         className={clsx(
-          'fixed left-0 top-0 z-30 flex h-full w-20 flex-col items-center overflow-y-auto rounded-br-2xl rounded-tr-2xl border-r border-purple02 bg-purple01 px-2 py-3 shadow-[4px_0_18px_rgba(91,30,207,0.10)] scrollbar-hide',
-          variant === 'glass' && 'header-glass bg-purple01/90'
+          'fixed left-0 top-0 z-30 flex h-full w-[88px] flex-col items-center overflow-y-auto border-r border-warmBorder bg-warmNav px-2.5 py-4 scrollbar-hide',
+          variant === 'glass' && 'header-glass bg-warmNav/90'
         )}
       >
         {/* 로고 영역 */}
-        <div className="mb-8 flex flex-col items-center text-purple05">
-          <span className="mb-1.5 inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-purple02 bg-white shadow-[0_5px_12px_rgba(91,30,207,0.10)]">
-            <TbMapPin className="text-[21px]" strokeWidth={1.7} />
-          </span>
-          <span className="whitespace-nowrap text-[10px] font-extrabold tracking-[-0.02em] text-purple06">
-            IT: PLACE
-          </span>
-        </div>
+        <Link
+          to="/map"
+          className="mb-8 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] transition-transform hover:scale-[1.04] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav"
+          aria-label="ITPLACE 지도 홈"
+        >
+          <img src="/brand/itplace-mark-b-rail.svg" alt="" className="h-9 w-9" />
+        </Link>
 
         {/* 주요 메뉴 */}
-        <nav className="flex w-full flex-1 flex-col items-center gap-y-4" aria-label="주요 메뉴">
+        <nav className="flex w-full flex-1 flex-col items-center gap-y-2" aria-label="주요 메뉴">
           {menus.map((m) => {
             const Icon = m.icon;
             const isActive =
               m.id === 'map'
                 ? location.pathname === '/' || location.pathname === '/map'
-                : m.id === 'mypage'
-                  ? location.pathname.startsWith('/mypage')
-                  : m.id === 'benefits'
-                    ? location.pathname.startsWith('/benefits')
-                    : location.pathname === m.path;
+                : m.id === 'favorites'
+                  ? location.pathname.startsWith('/mypage/favorites')
+                  : m.id === 'mypage'
+                    ? location.pathname.startsWith('/mypage') &&
+                      !location.pathname.startsWith('/mypage/favorites')
+                    : m.id === 'benefits'
+                      ? location.pathname.startsWith('/benefits')
+                      : location.pathname === m.path;
             return (
               <Link
                 to={m.path}
@@ -122,34 +124,39 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
                 className={clsx(primaryNavItemClass, isActive && activeNavClass)}
               >
                 <Icon
-                  className={clsx('text-[20px]', isActive ? 'text-white' : 'text-purple05')}
-                  strokeWidth={1.7}
+                  className={clsx(
+                    'text-[21px] transition-[color,transform]',
+                    isActive ? 'scale-110 text-brandStrong' : 'text-grey05 group-hover:text-grey06'
+                  )}
+                  strokeWidth={isActive ? 2.8 : 1.7}
                 />
                 <span className="mt-1 whitespace-nowrap leading-none">{m.label}</span>
               </Link>
             );
           })}
+        </nav>
 
+        {/* 보조 액션 */}
+        <div className="mb-1 mt-4 flex w-full flex-col items-center gap-y-1 border-t border-warmBorder pt-3">
           <button
             type="button"
             onClick={handleQuestionRecommendationClick}
-            className={clsx(primaryNavItemClass, isQuestionRecommendationOpen && activeNavClass)}
+            className={clsx(utilityNavItemClass, isQuestionRecommendationOpen && activeNavClass)}
             aria-pressed={isQuestionRecommendationOpen}
             aria-label="질문형 AI 추천 열기"
           >
             <TbSparkles
               className={clsx(
-                'text-[20px]',
-                isQuestionRecommendationOpen ? 'text-white' : 'text-purple05'
+                'text-[18px]',
+                isQuestionRecommendationOpen
+                  ? 'scale-110 text-brandStrong'
+                  : 'text-grey05 group-hover:text-grey06'
               )}
-              strokeWidth={1.7}
+              strokeWidth={isQuestionRecommendationOpen ? 2.8 : 1.7}
             />
-            <span className="mt-1 whitespace-nowrap leading-none">AI 질문</span>
+            <span className="mt-1 whitespace-nowrap leading-none">AI 추천</span>
           </button>
-        </nav>
 
-        {/* 보조 액션 */}
-        <div className="mb-1 mt-4 flex w-full flex-col items-center gap-y-3 border-t border-purple02 pt-3">
           <Link
             to="/about"
             className={clsx(utilityNavItemClass, isSupportActive && activeNavClass)}
@@ -157,15 +164,20 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
             aria-current={isSupportActive ? 'page' : undefined}
           >
             <TbInfoCircle
-              className={clsx('text-[18px]', isSupportActive ? 'text-white' : 'text-purple05')}
-              strokeWidth={1.7}
+              className={clsx(
+                'text-[18px]',
+                isSupportActive
+                  ? 'scale-110 text-brandStrong'
+                  : 'text-grey05 group-hover:text-grey06'
+              )}
+              strokeWidth={isSupportActive ? 2.8 : 1.7}
             />
             <span className="mt-1 whitespace-nowrap leading-none">안내</span>
           </Link>
 
           {isLoggedIn ? (
             <button className={utilityNavItemClass} onClick={handleLogout} aria-label="로그아웃">
-              <TbLogout className="text-[18px] text-purple05" strokeWidth={1.7} />
+              <TbLogout className="text-[18px]" strokeWidth={1.8} />
               <span className="mt-1 whitespace-nowrap leading-none">로그아웃</span>
             </button>
           ) : (
@@ -178,7 +190,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
               }}
               className={utilityNavItemClass}
             >
-              <TbLogin className="text-[18px] text-purple05" strokeWidth={1.7} />
+              <TbLogin className="text-[18px]" strokeWidth={1.8} />
               <span className="mt-1 whitespace-nowrap leading-none">로그인</span>
             </button>
           )}

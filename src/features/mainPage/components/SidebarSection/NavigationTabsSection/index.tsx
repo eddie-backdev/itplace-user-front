@@ -65,7 +65,7 @@ const NavigationTabsSection: React.FC<NavigationTabsSectionProps> = ({
   };
 
   return (
-    <div className="flex gap-2 max-md:w-auto max-md:overflow-visible max-md:px-4 max-sm:px-3">
+    <div className="flex gap-1 rounded-xl bg-warmCanvas p-1 max-md:mx-4 max-md:w-auto max-md:overflow-visible max-md:p-0.5 max-sm:mx-3">
       {tabs.map((tab) => (
         <button
           key={tab.id}
@@ -73,10 +73,10 @@ const NavigationTabsSection: React.FC<NavigationTabsSectionProps> = ({
           onClick={() => handleTabClick(tab.id)}
           onMouseEnter={() => handleMouseEnter(tab.id)}
           onMouseLeave={() => handleMouseLeave(tab.id)}
-          className={`relative text-title-7 text-center h-9 pt-1 w-[105px] rounded-[10px] mt-5 max-md:text-body-2 max-md:h-10 max-md:flex-1 max-md:mt-3 max-sm:text-body-3 max-sm:h-8 max-sm:mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
+          className={`relative h-9 flex-1 rounded-[9px] px-2 text-center text-body-3-bold transition-colors max-md:h-8 max-md:text-body-4-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
             activeTab === tab.id
-              ? 'bg-purple04 text-white'
-              : 'bg-grey01 text-grey05 hover:bg-grey02'
+              ? 'bg-warmSurface text-brandStrong shadow-[0_1px_4px_rgba(36,35,33,0.08)]'
+              : 'text-grey04 hover:text-grey06'
           }`}
         >
           {tab.label}
@@ -84,8 +84,9 @@ const NavigationTabsSection: React.FC<NavigationTabsSectionProps> = ({
             <span className="absolute top-[-4px] right-[-4px] w-[12px] h-[12px] pointer-events-none max-sm:w-[10px] max-sm:h-[10px] max-sm:right-[-2px]">
               <img
                 src="/images/main/tab-highlight.webp"
-                alt="ai탭 강조 이미지"
-                className="w-full h-full transform scale-[1.15] filter drop-shadow-[0_0_6px_#7132F5]"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full scale-[1.05] opacity-70"
               />
             </span>
           )}

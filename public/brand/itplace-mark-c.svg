@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">ITPLACE brand mark option C</title>
+  <desc id="desc">지역 블록 사이의 혜택 거점을 표현한 초록색 심볼</desc>
+  <rect x="4" y="4" width="88" height="88" rx="22" fill="#FFFEFB" />
+  <path d="M22 16H44V38C44 41.31 41.31 44 38 44H16V22C16 18.69 18.69 16 22 16Z" fill="#115C3A" />
+  <path d="M52 16H74C77.31 16 80 18.69 80 22V44H58C54.69 44 52 41.31 52 38V16Z" fill="#62B83D" />
+  <path d="M16 52H38C41.31 52 44 54.69 44 58V80H22C18.69 80 16 77.31 16 74V52Z" fill="#62B83D" />
+  <path d="M58 52H80V74C80 77.31 77.31 80 74 80H52V58C52 54.69 54.69 52 58 52Z" fill="#115C3A" />
+  <circle cx="48" cy="48" r="10" fill="#FFFEFB" />
+  <circle cx="48" cy="48" r="6" fill="#FFD75A" />
+</svg>

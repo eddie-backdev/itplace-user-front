@@ -48,7 +48,7 @@ const SearchInMapButton: React.FC<SearchInMapButtonProps> = ({ onClick }) => {
     <button
       ref={buttonRef}
       onClick={handleClick}
-      className="bg-purple04 text-white px-6 py-3 rounded-full shadow-lg hover:bg-purple05 transition-colors duration-200 flex items-center space-x-2 max-md:px-4 max-md:py-2 max-md:text-sm"
+      className="flex items-center space-x-2 rounded-full bg-brand px-5 py-2.5 text-white shadow-[0_5px_16px_rgba(17,92,58,0.24)] transition-colors duration-200 hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 max-md:px-4 max-md:py-2 max-md:text-sm"
     >
       <TbSearch size={20} className="max-md:w-4 max-md:h-4" />
       <span className="max-md:text-xs">현 지도에서 검색</span>

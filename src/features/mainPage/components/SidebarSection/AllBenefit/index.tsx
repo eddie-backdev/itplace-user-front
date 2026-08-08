@@ -199,21 +199,21 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   }, [platforms]);
 
   const renderHeader = (title: string, subtitle?: string, onBack?: () => void) => (
-    <div className="mb-4 max-md:mb-3 max-sm:mb-2 max-md:px-4 max-sm:px-3">
+    <div className="mb-3 max-md:mb-2 max-md:px-4 max-sm:px-3">
       <div className={`${onBack ? 'flex items-start justify-between gap-3' : ''}`}>
         <div>
-          <h3 className="text-lg font-bold text-grey06 max-md:text-title-7 max-sm:text-title-7">
+          <h3 className="text-[18px] font-bold tracking-[-0.02em] text-ink max-md:text-[16px]">
             {title}
           </h3>
           {subtitle && (
-            <p className="mt-1 text-body-4 text-grey04 max-md:text-body-5">{subtitle}</p>
+            <p className="mt-0.5 truncate text-[11px] text-grey04 max-md:text-[10px]">{subtitle}</p>
           )}
         </div>
         {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="flex shrink-0 items-center rounded-full border border-grey02 px-3 py-1.5 text-body-5 font-bold text-grey05 transition-colors hover:border-purple02 hover:text-purple04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+            className="flex shrink-0 items-center rounded-full border border-warmBorder px-3 py-1.5 text-body-5 font-bold text-grey05 transition-colors hover:border-brand/30 hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             돌아가기
           </button>
@@ -223,7 +223,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   );
 
   const renderDivider = () => (
-    <div className="border-b border-grey03 w-[330px] mb-0 max-md:mx-4 max-sm:mx-3 max-md:w-auto" />
+    <div className="mb-0 w-full border-b border-warmBorder max-md:mx-4 max-md:w-auto max-sm:mx-3" />
   );
 
   const renderStoreList = (
@@ -235,18 +235,14 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
     <div className="flex-1 min-h-0 flex flex-col">
       {renderHeader(title, subtitle, onBack)}
       {renderDivider()}
-      <div className="-mx-5 flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-10 max-md:overflow-y-scroll max-md:mx-0 max-md:pb-24">
-        {items.map((platform, index) => (
+      <div className="-mx-5 min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-10 pt-1.5 max-md:mx-0 max-md:overflow-y-scroll max-md:pb-24 max-md:pt-1">
+        {items.map((platform) => (
           <div key={platform.id}>
             <StoreCard
               platform={platform}
               isSelected={selectedPlatform?.id === platform.id}
               onSelect={onPlatformSelect}
             />
-
-            {index < items.length - 1 && (
-              <div className="border-b border-grey03 mx-5 w-[330px] max-md:mx-4 max-sm:mx-3 max-md:w-auto" />
-            )}
           </div>
         ))}
         <div className="h-8 max-md:h-10 max-sm:h-8"></div>
@@ -262,14 +258,14 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
           alt={`${entry.title} 로고`}
           fallbackLabel={entry.badge || entry.title}
           className="h-10 w-10 shrink-0 rounded-xl object-contain"
-          fallbackClassName="bg-purple01 text-body-4-bold"
+          fallbackClassName="bg-brandSoft text-body-4-bold text-brandStrong"
           loading="lazy"
         />
       );
     }
 
     return (
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple01 px-1 text-center text-[11px] font-bold leading-tight text-purple04">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brandSoft px-1 text-center text-[11px] font-bold leading-tight text-brandStrong">
         {entry.badge || entry.title}
       </span>
     );
@@ -286,7 +282,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
           platforms: entry.platforms,
         })
       }
-      className="flex w-full items-center gap-3 rounded-2xl border border-grey02 bg-white px-4 py-3 text-left transition-colors hover:border-purple02 hover:bg-purple01/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+      className="flex w-full items-center gap-3 rounded-xl border border-warmBorder bg-warmSurface px-4 py-3 text-left transition-colors hover:border-brand/30 hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
     >
       {renderSummaryVisual(entry)}
       <span className="min-w-0 flex-1">
@@ -373,7 +369,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   }
 
   if (displayMode !== 'summary') {
-    return renderStoreList(platforms);
+    return renderStoreList(platforms, `내 주변 혜택 ${platforms.length}`, currentLocation);
   }
 
   if (drilldown) {

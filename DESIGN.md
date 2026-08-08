@@ -1,271 +1,120 @@
 # ITPLACE Design
 
-## Source of truth
+## Active design contract
 
-- Status: Active — Kraken 기반 색상 체계를 ITPLACE 의미 체계로 채택, 화면별 적용은 점진 리팩토링
-- Last refreshed: 2026-07-20
-- Primary product surfaces:
-  - 랜딩/모바일 홈
-  - 지도 기반 혜택 탐색
-  - 전체 혜택 목록/제휴처 혜택 상세 페이지
-  - 질문형 AI 추천 채팅
-  - 로그인/회원가입/휴대폰 인증
-  - 마이페이지/관심 혜택/히스토리
-  - 개인정보처리방침/계정 삭제 안내
-- Evidence reviewed:
-  - `tailwind.config.js` — 기존 색상/타이포그래피/브레이크포인트 토큰
-  - `src/index.css` — NanumBarunGothic, datepicker, 전역 CSS
-  - `src/components/*` — 공통 버튼, 검색, 모달, 탭, 결과 없음 상태
-  - `src/features/allBenefitsPage/*` — 제휴처 목록/통신사별 혜택 상세
-  - `src/features/mainPage/*` — 지도, 추천, 매장 탐색 도메인
-  - `src/features/loginPage/*` — 인증/회원가입 전환 흐름
-  - `src/features/myPage/*` — 마이페이지 사이드바/카드/히스토리
-  - `src/pages/*` — 랜딩, 모바일 홈, 정책 문서, NotFound
+- Status: Active — warm Korean consumer utility direction
+- Last refreshed: 2026-08-08
+- Thesis: 주변 혜택은 카드 더미가 아니라 지도 위에 도착하는 생활 정보처럼 읽힌다.
+- This document is the implementation source of truth for active visual and interaction work. Confirm token values in `tailwind.config.js` and `src/index.css`, and confirm layout behavior in `src/components/Header.tsx`, `src/components/MobileAppTabBar.tsx`, and `src/features/mainPage/components`.
 
-## Brand
+## Product and information architecture
 
-- Personality:
-  - 신뢰감 있는 purple-first 서비스
-  - 생활 밀착형 혜택 탐색 도구
-  - 빠르고 명확하며 과장 없는 안내자
-  - 모바일에서는 앱처럼 직관적이고 친근한 경험
-- Trust signals:
-  - 통신사 멤버십/제휴처/혜택 조건을 명확하게 보여준다.
-  - 현재 위치, 검색, 카테고리, 통신사 필터를 사용자가 예측 가능하게 조작할 수 있다.
-  - 인증/회원가입은 진행 상태와 다음 행동을 불안하지 않게 안내한다.
-- Avoid:
-  - 화면마다 다른 임의의 보라/핑크/오렌지를 추가하지 않는다.
-  - 지도와 혜택 정보보다 장식, 일러스트, 모션이 먼저 보이게 하지 않는다.
-  - crypto/finance 브랜드처럼 차갑고 무거운 어휘를 쓰지 않는다.
-  - `Kraken` 명칭, 전용 폰트명, 외부 브랜드 표현을 코드/문서/UX에 노출하지 않는다.
-
-## Product goals
-
-- Goals:
-  - 사용자가 주변 멤버십 혜택을 빠르게 발견하고 비교한다.
-  - 통신사, 카테고리, 위치, 검색어 기반으로 혜택 탐색 경로를 단순화한다.
-  - 모바일 웹에서도 앱처럼 홈-지도-혜택-저장-마이 흐름을 자연스럽게 제공한다.
-  - 회원가입/인증 흐름을 짧고 명확하게 만들어 이탈을 줄인다.
-- Non-goals:
-  - 커머스 앱처럼 과도한 프로모션 밀도를 만든다.
-  - 관리자용 정보 구조나 내부 용어를 사용자 화면에 노출한다.
-  - 시각적 참신함을 이유로 기존 컴포넌트/토큰 체계를 우회한다.
-- Success signals:
-  - 첫 진입 후 지도/혜택 목록까지의 인지 비용이 낮다.
-  - 전체 혜택 카드에서 제휴처와 혜택 제공 통신사가 빠르게 읽힌다.
-  - 제휴처 상세에서 통신사를 전환하며 등급별 조건과 이용 방법을 비교할 수 있다.
-  - 모바일 주요 액션은 한 손 조작 가능한 위치와 크기를 가진다.
-  - 새 UI 작업에서 하드코딩 색상 대신 토큰을 재사용한다.
-
-## Personas and jobs
-
-- Primary personas:
-  - 외출 중 주변 멤버십 제휴처를 찾는 사용자
-  - 특정 브랜드/카테고리 혜택을 비교하는 사용자
-  - 자주 쓰는 혜택을 저장하고 다시 확인하는 사용자
-  - 회원가입/인증을 빠르게 끝내고 혜택 탐색으로 넘어가려는 사용자
-- User jobs:
-  - 내 주변 혜택 찾기
-  - 통신사/카테고리별 혜택 필터링
-  - 브랜드/제휴처 검색
-  - 혜택 상세 조건 확인
-  - 관심 혜택 저장/삭제
-  - 상황 기반 질문으로 추천 받기
-- Key contexts of use:
-  - 매장 근처에서 모바일로 빠르게 확인
-  - 집/회사에서 데스크톱으로 혜택 비교
-  - 느린 네트워크나 위치 권한 거부 상태에서도 다음 행동 필요
-
-## Information architecture
-
+- Primary jobs: 내 주변 혜택 찾기, 통신사·카테고리별 필터링, 브랜드·제휴처 검색, 상세 조건 확인, 관심 혜택 저장, 질문형 AI 추천 받기.
 - Primary navigation:
-  - 모바일: 홈, 지도, 혜택, 저장, 마이
-  - 데스크톱: 랜딩/지도/전체 혜택/마이페이지 중심
-- Core routes/screens:
-  - `/` 랜딩 또는 모바일 홈
-  - `/map` 지도 기반 탐색
-  - `/benefits` 전체 혜택
-  - `/login` 로그인/회원가입
-  - `/mypage/*` 내 정보, 관심 혜택, 히스토리
-  - `/privacy-policy`, `/account-deletion` 정책/계정 안내
-- Content hierarchy:
-  - 1순위: 현재 위치/검색어/필터 맥락
-  - 2순위: 제휴처 카드의 브랜드와 혜택 제공 통신사
-  - 3순위: 제휴처 상세 페이지의 선택 통신사별 핵심 혜택과 적용 등급
-  - 4순위: 설명 문구, 일러스트, 장식
+  - Mobile: 홈, 지도, 혜택, 즐겨찾기, 마이.
+  - Desktop: 지도, 전체 혜택, 즐겨찾기, 마이와 AI 추천·서비스 안내·인증 보조 액션.
+- Core routes:
+  - `/`: landing or mobile home
+  - `/map`: map-based nearby benefit discovery
+  - `/benefits`, `/benefits/partners/:partnerId/:partnerSlug`: all benefits and partner detail
+  - `/login`: login, signup, and phone verification
+  - `/mypage/info`, `/mypage/favorites`: profile and saved benefits
+  - `/membership`, `/membership/:carrierSlug`: carrier membership guidance
+  - `/about`, `/guide`, `/faq`, `/contact`: service support
+  - `/terms`, `/privacy`, `/account-deletion`: policy and account guidance
+- Information priority: location/search/filter context → nearby partner and highlighted benefit → carrier and distance → full conditions in detail.
+- Location denial, empty results, slow networks, and API failures must always expose a clear recovery or alternate exploration action.
 
-## Design principles
+## Brand direction
 
-- Principle 1: 혜택 정보와 지도 탐색이 장식보다 우선한다.
-- Principle 2: 색상은 Kraken 팔레트 값을 그대로 쓰되, 이름과 의미는 ITPLACE로 정의한다.
-- Principle 3: 새 화면은 기존 토큰/컴포넌트를 먼저 확장하고, 새 하드코딩 색상은 금지한다.
-- Principle 4: 모바일은 앱형 조작감, 데스크톱은 탐색/비교 효율을 우선한다.
-- Principle 5: 인증/오류/빈 상태는 사용자가 다음 행동을 이해할 수 있게 안내한다.
-- Tradeoffs:
-  - 정보 밀도보다 빠른 인지와 조작을 우선한다.
-  - 친근함은 일러스트/마이크로카피로 보완하고, 핵심 UI 색상은 절제한다.
-  - 기존 화면의 급격한 시각 파손을 피하기 위해 토큰값 교체 후 화면별 컴포넌트를 점진 정리한다.
+- ITPLACE feels warm, practical, trustworthy, and lightly friendly: a Korean everyday utility, not a luxury, finance, crypto, or promotion-heavy service.
+- Four vector brand-mark candidates live in `public/brand/itplace-mark-{a,b,c,d}.svg`. Option B is active: a segmented route surrounds a central place while two leaf-green benefit nodes create movement and locality. The desktop rail, browser favicon, install icon, and touch icon use this active mark.
+- The desktop rail uses the background-free responsive cut `itplace-mark-b-rail.svg` so the mark shares the navigation surface instead of appearing as a detached icon tile. Browser and install icons retain the warm-ivory tile for legibility outside the product UI.
+- Use refined matte surfaces, thin warm borders, compact information hierarchy, and restrained soft shadows.
+- The map and benefit information lead. Illustration, decoration, and motion support empty states or guidance without competing with discovery.
+- Empty and blocked states use one consistent flat 2D squirrel mascot: warm biscuit-beige fur, a deep-green map pouch, and restrained butter-yellow benefit accents. Keep the silhouette readable at 112–144px, vary only the pose or prop by state, and never embed UI copy in the artwork.
+- Copy is friendly but factual. Benefit conditions take precedence over advertising language; buttons name the action directly.
 
-## Visual language
+## Color and tokens
 
-- Color:
-  - ITPLACE는 Kraken 참조 팔레트의 색상값을 채택한다.
-  - 코드/문서에서는 외부 브랜드명을 쓰지 않고 ITPLACE 역할명으로 부른다.
-  - Brand Purple: `#7132F5` — primary CTA, active state, 주요 링크, 브랜드 강조
-  - Purple Hover: `#5741D8` — hover/pressed, outlined border
-  - Purple Deep: `#5B1ECF` — 강한 강조, 딥 배경, 로고 텍스트 보조
-  - Purple Subtle: `rgba(133, 91, 251, 0.16)` 또는 `#EDE7FE` — pill, 선택 배경, 보조 강조
-  - Text Primary: `#101114`
-  - Text Secondary: `#686B82`
-  - Text Muted: `#9497A9`
-  - Border: `#DEDEE5`
-  - Surface: `#FFFFFF`
-  - Surface Subtle: `#F8F8FA`
-  - Success: `#149E61`, Success Deep: `#026B3F`
-  - Semantic accents paired with Brand Purple:
-    - Map/Cool accent: `#2F80ED` → `#14B8A6` — 보라와 인접한 blue/teal 조화로 위치/탐색을 표현한다.
-    - Reward accent: `#F6C343` → `#D98E04` — 보라의 complementary yellow/gold 대비로 멤버십/보상을 표현한다.
-    - Favorite accent: `#EC4899` → `#BE185D` — purple과 가까운 rose 계열로 관심/저장을 표현한다.
-  - Danger는 Kraken 팔레트에 없으므로 오류 의미에만 제한해 `#D7263D`를 사용한다.
-  - Legacy Orange/Pink token은 신규 UI에서 직접 쓰지 않는다. 의미가 필요하면 `accentGold`, `accentRose`처럼 역할 기반 token을 사용한다.
-- Typography:
-  - 한국어 가독성을 위해 `NanumBarunGothic`, `Apple SD Gothic Neo`, `Malgun Gothic`, `Helvetica Neue`, `Arial` 순서를 유지한다.
-  - 외부 브랜드 전용 폰트는 사용하지 않는다.
-  - 제목은 짧고 굵게, 혜택 조건/설명은 줄 간격을 충분히 둔다.
-- Spacing/layout rhythm:
-  - Tailwind spacing을 우선 사용한다.
-  - 카드 내부는 16/20/24px 리듬을 기본으로 하고, 모바일은 터치 여백을 우선한다.
-- Shape/radius/elevation:
-  - 버튼: 10~12px 또는 기존 랜딩 pill 패턴 유지. 새 기본 버튼은 12px를 우선한다.
-  - 카드/모달: 18~28px 범위에서 정보 계층에 맞게 사용한다.
-  - shadow는 `rgba(0,0,0,0.03)` 또는 purple-tinted subtle shadow를 우선한다.
-- Motion:
-  - 목적 없는 장식 모션은 금지한다.
-  - 인증/회원가입 전환, 로딩, 탭 이동은 짧고 방향성이 있어야 한다.
-  - `prefers-reduced-motion` 대응이 필요한 모션은 별도 open question으로 남긴다.
-- Imagery/iconography:
-  - 토끼/브랜드 일러스트는 친근함과 빈 상태 안내용으로 사용한다.
-  - 혜택 카드에서는 로고/아이콘이 정보 가독성을 방해하지 않게 한다.
-  - 아이콘은 stroke weight와 크기를 모바일 탭/버튼별로 일관되게 유지한다.
+| Role         | Token/value                              | Use                                                       |
+| ------------ | ---------------------------------------- | --------------------------------------------------------- |
+| Canvas       | `warmCanvas` / `#F9F8F5`                 | page background and quiet regions                         |
+| Surface      | `warmSurface`, `white` / `#FFFEFB`       | panels, sheets, cards, controls                           |
+| Brand        | `brand`, `success` / `#167A4C`           | primary action, selection, location and positive emphasis |
+| Brand strong | `brandStrong`, `successDark` / `#115C3A` | hover/pressed states and high-contrast green text         |
+| Brand soft   | `brandSoft` / `#EDF8F2`                  | selected background and subtle green emphasis             |
+| Benefit      | `benefit`, `accentGold` / `#FFD75A`      | rare promotional badges; not nearby-card copy             |
+| Ink          | `ink`, `black` / `#242321`               | primary text and icons                                    |
+| Muted text   | `warmMuted` / `#6F6A60`                  | supporting copy                                           |
+| Border       | `warmBorder` / `#E4E1D8`                 | dividers, card and control outlines                       |
+| Navigation   | `warmNav` / `#F3F0E8`                    | desktop navigation rail                                   |
+| Danger       | `danger` / `#D7263D`                     | errors and destructive actions only                       |
 
-## Components
+- `tailwind.config.js` is the Tailwind color source of truth; CSS-only surfaces use synchronized `--itplace-*` variables from `src/index.css`.
+- `purple01` through `purple06` are compatibility aliases mapped to green values. They do not define a purple visual direction and must not justify new purple UI.
+- Prefer semantic tokens for new work. Do not add component-level hex/rgb values when an active token exists.
+- Pink and orange legacy names are not the brand direction; use role-based tokens such as `benefit` or `accentGold` when the meaning is valid.
 
-- Existing components to reuse:
-  - `src/components/SearchBar.tsx`
-  - `src/components/ActionButton.tsx`
-  - `src/components/Modal.tsx`
-  - `src/components/NoResult.tsx`
-  - `src/components/MobileAppTabBar.tsx`
-  - `src/components/MobileHeader.tsx`
-  - `src/components/BenefitFilterToggle.tsx`
-  - `src/features/allBenefitsPage/components/BenefitDetailModal.tsx`
-  - `src/features/loginPage/layouts/AuthLayout.tsx`
-- New/changed components:
-  - 전체 혜택 목록은 `partnerId` 기준으로 제휴처당 카드 한 장만 표시한다.
-  - 제휴처 카드 외부에는 제휴처명, 로고, 카테고리, 혜택 제공 통신사만 표시한다.
-  - 등급별 할인, 이용 제한, 이용 방법, 관심 등록, 외부 링크는 제휴처 상세 페이지에서 제공한다.
-  - 제휴처 상세 페이지는 로고, 제휴처명, 제공 통신사와 전체 혜택 수를 compact hero 하나에 요약하고 중복 제목과 소개 문구를 만들지 않는다.
-  - 제휴처 상세 페이지는 실제 혜택이 있는 통신사만 compact pill 선택기로 표시하고, 선택한 통신사의 혜택 목록만 보여준다. 통신사 선택기가 혜택 카드보다 넓거나 강하게 보이지 않도록 한다.
-  - 지원 통신사가 하나뿐이면 선택형 탭을 만들지 않고 통신사명만 담은 compact 배지로 표시한다. 통신사가 2개 이상이면 같은 크기와 시각 언어의 compact pill 탭으로 전환한다.
-  - 상세 페이지의 등급별 혜택 문구가 같으면 문구는 한 번만 표시하고 적용 등급을 배지로 묶어 반복을 줄인다. 문구가 다를 때만 조건별 블록을 나눈다.
-  - 상세 혜택 카드는 `혜택명/이용 유형 → 적용 등급/핵심 혜택 → 이용 제한/방법` 순서로 읽히게 구성한다.
-  - 상세 혜택은 데스크톱에서 2열, 모바일에서 1열로 표시한다. 핵심 혜택과 적용 등급은 항상 보이고 긴 설명과 이용 방법은 disclosure에 접어 초기 스크롤을 줄인다.
-  - 지도에서 매장 찾기와 통신사 멤버십 안내는 데스크톱 sticky 보조 패널에 모으고 첫 혜택 카드 행과 상단 기준선만 맞춘다. 좌측 상세 조건을 펼쳐도 보조 패널 높이는 연동하지 않으며, 모바일에서는 혜택 카드 다음에 자연스럽게 이어지게 한다.
-  - 제휴처 상세 페이지는 본문이 짧아도 main이 남은 뷰포트 높이를 채우고 푸터를 화면 하단에 둔다. 콘텐츠가 길면 푸터는 문서 흐름에 따라 아래로 이동한다.
-  - 전체 혜택 데스크톱은 잇플 맵과 동일한 370px sticky 좌측 탐색 패널을 전역 내비게이션 바로 옆에 두고, 우측 결과 영역을 2~4열 카드로 사용한다.
-  - 전체 혜택 모바일은 좁은 화면에서 좌우 분할을 강제하지 않고 필터를 목록 위에 유지한다.
-  - 신규 버튼/카드/배지는 먼저 기존 컴포넌트 확장 가능성을 확인한다.
-  - 새 색상 token은 `tailwind.config.js`와 이 문서를 함께 갱신할 때만 추가한다.
-- Variants and states:
-  - default, hover, active, selected, focus-visible
-  - loading, empty, error, success, disabled
-  - mobile, tablet, desktop
-- Token/component ownership:
-  - Tailwind token이 색상 source of truth다.
-  - CSS-only 영역은 `src/index.css`의 `:root` 디자인 변수와 Tailwind token값을 동기화한다.
-  - `orange*`, `pink*` 클래스명은 legacy alias이며 신규 사용 금지.
+## Typography, surfaces, and motion
+
+- Font stack: `NanumBarunGothic`, `Apple SD Gothic Neo`, `Malgun Gothic`, `Helvetica Neue`, `Arial`, sans-serif.
+- Titles are short and firm. Body and benefit conditions use the existing 150% line-height scale for Korean readability.
+- Cards and controls use compact 12–16px radii; sheets and larger containers may use 20–24px radii.
+- Default surfaces are matte, with 1px `warmBorder` outlines. Shadows stay soft and low-opacity, typically based on warm charcoal or deep green rather than colored glow.
+- Motion communicates state or spatial change only. Hover lift and press feedback remain subtle; dragging and panel transitions preserve direct manipulation. Respect `prefers-reduced-motion` for non-essential movement.
+
+## Shell and map experience
+
+### Desktop (`md` and above)
+
+- The application shell is an 88px fixed navigation rail, followed by a 356px nearby-benefit panel, then the flexible map.
+- The rail uses `warmNav`, a thin right border, and icon-plus-label controls. Map, ticket, bookmark, and user icons match their destinations. The active item's icon alone turns deep green, grows slightly, and uses a heavier stroke without a filled surface or side marker; `aria-current` provides the semantic cue.
+- The nearby panel owns search, nearby/favorites/AI modes, contextual guidance, compact results, and selected-store detail. It may collapse to give the map more space.
+- Categories sit above the map as horizontal controls. Map controls and transient cards remain visually secondary to location and result context.
+- The map fills the remaining viewport; avoid detached promotional card grids over it.
+- Partner and numeric cluster markers use a mathematically circular badge with a short tapered tail layered behind it. Do not stretch one outline into both the badge and pointer; the resulting lower curve appears uneven at map scale.
+
+### Mobile (below `md`)
+
+- Keep search fixed at the top as the first discovery action.
+- Render categories as a horizontally scrollable row over the map. Do not wrap them into multiple lines.
+- The map is the base layer and must remain legible between the search controls and sheet.
+- The benefit sheet is draggable with a 300px default height, a 430px intermediate snap point when available, and a viewport-bounded expanded state. Its top corners are 24px with a visible drag handle, thin border, and restrained upward shadow.
+- The 64px bottom navigation is fixed, safe-area aware, and contains 홈, 지도, 혜택, 즐겨찾기, 마이. Transient dialogs and overlays may temporarily hide it to prevent conflicting controls.
+- Position map controls above the current sheet and bottom-navigation offset; mobile interaction must not depend on hover.
+
+## Nearby benefit cards and detail
+
+- Nearby results are compact map companions, not standalone promotional cards.
+- A nearby card contains, in order: logo, partner/store name, one representative benefit, carrier, and distance. Category or walking time may appear as quiet secondary metadata.
+- Render the representative benefit as concise green text without a highlighter background. Reserve yellow for exceptional promotional badges outside the standard nearby-card rhythm.
+- Selected cards use border, surface, and elevation changes in addition to color.
+- Keep tier rules, usage limits, usage method, external links, and other full conditions in the detail view.
+- In detail, group benefits by carrier. Show only carriers that have benefits; use a label for one carrier and equal compact tabs/pills for multiple carriers.
+- If several grades share the same benefit copy, show the copy once and group the applicable grade badges. Keep the reading order: benefit name/type → applicable grade and key benefit → limits and usage method.
+- Default to one column on mobile and two columns where desktop detail width permits. Long explanations may use a semantic disclosure while key benefit and applicable grade remain visible.
+
+## Component and state rules
+
+- Reuse `SearchBar`, `ActionButton`, `Modal`, `NoResult`, `MobileAppTabBar`, `MobileHeader`, and existing feature components before introducing a parallel primitive.
+- Every interactive element covers default, hover where relevant, pressed, selected/active, `focus-visible`, disabled, loading, empty, error, and success states as applicable.
+- Loading uses concise status text with a spinner or skeleton. Empty states pair a gentle explanation with a next action. Errors lead with recovery. Saved, removed, and authenticated actions return explicit feedback.
+- Do not encode active or selected state by color alone. Pair color with a marker, border/surface change, icon weight, label, `aria-current`, or `aria-pressed` as appropriate.
+- Policy and account-deletion routes retain stable, readable document layouts suitable for external review.
 
 ## Accessibility
 
-- Target standard:
-  - WCAG 2.1 AA 지향
-- Keyboard/focus behavior:
-  - 모든 버튼/링크/탭/모달 닫기는 `focus-visible` 상태를 가져야 한다.
-  - 로그인/회원가입 폼은 키보드만으로 진행 가능해야 한다.
-- Contrast/readability:
-  - 본문은 `grey05` 이상, 핵심 텍스트는 `grey07`/`black`을 사용한다.
-  - `purple01` 위 텍스트는 `purple04` 이상 또는 `grey06` 이상을 사용한다.
-- Screen-reader semantics:
-  - 모바일 탭은 `aria-label`, 현재 탭은 `aria-current`를 유지한다.
-  - 폼 오류 문구는 관련 입력과 연결한다.
-  - 지도/위치 권한 상태는 시각 정보만으로 전달하지 않는다.
-- Reduced motion and sensory considerations:
-  - 긴 스크롤/랜딩 모션은 reduced-motion 대응을 검토한다.
-  - 자동 재생 영상/커서 장식은 핵심 탐색을 방해하지 않게 한다.
+- Target WCAG 2.1 AA. Body text must meet at least 4.5:1 contrast against its surface; do not use muted tokens where they fail this threshold.
+- Buttons, links, tabs, search, disclosure controls, and modal close controls are semantic native controls and expose a visible `focus-visible` state.
+- Use `aria-current` for the active route and `aria-pressed` or the appropriate tab semantics for toggled states. Form errors are programmatically connected to inputs.
+- Location permission, map selection, loading, empty, and error states cannot be communicated by color or map graphics alone.
+- Preserve keyboard access for authentication, navigation, filters, details, and overlays. Keep touch targets comfortably operable and account for the mobile safe area.
 
-## Responsive behavior
+## Responsive and implementation constraints
 
-- Supported breakpoints/devices:
-  - `sm: 640px`, `md: 768px`, `lg: 1024px`, `xl: 1280px`, `2xl: 1536px`
-  - custom max breakpoints: `max-sm: 500px`, `max-md: 767px`, `max-lg: 1023px`, `max-xlg: 1250px`, `max-xl: 1536px`
-- Layout adaptations:
-  - 모바일: 하단 탭, 바텀시트, 카드형 정보, 한 손 조작
-  - 태블릿: 지도/목록 전환과 사이드 정보 밀도 균형
-  - 데스크톱: 넓은 지도, 검색/필터, 비교 가능한 카드 그리드
-- Touch/hover differences:
-  - 모바일은 hover에 의존하지 않는다.
-  - 터치 타겟은 최소 40px 이상을 지향한다.
-
-## Interaction states
-
-- Loading:
-  - 지도/혜택/추천 데이터는 spinner 또는 skeleton과 짧은 상태 문구를 제공한다.
-- Empty:
-  - `NoResult`와 토끼 일러스트를 활용하되, 다음 행동 CTA를 함께 제공한다.
-- Error:
-  - 원인보다 복구 행동을 먼저 알려준다.
-  - danger 색상은 오류와 파괴적 행동에만 사용한다.
-- Success:
-  - 저장/삭제/인증 완료는 toast 또는 명확한 상태 변화로 피드백한다.
-- Disabled:
-  - 비활성 CTA는 이유를 가까운 위치에 제공한다.
-- Offline/slow network:
-  - 추천/지도 API 실패 시 재시도 또는 대체 탐색 경로를 제공한다.
-
-## Content voice
-
-- Tone:
-  - 친근하지만 과장하지 않는다.
-  - 혜택 조건은 광고 문구보다 정보 정확성을 우선한다.
-- Terminology:
-  - `혜택`, `제휴처`, `멤버십`, `통신사`, `주변 혜택`, `관심 혜택`, `인증`
-- Microcopy rules:
-  - 버튼은 사용자의 행동을 직접 말한다. 예: `혜택 보러가기`, `인증번호 확인`, `관심 혜택 추가`
-  - 오류 문구는 사용자가 고칠 수 있는 다음 행동을 포함한다.
-  - 빈 상태는 감정적으로 부드럽게, CTA는 명확하게 작성한다.
-
-## Implementation constraints
-
-- Framework/styling system:
-  - React 19, TypeScript, Vite, Tailwind CSS
-  - `npm run lint`는 `--fix`를 실행하므로 검증에는 `npx eslint . --config eslint.config.js`를 사용한다.
-- Design-token constraints:
-  - 신규 UI에서 hex/rgb 하드코딩 금지. Tailwind token 또는 `src/index.css` 변수 사용.
-  - Kraken 값은 Tailwind token에만 직접 선언한다.
-  - legacy `orange*`, `pink*` token은 기존 컴파일 호환용이며 신규 사용 금지.
-- Performance constraints:
-  - Kakao Maps SDK, 대형 이미지, 랜딩 비디오, 대형 JS chunk가 초기 로딩에 영향을 줄 수 있다.
-  - 모바일 진입 화면은 지도/혜택 탐색에 필요한 정보만 먼저 보여준다.
-- Compatibility constraints:
-  - 모바일 safe-area, 주소창 높이 변화, 터치 스크롤 잠금을 고려한다.
-  - 정책 문서와 계정 삭제 페이지는 외부 심사/스토어 요구사항에 맞게 안정적인 정적 레이아웃을 유지한다.
-- Test/screenshot expectations:
-  - 색상 token 변경 후 `npx eslint . --config eslint.config.js`와 `npm run build`를 실행한다.
-  - 주요 화면은 가능하면 모바일/데스크톱 screenshot으로 시각 회귀를 확인한다.
-
-## Open questions
-
-- [ ] `orange*`, `pink*` legacy token 이름을 언제 의미 기반 이름으로 제거할지 결정 필요 / owner: frontend / impact: class rename 규모
-- [ ] 랜딩의 full-black section과 purple-first 시스템의 균형을 어디까지 유지할지 결정 필요 / owner: product-design / impact: 브랜드 첫인상
-- [ ] 지도 marker/cluster 색상이 새 palette와 충돌하는지 실제 지도 화면에서 확인 필요 / owner: frontend / impact: 지도 탐색 가독성
-- [ ] reduced-motion 대응 범위를 랜딩 전체로 확대할지 결정 필요 / owner: frontend / impact: 접근성
+- Standard breakpoints: `sm: 640px`, `md: 768px`, `lg: 1024px`, `xl: 1280px`, `2xl: 1536px`; repository max-width aliases remain available for compatibility.
+- Below 768px, use the mobile search/map/sheet/tab-bar composition. At 768px and above, use the rail/panel/map composition.
+- React 19, TypeScript, Vite, and Tailwind CSS remain the implementation baseline.
+- Kakao Maps SDK, large imagery, landing media, and large chunks can affect first load. Prioritize the code and data required for map and nearby-benefit discovery.
+- After visual/token changes, run `npx eslint . --config eslint.config.js` and `npm run build`, then inspect both mobile and desktop map screens at representative viewport sizes.

@@ -19,7 +19,7 @@ export const FAVORITES_DEFAULT_PAGE = 0;
 
 // 레이아웃 크기 상수
 export const LAYOUT = {
-  SIDEBAR_WIDTH: 370,
+  SIDEBAR_WIDTH: 356,
   SIDEBAR_MIN_WIDTH: 300,
   MAP_MIN_WIDTH: 800,
   CATEGORY_TAB_HEIGHT: 48, // 기본 높이

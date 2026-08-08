@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 // message2: 하단 설명
 // buttonText: 버튼 문구 (없으면 버튼 안보임)
 // buttonRoute: 버튼 클릭 시 이동할 경로 (없으면 버튼 안보임)
-// isLoginRequired: 로그인 토끼 이미지 분기를 위한 로그인 여부
+// isLoginRequired: 로그인 안내 마스코트 분기를 위한 로그인 여부
 
 // Props 타입 지정
 type NoResultProps = {
@@ -63,8 +63,12 @@ const NoResult: React.FC<NoResultProps> = ({
   };
 
   const isBlocked = variant === 'blocked' || isLoginRequired;
-  const imageWebp = isBlocked ? '/images/bunny-login-require.webp' : '/images/bunny-no-result.webp';
-  const imagePng = isBlocked ? '/images/bunny-login-require.png' : '/images/bunny-no-result.png';
+  const imageWebp = isBlocked
+    ? '/images/itplace-mascot-login-required.webp'
+    : '/images/itplace-mascot-no-result.webp';
+  const imagePng = isBlocked
+    ? '/images/itplace-mascot-login-required.png'
+    : '/images/itplace-mascot-no-result.png';
 
   return (
     <div
@@ -75,8 +79,10 @@ const NoResult: React.FC<NoResultProps> = ({
         <source srcSet={imageWebp} type="image/webp" />
         <img
           src={imagePng}
-          alt={isBlocked ? 'login-required' : variant}
-          className="w-36 h-auto mb-4 max-xl:w-28"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="mb-4 h-auto w-32 max-md:w-28"
         />
       </picture>
 

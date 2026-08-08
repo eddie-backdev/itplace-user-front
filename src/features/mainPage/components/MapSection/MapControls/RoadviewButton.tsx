@@ -11,11 +11,11 @@ const RoadviewButton: React.FC<RoadviewButtonProps> = ({ isRoadviewMode, onToggl
     <button
       onClick={onToggle}
       className={`
-        flex items-center justify-center w-12 h-12 max-md:w-10 max-md:h-10 rounded-lg transition-colors duration-200 shadow-lg
+        flex h-12 w-12 items-center justify-center rounded-xl shadow-[0_5px_16px_rgba(36,35,33,0.10)] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-md:h-10 max-md:w-10
         ${
           isRoadviewMode
-            ? 'bg-purple03 text-white hover:bg-purple04'
-            : 'bg-white text-grey04 hover:bg-grey01 border-2 border-grey02'
+            ? 'border border-brand bg-brand text-white hover:bg-brandStrong'
+            : 'border border-warmBorder bg-warmSurface text-grey05 hover:border-brand/30 hover:bg-brandSoft hover:text-brandStrong'
         }
       `}
       aria-label={isRoadviewMode ? '로드뷰 끄기' : '로드뷰 켜기'}

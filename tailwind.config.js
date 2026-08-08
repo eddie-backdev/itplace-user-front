@@ -37,51 +37,58 @@ export default {
       // 컬러
       // bg-[지정명]
       colors: {
-        black: '#101114',
-        white: '#FFFFFF',
+        black: '#242321',
+        white: '#FFFEFB',
         danger: '#D7263D',
-        success: '#149E61',
-        successDark: '#026B3F',
-        // Semantic accents paired with Brand Purple
-        accentBlue: '#2F80ED',
-        accentTeal: '#14B8A6',
-        accentGold: '#F6C343',
-        accentGoldDark: '#D98E04',
+        success: '#167A4C',
+        successDark: '#115C3A',
+        // ITPLACE semantic palette
+        brand: '#167A4C',
+        brandStrong: '#115C3A',
+        brandSoft: '#EDF8F2',
+        benefit: '#FFD75A',
+        ink: '#242321',
+        warmMuted: '#6F6A60',
+        warmCanvas: '#F9F8F5',
+        warmSurface: '#FFFEFB',
+        warmBorder: '#E4E1D8',
+        warmNav: '#F3F0E8',
+        accentBlue: '#33856A',
+        accentTeal: '#42A77B',
+        accentGold: '#FFD75A',
+        accentGoldDark: '#7A5700',
         accentRose: '#EC4899',
         accentRoseDark: '#BE185D',
-        // ITPLACE Brand Purple — Kraken reference values with ITPLACE naming
-        purple01: '#EDE7FE', // subtle surface derived from rgba(133, 91, 251, 0.16)
-        purple02: '#D8CBFE', // focus ring / soft border
-        purple03: '#855BFB', // light brand accent
-        purple04: '#7132F5', // primary brand / CTA
-        purple05: '#5741D8', // hover / active
-        purple06: '#5B1ECF', // deep emphasis
-        // Legacy accent aliases. 신규 UI에서는 success*/purple* 사용을 우선한다.
-        orange01: '#E7F4EE',
-        orange02: '#CBE9DA',
-        orange03: '#149E61',
-        orange04: '#149E61',
-        orange05: '#026B3F',
-        // Neutral - Kraken cool gray scale
-        grey01: '#F8F8FA',
-        grey02: '#DEDEE5',
-        grey03: '#C9CBD6',
-        grey04: '#9497A9',
-        grey05: '#686B82',
-        grey06: '#484B5E',
-        grey07: '#101114',
-        // Legacy pink aliases. 신규 UI에서는 purple* 사용을 우선한다.
-        pink01: '#EDE7FE',
-        pink02: '#D8CBFE',
-        pink03: '#855BFB',
-        pink04: '#7132F5',
-        pink05: '#5741D8',
+        // 기존 class 이름은 점진 마이그레이션을 위한 호환 alias다.
+        purple01: '#EDF8F2',
+        purple02: '#C9E7D7',
+        purple03: '#39A66F',
+        purple04: '#167A4C',
+        purple05: '#115C3A',
+        purple06: '#0B452B',
+        orange01: '#FFF8D8',
+        orange02: '#FFEBA2',
+        orange03: '#FFD75A',
+        orange04: '#7A5700',
+        orange05: '#5F4300',
+        grey01: '#F9F8F5',
+        grey02: '#E4E1D8',
+        grey03: '#D3CFC4',
+        grey04: '#757064',
+        grey05: '#5F5B52',
+        grey06: '#3D3A34',
+        grey07: '#242321',
+        pink01: '#FFF0F4',
+        pink02: '#FFD6E1',
+        pink03: '#EF8DA9',
+        pink04: '#C74A70',
+        pink05: '#9F3152',
       },
       // 그라데이션
       // bg-[지정명]
       backgroundImage: {
-        'gradient-header': 'linear-gradient(#7132F5 0%, #7132F5 32%, #5B1ECF 100%)',
-        'gradient-myPage': 'linear-gradient(90deg, #855BFB 0%, #7132F5 45%, #5B1ECF 100%)',
+        'gradient-header': 'linear-gradient(#167A4C 0%, #167A4C 32%, #0B452B 100%)',
+        'gradient-myPage': 'linear-gradient(90deg, #39A66F 0%, #167A4C 45%, #0B452B 100%)',
       },
       // 드롭 섀도우
       // drop-shadow-[지정명]
