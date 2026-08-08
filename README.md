@@ -47,7 +47,7 @@ VITE_APP_BASE_URL=http://localhost:8080/
 VITE_KAKAO_JDK_API_KEY=
 VITE_KAKAO_REDIRECT_URI=http://localhost:8080/oauth/kakao
 VITE_KAKAO_CLIENT_ID=
-VITE_CONTACT_EMAIL=support@itplace.click
+VITE_CONTACT_EMAIL=noreply.itplace@gmail.com
 ```
 
 좌표→주소 변환에 쓰는 Kakao REST API 키는 브라우저 번들에 넣지 않고 user-api의 `KAKAO_REST_API_KEY` 환경 변수로 설정합니다.
