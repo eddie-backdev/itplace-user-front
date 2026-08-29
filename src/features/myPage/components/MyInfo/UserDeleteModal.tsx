@@ -3,6 +3,7 @@ import Modal from '../../../../components/Modal';
 
 interface UserDeleteModalProps {
   isOpen: boolean;
+  submitting?: boolean;
   password: string;
   requiresPassword?: boolean;
   onPasswordChange: (val: string) => void;
@@ -12,6 +13,7 @@ interface UserDeleteModalProps {
 
 export default function UserDeleteModal({
   isOpen,
+  submitting = false,
   password,
   requiresPassword = true,
   onPasswordChange,
@@ -21,6 +23,7 @@ export default function UserDeleteModal({
   return (
     <Modal
       isOpen={isOpen}
+      busy={submitting}
       inputType="password"
       title="정말 탈퇴하시겠습니까?"
       message={
@@ -35,7 +38,11 @@ export default function UserDeleteModal({
       onClose={onCancel}
       buttons={[
         { label: '취소', type: 'secondary', onClick: onCancel },
-        { label: '탈퇴하기', type: 'primary', onClick: onDelete },
+        {
+          label: submitting ? '탈퇴 처리 중…' : '탈퇴하기',
+          type: 'primary',
+          onClick: onDelete,
+        },
       ]}
     />
   );

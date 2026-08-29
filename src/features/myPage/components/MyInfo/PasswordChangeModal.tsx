@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 interface PasswordChangeModalProps {
   isOpen: boolean;
+  submitting?: boolean;
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
@@ -17,6 +18,7 @@ const specialCharRegex = /[!@#$%^&*()_+{}[\]:;<>,.?~/-]/;
 
 export default function PasswordChangeModal({
   isOpen,
+  submitting = false,
   currentPassword,
   newPassword,
   confirmPassword,
@@ -35,6 +37,7 @@ export default function PasswordChangeModal({
   }, [newPassword, confirmPassword]);
 
   const isReady =
+    !submitting &&
     currentPassword.trim() !== '' &&
     newPassword.trim() !== '' &&
     confirmPassword.trim() !== '' &&
@@ -44,6 +47,7 @@ export default function PasswordChangeModal({
   return (
     <Modal
       isOpen={isOpen}
+      busy={submitting}
       title="비밀번호를 재설정합니다"
       message="현재 비밀번호와 새 비밀번호를 입력해주세요."
       onClose={onCancel}
@@ -57,6 +61,7 @@ export default function PasswordChangeModal({
             placeholder="현재 비밀번호 입력"
             value={currentPassword}
             onChange={(e) => onCurrentChange(e.target.value)}
+            disabled={submitting}
           />
 
           <div className="flex flex-col gap-1">
@@ -66,6 +71,7 @@ export default function PasswordChangeModal({
               placeholder="새 비밀번호 입력"
               value={newPassword}
               onChange={(e) => onNewChange(e.target.value)}
+              disabled={submitting}
             />
             <p
               className={`text-caption text-left ml-1 ${newPassword && !isPasswordValid ? 'text-red-500' : 'text-grey04'}`}
@@ -81,6 +87,7 @@ export default function PasswordChangeModal({
               placeholder="새 비밀번호 확인"
               value={confirmPassword}
               onChange={(e) => onConfirmChange(e.target.value)}
+              disabled={submitting}
             />
             {confirmPassword && !isPasswordMatch && (
               <p className="text-caption text-red-500 text-left ml-1">
@@ -93,12 +100,15 @@ export default function PasswordChangeModal({
         {/* 버튼 영역 */}
         <div className="flex gap-4 w-full mt-4">
           <button
+            type="button"
             onClick={onCancel}
-            className="flex-1 h-[56px] rounded-[10px] border border-grey02 text-grey04 hover:text-grey05"
+            disabled={submitting}
+            className="flex-1 h-[56px] rounded-[10px] border border-grey02 text-grey04 hover:text-grey05 disabled:cursor-not-allowed disabled:opacity-60"
           >
             취소
           </button>
           <button
+            type="button"
             onClick={() => {
               if (!isReady) return;
               onSubmit();
@@ -110,7 +120,7 @@ export default function PasswordChangeModal({
                 : 'bg-grey01 text-grey03 cursor-not-allowed'
             }`}
           >
-            변경하기
+            {submitting ? '변경 중…' : '변경하기'}
           </button>
         </div>
       </div>

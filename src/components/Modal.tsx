@@ -12,6 +12,7 @@ interface ButtonType {
 
 interface ModalProps {
   isOpen: boolean;
+  busy?: boolean;
   title?: string;
   message?: string;
   subMessage?: string;
@@ -31,6 +32,7 @@ interface ModalProps {
 
 const Modal: React.FC<ModalProps> = ({
   isOpen,
+  busy = false,
   title,
   message,
   subMessage = '',
@@ -51,6 +53,7 @@ const Modal: React.FC<ModalProps> = ({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
+  const busyRef = useRef(busy);
   const pointerDownOnOverlayRef = useRef(false);
   const titleId = useId();
   const descriptionId = useId();
@@ -66,6 +69,10 @@ const Modal: React.FC<ModalProps> = ({
   }, [onClose]);
 
   useEffect(() => {
+    busyRef.current = busy;
+  }, [busy]);
+
+  useEffect(() => {
     if (!isOpen) {
       return;
     }
@@ -78,7 +85,7 @@ const Modal: React.FC<ModalProps> = ({
     }, 0);
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !busyRef.current) {
         onCloseRef.current();
       }
     };
@@ -98,7 +105,7 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (pointerDownOnOverlayRef.current && event.target === event.currentTarget) {
+    if (!busy && pointerDownOnOverlayRef.current && event.target === event.currentTarget) {
       onClose();
     }
 
@@ -118,6 +125,7 @@ const Modal: React.FC<ModalProps> = ({
         ref={modalRef}
         role="dialog"
         aria-modal="true"
+        aria-busy={busy || undefined}
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={message || subMessage ? descriptionId : undefined}
         className={`relative ${widthClass ?? 'w-full max-w-[500px]'} bg-white rounded-[20px] shadow-xl p-10 flex flex-col items-center max-sm:p-5 max-sm:w-[90%]`}
@@ -127,8 +135,9 @@ const Modal: React.FC<ModalProps> = ({
         <button
           ref={closeButtonRef}
           onClick={onClose}
+          disabled={busy}
           aria-label="모달 닫기"
-          className="absolute top-5 right-5 rounded-full text-grey04 hover:text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+          className="absolute top-5 right-5 rounded-full text-grey04 hover:text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <TbX size={24} className="max-sm:w-5 max-sm:h-5" />
         </button>
@@ -171,6 +180,7 @@ const Modal: React.FC<ModalProps> = ({
             placeholder={inputPlaceholder}
             value={inputValue}
             onChange={(e) => onInputChange?.(e.target.value)}
+            disabled={busy}
           />
         )}
 
@@ -189,7 +199,9 @@ const Modal: React.FC<ModalProps> = ({
               return (
                 <button
                   key={idx}
-                  className={`flex-1 h-[56px] rounded-[10px] text-title-6 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${typeClass} max-xl:h-[52px] max-sm:h-[46px] max-sm:text-title-7`}
+                  type="button"
+                  disabled={busy}
+                  className={`flex-1 h-[56px] rounded-[10px] text-title-6 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:cursor-not-allowed disabled:opacity-60 ${typeClass} max-xl:h-[52px] max-sm:h-[46px] max-sm:text-title-7`}
                   onClick={btn.onClick}
                 >
                   {btn.label}

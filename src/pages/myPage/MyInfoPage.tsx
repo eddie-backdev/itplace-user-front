@@ -41,9 +41,11 @@ export default function MyInfoPage() {
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
+  const [passwordChanging, setPasswordChanging] = useState(false);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [password, setPassword] = useState('');
+  const [accountDeleting, setAccountDeleting] = useState(false);
 
   const [membershipModalOpen, setMembershipModalOpen] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -157,6 +159,82 @@ export default function MyInfoPage() {
     }
   };
 
+  const closePasswordChangeModal = () => {
+    if (passwordChanging) return;
+
+    setIsPwModalOpen(false);
+    setCurrentPw('');
+    setNewPw('');
+    setConfirmPw('');
+  };
+
+  const handlePasswordChange = async () => {
+    if (passwordChanging) return;
+
+    try {
+      setPasswordChanging(true);
+      await api.patch('api/v1/users/changePassword', {
+        oldPassword: currentPw,
+        newPassword: newPw,
+        newPasswordConfirm: confirmPw,
+      });
+      showToast('비밀번호가 성공적으로 변경되었습니다.', 'success');
+      setIsPwModalOpen(false);
+      setCurrentPw('');
+      setNewPw('');
+      setConfirmPw('');
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ code: string }>;
+      const code = axiosErr.response?.data?.code;
+      if (code === 'PASSWORD_MISMATCH') {
+        showToast('현재 비밀번호가 일치하지 않습니다.', 'error');
+      } else if (code === 'UNAUTHORIZED_ACCESS') {
+        showToast('인증이 유효하지 않습니다. 다시 로그인해 주세요.', 'error');
+      } else {
+        showToast('비밀번호 변경에 실패했습니다.', 'error');
+      }
+    } finally {
+      setPasswordChanging(false);
+    }
+  };
+
+  const closeUserDeleteModal = () => {
+    if (accountDeleting) return;
+
+    setDeleteModalOpen(false);
+    setPassword('');
+  };
+
+  const handleUserDelete = async () => {
+    if (accountDeleting) return;
+
+    try {
+      setAccountDeleting(true);
+      await api.delete('api/v1/users', {
+        data: user.hasLocalPassword === false ? {} : { password },
+      });
+
+      showToast('회원 탈퇴가 완료되었습니다.', 'success');
+      setDeleteModalOpen(false);
+      setPassword('');
+      dispatch(logout());
+      navigate('/login');
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ code?: string }>;
+      const code = axiosErr.response?.data?.code;
+
+      if (code === 'PASSWORD_MISMATCH') {
+        showToast('비밀번호가 일치하지 않습니다.', 'error');
+      } else if (code === 'USER_NOT_FOUND') {
+        showToast('사용자 정보를 찾을 수 없습니다.', 'error');
+      } else {
+        showToast('회원 탈퇴에 실패했습니다.', 'error');
+      }
+    } finally {
+      setAccountDeleting(false);
+    }
+  };
+
   return (
     <div className="flex h-[640px] flex-row items-stretch gap-4 w-full max-lg:h-auto max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-3">
       <MyPageContentLayout
@@ -209,84 +287,25 @@ export default function MyInfoPage() {
       {/* 비밀번호 변경 */}
       <PasswordChangeModal
         isOpen={isPwModalOpen}
+        submitting={passwordChanging}
         currentPassword={currentPw}
         newPassword={newPw}
         confirmPassword={confirmPw}
         onCurrentChange={setCurrentPw}
         onNewChange={setNewPw}
         onConfirmChange={setConfirmPw}
-        onCancel={() => {
-          setIsPwModalOpen(false);
-          setCurrentPw('');
-          setNewPw('');
-          setConfirmPw('');
-        }}
-        onSubmit={async () => {
-          try {
-            await api.patch('api/v1/users/changePassword', {
-              oldPassword: currentPw,
-              newPassword: newPw,
-              newPasswordConfirm: confirmPw,
-            });
-            showToast('비밀번호가 성공적으로 변경되었습니다.', 'success');
-          } catch (err) {
-            // 👉 에러 코드별 토스트 처리
-            const axiosErr = err as AxiosError<{ code: string }>;
-            const code = axiosErr.response?.data?.code;
-            if (code === 'PASSWORD_MISMATCH') {
-              showToast('현재 비밀번호가 일치하지 않습니다.', 'error');
-            } else if (code === 'UNAUTHORIZED_ACCESS') {
-              showToast('인증이 유효하지 않습니다. 다시 로그인해 주세요.', 'error');
-            } else {
-              showToast('비밀번호 변경에 실패했습니다.', 'error');
-            }
-          } finally {
-            setIsPwModalOpen(false);
-            setCurrentPw('');
-            setNewPw('');
-            setConfirmPw('');
-          }
-        }}
+        onCancel={closePasswordChangeModal}
+        onSubmit={handlePasswordChange}
       />
       {/* 회원탈퇴 */}
       <UserDeleteModal
         isOpen={deleteModalOpen}
+        submitting={accountDeleting}
         password={password}
         requiresPassword={user.hasLocalPassword !== false}
         onPasswordChange={setPassword}
-        onCancel={() => {
-          setDeleteModalOpen(false);
-          setPassword('');
-        }}
-        onDelete={async () => {
-          try {
-            await api.delete('api/v1/users', {
-              data: user.hasLocalPassword === false ? {} : { password },
-            });
-
-            showToast('회원 탈퇴가 완료되었습니다.', 'success');
-
-            // 로그인 상태 초기화
-            dispatch(logout());
-
-            // 로그인 페이지로 이동
-            navigate('/login');
-          } catch (err) {
-            const axiosErr = err as AxiosError<{ code?: string }>;
-            const code = axiosErr.response?.data?.code;
-
-            if (code === 'PASSWORD_MISMATCH') {
-              showToast('비밀번호가 일치하지 않습니다.', 'error');
-            } else if (code === 'USER_NOT_FOUND') {
-              showToast('사용자 정보를 찾을 수 없습니다.', 'error');
-            } else {
-              showToast('회원 탈퇴에 실패했습니다.', 'error');
-            }
-          } finally {
-            setDeleteModalOpen(false);
-            setPassword('');
-          }
-        }}
+        onCancel={closeUserDeleteModal}
+        onDelete={handleUserDelete}
       />
     </div>
   );
