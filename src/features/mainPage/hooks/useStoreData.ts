@@ -4,34 +4,51 @@ import {
   getStorePreviewList,
   getStorePreviewListByCategory,
   getStoreClustersInView,
-  getStorePreviewsInView,
+  getCompactStorePreviewsInView,
   getCurrentLocation,
   getAddressFromCoordinates,
   searchStorePreviews,
 } from '../api/storeApi';
-import { transformMapStorePreviewsToPlatforms } from '../utils/dataTransform';
+import {
+  transformMapStorePreviewBatchToPlatforms,
+  transformMapStorePreviewsToPlatforms,
+} from '../utils/dataTransform';
 import { getRadiusByMapLevel } from '../utils/mapUtils';
 import { useApiCall } from './useApiCall';
 import { DEFAULT_RADIUS } from '../constants';
 
 type InViewPreviewOptions = {
   limit: number;
-  includeBenefits: boolean;
   boundsPaddingRatio: number;
 };
 
+type PreviewCoverage = {
+  bounds: MapBounds;
+  categoryKey: string;
+  userLat: number;
+  userLng: number;
+  expiresAt: number;
+};
+
+type InViewStoreResult = {
+  platforms: Platform[];
+  coverage: PreviewCoverage | null;
+};
+
 const SERVER_CLUSTER_MIN_LEVEL = 5;
+const DETAILED_STORE_PREVIEW_LIMIT = 300;
+const PREVIEW_COVERAGE_TTL_MS = 30_000;
 
 const shouldUseServerClusters = (mapLevel?: number) =>
   Boolean(mapLevel && mapLevel >= SERVER_CLUSTER_MIN_LEVEL);
 
 const getInViewPreviewOptionsByMapLevel = (mapLevel?: number): InViewPreviewOptions => {
-  if (!mapLevel) return { limit: 500, includeBenefits: true, boundsPaddingRatio: 0 };
-  if (mapLevel >= 8) return { limit: 2000, includeBenefits: false, boundsPaddingRatio: 0.5 };
-  if (mapLevel >= 7) return { limit: 1600, includeBenefits: false, boundsPaddingRatio: 0.35 };
-  if (mapLevel >= 6) return { limit: 1200, includeBenefits: false, boundsPaddingRatio: 0.2 };
-  if (mapLevel >= 5) return { limit: 900, includeBenefits: false, boundsPaddingRatio: 0.1 };
-  return { limit: 500, includeBenefits: true, boundsPaddingRatio: 0 };
+  if (!mapLevel) return { limit: DETAILED_STORE_PREVIEW_LIMIT, boundsPaddingRatio: 0.2 };
+  if (mapLevel >= 8) return { limit: 2000, boundsPaddingRatio: 0.5 };
+  if (mapLevel >= 7) return { limit: 1600, boundsPaddingRatio: 0.35 };
+  if (mapLevel >= 6) return { limit: 1200, boundsPaddingRatio: 0.2 };
+  if (mapLevel >= 5) return { limit: 900, boundsPaddingRatio: 0.1 };
+  return { limit: DETAILED_STORE_PREVIEW_LIMIT, boundsPaddingRatio: 0.2 };
 };
 
 const expandMapBounds = (bounds: MapBounds, paddingRatio: number): MapBounds => {
@@ -47,6 +64,15 @@ const expandMapBounds = (bounds: MapBounds, paddingRatio: number): MapBounds => 
     maxLng: Math.min(180, bounds.maxLng + lngPadding),
   };
 };
+
+const previewCategoryKey = (category: string | null) =>
+  category && category !== '전체' ? category : '전체';
+
+const containsBounds = (outer: MapBounds, inner: MapBounds) =>
+  outer.minLat <= inner.minLat &&
+  outer.minLng <= inner.minLng &&
+  outer.maxLat >= inner.maxLat &&
+  outer.maxLng >= inner.maxLng;
 
 /**
  * 가맹점 데이터 관리 훅
@@ -77,6 +103,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
   // 지도 viewport bounds의 최신 값을 참조하기 위한 ref
   const currentMapBoundsRef = useRef<MapBounds | null>(null);
+  const previewCoverageRef = useRef<PreviewCoverage | null>(null);
 
   // 카테고리 필터 상태
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -199,9 +226,8 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       category: string | null,
       userLat?: number,
       userLng?: number,
-      limit = 500,
-      includeBenefits = true,
-      boundsPaddingRatio = 0,
+      limit = DETAILED_STORE_PREVIEW_LIMIT,
+      boundsPaddingRatio = 0.2,
       signal?: AbortSignal
     ) => {
       const currentUserCoords = userCoordsRef.current;
@@ -215,22 +241,32 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       const shouldFilterByCategory = category && category !== '전체';
 
       try {
-        const storeResponse = await getStorePreviewsInView(
+        const storeResponse = await getCompactStorePreviewsInView(
           {
             minLat: queryBounds.minLat,
             minLng: queryBounds.minLng,
             maxLat: queryBounds.maxLat,
             maxLng: queryBounds.maxLng,
             category: shouldFilterByCategory ? category : undefined,
-            userLat: finalUserLat,
-            userLng: finalUserLng,
             limit,
-            includeBenefits,
           },
           signal
         );
 
-        return transformMapStorePreviewsToPlatforms(storeResponse.data);
+        return {
+          platforms: transformMapStorePreviewBatchToPlatforms(
+            storeResponse.data,
+            finalUserLat,
+            finalUserLng
+          ),
+          coverage: {
+            bounds: queryBounds,
+            categoryKey: previewCategoryKey(category),
+            userLat: finalUserLat,
+            userLng: finalUserLng,
+            expiresAt: Date.now() + PREVIEW_COVERAGE_TTL_MS,
+          },
+        } satisfies InViewStoreResult;
       } catch (error) {
         if (signal?.aborted) {
           throw error;
@@ -269,7 +305,10 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
               signal
             );
 
-        return transformMapStorePreviewsToPlatforms(fallbackResponse.data);
+        return {
+          platforms: transformMapStorePreviewsToPlatforms(fallbackResponse.data),
+          coverage: null,
+        } satisfies InViewStoreResult;
       }
     },
     []
@@ -410,6 +449,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
       const bounds = currentMapBoundsRef.current;
       if (bounds && shouldUseServerClusters(currentMapLevelInHook)) {
+        previewCoverageRef.current = null;
         await requestMapClusterSnapshot(
           bounds,
           selectedCategory,
@@ -422,17 +462,19 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
       clearMapClusterSnapshot();
       const inViewOptions = getInViewPreviewOptionsByMapLevel(currentMapLevelInHook);
-      const platforms = bounds
+      const inViewResult = bounds
         ? await loadStoresInBoundsRef.current(
             bounds,
             selectedCategory,
             undefined,
             undefined,
             inViewOptions.limit,
-            inViewOptions.includeBenefits,
             inViewOptions.boundsPaddingRatio,
             controller.signal
           )
+        : null;
+      const nextPlatforms = inViewResult
+        ? inViewResult.platforms
         : await loadStoresByCategoryRef.current(
             coords.lat,
             coords.lng,
@@ -446,7 +488,9 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         return platformsRef.current;
       }
 
-      return platforms || []; // null/undefined 방어
+      previewCoverageRef.current = inViewResult?.coverage ?? null;
+
+      return nextPlatforms || []; // null/undefined 방어
     };
 
     executeRef.current(reloadByCategory);
@@ -506,6 +550,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         const searchBounds = bounds ?? currentMapBoundsRef.current;
 
         if (searchBounds && shouldUseServerClusters(mapLevel)) {
+          previewCoverageRef.current = null;
           await requestMapClusterSnapshot(
             searchBounds,
             selectedCategory,
@@ -517,17 +562,19 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         }
 
         const inViewOptions = getInViewPreviewOptionsByMapLevel(mapLevel);
-        const platforms = searchBounds
+        const inViewResult = searchBounds
           ? await loadStoresInBoundsRef.current(
               searchBounds,
               selectedCategory,
               currentUserCoords?.lat,
               currentUserCoords?.lng,
               inViewOptions.limit,
-              inViewOptions.includeBenefits,
               inViewOptions.boundsPaddingRatio,
               controller.signal
             )
+          : null;
+        const nextPlatforms = inViewResult
+          ? inViewResult.platforms
           : await loadStoresByCategoryRef.current(
               centerLat,
               centerLng,
@@ -542,7 +589,9 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
           return platformsRef.current;
         }
 
-        return platforms;
+        previewCoverageRef.current = inViewResult?.coverage ?? null;
+
+        return nextPlatforms;
       };
 
       const shouldLoadServerSnapshot = Boolean(
@@ -575,12 +624,31 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   const searchInMapBounds = useCallback(
     async (bounds: MapBounds, centerLat: number, centerLng: number, mapLevel?: number) => {
       currentMapBoundsRef.current = bounds;
-      const { controller, requestSeq } = beginViewportRequest();
       void updateAddressLatest(centerLat, centerLng);
 
       const effectiveMapLevel = mapLevel ?? currentMapLevelInHook;
 
+      if (!shouldUseServerClusters(effectiveMapLevel)) {
+        const currentUserCoords = userCoordsRef.current ?? { lat: centerLat, lng: centerLng };
+        const coverage = previewCoverageRef.current;
+        const canReuseCoverage =
+          coverage !== null &&
+          coverage.expiresAt > Date.now() &&
+          coverage.categoryKey === previewCategoryKey(selectedCategory) &&
+          coverage.userLat === currentUserCoords.lat &&
+          coverage.userLng === currentUserCoords.lng &&
+          containsBounds(coverage.bounds, bounds);
+
+        if (canReuseCoverage) {
+          cancelViewportRequest();
+          return true;
+        }
+      }
+
+      const { controller, requestSeq } = beginViewportRequest();
+
       if (shouldUseServerClusters(effectiveMapLevel)) {
+        previewCoverageRef.current = null;
         try {
           return await requestMapClusterSnapshot(
             bounds,
@@ -599,13 +667,12 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
       const searchInBounds = async () => {
         const inViewOptions = getInViewPreviewOptionsByMapLevel(effectiveMapLevel);
-        const platforms = await loadStoresInBoundsRef.current(
+        const result = await loadStoresInBoundsRef.current(
           bounds,
           selectedCategory,
           undefined,
           undefined,
           inViewOptions.limit,
-          inViewOptions.includeBenefits,
           inViewOptions.boundsPaddingRatio,
           controller.signal
         );
@@ -614,7 +681,9 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
           return platformsRef.current;
         }
 
-        return platforms;
+        previewCoverageRef.current = result.coverage;
+
+        return result.platforms;
       };
 
       // 상세 핀 응답이 성공한 시점에만 기존 서버 클러스터를 같이 해제한다.
@@ -627,6 +696,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
     },
     [
       beginViewportRequest,
+      cancelViewportRequest,
       clearMapClusterSnapshot,
       currentMapLevelInHook,
       isLatestViewportRequest,
@@ -642,6 +712,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   const updateToCurrentLocation = useCallback(
     async (lat: number, lng: number, mapLevel: number) => {
       cancelViewportRequest();
+      previewCoverageRef.current = null;
       clearMapClusterSnapshot();
       void updateAddressLatest(lat, lng);
 
@@ -671,6 +742,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   const searchByKeyword = useCallback(
     async (keyword: string, mapLevel: number, searchLat: number, searchLng: number) => {
       cancelViewportRequest();
+      previewCoverageRef.current = null;
       clearMapClusterSnapshot();
       const keywordSearch = async () => {
         // 맵 레벨에 따른 반경 계산
@@ -722,6 +794,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
 
   const clearPlatforms = useCallback(() => {
     cancelViewportRequest();
+    previewCoverageRef.current = null;
     clearMapClusterSnapshot();
     return executeRef.current(async () => []);
   }, [cancelViewportRequest, clearMapClusterSnapshot]);

@@ -5,9 +5,11 @@ import {
   SearchStoresParams,
   ReverseGeocodeApiResponse,
   MapStorePreviewApiResponse,
+  MapStorePreviewBatchApiResponse,
   MapStoreClusterApiResponse,
   StoreClusterInViewParams,
   StoreInViewParams,
+  CompactStoreInViewParams,
 } from '../types/api';
 
 /**
@@ -50,6 +52,29 @@ export const getStorePreviewsInView = async (
       userLng: params.userLng,
       limit: params.limit,
       includeBenefits: params.includeBenefits,
+    },
+    signal,
+  });
+
+  return response.data;
+};
+
+/**
+ * 현재 지도 화면 영역 기반 지점 목록 조회.
+ * 제휴처와 혜택을 지점 목록에서 분리해 동일 브랜드 데이터의 반복 전송을 제거한다.
+ */
+export const getCompactStorePreviewsInView = async (
+  params: CompactStoreInViewParams,
+  signal?: AbortSignal
+): Promise<MapStorePreviewBatchApiResponse> => {
+  const response = await api.get('/api/v1/maps/stores/in-view/previews/compact', {
+    params: {
+      minLat: params.minLat,
+      minLng: params.minLng,
+      maxLat: params.maxLat,
+      maxLng: params.maxLng,
+      category: params.category,
+      limit: params.limit,
     },
     signal,
   });

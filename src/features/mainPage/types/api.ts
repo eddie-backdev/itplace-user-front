@@ -14,6 +14,38 @@ export interface MapStorePreviewApiResponse {
   data: MapStorePreviewData[];
 }
 
+export interface MapStorePreviewBatchApiResponse {
+  code: string;
+  status: string;
+  message: string;
+  data: MapStorePreviewBatchData;
+}
+
+export interface MapStorePreviewBatchData {
+  stores: MapStorePreviewStoreData[];
+  partners: MapStorePreviewPartnerData[];
+}
+
+export interface MapStorePreviewStoreData {
+  storeId: number;
+  partnerId: number;
+  storeName: string;
+  latitude: number;
+  longitude: number;
+  address?: string | null;
+  roadAddress?: string | null;
+  postCode?: string | null;
+  hasCoupon: boolean;
+}
+
+export interface MapStorePreviewPartnerData {
+  partnerId: number;
+  partnerName: string;
+  category: string;
+  image?: string | null;
+  tierBenefit: TierBenefit[];
+}
+
 export interface MapStoreClusterApiResponse {
   code: string;
   status: string;
@@ -168,6 +200,11 @@ export interface StoreInViewParams {
   limit?: number;
   includeBenefits?: boolean;
 }
+
+export type CompactStoreInViewParams = Omit<
+  StoreInViewParams,
+  'userLat' | 'userLng' | 'includeBenefits'
+>;
 
 // 즐겨찾기 API 타입
 export interface FavoriteRequest {
