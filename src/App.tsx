@@ -9,6 +9,7 @@ import { RootState } from './store';
 import { logout } from './store/authSlice';
 import { persistor } from './store';
 import { refreshToken } from './features/loginPage/apis/auth';
+import { AI_RECOMMENDATION_ENABLED } from './config/features';
 
 const QuestionRecommendationChatWidget = lazy(
   () => import('./features/questionRecommendationChat/components/QuestionRecommendationChatWidget')
@@ -42,9 +43,11 @@ const App = () => {
     <>
       <RouterProvider router={router} />
       <ToastProvider />
-      <Suspense fallback={null}>
-        <QuestionRecommendationChatWidget />
-      </Suspense>
+      {AI_RECOMMENDATION_ENABLED && (
+        <Suspense fallback={null}>
+          <QuestionRecommendationChatWidget />
+        </Suspense>
+      )}
     </>
   );
 };

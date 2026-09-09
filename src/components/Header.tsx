@@ -18,6 +18,7 @@ import { RootState } from '../store';
 import { logout } from '../store/authSlice';
 import { persistor } from '../store';
 import { showToast } from '../utils/toast';
+import { AI_RECOMMENDATION_ENABLED } from '../config/features';
 import {
   addQuestionRecommendationChatStateListener,
   openQuestionRecommendationChat,
@@ -51,6 +52,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
     supportPaths.includes(location.pathname) || location.pathname.startsWith('/membership/');
 
   useEffect(() => {
+    if (!AI_RECOMMENDATION_ENABLED) return;
     return addQuestionRecommendationChatStateListener(setIsQuestionRecommendationOpen);
   }, []);
 
@@ -138,24 +140,26 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
 
         {/* 보조 액션 */}
         <div className="mb-1 mt-4 flex w-full flex-col items-center gap-y-1 border-t border-warmBorder pt-3">
-          <button
-            type="button"
-            onClick={handleQuestionRecommendationClick}
-            className={clsx(utilityNavItemClass, isQuestionRecommendationOpen && activeNavClass)}
-            aria-pressed={isQuestionRecommendationOpen}
-            aria-label="질문형 AI 추천 열기"
-          >
-            <TbSparkles
-              className={clsx(
-                'text-[18px]',
-                isQuestionRecommendationOpen
-                  ? 'scale-110 text-brandStrong'
-                  : 'text-grey05 group-hover:text-grey06'
-              )}
-              strokeWidth={isQuestionRecommendationOpen ? 2.8 : 1.7}
-            />
-            <span className="mt-1 whitespace-nowrap leading-none">AI 추천</span>
-          </button>
+          {AI_RECOMMENDATION_ENABLED && (
+            <button
+              type="button"
+              onClick={handleQuestionRecommendationClick}
+              className={clsx(utilityNavItemClass, isQuestionRecommendationOpen && activeNavClass)}
+              aria-pressed={isQuestionRecommendationOpen}
+              aria-label="질문형 AI 추천 열기"
+            >
+              <TbSparkles
+                className={clsx(
+                  'text-[18px]',
+                  isQuestionRecommendationOpen
+                    ? 'scale-110 text-brandStrong'
+                    : 'text-grey05 group-hover:text-grey06'
+                )}
+                strokeWidth={isQuestionRecommendationOpen ? 2.8 : 1.7}
+              />
+              <span className="mt-1 whitespace-nowrap leading-none">AI 추천</span>
+            </button>
+          )}
 
           <Link
             to="/about"

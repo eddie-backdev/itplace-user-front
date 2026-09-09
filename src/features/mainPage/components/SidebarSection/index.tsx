@@ -19,6 +19,7 @@ import { StoreData } from '../../types/api';
 import { RootState } from '../../../../store';
 import { useResponsive } from '../../../../hooks/useResponsive';
 import { addFavoritesChangedListener } from '../../utils/favoriteEvents';
+import { AI_RECOMMENDATION_ENABLED } from '../../../../config/features';
 
 interface Tab {
   id: string;
@@ -57,7 +58,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   isLoading,
   error,
   onSearchChange,
-  activeTab,
+  activeTab: requestedTab,
   onActiveTabChange,
   onKeywordSearch,
   searchQuery,
@@ -71,6 +72,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   onTouchMove,
   onTouchEnd,
 }) => {
+  const activeTab = !AI_RECOMMENDATION_ENABLED && requestedTab === 'ai' ? 'nearby' : requestedTab;
   const user = useSelector((state: RootState) => state.auth.user);
   const { isMobile, isTablet } = useResponsive();
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
@@ -138,6 +140,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   isInitialRecommendationsLoadRef.current = isInitialRecommendationsLoad;
 
   const fetchPersonalizedRecommendations = useCallback(async () => {
+    if (!AI_RECOMMENDATION_ENABLED) return;
     setIsPersonalizedRecommendationsLoading(true);
     setPersonalizedRecommendationsError(null);
     try {
@@ -245,7 +248,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   const mainTabs: Tab[] = [
     { id: 'nearby', label: '주변 혜택' },
     { id: 'favorites', label: '관심 혜택' },
-    { id: 'ai', label: '맞춤 AI 추천' },
+    ...(AI_RECOMMENDATION_ENABLED ? [{ id: 'ai', label: '맞춤 AI 추천' }] : []),
   ];
 
   const handleSearchChange = (query: string) => {
