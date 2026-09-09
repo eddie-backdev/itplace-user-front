@@ -1,13 +1,16 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import {
-  getPartnerBenefitPath,
-  loadPartnerCatalog,
-  loadPartnerDetails,
-} from './seo-partners.mjs';
+import { getPartnerBenefitPath, loadPartnerCatalog, loadPartnerDetails } from './seo-partners.mjs';
 
 const SITE_ORIGIN = 'https://itplace.click';
 const DIST_DIR = path.resolve('dist');
+
+const [privacyPolicy, guide, faqs, benefitDisplay, partnerNotes] = await Promise.all(
+  ['privacy-policy', 'membership-guide', 'membership-faq', 'benefit-display', 'partner-notes'].map(
+    async (name) =>
+      JSON.parse(await readFile(new URL(`../src/content/${name}.json`, import.meta.url), 'utf8'))
+  )
+);
 
 const publicPages = [
   {
@@ -235,23 +238,12 @@ const carrierPaths = {
   LGU: '/membership/lguplus',
 };
 
-const gradeLabels = {
-  SKT_VIP: 'VIP',
-  SKT_GOLD: 'GOLD',
-  SKT_SILVER: 'SILVER',
-  KT_VVIP: 'VVIP',
-  KT_VIP: 'VIP',
-  KT_GOLD: 'GOLD',
-  KT_GENERAL: '일반',
-  VVIP: 'VVIP',
-  VIP: 'VIP',
-  BASIC: '우수',
-};
+const gradeLabels = benefitDisplay.gradeLabels;
 
 const usageTypeLabels = {
   ONLINE: '온라인',
   OFFLINE: '오프라인',
-  BOTH: '온라인 · 오프라인',
+  BOTH: '이용 채널은 상세 조건 확인',
 };
 
 const escapeHtml = (value) =>
@@ -262,12 +254,10 @@ const escapeHtml = (value) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 
-const compactText = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
-
-const truncateText = (value, maxLength = 700) => {
-  const compacted = compactText(value);
-  return compacted.length > maxLength ? compacted.slice(0, maxLength).trim() + '…' : compacted;
-};
+const compactText = (value) =>
+  String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 const renderBenefitSections = (sections = []) =>
   sections
@@ -318,17 +308,24 @@ const renderBenefitSections = (sections = []) =>
             lines.push('          </ul>');
           }
 
-          const manual = truncateText(benefit.manual);
+          const manual = compactText(benefit.manual);
           if (manual) {
-            lines.push(
-              '          <p><strong>이용 방법:</strong> ' + escapeHtml(manual) + '</p>'
-            );
+            lines.push('          <p><strong>이용 방법:</strong> ' + escapeHtml(manual) + '</p>');
           }
-          if (benefit.url) {
+          {
+            const source = benefitDisplay.carrierSources[section.carrier];
             lines.push(
               '          <p><a href="' +
-                escapeHtml(benefit.url) +
-                '" rel="nofollow noopener">공식 안내 확인</a></p>'
+                escapeHtml(benefit.sourceUrl || benefit.url || source.url) +
+                '" rel="nofollow noopener">' +
+                escapeHtml(
+                  benefit.sourceUrl
+                    ? '통신사 공식 원문 확인'
+                    : benefit.url
+                      ? '혜택 제공처 안내 확인'
+                      : source.label
+                ) +
+                '</a></p>'
             );
           }
           lines.push('        </article>');
@@ -420,6 +417,44 @@ const updateHead = (html, page) => {
   return next;
 };
 
+const renderContentSections = (sections = []) =>
+  sections
+    .map(
+      (section) => `
+      <section>
+        <h2>${escapeHtml(section.title)}</h2>
+        ${(section.paragraphs ?? []).map((text) => `<p>${escapeHtml(text)}</p>`).join('\n')}
+        ${(section.items ?? []).length ? `<ul>${section.items.map((text) => `<li>${escapeHtml(text)}</li>`).join('')}</ul>` : ''}
+        ${(section.links ?? []).map((link) => `<p><a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a></p>`).join('\n')}
+      </section>`
+    )
+    .join('\n');
+
+for (const page of publicPages) {
+  if (page.path === '/privacy') {
+    page.paragraphs = [privacyPolicy.introduction, `시행일: ${privacyPolicy.updatedAt}`];
+    page.sections = [
+      ...privacyPolicy.sections,
+      { title: '11. 문의', paragraphs: ['개인정보 관련 문의: noreply.itplace@gmail.com'] },
+    ];
+  } else if (page.path === '/faq') {
+    page.sections = faqs.map((faq) => ({ title: faq.question, paragraphs: [faq.answer] }));
+  } else if (page.path === '/guide') {
+    page.sections = [
+      ...guide.steps.map((step) => ({ title: step.title, paragraphs: [step.body] })),
+      { title: '통신사별 확인 팁', items: guide.tips },
+    ];
+  } else if (page.path.startsWith('/membership')) {
+    page.sections = [
+      {
+        title: '실제 결제액으로 혜택 비교하기',
+        paragraphs: [guide.steps[4].body],
+        links: [{ href: '/guide', label: '적용 조건과 이용 실패 사례 확인' }],
+      },
+    ];
+  }
+}
+
 const renderFallback = (page) => {
   const links = [
     ['/', '홈'],
@@ -439,10 +474,11 @@ const renderFallback = (page) => {
 
   const relatedLinks = page.relatedLinks ?? [];
   const benefitSections = renderBenefitSections(page.benefitSections);
+  const contentSections = renderContentSections(page.sections);
 
-  return `    <main data-prerender-fallback="true" style="max-width: 840px; margin: 0 auto; padding: 48px 20px; font-family: sans-serif; line-height: 1.7; color: #101114;">\n      <p style="font-weight: 700; color: #7132f5;">잇플레이스 · IT:PLACE</p>\n      <h1>${escapeHtml(page.heading)}</h1>\n${page.paragraphs
+  return `    <main data-prerender-fallback="true" style="max-width: 840px; margin: 0 auto; padding: 48px 20px; font-family: sans-serif; line-height: 1.7; color: #101114;">\n      <p style="font-weight: 700; color: #167a4c;">잇플레이스 · IT:PLACE</p>\n      <h1>${escapeHtml(page.heading)}</h1>\n${page.paragraphs
     .map((paragraph) => `      <p>${escapeHtml(paragraph)}</p>`)
-    .join('\n')}${benefitSections ? `\n${benefitSections}` : ''}${
+    .join('\n')}${contentSections}${benefitSections ? `\n${benefitSections}` : ''}${
     relatedLinks.length > 0
       ? `\n      <section>\n        <h2>관련 멤버십 혜택</h2>\n        <ul>\n${relatedLinks
           .map(
@@ -454,11 +490,9 @@ const renderFallback = (page) => {
   }\n      <nav aria-label="잇플레이스 주요 페이지" style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px;">\n${links
     .map(
       ([href, label]) =>
-        `        <a href="${href}" style="color: #7132f5; font-weight: 700;">${escapeHtml(label)}</a>`
+        `        <a href="${href}" style="color: #167a4c; font-weight: 700;">${escapeHtml(label)}</a>`
     )
-    .join(
-      '\n'
-    )}\n      </nav>\n    </main>\n    <script>document.querySelector('[data-prerender-fallback="true"]')?.remove();</script>`;
+    .join('\n')}\n      </nav>\n    </main>`;
 };
 
 const injectStructuredData = (html, page) => {
@@ -524,7 +558,7 @@ const injectFallback = (html, page) => {
   const withoutRootNoscript = html.replace(/\s*<noscript>[\s\S]*?<\/noscript>/, '');
   return withoutRootNoscript.replace(
     '    <div id="root"></div>',
-    `    <div id="root"></div>\n${fallback}`
+    `    <div id="root">\n${fallback}\n    </div>`
   );
 };
 
@@ -569,9 +603,16 @@ const partnerPages = partners.map((partner) => {
     image: partner.image,
     paragraphs: [
       `${partner.partnerName}에서는 ${carrierNames.join(', ')} 멤버십 혜택을 확인할 수 있습니다.`,
-      `제휴처 카테고리는 ${partner.category || '미분류'}이며, 통신사별 멤버십 등급과 이용 채널에 따라 혜택 내용이 달라질 수 있습니다.`,
+      `${partner.category ? `제휴처 카테고리는 ${partner.category}입니다. ` : ''}통신사별 멤버십 등급과 이용 채널에 따라 혜택 내용이 달라질 수 있습니다.`,
       '혜택 상세에서 통신사별 조건, 이용 제한과 이용 방법을 비교하고 실제 결제 전 통신사 공식 안내에서 최신 정보를 확인해 주세요.',
     ],
+    sections: partnerNotes
+      .filter((note) => note.partnerId === partner.partnerId)
+      .map((note) => ({
+        title: note.title,
+        paragraphs: [...note.paragraphs, `이 해설의 원문 확인일: ${note.checkedAt}`],
+        links: [{ href: note.sourceUrl, label: note.sourceLabel }],
+      })),
     breadcrumbs: [{ name: '전체 멤버십 혜택', path: '/benefits' }],
     relatedLinks: carriers.map((carrier) => [
       carrierPaths[carrier],
@@ -595,8 +636,34 @@ for (const page of publicPages.filter((item) => item.path.startsWith('/membershi
     page.path === '/membership' ? [] : [{ name: '통신사 멤버십', path: '/membership' }];
 }
 
-const template = await readFile(path.join(DIST_DIR, 'index.html'), 'utf8');
+const benefitsPage = appShellPages.find((page) => page.path === '/benefits');
+benefitsPage.sections = partners.slice(0, 20).map((partner) => ({
+  title: partner.partnerName,
+  paragraphs: (partnerDetailsById.get(partner.partnerId)?.carrierGroups ?? []).flatMap((group) =>
+    group.benefits
+      .slice(0, 1)
+      .map(
+        (benefit) =>
+          `${carrierLabels[group.carrier]}: ${benefit.description || '등급별 조건은 상세에서 확인하세요.'}`
+      )
+  ),
+  links: [
+    { href: getPartnerBenefitPath(partner), label: `${partner.partnerName} 통신사별 조건 비교` },
+  ],
+}));
+
+const template = (await readFile(path.join(DIST_DIR, 'index.html'), 'utf8'))
+  .replace(/<main data-prerender-fallback="true"[\s\S]*?<\/main>/g, '')
+  .replace(/<div id="root">\s*<\/div>/, '<div id="root"></div>');
 const knownRoutes = [...publicPages, ...appShellPages, ...partnerPages];
+const homePage = {
+  heading: '통신사 멤버십 혜택을 비교하고 주변 매장을 찾으세요',
+  paragraphs: [
+    '잇플레이스는 SKT, KT, LG U+ 제휴처의 멤버십 등급별 혜택과 이용 조건을 함께 보여줍니다. 같은 브랜드의 통신사별 조건을 비교한 뒤 지도에서 가까운 매장을 찾아보세요.',
+  ],
+  sections: benefitsPage.sections.slice(0, 8),
+};
+await writeFile(path.join(DIST_DIR, 'index.html'), injectFallback(template, homePage), 'utf8');
 
 for (const page of knownRoutes) {
   const html = injectFallback(injectStructuredData(updateHead(template, page), page), page);

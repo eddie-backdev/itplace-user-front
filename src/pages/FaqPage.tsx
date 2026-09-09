@@ -2,38 +2,7 @@ import { Link } from 'react-router-dom';
 import PageSeo from '../components/PageSeo';
 import InfoPageShell from '../components/InfoPageShell';
 
-const faqs = [
-  {
-    question: 'ITPLACE에서 어떤 혜택을 찾을 수 있나요?',
-    answer:
-      'SKT, KT, LG U+ 통신사 멤버십으로 이용할 수 있는 제휴처 할인, 무료 제공, 등급별 혜택, 온라인·오프라인 이용 조건을 검색할 수 있습니다.',
-  },
-  {
-    question: '온라인 혜택과 오프라인 혜택은 어떻게 구분하나요?',
-    answer:
-      '혜택 상세에서 이용 채널과 조건을 확인할 수 있도록 정리합니다. 오프라인 매장 이용 혜택은 지도와 매장 정보 중심으로, 온라인 혜택은 적용 링크나 이용 조건 중심으로 확인하는 방식입니다.',
-  },
-  {
-    question: '지도에 보이는 매장은 어떻게 찾나요?',
-    answer:
-      '현재 위치 또는 검색 위치를 기준으로 주변 제휴처를 조회합니다. 카테고리, 키워드, 통신사 조건을 조합해 원하는 혜택을 좁혀볼 수 있습니다.',
-  },
-  {
-    question: '혜택 정보가 실제와 다를 수 있나요?',
-    answer:
-      '통신사와 제휴처 정책은 수시로 바뀔 수 있습니다. ITPLACE는 정보 정확도를 높이기 위해 데이터를 정리하지만, 실제 결제 전 통신사 또는 제휴처의 최신 안내를 확인하는 것을 권장합니다.',
-  },
-  {
-    question: '잘못된 혜택 정보는 어떻게 제보하나요?',
-    answer:
-      '문의 페이지 또는 앱 내 문의 기능으로 제휴처명, 통신사, 잘못된 조건, 확인한 위치를 알려주시면 검토 후 반영합니다.',
-  },
-  {
-    question: '회원가입 없이도 사용할 수 있나요?',
-    answer:
-      '공개 혜택 조회와 지도 검색은 기본적으로 이용할 수 있습니다. 즐겨찾기, 맞춤 추천, 마이페이지 등 개인화 기능은 로그인이 필요할 수 있습니다.',
-  },
-];
+import faqs from '../content/membership-faq.json';
 
 const FaqPage = () => {
   return (

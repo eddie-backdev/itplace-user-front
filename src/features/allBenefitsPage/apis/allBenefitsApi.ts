@@ -1,3 +1,4 @@
+import benefitDisplay from '../../../content/benefit-display.json';
 import axiosInstance from '../../../apis/axiosInstance';
 import { CarrierCode } from '../../../utils/membership';
 
@@ -66,6 +67,7 @@ export interface CarrierBenefitDetail {
   benefitLimit?: string | null;
   manual?: string | null;
   url?: string | null;
+  sourceUrl?: string | null;
   usageType: 'ONLINE' | 'OFFLINE' | 'BOTH';
   tierBenefits: TierBenefit[];
   isFavorite: boolean;
@@ -127,6 +129,7 @@ const mergeDuplicateBenefit = (
     benefitLimit: primary.benefitLimit?.trim() ? primary.benefitLimit : secondary.benefitLimit,
     manual: primary.manual?.trim() ? primary.manual : secondary.manual,
     url: primary.url?.trim() ? primary.url : secondary.url,
+    sourceUrl: primary.sourceUrl?.trim() ? primary.sourceUrl : secondary.sourceUrl,
     tierBenefits: mergeTierBenefits(primary.tierBenefits, secondary.tierBenefits),
     isFavorite: primary.isFavorite || secondary.isFavorite,
     favoriteCount: Math.max(primary.favoriteCount, secondary.favoriteCount),
@@ -146,7 +149,16 @@ export const normalizePartnerBenefitDetail = (
         current ? mergeDuplicateBenefit(current, benefit) : benefit
       );
     });
-    return { ...group, benefits: [...benefitsById.values()] };
+    return {
+      ...group,
+      benefits: [...benefitsById.values()].map((benefit) => ({
+        ...benefit,
+        benefitLimit:
+          benefit.benefitLimit === '제한없음'
+            ? benefitDisplay.limitLabels['제한없음']
+            : benefit.benefitLimit,
+      })),
+    };
   }),
 });
 
@@ -168,6 +180,7 @@ export interface BenefitDetailResponse {
   benefitLimit: string;
   manual: string;
   url: string;
+  sourceUrl?: string | null;
   partnerName: string;
   carrier?: string | null;
   image: string;

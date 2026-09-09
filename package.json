@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/prerender-info-pages.mjs && node scripts/check-seo-output.mjs",
+    "build": "tsc -b && vite build && node scripts/prerender-info-pages.mjs && npm run seo:check",
     "seo:refresh": "node scripts/refresh-seo-partner-catalog.mjs",
-    "seo:check": "node scripts/check-seo-output.mjs",
+    "seo:check": "node --test scripts/seo-partners.test.mjs && node scripts/check-seo-output.mjs",
     "lint": "eslint . --config eslint.config.js --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "preview": "vite preview"

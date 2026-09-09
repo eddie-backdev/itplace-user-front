@@ -1,0 +1,34 @@
+{
+  "limitLabels": {
+    "제한없음": "이용 방법에서 횟수·한도 확인"
+  },
+  "carrierSources": {
+    "SKT": {
+      "label": "T 멤버십 공식 안내",
+      "url": "https://sktmembership.tworld.co.kr/mps/pc-bff/benefitbrand/list-tab1.do"
+    },
+    "KT": {
+      "label": "KT 멤버십 공식 안내",
+      "url": "https://membership.kt.com/"
+    },
+    "LGU": {
+      "label": "LG U+ 멤버십 공식 안내",
+      "url": "https://www.lguplus.com/benefit-membership"
+    }
+  },
+  "gradeLabels": {
+    "SKT_VIP": "VIP",
+    "SKT_GOLD": "Gold",
+    "SKT_SILVER": "Silver",
+    "KT_VVIP": "VVIP",
+    "KT_VIP": "VIP",
+    "KT_GOLD": "Gold",
+    "KT_SILVER": "Silver",
+    "KT_WHITE": "White",
+    "KT_GENERAL": "일반",
+    "VVIP": "VVIP",
+    "VIP": "VIP",
+    "BASIC": "우수",
+    "VIP콕": "VIP콕"
+  }
+}

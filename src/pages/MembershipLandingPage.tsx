@@ -1,3 +1,4 @@
+import guide from '../content/membership-guide.json';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { TbArrowRight, TbMapPin, TbRefresh, TbSearch } from 'react-icons/tb';
@@ -305,6 +306,17 @@ const MembershipLandingPage = () => {
               ))}
             </div>
           ) : null}
+        </section>
+
+        <section className="rounded-3xl border border-grey02 p-6">
+          <h2 className="text-xl font-black text-grey07">실제 결제액으로 혜택 비교하기</h2>
+          <p className="mt-3 leading-7 text-grey06">{guide.steps[4].body}</p>
+          <Link
+            to="/guide"
+            className="mt-4 inline-flex min-h-11 items-center font-bold text-purple05 underline"
+          >
+            적용 조건과 이용 실패 사례 확인
+          </Link>
         </section>
 
         <section className="rounded-3xl border border-grey02 p-6">

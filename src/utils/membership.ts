@@ -1,3 +1,5 @@
+import benefitDisplay from '../content/benefit-display.json';
+
 export type CarrierCode = 'LGU' | 'SKT' | 'KT';
 
 export type MembershipGradeCode =
@@ -52,15 +54,7 @@ const CARRIER_LABELS = CARRIER_OPTIONS.reduce<Record<string, string>>((acc, opti
   return acc;
 }, {});
 
-const GRADE_LABELS = Object.values(MEMBERSHIP_GRADE_OPTIONS_BY_CARRIER)
-  .flat()
-  .reduce<Record<string, string>>(
-    (acc, option) => {
-      acc[option.code] = option.label;
-      return acc;
-    },
-    { VIP콕: 'VIP콕' }
-  );
+const GRADE_LABELS: Record<string, string> = benefitDisplay.gradeLabels;
 
 export const isCarrierCode = (value?: string | null): value is CarrierCode =>
   value === 'LGU' || value === 'SKT' || value === 'KT';

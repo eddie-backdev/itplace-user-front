@@ -17,10 +17,7 @@ const readDist = (relativePath) => readFile(path.join(DIST_DIR, relativePath), '
 const getTitle = (html) => html.match(/<title>(.*?)<\/title>/s)?.[1] ?? '';
 
 const homeHtml = await readDist('index.html');
-check(
-  getTitle(homeHtml) === 'ITPLACE',
-  'home browser title is not the ITPLACE brand name'
-);
+check(getTitle(homeHtml) === 'ITPLACE', 'home browser title is not the ITPLACE brand name');
 check(homeHtml.includes('"name": "잇플레이스"'), 'home WebSite/Organization name is missing');
 check(
   homeHtml.includes('rel="canonical" href="https://itplace.click/"'),
@@ -82,7 +79,8 @@ const sitemap = await readDist('sitemap.xml');
 const sitemapUrls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
 check(new Set(sitemapUrls).size === sitemapUrls.length, 'sitemap contains duplicate URLs');
 check(
-  sitemapUrls.length >= cachedPartners.length + 14,
+  sitemapUrls.filter((url) => url.includes('/benefits/partners/')).length > 0 &&
+    sitemapUrls.length >= 15,
   `sitemap URL count is too small: ${sitemapUrls.length}`
 );
 check(
@@ -114,6 +112,74 @@ check(
   'partner html redirect is missing'
 );
 
+const content = async (name) =>
+  JSON.parse(await readFile(new URL(`../src/content/${name}.json`, import.meta.url), 'utf8'));
+const [policy, guide, faqs, notes] = await Promise.all(
+  ['privacy-policy', 'membership-guide', 'membership-faq', 'partner-notes'].map(content)
+);
+const [privacyHtml, guideHtml, faqHtml, benefitsHtml] = await Promise.all(
+  ['privacy/index.html', 'guide/index.html', 'faq/index.html', 'benefits/index.html'].map(readDist)
+);
+const escapeHtml = (value) =>
+  String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+for (const section of policy.sections) {
+  for (const item of section.items)
+    check(
+      privacyHtml.includes(escapeHtml(item)),
+      `privacy policy paragraph missing: ${section.title}`
+    );
+  for (const link of section.links)
+    check(
+      privacyHtml.includes(`href="${escapeHtml(link.href)}"`),
+      `privacy choice link missing: ${link.label}`
+    );
+}
+for (const step of guide.steps)
+  check(guideHtml.includes(escapeHtml(step.body)), `guide step missing: ${step.title}`);
+for (const faq of faqs)
+  check(faqHtml.includes(escapeHtml(faq.answer)), `FAQ answer missing: ${faq.question}`);
+for (const note of notes) {
+  const partner = cachedPartners.find((item) => item.partnerId === note.partnerId);
+  if (!partner) continue;
+  const html = await readDist(`${getPartnerBenefitPath(partner).slice(1)}/index.html`);
+  check(
+    html.includes(note.sourceUrl) && html.includes(note.checkedAt),
+    'editorial note is missing its source or verification date'
+  );
+  for (const paragraph of note.paragraphs)
+    check(html.includes(escapeHtml(paragraph)), 'editorial explanation missing');
+}
+check(
+  benefitsHtml.includes('GS25') && benefitsHtml.includes('SKT:'),
+  'public benefit listing has no actual benefit summary'
+);
+check(
+  homeHtml.includes('data-prerender-fallback="true"') && homeHtml.includes('/benefits/partners/'),
+  'home has no public benefit content'
+);
+check(!samplePartnerHtml.includes('제한없음'), 'unparsed benefit limit promises unlimited use');
+for (const html of [privacyHtml, guideHtml, faqHtml, samplePartnerHtml]) {
+  check(
+    /<div id="root">\s*<main data-prerender-fallback/.test(html),
+    'public content is outside the React root'
+  );
+  check(!html.includes('?.remove()'), 'public content is removed before React can load');
+}
+const airclass = cachedPartners.find((partner) => partner.partnerName === '에어클래스');
+if (airclass) {
+  const html = await readDist(`${getPartnerBenefitPath(airclass).slice(1)}/index.html`);
+  check(
+    !html.includes('KT_WHITE') && !html.includes('KT_SILVER'),
+    'internal membership grade code leaked into HTML'
+  );
+  check(html.includes('https://membership.kt.com/'), 'carrier fallback source is missing');
+}
+
 const cachedPartnerDetails = await readCachedPartnerDetails();
 check(
   cachedPartnerDetails.length >= cachedPartners.length,
@@ -125,6 +191,6 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    `SEO output verified: ${sitemapUrls.length} sitemap URLs, ${cachedPartners.length} partners with actual benefit content, canonical redirects, unique membership titles`
+    `SEO output verified: ${sitemapUrls.length} sitemap URLs, ${sitemapUrls.filter((url) => url.includes('/benefits/partners/')).length} partners with actual benefit content, canonical redirects, unique membership titles`
   );
 }

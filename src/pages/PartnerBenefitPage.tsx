@@ -1,3 +1,5 @@
+import benefitDisplay from '../content/benefit-display.json';
+import partnerNotes from '../content/partner-notes.json';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -35,7 +37,7 @@ import {
 const getUsageTypeLabel = (usageType: CarrierBenefitDetail['usageType']) => {
   if (usageType === 'ONLINE') return '온라인';
   if (usageType === 'OFFLINE') return '오프라인';
-  return '온라인 · 오프라인';
+  return '이용 채널은 상세 조건 확인';
 };
 
 const groupTierBenefitConditions = (
@@ -112,6 +114,7 @@ const PartnerBenefitPage = () => {
     () => detail?.carrierGroups.find((group) => group.carrier === selectedCarrier) ?? null,
     [detail, selectedCarrier]
   );
+  const partnerNote = partnerNotes.find((note) => note.partnerId === partnerId);
   const isSingleSelectedBenefit = selectedGroup?.benefits.length === 1;
 
   const fallbackPartnerName = partnerSlug.replace(/-/g, ' ').trim() || '제휴처';
@@ -297,6 +300,108 @@ const PartnerBenefitPage = () => {
                         방문 전 실제 매장 적용 여부를 확인해 주세요.
                       </p>
                     </div>
+                  </div>
+                </section>
+
+                {partnerNote ? (
+                  <section
+                    className="mx-auto mt-4 max-w-6xl rounded-3xl border border-purple02 bg-white p-5 md:p-7"
+                    aria-labelledby="partner-editorial-note"
+                  >
+                    <h2 id="partner-editorial-note" className="text-xl font-black text-grey07">
+                      {partnerNote.title}
+                    </h2>
+                    {partnerNote.paragraphs.map((paragraph) => (
+                      <p key={paragraph} className="mt-3 leading-7 text-grey06">
+                        {paragraph}
+                      </p>
+                    ))}
+                    <p className="mt-4 text-sm leading-6 text-grey05">
+                      이 해설의 원문 확인일:{' '}
+                      <time dateTime={partnerNote.checkedAt}>{partnerNote.checkedAt}</time> ·{' '}
+                      <a
+                        href={partnerNote.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-bold text-purple05 underline"
+                      >
+                        {partnerNote.sourceLabel}
+                      </a>
+                    </p>
+                  </section>
+                ) : null}
+
+                <section
+                  className="mx-auto mt-4 max-w-6xl rounded-3xl border border-grey02 bg-white p-5 md:p-7"
+                  aria-labelledby="carrier-comparison"
+                >
+                  <h2 id="carrier-comparison" className="text-xl font-black text-grey07">
+                    통신사별 조건 한눈에 비교
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-grey05">
+                    같은 등급 이름이라도 통신사별 적용 조건은 다릅니다. 내 통신사·등급의 조건과 실제
+                    이용 방법을 함께 확인하세요.
+                  </p>
+                  <div
+                    className="mt-4 overflow-x-auto"
+                    role="region"
+                    aria-label="통신사별 혜택 비교표"
+                    tabIndex={0}
+                  >
+                    <table className="w-full min-w-[560px] border-collapse text-left text-sm leading-6">
+                      <caption className="sr-only">
+                        {detail.partnerName} 통신사별 혜택과 이용 제한
+                      </caption>
+                      <thead className="bg-purple01 text-grey07">
+                        <tr>
+                          <th scope="col" className="p-3">
+                            통신사
+                          </th>
+                          <th scope="col" className="p-3">
+                            혜택
+                          </th>
+                          <th scope="col" className="p-3">
+                            등급별 조건
+                          </th>
+                          <th scope="col" className="p-3">
+                            이용 제한
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detail.carrierGroups.flatMap((group) =>
+                          group.benefits.map((benefit) => {
+                            const conditions = groupTierBenefitConditions(benefit.tierBenefits);
+                            return (
+                              <tr
+                                key={`${group.carrier}-${benefit.benefitId}`}
+                                className="border-b border-grey02 align-top"
+                              >
+                                <th scope="row" className="whitespace-nowrap p-3 font-bold">
+                                  {getCarrierLabel(group.carrier)}
+                                </th>
+                                <td className="p-3">{benefit.benefitName}</td>
+                                <td className="p-3">
+                                  {conditions.length === 0 ? (
+                                    <p>
+                                      {benefit.description ||
+                                        '등급별 조건은 공식 안내에서 확인하세요.'}
+                                    </p>
+                                  ) : null}
+                                  {conditions.map((condition) => (
+                                    <p key={condition.context}>
+                                      <strong>{condition.gradeLabels.join(' · ')}</strong>:{' '}
+                                      {condition.context}
+                                    </p>
+                                  ))}
+                                </td>
+                                <td className="p-3">{benefit.benefitLimit || '이용 방법 확인'}</td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </section>
 
@@ -531,14 +636,22 @@ const PartnerBenefitPage = () => {
                                 </details>
                               ) : null}
 
-                              {benefit.url ? (
+                              {selectedGroup ? (
                                 <a
-                                  href={benefit.url}
+                                  href={
+                                    benefit.sourceUrl ||
+                                    benefit.url ||
+                                    benefitDisplay.carrierSources[selectedGroup.carrier].url
+                                  }
                                   target="_blank"
                                   rel="noreferrer"
                                   className="mt-auto inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-grey02 px-4 text-sm font-bold text-grey06 transition hover:border-purple02 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 sm:w-auto sm:self-start"
                                 >
-                                  공식 혜택 확인
+                                  {benefit.sourceUrl
+                                    ? '통신사 공식 원문 확인'
+                                    : benefit.url
+                                      ? '혜택 제공처 안내 확인'
+                                      : benefitDisplay.carrierSources[selectedGroup.carrier].label}
                                   <TbExternalLink className="h-5 w-5" aria-hidden="true" />
                                 </a>
                               ) : null}

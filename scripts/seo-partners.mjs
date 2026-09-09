@@ -1,6 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+const benefitDisplay = JSON.parse(
+  await readFile(new URL('../src/content/benefit-display.json', import.meta.url), 'utf8')
+);
+
 export const PARTNER_CATALOG_PATH = path.resolve('scripts/data/partner-catalog.json');
 export const PARTNER_DETAILS_PATH = path.resolve('scripts/data/partner-benefit-details.json');
 
@@ -20,9 +24,7 @@ export const getPartnerBenefitPath = (partner) =>
 
 const normalizeApiBaseUrl = (value) => `${value.replace(/\/+$/, '')}/`;
 const getApiBaseUrl = () =>
-  normalizeApiBaseUrl(
-    process.env.VITE_APP_BASE_URL?.trim() || 'https://userapi.itplace.click/'
-  );
+  normalizeApiBaseUrl(process.env.VITE_APP_BASE_URL?.trim() || 'https://userapi.itplace.click/');
 
 const apiHeaders = {
   Accept: 'application/json',
@@ -31,10 +33,10 @@ const apiHeaders = {
 
 const textRichness = (value) => String(value ?? '').trim().length;
 
-const normalizeSeoManual = (value, maxLength = 700) => {
-  const compacted = String(value ?? '').replace(/\s+/g, ' ').trim();
-  return compacted.length > maxLength ? compacted.slice(0, maxLength).trim() + '…' : compacted;
-};
+const normalizeSeoManual = (value) =>
+  String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 const getBenefitRichness = (benefit) =>
   textRichness(benefit.description) +
@@ -72,6 +74,7 @@ const mergeDuplicateBenefit = (current, candidate) => {
     benefitLimit: primary.benefitLimit?.trim() ? primary.benefitLimit : secondary.benefitLimit,
     manual: primary.manual?.trim() ? primary.manual : secondary.manual,
     url: primary.url?.trim() ? primary.url : secondary.url,
+    sourceUrl: primary.sourceUrl?.trim() ? primary.sourceUrl : secondary.sourceUrl,
     tierBenefits: mergeTierBenefits(primary.tierBenefits, secondary.tierBenefits),
   };
 };
@@ -91,6 +94,7 @@ export const normalizePartnerDetail = (detail) => ({
         benefitLimit: benefit.benefitLimit ?? null,
         manual: benefit.manual ? normalizeSeoManual(benefit.manual) : null,
         url: benefit.url ?? null,
+        sourceUrl: benefit.sourceUrl ?? null,
         usageType: benefit.usageType,
         tierBenefits: (benefit.tierBenefits ?? []).map((tierBenefit) => ({
           carrier: tierBenefit.carrier ?? null,
@@ -105,31 +109,48 @@ export const normalizePartnerDetail = (detail) => ({
         current ? mergeDuplicateBenefit(current, sanitizedBenefit) : sanitizedBenefit
       );
     });
-    return { carrier: group.carrier, benefits: [...benefitsById.values()] };
+    return {
+      carrier: group.carrier,
+      benefits: [...benefitsById.values()].map((benefit) => ({
+        ...benefit,
+        benefitLimit: benefitDisplay.limitLabels[benefit.benefitLimit] ?? benefit.benefitLimit,
+      })),
+    };
   }),
 });
 
 export const fetchLivePartnerCatalog = async () => {
-  const url = new URL('api/v1/benefits/partners', getApiBaseUrl());
-  url.searchParams.set('mainCategory', 'BASIC_BENEFIT');
-  url.searchParams.set('page', '0');
-  url.searchParams.set('size', '500');
-  url.searchParams.set('sort', 'POPULARITY');
-
-  const response = await fetch(url, {
-    headers: apiHeaders,
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!response.ok) {
-    throw new Error(`partner catalog API returned ${response.status}`);
+  const fetchPage = async (page) => {
+    const url = new URL('api/v1/benefits/partners', getApiBaseUrl());
+    url.searchParams.set('mainCategory', 'BASIC_BENEFIT');
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('size', '100');
+    url.searchParams.set('sort', 'POPULARITY');
+    const response = await fetch(url, { headers: apiHeaders, signal: AbortSignal.timeout(20_000) });
+    if (!response.ok) throw new Error(`partner catalog API returned ${response.status}`);
+    const { data } = await response.json();
+    if (
+      !Array.isArray(data?.content) ||
+      !Number.isInteger(data.totalPages) ||
+      data.totalPages < 1 ||
+      data.totalPages > 50
+    ) {
+      throw new Error('partner catalog API returned an invalid page');
+    }
+    return data;
+  };
+  const firstPage = await fetchPage(0);
+  const pages = await Promise.all(
+    Array.from({ length: firstPage.totalPages - 1 }, (_, index) => fetchPage(index + 1))
+  );
+  const partners = [...firstPage.content, ...pages.flatMap((page) => page.content)];
+  if (
+    partners.length === 0 ||
+    partners.length !== firstPage.totalElements ||
+    new Set(partners.map((partner) => partner.partnerId)).size !== partners.length
+  ) {
+    throw new Error('partner catalog changed during pagination or returned incomplete data');
   }
-
-  const payload = await response.json();
-  const partners = payload?.data?.content;
-  if (!Array.isArray(partners) || partners.length === 0) {
-    throw new Error('partner catalog API returned an empty payload');
-  }
-
   return partners;
 };
 
