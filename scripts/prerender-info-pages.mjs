@@ -496,10 +496,14 @@ const renderFallback = (page) => {
 };
 
 const injectStructuredData = (html, page) => {
+  if (page.noIndex) return html;
   const canonicalUrl = new URL(page.path, SITE_ORIGIN).href;
   const structuredData = {
     '@context': 'https://schema.org',
-    '@type': page.path.startsWith('/benefits/partners/') ? 'WebPage' : 'CollectionPage',
+    '@type':
+      page.path === '/benefits' || page.path.startsWith('/membership')
+        ? 'CollectionPage'
+        : 'WebPage',
     name: page.heading,
     description: page.description,
     url: canonicalUrl,

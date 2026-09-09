@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { TbGift, TbMapPin, TbStar } from 'react-icons/tb';
 import SafeImage from '../components/SafeImage';
 import {
@@ -11,7 +11,6 @@ import { CARRIER_OPTIONS, CarrierCode, getCarrierLabel } from '../utils/membersh
 import { getPartnerBenefitPath } from '../utils/partnerSeo';
 
 const MobileHomePage = () => {
-  const navigate = useNavigate();
   const [selectedCarrier, setSelectedCarrier] = useState<CarrierCode | 'ALL'>('ALL');
   const [popularPartners, setPopularPartners] = useState<PartnerBenefitItem[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -48,28 +47,26 @@ const MobileHomePage = () => {
       <section className="rounded-[28px] bg-white p-5 shadow-[0_18px_42px_rgba(113,50,245,0.10)]">
         <p className="text-body-4 font-bold text-purple04">IT:PLACE BENEFIT</p>
         <h1 className="mt-2 text-[26px] font-extrabold leading-[1.22] text-grey06">
-          오늘 쓸 수 있는 혜택을 먼저 확인해요
+          내 통신사 멤버십 혜택을 먼저 확인해요
         </h1>
         <p className="mt-3 text-body-3 leading-6 text-grey04">
           통신사별 인기 혜택과 주변 제휴처를 앱처럼 빠르게 탐색할 수 있어요.
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/benefits')}
+          <Link
+            to="/benefits"
             className="rounded-[18px] bg-purple04 px-4 py-3 text-left text-white shadow-[0_10px_22px_rgba(113,50,245,0.24)] active:scale-[0.98]"
           >
             <TbGift className="mb-2 h-6 w-6" aria-hidden="true" />
             <span className="block text-body-3 font-bold">전체 혜택 보기</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/map')}
+          </Link>
+          <Link
+            to="/map"
             className="rounded-[18px] border border-purple02 bg-purple01 px-4 py-3 text-left text-purple05 active:scale-[0.98]"
           >
             <TbMapPin className="mb-2 h-6 w-6" aria-hidden="true" />
             <span className="block text-body-3 font-bold">지도에서 찾기</span>
-          </button>
+          </Link>
         </div>
       </section>
 
@@ -79,13 +76,9 @@ const MobileHomePage = () => {
             <p className="text-body-4 font-bold text-purple04">통신사별 인기 혜택</p>
             <h2 className="mt-1 text-title-5 font-bold text-grey06">많이 찾는 혜택</h2>
           </div>
-          <button
-            type="button"
-            onClick={() => navigate('/benefits')}
-            className="text-body-4 font-bold text-purple04"
-          >
+          <Link to="/benefits" className="text-body-4 font-bold text-purple04">
             전체보기
-          </button>
+          </Link>
         </div>
 
         <div className="scrollbar-hide -mx-5 flex gap-2 overflow-x-auto px-5 pb-1">

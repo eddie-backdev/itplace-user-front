@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { setLoginSuccess } from '../../../store/authSlice';
 import { kakaoOAuthLogin } from '../apis/auth';
 import { showToast } from '../../../utils/toast';
+import PageSeo from '../../../components/PageSeo';
 
 const OAuthRedirectHandler = () => {
   const dispatch = useDispatch();
@@ -68,7 +69,17 @@ const OAuthRedirectHandler = () => {
     handleKakaoCallback();
   }, [dispatch, navigate, searchParams]);
 
-  return <div>카카오 로그인 처리 중입니다...</div>;
+  return (
+    <>
+      <PageSeo
+        title="카카오 로그인 처리 중 | 잇플레이스"
+        description="잇플레이스 카카오 로그인 처리 페이지입니다."
+        path="/oauth/callback/kakao"
+        noIndex
+      />
+      <div>카카오 로그인 처리 중입니다...</div>
+    </>
+  );
 };
 
 export default OAuthRedirectHandler;

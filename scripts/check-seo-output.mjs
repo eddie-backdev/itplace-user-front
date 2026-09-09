@@ -17,7 +17,13 @@ const readDist = (relativePath) => readFile(path.join(DIST_DIR, relativePath), '
 const getTitle = (html) => html.match(/<title>(.*?)<\/title>/s)?.[1] ?? '';
 
 const homeHtml = await readDist('index.html');
-check(getTitle(homeHtml) === 'ITPLACE', 'home browser title is not the ITPLACE brand name');
+const homeTitle = '통신 3사 멤버십 혜택 비교·검색 | 잇플레이스';
+check(getTitle(homeHtml) === homeTitle, 'home title does not describe the membership service');
+for (const tag of ['og:title', 'twitter:title']) {
+  check(homeHtml.includes(`${tag}" content="${homeTitle}"`), `${tag} differs from home title`);
+}
+check(!homeHtml.includes('맞춤 추천과 이벤트'), 'home metadata advertises unavailable features');
+check(!homeHtml.includes('user-scalable=no'), 'viewport prevents mobile zoom');
 check(homeHtml.includes('"name": "잇플레이스"'), 'home WebSite/Organization name is missing');
 check(
   homeHtml.includes('rel="canonical" href="https://itplace.click/"'),
@@ -96,6 +102,63 @@ check(
   robots.includes('Sitemap: https://itplace.click/sitemap.xml'),
   'robots.txt sitemap declaration is missing'
 );
+const privateRoutes = ['login', 'mypage/info', 'mypage/favorites', 'oauth/callback/kakao'];
+const disallowedPaths = [...robots.matchAll(/^Disallow:\s*(\S+)/gm)].map((match) => match[1]);
+for (const route of privateRoutes) {
+  const html = await readDist(`${route}/index.html`);
+  check(
+    html.includes('content="noindex,follow"'),
+    `${route}: noindex is missing from initial HTML`
+  );
+  check(
+    !disallowedPaths.some((prefix) => `/${route}`.startsWith(prefix)),
+    `${route}: robots.txt prevents crawlers from reading noindex`
+  );
+  check(
+    !html.includes('data-prerender-seo="true"'),
+    `${route}: private page has public page schema`
+  );
+}
+
+const titlesByUrl = new Map();
+for (const url of sitemapUrls) {
+  const pathname = decodeURIComponent(new URL(url).pathname);
+  const html = await readDist(pathname === '/' ? 'index.html' : `${pathname.slice(1)}/index.html`);
+  const title = getTitle(html);
+  check(Boolean(title), `${url}: title is missing`);
+  check(!titlesByUrl.has(title), `${url}: duplicate title with ${titlesByUrl.get(title)}`);
+  titlesByUrl.set(title, url);
+  const canonicals = [...html.matchAll(/<link\s+rel="canonical"\s+href="([^"]*)"/g)];
+  check(
+    canonicals.length === 1 && canonicals[0][1] === url,
+    `${url}: canonical differs from sitemap`
+  );
+  check(!/name="robots"[^>]*noindex/.test(html), `${url}: noindex page is in sitemap`);
+  check([...html.matchAll(/<h1[ >]/g)].length === 1, `${url}: expected one main heading`);
+  check(!html.includes('dapi.kakao.com/v2/maps/sdk.js'), `${url}: map SDK blocks initial HTML`);
+  const schemas = [
+    ...html.matchAll(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g),
+  ].map((match) => JSON.parse(match[1]));
+  const pageSchema = schemas.find((schema) =>
+    ['WebPage', 'CollectionPage'].includes(schema['@type'])
+  );
+  if (pathname !== '/') {
+    check(pageSchema?.url === url, `${url}: page schema URL differs from canonical`);
+    const expectedType =
+      pathname === '/benefits' || pathname.startsWith('/membership') ? 'CollectionPage' : 'WebPage';
+    check(
+      pageSchema?.['@type'] === expectedType,
+      `${url}: page schema type does not match content`
+    );
+  }
+  for (const entry of pageSchema?.mainEntity?.itemListElement ?? []) {
+    const anchor = new URL(entry.item.url).hash.slice(1);
+    check(
+      Boolean(anchor) && html.includes(`id="${anchor}"`),
+      `${url}: schema benefit link has no visible target`
+    );
+  }
+}
 
 const redirects = await readDist('_redirects');
 check(
@@ -191,6 +254,6 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    `SEO output verified: ${sitemapUrls.length} sitemap URLs, ${sitemapUrls.filter((url) => url.includes('/benefits/partners/')).length} partners with actual benefit content, canonical redirects, unique membership titles`
+    `SEO output verified: ${sitemapUrls.length} canonical URLs with unique titles and valid page schema, ${sitemapUrls.filter((url) => url.includes('/benefits/partners/')).length} partners with actual benefit content, crawlable noindex pages, canonical redirects`
   );
 }

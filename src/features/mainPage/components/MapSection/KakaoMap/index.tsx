@@ -812,9 +812,9 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       }, 100);
     };
 
-    // 카카오맵 API가 이미 로드되어 있으면 바로 초기화
+    // 비동기로 삽입한 SDK의 지도 모듈까지 로드된 뒤 초기화한다.
     if (window.kakao && window.kakao.maps) {
-      initializeMap();
+      window.kakao.maps.load(initializeMap);
     } else {
       // 카카오맵 API 로드 대기
       kakaoMapsCheckInterval = setInterval(() => {
@@ -823,7 +823,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
             clearInterval(kakaoMapsCheckInterval);
             kakaoMapsCheckInterval = null;
           }
-          initializeMap();
+          window.kakao.maps.load(initializeMap);
         }
       }, 100);
     }

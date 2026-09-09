@@ -5,11 +5,11 @@ const DEFAULT_SOCIAL_IMAGE = `${SITE_ORIGIN}/images/thumbnail.png`;
 
 type PageSeoProps = {
   title: string;
-  browserTitle?: string;
   description: string;
   path?: string;
   noIndex?: boolean;
   image?: string;
+  pageType?: 'WebPage' | 'CollectionPage';
   structuredData?: Record<string, unknown> | Array<Record<string, unknown>>;
 };
 
@@ -44,11 +44,11 @@ const setCanonical = (href: string) => {
 
 const PageSeo = ({
   title,
-  browserTitle,
   description,
   path = '/',
   noIndex = false,
   image,
+  pageType = 'WebPage',
   structuredData,
 }: PageSeoProps) => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
@@ -58,7 +58,7 @@ const PageSeo = ({
     : JSON.stringify(
         structuredData ?? {
           '@context': 'https://schema.org',
-          '@type': 'WebPage',
+          '@type': pageType,
           name: title,
           description,
           url: canonicalUrl,
@@ -67,7 +67,7 @@ const PageSeo = ({
       );
 
   useEffect(() => {
-    document.title = browserTitle ?? title;
+    document.title = title;
     setCanonical(canonicalUrl);
     setMetaTag('meta[name="description"]', { content: description });
     setMetaTag('meta[property="og:title"]', { property: 'og:title', content: title });
@@ -105,7 +105,7 @@ const PageSeo = ({
       const robots = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
       robots?.remove();
     }
-  }, [browserTitle, canonicalUrl, description, image, noIndex, structuredDataJson, title]);
+  }, [canonicalUrl, description, image, noIndex, structuredDataJson, title]);
 
   return null;
 };

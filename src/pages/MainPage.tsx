@@ -8,6 +8,13 @@ const MainPage = () => {
 
   return (
     <>
+      <script
+        async
+        src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${import.meta.env.VITE_KAKAO_JDK_API_KEY}&autoload=false`}
+      />
+      <h1 className="sr-only">
+        {isMapRoute ? '통신사 멤버십 혜택 지도' : '통신 3사 멤버십 혜택 비교·검색'}
+      </h1>
       {isMapRoute ? (
         <PageSeo
           title="통신사 멤버십 혜택 지도 | 잇플레이스"

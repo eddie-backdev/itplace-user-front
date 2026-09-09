@@ -178,7 +178,7 @@ const AllBenefitsLayout: React.FC = () => {
             className="md:sticky md:top-0 md:h-full md:overflow-y-auto md:border-r md:border-grey02 md:bg-white md:px-5 md:py-8"
             aria-label="혜택 탐색 패널"
           >
-            <header className="mb-5 hidden md:block">
+            <header className="sr-only md:not-sr-only md:mb-5">
               <p className="text-body-3 font-bold text-purple04">혜택 탐색</p>
               <h1 className="mt-2 text-title-3 font-bold text-grey07">전체 혜택</h1>
               <p className="mt-2 break-keep text-body-3 leading-6 text-grey05">

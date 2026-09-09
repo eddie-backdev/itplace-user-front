@@ -10,8 +10,7 @@ const HomeRoute = () => {
   return (
     <>
       <PageSeo
-        title="잇플레이스 | 통신 3사 멤버십 혜택 검색"
-        browserTitle="ITPLACE"
+        title="통신 3사 멤버십 혜택 비교·검색 | 잇플레이스"
         description="잇플레이스(ITPLACE, 잇플)에서 SKT, KT, LG U+ 통신 3사 멤버십 제휴처와 혜택을 지도와 목록으로 검색하고 비교하세요."
         path="/"
       />
