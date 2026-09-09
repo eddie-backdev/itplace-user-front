@@ -468,7 +468,7 @@ const AuthLayout = () => {
       </div>
 
       <div className="max-md:block hidden w-full fixed max-md:fixed max-md:inset-0 max-sm:block max-sm:fixed max-sm:inset-0">
-        <div className="absolute top-0 left-0 w-full h-1/2">
+        <div className="absolute left-0 top-0 h-[calc(60dvh-13rem+24px)] w-full">
           <AuthSideCard />
         </div>
 
