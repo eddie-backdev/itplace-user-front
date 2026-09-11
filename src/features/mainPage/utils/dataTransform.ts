@@ -55,36 +55,38 @@ const calculateDistanceKm = (
 };
 
 /**
- * Compact viewport 응답의 지점과 제휴처를 결합한다.
- * 사용자 위치에 따른 거리는 브라우저에서 계산해 서버 응답을 캐시 가능한 형태로 유지한다.
+ * Compact 응답을 기존 preview 형태로 확장하며 서버의 지점 순서를 보존한다.
+ * 거리 없는 viewport 응답만 사용자 위치로 거리를 계산한다.
  */
+export const expandMapStorePreviewBatch = (
+  batch: MapStorePreviewBatchData,
+  userLat: number,
+  userLng: number
+): MapStorePreviewData[] => {
+  const partnerById = new Map(batch.partners.map((partner) => [partner.partnerId, partner]));
+
+  return batch.stores.map((store) => {
+    const partner = partnerById.get(store.partnerId);
+    return {
+      ...store,
+      partnerName: partner?.partnerName ?? store.storeName,
+      category: partner?.category ?? '',
+      image: partner?.image,
+      roadName: store.roadName ?? null,
+      tierBenefit: store.tierBenefit ?? partner?.tierBenefit ?? [],
+      distance:
+        store.distance ?? calculateDistanceKm(userLat, userLng, store.latitude, store.longitude),
+    };
+  });
+};
+
+/** Viewport의 기존 동작인 사용자 거리순 정렬은 이 경로에서만 적용한다. */
 export const transformMapStorePreviewBatchToPlatforms = (
   batch: MapStorePreviewBatchData,
   userLat: number,
   userLng: number
 ): Platform[] => {
-  const partnerById = new Map(batch.partners.map((partner) => [partner.partnerId, partner]));
-
-  return batch.stores
-    .map((store) => {
-      const partner = partnerById.get(store.partnerId);
-      return convertStorePreviewToPlatform({
-        storeId: store.storeId,
-        partnerId: store.partnerId,
-        storeName: store.storeName,
-        partnerName: partner?.partnerName ?? store.storeName,
-        category: partner?.category ?? '',
-        image: partner?.image,
-        latitude: store.latitude,
-        longitude: store.longitude,
-        address: store.address,
-        roadName: null,
-        roadAddress: store.roadAddress,
-        postCode: store.postCode,
-        hasCoupon: store.hasCoupon,
-        tierBenefit: partner?.tierBenefit ?? [],
-        distance: calculateDistanceKm(userLat, userLng, store.latitude, store.longitude),
-      });
-    })
+  return expandMapStorePreviewBatch(batch, userLat, userLng)
+    .map(convertStorePreviewToPlatform)
     .sort((first, second) => first.distance - second.distance);
 };

@@ -1,0 +1,143 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import test from 'node:test';
+import { runInThisContext } from 'node:vm';
+import ts from 'typescript';
+import { AxiosError } from 'axios';
+
+// Run the actual TypeScript modules with only the HTTP transport replaced.
+const require = createRequire(import.meta.url);
+const loadModule = (path, dependencies = {}) => {
+  const filename = new URL(`../${path}`, import.meta.url);
+  const { outputText } = ts.transpileModule(readFileSync(filename, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true },
+  });
+  const exports = {};
+  runInThisContext(`(function(require, exports) { ${outputText}\n})`, {
+    filename: filename.pathname,
+  })((name) => dependencies[name] ?? require(name), exports);
+  return exports;
+};
+const membership = loadModule('src/utils/membership.ts', {
+  '../content/benefit-display.json': require('../src/content/benefit-display.json'),
+});
+const storeUtils = loadModule('src/features/mainPage/utils/storeUtils.ts', {
+  '../../../utils/membership': membership,
+});
+const transforms = loadModule('src/features/mainPage/utils/dataTransform.ts', {
+  './storeUtils': storeUtils,
+});
+let request;
+const api = loadModule('src/features/mainPage/api/storeApi.ts', {
+  '../../../apis/axiosInstance': { get: (...args) => request(...args) },
+  '../utils/dataTransform': transforms,
+});
+
+const benefits = [{ grade: 'VIP', context: '10% 할인', carrier: 'KT' }];
+const store = (storeId, extra = {}) => ({
+  storeId,
+  partnerId: 9,
+  storeName: `매장 ${storeId}`,
+  latitude: 37.5,
+  longitude: 127.1,
+  hasCoupon: false,
+  ...extra,
+});
+const batch = {
+  stores: [
+    store(30, { distance: 8, roadName: '테헤란로', tierBenefit: [] }),
+    store(10, { distance: 0, address: '주소', postCode: '12345' }),
+    store(20, { distance: 1, tierBenefit: [{ grade: 'VIP', context: '매장 혜택' }] }),
+  ],
+  partners: [
+    { partnerId: 9, partnerName: '구 이름', category: '카페', tierBenefit: [] },
+    { partnerId: 9, partnerName: '브랜드', category: '카페', tierBenefit: benefits },
+  ],
+};
+const envelope = { code: 'SUCCESS', status: 'SUCCESS', message: '성공', data: batch };
+
+test('compact expansion preserves server order, zero distance and store benefit overrides', () => {
+  const original = JSON.stringify(batch);
+  const expanded = transforms.expandMapStorePreviewBatch(batch, 0, 0);
+  assert.deepEqual(expanded.map((item) => item.storeId), [30, 10, 20]);
+  assert.deepEqual(expanded.map((item) => item.distance), [8, 0, 1]);
+  assert.equal(expanded[0].roadName, '테헤란로');
+  assert.equal(expanded[1].postCode, '12345');
+  assert.equal(expanded[1].partnerName, '브랜드');
+  assert.deepEqual(expanded[0].tierBenefit, []);
+  assert.equal(expanded[1].tierBenefit, benefits);
+  assert.equal(expanded[2].tierBenefit[0].context, '매장 혜택');
+  const platforms = transforms.transformMapStorePreviewsToPlatforms(expanded);
+  assert.deepEqual(platforms.map((item) => item.id), ['30', '10', '20']);
+  assert.equal(platforms[0].roadName, '테헤란로');
+  assert.equal(platforms[1].distance, 0);
+  assert.deepEqual(platforms[0].benefitDetails, []);
+  assert.equal(JSON.stringify(batch), original);
+  assert.deepEqual(transforms.expandMapStorePreviewBatch({ stores: [], partners: [] }, 0, 0), []);
+
+  const viewport = transforms.transformMapStorePreviewBatchToPlatforms({
+    stores: [store(1), store(2, { latitude: 37.6 }), store(3, { partnerId: 99 })],
+    partners: batch.partners,
+  }, 37.6, 127.1);
+  assert.deepEqual(viewport.map((item) => item.storeId), [2, 1, 3]);
+  assert.equal(viewport[0].distance, 0);
+  assert.ok(viewport[1].distance > 0);
+  assert.equal(viewport[2].partnerName, '매장 3');
+  assert.deepEqual(viewport[2].benefitDetails, []);
+});
+
+const paths = [
+  ['getStorePreviewList', '/api/v1/maps/nearby/previews', { radiusMeters: 1000 }],
+  ['getStorePreviewListByCategory', '/api/v1/maps/nearby/category/previews', { radiusMeters: 1000, category: '카페' }],
+  ['searchStorePreviews', '/api/v1/maps/nearby/search/previews', { keyword: '브랜드', category: '카페' }],
+];
+
+test('all web preview paths expand compact responses and propagate query parameters and AbortSignal', async () => {
+  const signal = new AbortController().signal;
+  for (const [method, path, extra] of paths) {
+    const params = { lat: 37.5, lng: 127.1, userLat: 0, userLng: 0, ...extra };
+    let calls = 0;
+    request = async (url, config) => {
+      calls++;
+      assert.equal(url, `${path}/compact`);
+      assert.deepEqual(config.params, params);
+      assert.equal(config.signal, signal);
+      return { data: envelope };
+    };
+    const response = await api[method](params, signal);
+    assert.equal(calls, 1);
+    assert.equal(response.code, envelope.code);
+    assert.deepEqual(response.data.map((item) => item.storeId), [30, 10, 20]);
+    assert.equal(response.data[1].distance, 0);
+  }
+});
+
+test('only unavailable compact routes fall back; failures and cancellation do not retry', async () => {
+  const legacy = { ...envelope, data: [] };
+  for (const [method, path, extra] of paths) {
+    for (const status of [404, 405, 401, 500, undefined]) {
+      const controller = new AbortController();
+      const params = { lat: 37.5, lng: 127.1, ...extra };
+      const calls = [];
+      const error = new AxiosError('request failed', undefined, undefined, undefined, { status });
+      request = async (url, config) => {
+        calls.push(url);
+        assert.equal(config.signal, controller.signal);
+        if (calls.length === 1) throw error;
+        return { data: legacy };
+      };
+      if (status === 404 || status === 405) {
+        assert.equal(await api[method](params, controller.signal), legacy);
+        assert.deepEqual(calls, [`${path}/compact`, path]);
+      } else {
+        await assert.rejects(api[method](params, controller.signal), (actual) => actual === error);
+        assert.equal(calls.length, 1);
+      }
+      calls.length = 0;
+      controller.abort();
+      await assert.rejects(api[method](params, controller.signal), (actual) => actual === error);
+      assert.equal(calls.length, 1);
+    }
+  }
+});

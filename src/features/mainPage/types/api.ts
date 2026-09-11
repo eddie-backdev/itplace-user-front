@@ -33,9 +33,12 @@ export interface MapStorePreviewStoreData {
   latitude: number;
   longitude: number;
   address?: string | null;
+  roadName?: string | null;
   roadAddress?: string | null;
   postCode?: string | null;
   hasCoupon: boolean;
+  distance?: number;
+  tierBenefit?: TierBenefit[];
 }
 
 export interface MapStorePreviewPartnerData {
