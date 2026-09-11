@@ -259,13 +259,17 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
             finalUserLat,
             finalUserLng
           ),
-          coverage: {
-            bounds: queryBounds,
-            categoryKey: previewCategoryKey(category),
-            userLat: finalUserLat,
-            userLng: finalUserLng,
-            expiresAt: Date.now() + PREVIEW_COVERAGE_TTL_MS,
-          },
+          // limit에 도달하면 전체 영역을 받았는지 알 수 없으므로 재사용하지 않는다.
+          coverage:
+            storeResponse.data.stores.length < limit
+              ? {
+                  bounds: queryBounds,
+                  categoryKey: previewCategoryKey(category),
+                  userLat: finalUserLat,
+                  userLng: finalUserLng,
+                  expiresAt: Date.now() + PREVIEW_COVERAGE_TTL_MS,
+                }
+              : null,
         } satisfies InViewStoreResult;
       } catch (error) {
         if (signal?.aborted) {

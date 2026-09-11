@@ -6,7 +6,7 @@ import { runInThisContext } from 'node:vm';
 import ts from 'typescript';
 import { AxiosError } from 'axios';
 
-// Run the actual TypeScript modules with only the HTTP transport replaced.
+// Run the actual TypeScript modules with explicit dependency substitutes, without a new framework.
 const require = createRequire(import.meta.url);
 const loadModule = (path, dependencies = {}) => {
   const filename = new URL(`../${path}`, import.meta.url);
@@ -139,5 +139,47 @@ test('only unavailable compact routes fall back; failures and cancellation do no
       await assert.rejects(api[method](params, controller.signal), (actual) => actual === error);
       assert.equal(calls.length, 1);
     }
+  }
+});
+
+test('viewport coverage reuses batches below the limit but refetches when the limit is reached', async () => {
+  for (const [count, expectedCalls] of [[0, 1], [299, 1], [300, 2]]) {
+    const requests = [];
+    const { useStoreData } = loadModule('src/features/mainPage/hooks/useStoreData.ts', {
+      // Keep callbacks and refs alive for consecutive viewport events; skip mount effects.
+      react: {
+        useState: (value) => [value, () => {}],
+        useEffect: () => {},
+        useCallback: (callback) => callback,
+        useRef: (current) => ({ current }),
+      },
+      '../api/storeApi': {
+        getAddressFromCoordinates: async () => '검증 위치',
+        getCompactStorePreviewsInView: async (params) => {
+          requests.push(params);
+          return { data: { stores: Array.from({ length: count }, (_, id) => store(id)), partners: batch.partners } };
+        },
+      },
+      '../utils/dataTransform': transforms,
+      '../utils/mapUtils': loadModule('src/features/mainPage/utils/mapUtils.ts'),
+      '../constants': { DEFAULT_RADIUS: 1000 },
+      './useApiCall': {
+        useApiCall: () => ({
+          data: [],
+          execute: async (task, onSuccess) => {
+            await task();
+            onSuccess?.();
+            return true;
+          },
+        }),
+      },
+    });
+    const hook = useStoreData();
+    const outer = { minLat: 1, minLng: 1, maxLat: 9, maxLng: 9 };
+    const inner = { minLat: 2, minLng: 2, maxLat: 8, maxLng: 8 };
+    assert.equal(await hook.searchInMapBounds(outer, 5, 5, 4), true);
+    assert.equal(await hook.searchInMapBounds(inner, 5, 5, 3), true);
+    assert.equal(requests.length, expectedCalls, `response count ${count}`);
+    assert.ok(requests.every((params) => params.limit === 300));
   }
 });
