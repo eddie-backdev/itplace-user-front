@@ -75,6 +75,8 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   }, [displayMode]);
 
   const summary = useMemo(() => {
+    if (displayMode !== 'summary') return null;
+
     const categoryMap = new Map<string, Platform[]>();
     const partnerMap = new Map<string, Platform[]>();
     const carrierMap = new Map<
@@ -196,7 +198,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
       totalBenefits: benefitMap.size,
       hasBenefitDetails: platforms.some((platform) => (platform.benefitDetails?.length ?? 0) > 0),
     };
-  }, [platforms]);
+  }, [displayMode, platforms]);
 
   const renderHeader = (title: string, subtitle?: string, onBack?: () => void) => (
     <div className="mb-3 max-md:mb-2 max-md:px-4 max-sm:px-3">
@@ -368,7 +370,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
     return renderStoreList(platforms, currentLocation, undefined, backButton.onBack);
   }
 
-  if (displayMode !== 'summary') {
+  if (!summary) {
     return renderStoreList(platforms, `내 주변 혜택 ${platforms.length}`, currentLocation);
   }
 

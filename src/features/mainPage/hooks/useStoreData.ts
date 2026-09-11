@@ -38,6 +38,7 @@ type InViewStoreResult = {
 const SERVER_CLUSTER_MIN_LEVEL = 5;
 const DETAILED_STORE_PREVIEW_LIMIT = 300;
 const PREVIEW_COVERAGE_TTL_MS = 30_000;
+const ADDRESS_CACHE_TTL_MS = 30_000;
 
 const shouldUseServerClusters = (mapLevel?: number) =>
   Boolean(mapLevel && mapLevel >= SERVER_CLUSTER_MIN_LEVEL);
@@ -85,8 +86,18 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   const [isMapClusterSnapshotReady, setIsMapClusterSnapshotReady] = useState(false);
   const viewportRequestSeqRef = useRef(0);
   const viewportRequestControllerRef = useRef<AbortController | null>(null);
-  const addressRequestSeqRef = useRef(0);
-  const addressRequestControllerRef = useRef<AbortController | null>(null);
+  const addressRequestRef = useRef<{
+    lat: number;
+    lng: number;
+    controller: AbortController;
+    promise: Promise<void>;
+  } | null>(null);
+  const lastAddressRef = useRef<{
+    lat: number;
+    lng: number;
+    address: string;
+    expiresAt: number;
+  } | null>(null);
   const platformsRef = useRef<Platform[]>([]);
   platformsRef.current = platforms || [];
 
@@ -142,32 +153,57 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
     []
   );
 
-  const updateAddressLatest = useCallback(async (lat: number, lng: number) => {
-    addressRequestControllerRef.current?.abort();
+  const updateAddressLatest = useCallback((lat: number, lng: number): Promise<void> => {
+    const pending = addressRequestRef.current;
+    if (
+      pending &&
+      !pending.controller.signal.aborted &&
+      pending.lat === lat &&
+      pending.lng === lng
+    ) {
+      return pending.promise;
+    }
+    pending?.controller.abort();
+    addressRequestRef.current = null;
+
+    // 최근 성공 결과 한 건만 재사용한다. 좌표별 이력을 누적하지 않는다.
+    const cached = lastAddressRef.current;
+    if (cached && cached.lat === lat && cached.lng === lng && cached.expiresAt > Date.now()) {
+      setCurrentLocation(cached.address);
+      return Promise.resolve();
+    }
 
     const controller = new AbortController();
-    const requestSeq = addressRequestSeqRef.current + 1;
-    addressRequestControllerRef.current = controller;
-    addressRequestSeqRef.current = requestSeq;
-
-    try {
-      const address = await getAddressFromCoordinates(lat, lng, controller.signal);
-      if (!controller.signal.aborted && addressRequestSeqRef.current === requestSeq) {
+    const promise = getAddressFromCoordinates(lat, lng, controller.signal)
+      .then((address) => {
+        if (controller.signal.aborted) return;
+        // API의 실패/빈 주소 대체 문구는 캐시하지 않아 다음 이동에서 재시도한다.
+        if (address !== '현재 위치') {
+          lastAddressRef.current = {
+            lat,
+            lng,
+            address,
+            expiresAt: Date.now() + ADDRESS_CACHE_TTL_MS,
+          };
+        }
         setCurrentLocation(address);
-      }
-    } catch {
-      // 취소되거나 주소 변환에 실패해도 지도/마커 조회에는 영향을 주지 않는다.
-    } finally {
-      if (addressRequestSeqRef.current === requestSeq) {
-        addressRequestControllerRef.current = null;
-      }
-    }
+      })
+      .catch(() => {
+        // 취소되거나 주소 변환에 실패해도 지도/마커 조회에는 영향을 주지 않는다.
+      })
+      .finally(() => {
+        if (addressRequestRef.current?.controller === controller) {
+          addressRequestRef.current = null;
+        }
+      });
+    addressRequestRef.current = { lat, lng, controller, promise };
+    return promise;
   }, []);
 
   useEffect(() => {
     return () => {
       viewportRequestControllerRef.current?.abort();
-      addressRequestControllerRef.current?.abort();
+      addressRequestRef.current?.controller.abort();
     };
   }, []);
 

@@ -183,3 +183,104 @@ test('viewport coverage reuses batches below the limit but refetches when the li
     assert.ok(requests.every((params) => params.limit === 300));
   }
 });
+
+test('address requests share pending work, cache one success briefly and reject stale results', async (t) => {
+  let now = 100_000;
+  t.mock.method(Date, 'now', () => now);
+  const requests = [];
+  const addresses = [];
+  const cleanups = [];
+  const { useStoreData } = loadModule('src/features/mainPage/hooks/useStoreData.ts', {
+    react: {
+      useState: (value) => [value, (next) => {
+        if (typeof next === 'string') addresses.push(next);
+      }],
+      useEffect: (effect, dependencies) => {
+        // Register the hook's unmount cleanup without starting geolocation/mount requests.
+        if (dependencies.length === 0) cleanups.push(effect());
+      },
+      useCallback: (callback) => callback,
+      useRef: (current) => ({ current }),
+    },
+    '../api/storeApi': {
+      getAddressFromCoordinates: (lat, lng, signal) => new Promise((resolve, reject) => {
+        requests.push({ lat, lng, signal, resolve, reject });
+      }),
+    },
+    '../utils/dataTransform': transforms,
+    '../utils/mapUtils': loadModule('src/features/mainPage/utils/mapUtils.ts'),
+    '../constants': { DEFAULT_RADIUS: 1000 },
+    './useApiCall': { useApiCall: () => ({ data: [], execute: async () => true }) },
+  });
+  const hook = useStoreData();
+  const locate = (latitude) => hook.updateLocationFromMap(latitude, 127.1);
+  const latestAddress = () => addresses.at(-1);
+
+  const first = locate(37.5);
+  assert.equal(locate(37.5), first, 'same coordinates share the pending Promise');
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].signal.aborted, false);
+  requests[0].resolve('주소 A');
+  await first;
+  assert.equal(latestAddress(), '주소 A');
+  now += 29_999;
+  await locate(37.5);
+  assert.equal(requests.length, 1, 'recent successful address is reused');
+  now += 1;
+  const expired = locate(37.5);
+  assert.equal(requests.length, 2, '30-second expiry starts a new request');
+  requests[1].resolve('갱신한 주소 A');
+  await expired;
+
+  const pendingB = locate(37.6);
+  await locate(37.5);
+  assert.equal(requests.length, 3, 'returning to cached A does not issue another request');
+  assert.equal(requests[2].signal.aborted, true, 'A cache hit cancels pending B');
+  requests[2].resolve('늦게 도착한 주소 B');
+  await pendingB;
+  assert.equal(latestAddress(), '갱신한 주소 A');
+  await locate(37.5);
+  assert.equal(requests.length, 3, 'late B cannot replace the cached A');
+
+  const pendingC = locate(37.7);
+  const pendingD = locate(37.8);
+  assert.equal(requests[3].signal.aborted, true, 'different coordinates cancel the old request');
+  requests[3].resolve('늦게 도착한 주소 C');
+  await pendingC;
+  assert.equal(latestAddress(), '갱신한 주소 A');
+  assert.equal(locate(37.8), pendingD, 'old completion cannot clear the newer pending request');
+  assert.equal(requests.length, 5);
+  requests[4].resolve('주소 D');
+  await pendingD;
+  assert.equal(latestAddress(), '주소 D');
+  await locate(37.8);
+  assert.equal(requests.length, 5);
+  const formerA = locate(37.5);
+  assert.equal(requests.length, 6, 'only the latest successful coordinate is cached');
+  requests[5].resolve('다시 조회한 주소 A');
+  await formerA;
+
+  const fallback = locate(37.9);
+  requests[6].resolve('현재 위치');
+  await fallback;
+  const retryFallback = locate(37.9);
+  assert.equal(requests.length, 8, 'fallback text must not be cached');
+  requests[7].resolve('주소 E');
+  await retryFallback;
+
+  const failure = locate(38.0);
+  requests[8].reject(new Error('address unavailable'));
+  await failure;
+  const retryFailure = locate(38.0);
+  assert.equal(requests.length, 10, 'failed work is removed so the next call can retry');
+  requests[9].resolve('주소 F');
+  await retryFailure;
+
+  const pendingUnmount = locate(38.1);
+  assert.ok(cleanups.some((cleanup) => typeof cleanup === 'function'));
+  cleanups.forEach((cleanup) => cleanup?.());
+  assert.equal(requests[10].signal.aborted, true, 'unmount cancels pending address work');
+  requests[10].resolve('언마운트 후 도착한 주소 G');
+  await pendingUnmount;
+  assert.equal(latestAddress(), '주소 F');
+});
