@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { debounce } from 'lodash';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../store';
 import SearchBar from '../../components/SearchBar';
 import Pagination from '../../components/Pagination';
 import NoResult from '../../components/NoResult';
@@ -18,7 +20,9 @@ import {
   CARRIER_OPTIONS,
   CarrierCode,
   getCarrierLabel,
+  getMembershipGradeLabel,
   isCarrierCode,
+  isValidCarrierGradePair,
 } from '../../utils/membership';
 import { CATEGORIES } from '../mainPage/constants';
 import { getPartnerBenefitPath } from '../../utils/partnerSeo';
@@ -26,7 +30,28 @@ import { getPartnerBenefitPath } from '../../utils/partnerSeo';
 const ITEMS_PER_PAGE = 15;
 
 const AllBenefitsLayout: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
+  const profileCarrier = isLoggedIn && isCarrierCode(user?.carrier) ? user.carrier : null;
+  const profileGrade = user?.membershipGradeCode || user?.membershipGrade || '';
+  const hasMembershipProfile = Boolean(
+    profileCarrier && profileGrade && isValidCarrierGradePair(profileCarrier, profileGrade)
+  );
+  const membershipOnly = searchParams.get('membership') === 'mine' && hasMembershipProfile;
+  const membershipCarrier = membershipOnly ? profileCarrier : null;
+  const membershipGrade = membershipOnly ? profileGrade : undefined;
+  const setMembershipOnly = (enabled: boolean) => {
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        if (enabled) next.set('membership', 'mine');
+        else next.delete('membership');
+        return next;
+      },
+      { replace: true }
+    );
+    setCurrentPage(1);
+  };
   const initialSearchTerm = searchParams.get('q')?.trim() ?? '';
   const initialCarrier = searchParams.get('carrier');
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
@@ -50,16 +75,25 @@ const AllBenefitsLayout: React.FC = () => {
       const requestId = ++latestRequestIdRef.current;
       setIsLoading(true);
       setLoadError(false);
+      if (!append) {
+        setPartners([]);
+        setTotalElements(0);
+        setHasNext(false);
+      }
 
       try {
         const params: PartnerBenefitApiParams = {
-          mainCategory: 'BASIC_BENEFIT',
+          mainCategory: membershipCarrier ? undefined : 'BASIC_BENEFIT',
           page: page,
           size: ITEMS_PER_PAGE,
         };
 
         if (keyword) params.keyword = keyword;
         if (selectedCarriers.length > 0) params.carriers = selectedCarriers;
+        if (membershipCarrier && membershipGrade) {
+          params.carriers = [membershipCarrier];
+          params.grade = membershipGrade;
+        }
         if (category && category !== '전체') {
           params.category = category;
         }
@@ -84,7 +118,7 @@ const AllBenefitsLayout: React.FC = () => {
         }
       }
     },
-    [selectedCarriers]
+    [selectedCarriers, membershipCarrier, membershipGrade]
   );
 
   // 초기 데이터 로드
@@ -124,6 +158,11 @@ const AllBenefitsLayout: React.FC = () => {
   };
 
   const handleCarrierChange = (carrier: CarrierCode | 'ALL') => {
+    setMembershipOnly(false);
+    if (membershipOnly) {
+      setSelectedCarriers(carrier === 'ALL' ? [] : [carrier]);
+      return;
+    }
     if (carrier === 'ALL') {
       setSelectedCarriers([]);
       setCurrentPage(1);
@@ -154,9 +193,11 @@ const AllBenefitsLayout: React.FC = () => {
     ...CARRIER_OPTIONS,
   ];
 
-  const activeFilterCount = (selectedCategory !== '전체' ? 1 : 0) + selectedCarriers.length;
+  const activeFilterCount =
+    (selectedCategory !== '전체' ? 1 : 0) + (membershipOnly ? 1 : selectedCarriers.length);
 
   const resetFilters = () => {
+    setMembershipOnly(false);
     setSelectedCategory('전체');
     setSelectedCarriers([]);
     setSearchTerm('');
@@ -199,6 +240,44 @@ const AllBenefitsLayout: React.FC = () => {
                 backgroundColor="bg-grey01/70"
               />
 
+              <div className="mt-4 border-t border-warmBorder pt-4">
+                <label className="flex min-h-11 items-center justify-between gap-3 text-body-3 font-bold text-ink">
+                  내 멤버십 혜택만
+                  <input
+                    type="checkbox"
+                    checked={membershipOnly}
+                    disabled={!hasMembershipProfile}
+                    onChange={(event) => setMembershipOnly(event.target.checked)}
+                    aria-describedby="membership-filter-description"
+                    className="h-5 w-5 shrink-0 cursor-pointer accent-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:cursor-not-allowed"
+                  />
+                </label>
+                <p
+                  id="membership-filter-description"
+                  className="mt-1 text-body-4 leading-6 text-warmMuted"
+                >
+                  {hasMembershipProfile
+                    ? `${getCarrierLabel(profileCarrier)} · ${getMembershipGradeLabel(profileGrade)} 기준으로 찾아보세요.`
+                    : isLoggedIn
+                      ? '통신사와 멤버십 등급을 설정해 주세요.'
+                      : '로그인하면 내 통신사와 등급으로 볼 수 있어요.'}
+                </p>
+                {!hasMembershipProfile && (
+                  <Link
+                    to={isLoggedIn ? '/mypage/info' : '/login'}
+                    className="mt-1 inline-flex min-h-11 items-center rounded-lg text-body-4 font-bold text-brand underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+                  >
+                    {isLoggedIn ? '멤버십 설정하기' : '로그인하기'}
+                  </Link>
+                )}
+                {membershipOnly && (
+                  <p className="mt-1 text-body-4 leading-6 text-warmMuted">
+                    등급별 혜택이 확인된 제휴처만 표시해요. 이용 횟수·기간·제외 매장은 상세에서
+                    확인해 주세요.
+                  </p>
+                )}
+              </div>
+
               <div className="mt-4 border-t border-grey02 pt-4 md:mt-5 md:pt-5">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <p className="text-body-4 font-bold text-grey06">통신사</p>
@@ -217,8 +296,9 @@ const AllBenefitsLayout: React.FC = () => {
                   aria-label="통신사 필터"
                 >
                   {carrierFilters.map((carrier) => {
-                    const isSelected =
-                      carrier.code === 'ALL'
+                    const isSelected = membershipCarrier
+                      ? carrier.code === membershipCarrier
+                      : carrier.code === 'ALL'
                         ? selectedCarriers.length === 0
                         : selectedCarriers.includes(carrier.code);
 
@@ -281,7 +361,7 @@ const AllBenefitsLayout: React.FC = () => {
                   id="benefit-results-title"
                   className="text-title-6 font-bold text-grey07 md:text-title-5"
                 >
-                  혜택 제휴처
+                  {membershipOnly ? '내 멤버십 혜택 제휴처' : '혜택 제휴처'}
                 </h2>
                 <span className="shrink-0 text-body-4 font-medium text-grey05">
                   {totalElements.toLocaleString()}개
@@ -324,8 +404,12 @@ const AllBenefitsLayout: React.FC = () => {
                     className="group relative min-w-0 overflow-hidden rounded-[18px] border border-grey02 bg-white transition-all hover:border-purple02 hover:shadow-[0_10px_24px_rgba(16,17,20,0.06)]"
                   >
                     <Link
-                      to={getPartnerBenefitPath(partner.partnerId, partner.partnerName)}
-                      aria-label={`${partner.partnerName} 통신사별 혜택 보기`}
+                      to={`${getPartnerBenefitPath(partner.partnerId, partner.partnerName)}${
+                        membershipCarrier && membershipGrade
+                          ? `?${new URLSearchParams({ carrier: membershipCarrier, grade: membershipGrade, membership: 'mine' })}`
+                          : ''
+                      }`}
+                      aria-label={`${partner.partnerName} ${membershipOnly ? '내 멤버십' : '통신사별'} 혜택 보기`}
                       className="flex min-h-[112px] w-full items-center gap-3 p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple02 md:min-h-[132px] md:gap-4 md:p-4"
                     >
                       <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] bg-grey01 p-2 md:h-16 md:w-16">
@@ -381,8 +465,18 @@ const AllBenefitsLayout: React.FC = () => {
               ) : (
                 <div className="col-span-1 flex h-[320px] items-center justify-center lg:col-span-2 xl:col-span-3 2xl:col-span-4">
                   <NoResult
-                    message1="앗! 일치하는 결과를 찾을 수 없어요!"
-                    message2="다른 제휴처명이나 카테고리로 다시 찾아보세요."
+                    message1={
+                      membershipOnly
+                        ? '내 조건에 맞는 혜택을 찾지 못했어요'
+                        : '앗! 일치하는 결과를 찾을 수 없어요!'
+                    }
+                    message2={
+                      membershipOnly
+                        ? '검색어나 카테고리를 바꾸거나 전체 혜택을 확인해 주세요.'
+                        : '다른 제휴처명이나 카테고리로 다시 찾아보세요.'
+                    }
+                    buttonText={membershipOnly ? '전체 혜택 보기' : undefined}
+                    onButtonClick={membershipOnly ? resetFilters : undefined}
                     message1FontSize="text-title-4 max-xl:text-title-6"
                     message2FontSize="text-body-1 max-xl:text-body-3"
                   />

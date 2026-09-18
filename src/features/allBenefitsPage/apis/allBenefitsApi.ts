@@ -58,7 +58,10 @@ export interface PartnerBenefitResponse {
   hasNext: boolean;
 }
 
-export type PartnerBenefitApiParams = BenefitApiParams;
+export type PartnerBenefitApiParams = Omit<BenefitApiParams, 'mainCategory'> & {
+  mainCategory?: BenefitApiParams['mainCategory'];
+  grade?: string;
+};
 
 export interface CarrierBenefitDetail {
   benefitId: number;
@@ -216,6 +219,7 @@ export const getPartnerBenefits = async (
     ...(params.category && { category: params.category }),
     ...(params.filter && { filter: params.filter }),
     ...(params.keyword && { keyword: params.keyword }),
+    ...(params.grade && { grade: params.grade }),
     ...(params.carriers && params.carriers.length > 0 && { carriers: params.carriers.join(',') }),
   };
 
@@ -247,10 +251,13 @@ export const getBenefitDetail = async (benefitId: number): Promise<BenefitDetail
 };
 
 export const getPartnerBenefitDetail = async (
-  partnerId: number
+  partnerId: number,
+  membership?: { carrier: CarrierCode; grade?: string }
 ): Promise<PartnerBenefitDetailResponse> => {
   const response = await axiosInstance.get(`/api/v1/benefits/partners/${partnerId}`, {
-    params: { mainCategory: 'BASIC_BENEFIT' },
+    params: membership
+      ? { ...membership, mainCategory: undefined }
+      : { mainCategory: 'BASIC_BENEFIT' },
   });
   return normalizePartnerBenefitDetail(response.data.data);
 };

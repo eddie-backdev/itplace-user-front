@@ -1,7 +1,7 @@
 import benefitDisplay from '../content/benefit-display.json';
 import partnerNotes from '../content/partner-notes.json';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   TbArrowLeft,
   TbChevronDown,
@@ -27,6 +27,8 @@ import {
   getCarrierGradeOrder,
   getCarrierLabel,
   getMembershipGradeLabel,
+  isCarrierCode,
+  isValidCarrierGradePair,
 } from '../utils/membership';
 import {
   createPartnerSlug,
@@ -66,6 +68,16 @@ const PartnerBenefitPage = () => {
     partnerSlug: string;
   }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const filterCarrier = searchParams.get('carrier');
+  const filterGrade = searchParams.get('grade');
+  const membershipCarrier =
+    isCarrierCode(filterCarrier) &&
+    (!filterGrade || isValidCarrierGradePair(filterCarrier, filterGrade))
+      ? filterCarrier
+      : null;
+  const membershipGrade = membershipCarrier ? filterGrade : null;
+  const detailRequestIdRef = useRef(0);
   const partnerId = Number(partnerIdParam);
   const [detail, setDetail] = useState<PartnerBenefitDetailResponse | null>(null);
   const [selectedCarrier, setSelectedCarrier] = useState<CarrierCode | null>(null);
@@ -73,6 +85,7 @@ const PartnerBenefitPage = () => {
   const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(null);
 
   const loadDetail = useCallback(async () => {
+    const requestId = ++detailRequestIdRef.current;
     if (!Number.isInteger(partnerId) || partnerId <= 0) {
       setStatus('error');
       return;
@@ -80,7 +93,13 @@ const PartnerBenefitPage = () => {
 
     setStatus('loading');
     try {
-      const response = await getPartnerBenefitDetail(partnerId);
+      const response = await getPartnerBenefitDetail(
+        partnerId,
+        membershipCarrier
+          ? { carrier: membershipCarrier, grade: membershipGrade || undefined }
+          : undefined
+      );
+      if (requestId !== detailRequestIdRef.current) return;
       setDetail(response);
       setSelectedCarrier((currentCarrier) => {
         if (
@@ -93,22 +112,26 @@ const PartnerBenefitPage = () => {
       });
       setStatus('ready');
     } catch {
+      if (requestId !== detailRequestIdRef.current) return;
       setDetail(null);
       setStatus('error');
     }
-  }, [partnerId]);
+  }, [partnerId, membershipCarrier, membershipGrade]);
 
   useEffect(() => {
     void loadDetail();
+    return () => {
+      detailRequestIdRef.current += 1;
+    };
   }, [loadDetail]);
 
   useEffect(() => {
     if (!detail) return;
     const canonicalPath = getPartnerBenefitPath(detail.partnerId, detail.partnerName);
     if (partnerSlug !== createPartnerSlug(detail.partnerName)) {
-      navigate(canonicalPath, { replace: true });
+      navigate(`${canonicalPath}?${searchParams}`, { replace: true });
     }
-  }, [detail, navigate, partnerSlug]);
+  }, [detail, navigate, partnerSlug, searchParams]);
 
   const selectedGroup = useMemo(
     () => detail?.carrierGroups.find((group) => group.carrier === selectedCarrier) ?? null,
@@ -238,12 +261,27 @@ const PartnerBenefitPage = () => {
         <main className="flex-1 px-4 py-5 md:px-8 md:py-7">
           <div className="mx-auto max-w-7xl">
             <Link
-              to="/benefits"
+              to={membershipCarrier ? '/benefits?membership=mine' : '/benefits'}
               className="inline-flex min-h-10 items-center gap-2 rounded-xl px-1 font-bold text-grey06 transition hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
             >
               <TbArrowLeft className="h-5 w-5" aria-hidden="true" />
               전체 혜택
             </Link>
+
+            {membershipCarrier && membershipGrade && (
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-warmBorder bg-warmSurface px-4 py-2">
+                <p className="text-body-3 font-bold text-brandStrong">
+                  {getCarrierLabel(membershipCarrier)} · {getMembershipGradeLabel(membershipGrade)}{' '}
+                  혜택만 보고 있어요
+                </p>
+                <Link
+                  to={`${canonicalPath}?carrier=${membershipCarrier}`}
+                  className="inline-flex min-h-11 items-center rounded-lg px-2 text-body-4 font-bold text-brand underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+                >
+                  모든 등급 보기
+                </Link>
+              </div>
+            )}
 
             {status === 'loading' ? (
               <div className="mt-3 space-y-4" aria-label="제휴처 혜택 로딩 중">
@@ -270,7 +308,16 @@ const PartnerBenefitPage = () => {
               </div>
             ) : null}
 
-            {status === 'ready' && detail ? (
+            {status === 'ready' && detail?.carrierGroups.length === 0 ? (
+              <NoResult
+                message1="선택한 등급의 혜택을 찾지 못했어요"
+                message2="혜택 조건이 바뀌었을 수 있어요. 모든 등급의 조건을 확인해 주세요."
+                buttonText="모든 등급 보기"
+                onButtonClick={() => navigate(`${canonicalPath}?carrier=${membershipCarrier}`)}
+              />
+            ) : null}
+
+            {status === 'ready' && detail && detail.carrierGroups.length > 0 ? (
               <>
                 <section className="relative mx-auto mt-3 w-full max-w-6xl overflow-hidden rounded-[28px] border border-purple02 bg-white px-5 py-5 shadow-[0_16px_44px_rgba(113,50,245,0.09)] md:px-7 md:py-6">
                   <div
@@ -356,7 +403,7 @@ const PartnerBenefitPage = () => {
                   aria-labelledby="carrier-comparison"
                 >
                   <h2 id="carrier-comparison" className="text-xl font-black text-grey07">
-                    통신사별 조건 한눈에 비교
+                    {membershipGrade ? '내 등급의 혜택 조건' : '통신사별 조건 한눈에 비교'}
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-grey05">
                     같은 등급 이름이라도 통신사별 적용 조건은 다릅니다. 내 통신사·등급의 조건과 실제
