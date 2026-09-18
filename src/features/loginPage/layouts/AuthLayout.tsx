@@ -446,12 +446,12 @@ const AuthLayout = () => {
           className="hidden h-full overflow-y-auto bg-white px-6 pb-8 pt-[86px] max-md:block"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          {renderFormContent()}
+          {isMobile && renderFormContent()}
         </div>
 
         <div className="relative flex min-h-[100dvh] w-full items-center justify-center overflow-y-auto px-6 py-12 max-xl:py-10 max-lg:items-start max-md:hidden">
           <div className="flex w-full max-w-[540px] justify-center" style={{ transform: 'none' }}>
-            <SignupFlowCard>{renderFormContent()}</SignupFlowCard>
+            {!isMobile && <SignupFlowCard>{renderFormContent()}</SignupFlowCard>}
           </div>
         </div>
       </div>

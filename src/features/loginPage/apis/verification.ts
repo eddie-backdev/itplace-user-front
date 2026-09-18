@@ -20,16 +20,20 @@ export type SmsVerificationIssueResponse = {
   expiresInSeconds: number;
 };
 
-export const issueSmsVerificationCode = async (phoneNumber: string) => {
-  const response = await api.post('/api/v1/verification/sms', {
-    phoneNumber,
-  });
+export const issueSmsVerificationCode = async (phoneNumber: string, signal?: AbortSignal) => {
+  const response = await api.post(
+    '/api/v1/verification/sms',
+    { phoneNumber },
+    { signal, timeout: 10000 }
+  );
 
   return response.data.data as SmsVerificationIssueResponse;
 };
 
-export const confirmSmsVerificationCode = async (phoneNumber: string) => {
-  return await api.post('/api/v1/verification/sms/confirm', {
-    phoneNumber,
-  });
+export const confirmSmsVerificationCode = async (phoneNumber: string, signal?: AbortSignal) => {
+  return await api.post(
+    '/api/v1/verification/sms/confirm',
+    { phoneNumber },
+    { signal, timeout: 10000 }
+  );
 };

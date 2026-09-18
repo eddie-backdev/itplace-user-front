@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AxiosError } from 'axios';
+import { AxiosError, isCancel } from 'axios';
 import gsap from 'gsap';
 import AuthButton from '../common/AuthButton';
 import AuthInput from '../common/AuthInput';
@@ -17,6 +17,18 @@ type SignUpPhoneVerificationFormProps = {
 
 const normalizePhoneNumber = (value: string) => value.replace(/\D/g, '');
 const SIGNUP_SMS_STORAGE_KEY = 'itplace.signupSmsVerification';
+const POLL_INTERVAL_MS = 5000;
+
+type VerificationNotice = {
+  kind: 'limited' | 'error' | 'expired';
+  message: string;
+};
+
+const retryDelayMs = (value: unknown) => {
+  const seconds = Number(value);
+  const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(String(value)) - Date.now();
+  return Number.isFinite(delay) ? Math.max(POLL_INTERVAL_MS, delay) : POLL_INTERVAL_MS;
+};
 
 type StoredSmsVerification = {
   phoneNumber: string;
@@ -94,7 +106,10 @@ const SignUpPhoneVerificationForm = ({
   onNext,
 }: SignUpPhoneVerificationFormProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const checkingRef = useRef(false);
+  const confirmRequestRef = useRef<AbortController | null>(null);
+  const issueRequestRef = useRef<AbortController | null>(null);
+  const nextCheckAtRef = useRef(0);
+  const pausedRef = useRef(false);
   const completedRef = useRef(false);
   const [storedVerification] = useState(() => readStoredSmsVerification(initialPhoneNumber));
   const [phoneNumber, setPhoneNumber] = useState(
@@ -104,8 +119,24 @@ const SignUpPhoneVerificationForm = ({
     storedVerification?.issue ?? null
   );
   const [expiresAt, setExpiresAt] = useState<number | null>(storedVerification?.expiresAt ?? null);
-  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [now, setNow] = useState(Date.now);
+  const [retryAt, setRetryAt] = useState(0);
+  const [notice, setNotice] = useState<VerificationNotice | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const abortConfirmation = useCallback(() => {
+    confirmRequestRef.current?.abort();
+    confirmRequestRef.current = null;
+  }, []);
+
+  useEffect(
+    () => () => {
+      abortConfirmation();
+      issueRequestRef.current?.abort();
+      issueRequestRef.current = null;
+    },
+    [abortConfirmation]
+  );
 
   useEffect(() => {
     gsap.fromTo(
@@ -116,24 +147,38 @@ const SignUpPhoneVerificationForm = ({
   }, []);
 
   const handlePhoneChange = (value: string) => {
+    abortConfirmation();
     setPhoneNumber(normalizePhoneNumber(value).slice(0, 11));
     setIssue(null);
     setExpiresAt(null);
-    setRemainingSeconds(0);
+    setRetryAt(0);
+    setNotice(null);
+    nextCheckAtRef.current = 0;
+    pausedRef.current = false;
     completedRef.current = false;
     clearStoredSmsVerification();
   };
 
   const handleIssueSms = async () => {
+    if (issueRequestRef.current) return;
     const normalized = normalizePhoneNumber(phoneNumber);
     if (!/^01\d{8,9}$/.test(normalized)) {
       showToast("휴대폰 번호는 '-' 없이 01012345678 형식으로 입력해주세요.", 'error');
       return;
     }
 
+    const controller = new AbortController();
+    issueRequestRef.current = controller;
     try {
       setLoading(true);
-      const response = await issueSmsVerificationCode(normalized);
+      setNotice(null);
+      const response = await issueSmsVerificationCode(normalized, controller.signal);
+      if (issueRequestRef.current !== controller) return;
+      abortConfirmation();
+      pausedRef.current = false;
+      nextCheckAtRef.current = 0;
+      setRetryAt(0);
+      setNow(Date.now());
       const nextExpiresAt = Date.now() + response.expiresInSeconds * 1000;
       setIssue(response);
       setPhoneNumber(response.phoneNumber);
@@ -150,6 +195,7 @@ const SignUpPhoneVerificationForm = ({
         showToast('휴대폰에서 안내된 문자 내용을 전송하면 자동으로 인증됩니다.', 'success');
       }
     } catch (error) {
+      if (isCancel(error) || issueRequestRef.current !== controller) return;
       const axiosError = error as AxiosError<{ code?: string; message?: string }>;
       const code = axiosError.response?.data?.code;
       const fallback = axiosError.response?.data?.message || '문자 인증 요청에 실패했습니다.';
@@ -158,79 +204,103 @@ const SignUpPhoneVerificationForm = ({
         'error'
       );
     } finally {
-      setLoading(false);
+      if (issueRequestRef.current === controller) {
+        issueRequestRef.current = null;
+        setLoading(false);
+      }
     }
   };
 
-  const confirmAutomatically = useCallback(async () => {
-    if (!issue || completedRef.current || checkingRef.current) return;
+  const expireVerification = useCallback(() => {
+    abortConfirmation();
+    setIssue(null);
+    setExpiresAt(null);
+    setRetryAt(0);
+    pausedRef.current = false;
+    clearStoredSmsVerification();
+    setNotice({ kind: 'expired', message: '인증 시간이 만료되었습니다. 다시 인증해주세요.' });
+  }, [abortConfirmation]);
 
-    if (expiresAt && Date.now() > expiresAt) {
-      setIssue(null);
-      setExpiresAt(null);
-      setRemainingSeconds(0);
-      clearStoredSmsVerification();
-      showToast('문자 인증 시간이 만료되었습니다. 다시 인증해주세요.', 'error');
+  const confirmAutomatically = useCallback(async () => {
+    if (!issue || completedRef.current) return;
+
+    if (expiresAt && Date.now() >= expiresAt) {
+      expireVerification();
       return;
     }
 
-    checkingRef.current = true;
+    if (
+      document.visibilityState !== 'visible' ||
+      pausedRef.current ||
+      confirmRequestRef.current ||
+      Date.now() < nextCheckAtRef.current
+    )
+      return;
+
+    const controller = new AbortController();
+    confirmRequestRef.current = controller;
+    nextCheckAtRef.current = Date.now() + POLL_INTERVAL_MS;
+    setRetryAt(0);
+    setNotice(null);
     try {
-      await confirmSmsVerificationCode(issue.phoneNumber);
+      await confirmSmsVerificationCode(issue.phoneNumber, controller.signal);
+      if (confirmRequestRef.current !== controller) return;
       completedRef.current = true;
       clearStoredSmsVerification();
       showToast('휴대폰 인증이 완료되었습니다.', 'success');
       onNext(issue.phoneNumber);
-    } catch {
-      // Octomo에 수신 문자가 아직 반영되지 않은 정상 대기 상태입니다.
-    } finally {
-      checkingRef.current = false;
-    }
-  }, [expiresAt, issue, onNext]);
+    } catch (error) {
+      if (isCancel(error) || confirmRequestRef.current !== controller) return;
+      const response = (error as AxiosError<{ code?: string }>).response;
+      const code = response?.data?.code;
 
-  useEffect(() => {
-    if (!issue || completedRef.current) return;
-
-    void confirmAutomatically();
-    const intervalId = window.setInterval(() => {
-      void confirmAutomatically();
-    }, 3000);
-
-    return () => window.clearInterval(intervalId);
-  }, [confirmAutomatically, issue]);
-
-  useEffect(() => {
-    if (!issue || completedRef.current) return;
-
-    const handleFocus = () => {
-      void confirmAutomatically();
-    };
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        void confirmAutomatically();
+      if (response?.status === 429) {
+        const retryUntil = Date.now() + retryDelayMs(response.headers['retry-after']);
+        nextCheckAtRef.current = retryUntil;
+        setRetryAt(retryUntil);
+        setNotice({
+          kind: 'limited',
+          message: '확인 요청이 많아 잠시 기다리고 있어요. 잠시 후 자동으로 다시 확인합니다.',
+        });
+      } else if (code === 'SMS_CODE_EXPIRED') {
+        expireVerification();
+      } else if (code !== 'SMS_VERIFICATION_FAILURE') {
+        pausedRef.current = true;
+        setNotice({
+          kind: 'error',
+          message: response
+            ? '문자 인증 서비스에 일시적인 문제가 있어요. 잠시 후 다시 확인해주세요.'
+            : '인증 상태를 확인하지 못했어요. 인터넷 연결을 확인하고 다시 시도해주세요.',
+        });
       }
-    };
+    } finally {
+      if (confirmRequestRef.current === controller) {
+        confirmRequestRef.current = null;
+        nextCheckAtRef.current = Math.max(nextCheckAtRef.current, Date.now() + POLL_INTERVAL_MS);
+      }
+    }
+  }, [expireVerification, expiresAt, issue, onNext]);
 
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+  useEffect(() => {
+    if (!issue || completedRef.current) return;
+
+    const tick = () => {
+      setNow(Date.now());
+      void confirmAutomatically();
+    };
+    tick();
+    const intervalId = window.setInterval(tick, 1000);
+    window.addEventListener('focus', tick);
+    document.addEventListener('visibilitychange', tick);
     return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', tick);
+      document.removeEventListener('visibilitychange', tick);
     };
   }, [confirmAutomatically, issue]);
 
-  useEffect(() => {
-    if (!expiresAt || completedRef.current) return;
-
-    const updateRemaining = () => {
-      setRemainingSeconds(Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000)));
-    };
-
-    updateRemaining();
-    const intervalId = window.setInterval(updateRemaining, 1000);
-    return () => window.clearInterval(intervalId);
-  }, [expiresAt]);
-
+  const remainingSeconds = expiresAt ? Math.max(0, Math.ceil((expiresAt - now) / 1000)) : 0;
+  const retrySeconds = Math.max(0, Math.ceil((retryAt - now) / 1000));
   const canSubmit = /^01\d{8,9}$/.test(normalizePhoneNumber(phoneNumber)) && !loading;
 
   return (
@@ -254,26 +324,52 @@ const SignUpPhoneVerificationForm = ({
         label={
           loading
             ? '인증 준비 중...'
-            : issue
-              ? isMobileSmsEnvironment()
-                ? '문자 앱 다시 열기'
-                : '인증 상태 확인'
-              : '문자 인증하기'
+            : retrySeconds > 0
+              ? `${retrySeconds}초 후 자동 확인`
+              : notice?.kind === 'error'
+                ? '인증 다시 확인'
+                : issue
+                  ? isMobileSmsEnvironment()
+                    ? '문자 앱 다시 열기'
+                    : '인증 상태 확인'
+                  : notice?.kind === 'expired'
+                    ? '다시 인증하기'
+                    : '문자 인증하기'
         }
         onClick={() => {
           if (issue) {
-            openSmsComposer(issue);
+            if (pausedRef.current) {
+              pausedRef.current = false;
+              setNotice(null);
+            } else {
+              openSmsComposer(issue);
+            }
             void confirmAutomatically();
             return;
           }
           void handleIssueSms();
         }}
-        variant={canSubmit || issue ? 'default' : 'disabled'}
+        variant={!loading && retrySeconds === 0 && (canSubmit || issue) ? 'default' : 'disabled'}
       />
+
+      {notice && (
+        <p
+          role={notice.kind === 'limited' ? 'status' : 'alert'}
+          className="mt-3 w-full max-w-[320px] text-body-5 leading-relaxed text-grey06"
+        >
+          {notice.message}
+        </p>
+      )}
 
       {issue && (
         <div className="mt-5 w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full rounded-[20px] border border-purple02 bg-gradient-to-br from-purple01/60 to-white px-4 py-4 text-left shadow-[0_10px_24px_rgba(113,50,245,0.08)]">
-          <p className="text-body-3 font-semibold text-purple05">문자 전송 후 자동 확인 중</p>
+          <p className="text-body-3 font-semibold text-purple05">
+            {notice?.kind === 'error'
+              ? '인증 확인이 잠시 멈췄어요'
+              : notice?.kind === 'limited'
+                ? '잠시 후 다시 확인합니다'
+                : '문자 전송 후 자동 확인 중'}
+          </p>
           <p className="mt-2 text-body-5 text-grey05 leading-relaxed">
             모바일 웹에서는 문자 앱이 열립니다. 데스크톱에서는 본인 휴대폰에서 아래 내용을 그대로
             전송해주세요.
@@ -288,7 +384,9 @@ const SignUpPhoneVerificationForm = ({
             </p>
           </div>
           <p className="mt-3 text-body-5 text-grey04">
-            수신 여부를 자동으로 확인하고 있어요.
+            {notice
+              ? '현재 인증 정보는 유효시간 안에 사용할 수 있어요.'
+              : '이 화면으로 돌아오면 수신 여부를 자동으로 확인해요.'}
             {remainingSeconds > 0 ? ` 남은 시간 ${formatSeconds(remainingSeconds)}` : ''}
           </p>
         </div>
