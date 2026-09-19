@@ -23,7 +23,7 @@
 - 비밀번호 변경·회원 탈퇴 중 중복 제출과 모달 닫기를 막고, 실패하면 입력을 보존합니다.
 - 지도 compact 응답·viewport 재사용과 공개 안내 콘텐츠·공식 출처·검색 메타데이터를 반영했습니다. 기존 Next.js의 서버 렌더링, OAuth 정보 보호, 지도 SDK·줌 처리, WOFF2 최적화는 유지합니다.
 
-`npm run verify`는 린트·타입 검사·Next.js 및 지도 compact 회귀 테스트·production 빌드·모의 API를 이용한 SSR/필터/SEO 검증을 수행합니다. 실제 문자 수신과 운영 계정·OAuth 인증은 모의 응답 검증과 별도로 확인해야 합니다. Git 배포 브랜치는 기존 `eddie-backdev/itplace-user-front` 저장소의 `migration/nextjs-workers`이며, Cloudflare 운영 전환은 아직 수행하지 않았습니다.
+`npm run verify`는 린트·타입 검사·Next.js 및 지도 compact 회귀 테스트·production 빌드·모의 API를 이용한 SSR/필터/SEO 검증을 수행합니다. 실제 문자 수신과 운영 계정·OAuth 인증은 모의 응답 검증과 별도로 확인해야 합니다. Git 배포 기준은 기존 `eddie-backdev/itplace-user-front` 저장소의 `main`입니다. Next.js 변경을 원격 main에 반영한 뒤 Workers 배포 성공과 운영 도메인 연결을 확인합니다.
 
 ## 기술 스택
 
@@ -56,7 +56,7 @@ NEXT_PUBLIC_CONTACT_EMAIL=noreply.itplace@gmail.com
 
 - `NEXT_PUBLIC_*` 값은 브라우저 번들에 포함될 수 있으므로 비밀값을 넣지 않습니다.
 - 프로젝트 환경 변수는 위 예시의 다섯 항목입니다. 별도 채팅 WebSocket URL은 사용하지 않으며, Kakao REST API 키는 백엔드에서 관리합니다.
-- `USER_API_BASE_URL`은 Server Component의 공개 데이터 조회용이며 없으면 `NEXT_PUBLIC_APP_BASE_URL`을 사용합니다.
+- `USER_API_BASE_URL`은 서버의 공개 API 주소를 별도로 지정할 때만 필요하며, 없으면 `NEXT_PUBLIC_APP_BASE_URL`을 사용합니다. 두 주소가 같으면 로컬 환경 파일과 Cloudflare Build variables에서 중복 지정할 필요가 없습니다. Workers 런타임의 운영 주소는 `wrangler.jsonc`에 선언돼 있습니다.
 - 공개 혜택 데이터는 기존 Vite 앱과 동일하게 요청 시점의 최신 값을 조회하며, Server Component 안의 중복 호출만 React 요청 캐시로 합칩니다.
 - 운영 환경의 실제 비밀값과 배포 설정은 저장소에 커밋하지 않습니다.
 
@@ -112,11 +112,11 @@ npm run verify:workers   # 린트·타입·테스트·Workers 빌드·로컬 wor
 npm run preview:workers  # 빌드된 Worker를 http://127.0.0.1:8787 에서 확인
 ```
 
-Next.js 코드는 저장소 루트에 있으므로 Workers Builds에서 저장소 `eddie-backdev/itplace-user-front`, 브랜치 `migration/nextjs-workers`, Root directory `/`를 선택합니다. Cloudflare 자동 배포 연결과 도메인 전환은 별도 단계입니다. 대시보드 입력값과 환경 변수는 [Workers 배포 안내](docs/WORKERS_DEPLOYMENT.md)를 참고하세요.
+Next.js 코드는 저장소 루트에 있으므로 Workers Builds에서 저장소 `eddie-backdev/itplace-user-front`, 브랜치 `main`, Root directory `/`를 선택합니다. 최초 main 푸시 전에는 기존 Pages 프로젝트의 Git 자동 배포를 중지하고, Workers 배포 성공 후 운영 도메인을 전환합니다. 대시보드 입력값과 환경 변수는 [Workers 배포 안내](docs/WORKERS_DEPLOYMENT.md)를 참고하세요.
 
 ## 연관 저장소
 
-- 기존 Vite 프론트: 같은 저장소의 `main` 브랜치
+- 기존 Vite 프론트: 같은 저장소의 이전 커밋 `ce22c875665d6b3eb06ed4bec191cbc49a29b15d`
 - User API: `itplace-user-api`
 - Admin Front: `itplace-admin-front`
 - Admin API: `itplace-admin-api`

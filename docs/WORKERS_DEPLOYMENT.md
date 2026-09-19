@@ -1,6 +1,6 @@
 # Cloudflare Workers 배포 안내
 
-작성 기준: 2026-09-19. 프로젝트 설정과 로컬 workerd 검증을 완료했으며 Cloudflare 계정에 배포하지 않았다.
+작성 기준: 2026-09-19. Next.js 변경을 로컬 main에 통합하고 workerd 검증을 완료했다. Cloudflare에는 main을 빌드하는 Worker가 생성됐으나 원격 main의 기존 Vite 코드에서 `Missing script: "build:workers"`로 실패했다. Next.js 코드의 원격 main 반영과 이후 배포 성공 확인이 필요하다.
 
 ## 구성
 
@@ -17,11 +17,11 @@ OpenNext의 Node.js middleware/proxy 지원이 실험적이므로 기존 `src/pr
 
 ## 1. Git 배포 브랜치
 
-배포 대상은 기존 GitHub 저장소 `eddie-backdev/itplace-user-front`의 `migration/nextjs-workers` 브랜치다. Next.js 프로젝트를 저장소 루트에 배치했다. `main`은 기존 Vite/Pages 상태를 유지하므로 Worker에는 반드시 Next.js 브랜치를 선택한다.
+배포 대상은 기존 GitHub 저장소 `eddie-backdev/itplace-user-front`의 `main` 브랜치다. `migration/nextjs-workers`의 Next.js 프로젝트를 main에 통합했으며 파일은 저장소 루트에 있다. 로컬 병합만으로 Cloudflare가 새 코드를 가져오지는 않으므로 원격 main 반영까지 확인한다.
 
 프로젝트 루트에 `package.json`, `package-lock.json`, `.nvmrc`, `wrangler.jsonc`, `open-next.config.ts`를 포함한다. `.env*` 실값, `.dev.vars`, `.next`, `.open-next`, `.wrangler`, `output`, `node_modules`는 제외한다. 기존 Vite용 Pages 배포 알림 workflow는 이 브랜치에서 제거했다. Workers 자동 배포는 대시보드의 Git 연결로 설정한다.
 
-기존 Pages 프로젝트가 모든 브랜치의 preview build를 실행하도록 설정돼 있다면 이 브랜치를 Pages preview 대상에서 제외한다. 기존 Vite 빌드 설정은 Next.js 브랜치와 맞지 않으며, Workers Builds와 별개다. 운영 전환 후 `main`으로 합칠 때는 Pages의 기존 Git 자동 배포도 함께 정리한다.
+첫 Next.js main 푸시 전에 기존 Pages 프로젝트의 **Settings → Builds & deployments → Configure Production deployments**에서 **Enable automatic production branch deployments**를 해제한다. Preview deployments도 필요하지 않으면 `None`으로 설정한다. 기존 Vite의 `dist` 빌드 설정은 Next.js와 맞지 않으며 Workers Builds와 별도로 실행된다. 자동 배포 중지는 기존 Pages 배포나 도메인을 삭제하는 작업이 아니므로, Worker 검증 동안 기존 사이트를 유지할 수 있다.
 
 ## 2. Cloudflare 대시보드 입력값
 
@@ -30,7 +30,7 @@ Workers & Pages에서 **Worker**를 만들고 Git 저장소를 연결한다. Wor
 | 항목                         | 입력값                                                          |
 | ---------------------------- | --------------------------------------------------------------- |
 | Worker 이름                  | `itplace-user-front` (`wrangler.jsonc`의 `name`과 일치)         |
-| 운영 브랜치                  | `migration/nextjs-workers`                                      |
+| 운영 브랜치                  | `main`                                                          |
 | Root directory               | `/` (Next.js 프로젝트가 저장소 루트에 위치)                     |
 | Build command                | `npm run build:workers`                                         |
 | Deploy command               | `npm run deploy:workers`                                        |
@@ -46,13 +46,14 @@ Workers & Pages에서 **Worker**를 만들고 Git 저장소를 연결한다. Wor
 
 **Build variables**에 다음을 등록한다. `NEXT_PUBLIC_*`는 빌드 시 브라우저 코드에 포함되므로 변경 후 재빌드해야 한다. Runtime 변수만 수정해서는 적용되지 않는다.
 
-| 이름                               | 운영 값                                     | 용도                                   |
-| ---------------------------------- | ------------------------------------------- | -------------------------------------- |
-| `NEXT_PUBLIC_APP_BASE_URL`         | `https://userapi.itplace.click/`            | 브라우저 API 요청                      |
-| `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY` | 현재 서비스의 Kakao JavaScript 키           | 지도 SDK (공개 키, REST/비밀 키 아님)  |
-| `NEXT_PUBLIC_KAKAO_REDIRECT_URI`   | `https://userapi.itplace.click/oauth/kakao` | 기존 API의 Kakao 로그인 시작 주소      |
-| `NEXT_PUBLIC_CONTACT_EMAIL`        | `noreply.itplace@gmail.com`                 | 공개 문의 이메일                       |
-| `USER_API_BASE_URL`                | `https://userapi.itplace.click/`            | 빌드 중 공개 API 조회가 필요할 때 사용 |
+| 이름                               | 운영 값                                     | 용도                                  |
+| ---------------------------------- | ------------------------------------------- | ------------------------------------- |
+| `NEXT_PUBLIC_APP_BASE_URL`         | `https://userapi.itplace.click/`            | 브라우저 API 요청                     |
+| `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY` | 현재 서비스의 Kakao JavaScript 키           | 지도 SDK (공개 키, REST/비밀 키 아님) |
+| `NEXT_PUBLIC_KAKAO_REDIRECT_URI`   | `https://userapi.itplace.click/oauth/kakao` | 기존 API의 Kakao 로그인 시작 주소     |
+| `NEXT_PUBLIC_CONTACT_EMAIL`        | `noreply.itplace@gmail.com`                 | 공개 문의 이메일                      |
+
+`USER_API_BASE_URL`은 서버가 브라우저와 다른 API 주소를 사용해야 할 때 선택적으로 지정한다. 없으면 서버도 `NEXT_PUBLIC_APP_BASE_URL`을 사용하므로 같은 주소를 Build variables에 두 번 등록할 필요가 없다.
 
 **Runtime**의 `USER_API_BASE_URL`은 이미 `wrangler.jsonc`의 `vars`에 운영 API 주소로 선언했다. 이 주소는 비밀값이 아니다. 변경할 때는 설정 파일을 수정하고 재배포한다. 대시보드에서만 값을 바꾸면 다음 코드 배포와 불일치할 수 있다. 현재 프런트 Worker에 JWT 비밀 키·문자 공급자 키·DB 비밀번호는 필요하지 않다.
 
@@ -74,7 +75,7 @@ npm run preview:workers
 npx wrangler deploy --dry-run --outdir output/workers-dry-run
 ```
 
-2026-09-19 로컬 검증 결과: gzip 약 1,484 KiB. Workers 로컬 SSR 검사, 기존 Node SSR 검사, 15개 테스트, cmux 화면 확인을 통과했다. 모의 응답을 이용한 브라우저 검증은 멤버십·계정 처리·모바일 화면·AI 비활성화 6개와 문자 인증 8개 시나리오를 통과했다. 실제 배포의 CPU 제한·지연, 운영 로그인/OAuth, 실제 문자 수신 성공을 입증하는 결과는 아니다.
+2026-09-19 로컬 검증 결과: gzip 약 1,484 KiB. Workers 로컬 SSR 검사, 기존 Node SSR 검사, 19개 테스트, cmux 화면 확인을 통과했다. main 통합 후에도 `npm run verify:workers`를 다시 통과했다. 모의 응답을 이용한 브라우저 검증은 멤버십·계정 처리·모바일 화면·AI 비활성화 6개와 문자 인증 8개 시나리오를 통과했다. 실제 배포의 CPU 제한·지연, 운영 로그인/OAuth, 실제 문자 수신 성공을 입증하는 결과는 아니다.
 
 ## 5. 도메인 전환
 
@@ -85,6 +86,7 @@ npx wrangler deploy --dry-run --outdir output/workers-dry-run
 ## 참고
 
 - [Cloudflare Workers Builds 설정](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/)
+- [Cloudflare Pages 브랜치별 자동 배포 설정](https://developers.cloudflare.com/pages/configuration/branch-build-controls/)
 - [OpenNext 시작 안내](https://opennext.js.org/cloudflare/get-started)
 - [OpenNext 캐시 구성](https://opennext.js.org/cloudflare/caching)
 - [Cloudflare Next.js 안내](https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/)
