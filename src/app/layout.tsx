@@ -5,7 +5,6 @@ import JsonLd from '@/components/JsonLd';
 import AppProviders from './AppProviders';
 import { SITE_ORIGIN } from '@/lib/metadata';
 import '@/index.css';
-import '@/App.css';
 
 const description =
   '잇플레이스(ITPLACE, 잇플)에서 SKT, KT, LG U+ 통신 3사 멤버십 제휴처와 혜택을 지도와 목록으로 검색하고 비교하세요.';

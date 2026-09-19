@@ -1,4 +1,12 @@
 node_modules
-dist
-build
+.next
+.open-next
+.wrangler
+out
+output
+graphify-out
+.playwright-cli
+next-env.d.ts
+.env*
+.dev.vars*
 .vscode

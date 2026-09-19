@@ -55,6 +55,7 @@ NEXT_PUBLIC_CONTACT_EMAIL=noreply.itplace@gmail.com
 ```
 
 - `NEXT_PUBLIC_*` 값은 브라우저 번들에 포함될 수 있으므로 비밀값을 넣지 않습니다.
+- 프로젝트 환경 변수는 위 예시의 다섯 항목입니다. 별도 채팅 WebSocket URL은 사용하지 않으며, Kakao REST API 키는 백엔드에서 관리합니다.
 - `USER_API_BASE_URL`은 Server Component의 공개 데이터 조회용이며 없으면 `NEXT_PUBLIC_APP_BASE_URL`을 사용합니다.
 - 공개 혜택 데이터는 기존 Vite 앱과 동일하게 요청 시점의 최신 값을 조회하며, Server Component 안의 중복 호출만 React 요청 캐시로 합칩니다.
 - 운영 환경의 실제 비밀값과 배포 설정은 저장소에 커밋하지 않습니다.
