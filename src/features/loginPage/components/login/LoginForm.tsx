@@ -8,7 +8,7 @@ import AuthButton from '../common/AuthButton';
 import AuthLinkRow from '../common/AuthLinkRow';
 import AuthDivider from '../common/AuthDivider';
 import KakaoLoginButton from './KakaoLoginButton';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/lib/navigation';
 
 type Props = {
   onGoToSignUp: () => void;
@@ -44,7 +44,11 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword }: Props) => {
   };
 
   const handleKakaoLogin = () => {
-    const kakaoLoginUrl = import.meta.env.VITE_KAKAO_REDIRECT_URI;
+    const kakaoLoginUrl = process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI;
+    if (!kakaoLoginUrl) {
+      showToast('카카오 로그인 설정을 확인해주세요', 'error');
+      return;
+    }
     window.location.href = kakaoLoginUrl;
   };
 

@@ -1,28 +1,32 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from '@/lib/navigation';
 import { useDispatch } from 'react-redux';
 import { setLoginSuccess } from '../../../store/authSlice';
 import { kakaoOAuthLogin } from '../apis/auth';
 import { showToast } from '../../../utils/toast';
-import PageSeo from '../../../components/PageSeo';
+import { storeOAuthPreAuth } from '../utils/oauthPreAuthStorage';
 
 const OAuthRedirectHandler = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const handledCallbackRef = useRef<string | null>(null);
 
   useEffect(() => {
     const handleKakaoCallback = async () => {
       const code = searchParams.get('code');
       const error = searchParams.get('error');
+      const callbackKey = `${code ?? ''}:${error ?? ''}`;
+      if (handledCallbackRef.current === callbackKey) return;
+      handledCallbackRef.current = callbackKey;
 
       if (error) {
-        navigate('/login');
+        navigate('/login', { replace: true });
         return;
       }
 
       if (!code) {
-        navigate('/login');
+        navigate('/login', { replace: true });
         return;
       }
 
@@ -32,13 +36,16 @@ const OAuthRedirectHandler = () => {
 
         if (responseCode === 'PRE_AUTHENTICATION_SUCCESS') {
           const preAuthData = response.data?.data;
-          const params = new URLSearchParams({
-            step: 'oauthIntegration',
-            verifiedType: 'oauth',
+          const stored = storeOAuthPreAuth({
             email: preAuthData?.email ?? '',
             nickname: preAuthData?.nickname ?? '',
           });
-          navigate(`/login?${params.toString()}`);
+          if (!stored) throw new Error('OAuth 사전 인증 정보를 저장하지 못했습니다.');
+          const params = new URLSearchParams({
+            step: 'oauthIntegration',
+            verifiedType: 'oauth',
+          });
+          navigate(`/login?${params.toString()}`, { replace: true });
         } else if (responseCode === 'LOGIN_SUCCESS') {
           // Redux에 로그인 정보 저장
           const userData = response.data?.data;
@@ -57,29 +64,19 @@ const OAuthRedirectHandler = () => {
 
           // 로그인 성공 토스트
           showToast('로그인에 성공하셨습니다!', 'success');
-          navigate('/');
+          navigate('/', { replace: true });
         } else {
-          navigate('/login');
+          navigate('/login', { replace: true });
         }
       } catch {
-        navigate('/login');
+        navigate('/login', { replace: true });
       }
     };
 
     handleKakaoCallback();
   }, [dispatch, navigate, searchParams]);
 
-  return (
-    <>
-      <PageSeo
-        title="카카오 로그인 처리 중 | 잇플레이스"
-        description="잇플레이스 카카오 로그인 처리 페이지입니다."
-        path="/oauth/callback/kakao"
-        noIndex
-      />
-      <div>카카오 로그인 처리 중입니다...</div>
-    </>
-  );
+  return <div>카카오 로그인 처리 중입니다...</div>;
 };
 
 export default OAuthRedirectHandler;

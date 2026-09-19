@@ -820,6 +820,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
     searchByKeyword,
     updateToCurrentLocation,
     currentMapLevelInHook,
+    cancelMapViewportRequest: cancelViewportRequest,
     clearPlatforms,
   };
 };

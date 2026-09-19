@@ -1,8 +1,11 @@
+'use client';
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { debounce } from 'lodash';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from '@/lib/navigation';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
+import { useClientReady } from '../../hooks/useClientReady';
 import SearchBar from '../../components/SearchBar';
 import Pagination from '../../components/Pagination';
 import NoResult from '../../components/NoResult';
@@ -13,9 +16,9 @@ import {
   getPartnerBenefits,
   PartnerBenefitItem,
   PartnerBenefitApiParams,
+  PartnerBenefitResponse,
 } from './apis/allBenefitsApi';
 import MobileHeader from '../../components/MobileHeader';
-import { useResponsive } from '../../hooks/useResponsive';
 import {
   CARRIER_OPTIONS,
   CarrierCode,
@@ -29,9 +32,14 @@ import { getPartnerBenefitPath } from '../../utils/partnerSeo';
 
 const ITEMS_PER_PAGE = 15;
 
-const AllBenefitsLayout: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
+type AllBenefitsLayoutProps = { initialData?: PartnerBenefitResponse | null };
+
+const AllBenefitsLayout: React.FC<AllBenefitsLayoutProps> = ({ initialData = null }) => {
+  const [searchParams] = useSearchParams();
+  const { isLoggedIn: storedIsLoggedIn, user } = useSelector((state: RootState) => state.auth);
+  const isAuthRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
+  const isClientReady = useClientReady();
+  const isLoggedIn = isClientReady && isAuthRehydrated && storedIsLoggedIn;
   const profileCarrier = isLoggedIn && isCarrierCode(user?.carrier) ? user.carrier : null;
   const profileGrade = user?.membershipGradeCode || user?.membershipGrade || '';
   const hasMembershipProfile = Boolean(
@@ -41,33 +49,31 @@ const AllBenefitsLayout: React.FC = () => {
   const membershipCarrier = membershipOnly ? profileCarrier : null;
   const membershipGrade = membershipOnly ? profileGrade : undefined;
   const setMembershipOnly = (enabled: boolean) => {
-    setSearchParams(
-      (current) => {
-        const next = new URLSearchParams(current);
-        if (enabled) next.set('membership', 'mine');
-        else next.delete('membership');
-        return next;
-      },
-      { replace: true }
-    );
+    const next = new URL(window.location.href);
+    if (enabled) next.searchParams.set('membership', 'mine');
+    else next.searchParams.delete('membership');
+    // This filter uses the restored browser profile; a server navigation adds no data.
+    window.history.replaceState(null, '', `${next.pathname}${next.search}${next.hash}`);
     setCurrentPage(1);
   };
   const initialSearchTerm = searchParams.get('q')?.trim() ?? '';
   const initialCarrier = searchParams.get('carrier');
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearchTerm);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState((initialData?.currentPage ?? 0) + 1);
   const [selectedCategory, setSelectedCategory] = useState('전체');
   const [selectedCarriers, setSelectedCarriers] = useState<CarrierCode[]>(() =>
     isCarrierCode(initialCarrier) ? [initialCarrier] : []
   );
-  const [isLoading, setIsLoading] = useState(false);
-  const [partners, setPartners] = useState<PartnerBenefitItem[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
+  const [isLoading, setIsLoading] = useState(!initialData);
+  const [partners, setPartners] = useState<PartnerBenefitItem[]>(initialData?.content ?? []);
+  const [totalElements, setTotalElements] = useState(initialData?.totalElements ?? 0);
+  const [hasNext, setHasNext] = useState(initialData?.hasNext ?? false);
   const [loadError, setLoadError] = useState(false);
-  const { isMobile } = useResponsive();
   const latestRequestIdRef = useRef(0);
+  const hasInitialDataRef = useRef(Boolean(initialData));
+  const waitingForMembership =
+    searchParams.get('membership') === 'mine' && (!isClientReady || !isAuthRehydrated);
 
   // API 호출 함수
   const fetchBenefits = useCallback(
@@ -123,8 +129,17 @@ const AllBenefitsLayout: React.FC = () => {
 
   // 초기 데이터 로드
   useEffect(() => {
-    fetchBenefits(0, debouncedSearchTerm, selectedCategory);
-  }, [fetchBenefits, debouncedSearchTerm, selectedCategory]);
+    if (waitingForMembership) return;
+    if (hasInitialDataRef.current && !membershipOnly) {
+      hasInitialDataRef.current = false;
+      return;
+    }
+    hasInitialDataRef.current = false;
+    void fetchBenefits(0, debouncedSearchTerm, selectedCategory);
+    return () => {
+      latestRequestIdRef.current += 1;
+    };
+  }, [fetchBenefits, debouncedSearchTerm, selectedCategory, waitingForMembership, membershipOnly]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -484,30 +499,27 @@ const AllBenefitsLayout: React.FC = () => {
               )}
             </div>
 
-            {isMobile ? (
-              hasNext && partners.length > 0 ? (
-                <div className="mt-5 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={handleLoadMore}
-                    disabled={isLoading}
-                    className="min-h-12 w-full rounded-[14px] border border-purple02 bg-white px-5 text-body-3 font-bold text-purple05 transition-colors hover:bg-purple01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:cursor-wait disabled:opacity-60"
-                  >
-                    {isLoading ? '혜택을 불러오는 중' : '혜택 더 보기'}
-                  </button>
-                </div>
-              ) : null
-            ) : (
-              <div className="mt-8 flex justify-center md:mt-10">
-                <Pagination
-                  currentPage={currentPage}
-                  itemsPerPage={ITEMS_PER_PAGE}
-                  totalItems={totalElements}
-                  onPageChange={handlePageChange}
-                  compact
-                />
+            {hasNext && partners.length > 0 ? (
+              <div className="mt-5 flex justify-center md:hidden">
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={isLoading}
+                  className="min-h-12 w-full rounded-[14px] border border-purple02 bg-white px-5 text-body-3 font-bold text-purple05 transition-colors hover:bg-purple01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {isLoading ? '혜택을 불러오는 중' : '혜택 더 보기'}
+                </button>
               </div>
-            )}
+            ) : null}
+            <div className="mt-8 hidden justify-center md:mt-10 md:flex">
+              <Pagination
+                currentPage={currentPage}
+                itemsPerPage={ITEMS_PER_PAGE}
+                totalItems={totalElements}
+                onPageChange={handlePageChange}
+                compact
+              />
+            </div>
           </section>
         </div>
       </div>

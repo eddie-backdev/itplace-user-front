@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from '@/lib/navigation';
 
 interface MainContentWrapperProps {
   children: ReactNode;

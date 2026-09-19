@@ -69,7 +69,7 @@
 ### Desktop (`md` and above)
 
 - The application shell is an 88px fixed navigation rail, followed by a 356px nearby-benefit panel, then the flexible map.
-- The rail uses `warmNav`, a thin right border, and icon-plus-label controls. Map, ticket, bookmark, and user icons match their destinations. The active item's icon alone turns deep green, grows slightly, and uses a heavier stroke without a filled surface or side marker; `aria-current` provides the semantic cue.
+- The rail uses `warmNav`, a thin right border, and icon-plus-label controls. A thin divider separates the brand mark from the primary navigation, mirroring the divider above utility actions. Primary navigation uses 24px icons and 12px labels for comfortable recognition. Map, ticket, bookmark, and user icons match their destinations. The active item's icon alone turns deep green, grows slightly, and uses a heavier stroke without a filled surface or side marker; `aria-current` provides the semantic cue.
 - The nearby panel owns search, nearby/favorites/AI modes, contextual guidance, compact results, and selected-store detail. It may collapse to give the map more space.
 - Categories sit above the map as horizontal controls. Map controls and transient cards remain visually secondary to location and result context.
 - The map fills the remaining viewport; avoid detached promotional card grids over it.
@@ -115,6 +115,6 @@
 
 - Standard breakpoints: `sm: 640px`, `md: 768px`, `lg: 1024px`, `xl: 1280px`, `2xl: 1536px`; repository max-width aliases remain available for compatibility.
 - Below 768px, use the mobile search/map/sheet/tab-bar composition. At 768px and above, use the rail/panel/map composition.
-- React 19, TypeScript, Vite, and Tailwind CSS remain the implementation baseline.
+- React 19, TypeScript, Next.js App Router, and Tailwind CSS are the implementation baseline.
 - Kakao Maps SDK, large imagery, landing media, and large chunks can affect first load. Prioritize the code and data required for map and nearby-benefit discovery.
 - After visual/token changes, run `npx eslint . --config eslint.config.js` and `npm run build`, then inspect both mobile and desktop map screens at representative viewport sizes.

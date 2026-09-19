@@ -1,0 +1,3 @@
+# Optional local Workers override. Copy to .dev.vars to use the local API.
+# NEXT_PUBLIC_* values must be set before build in .env.local or the build environment.
+USER_API_BASE_URL=http://127.0.0.1:8080/

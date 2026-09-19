@@ -1,7 +1,7 @@
+import dynamic from 'next/dynamic';
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import QuestionRecommendationChatRoom from './QuestionRecommendationChatRoom';
 import { useResponsive } from '../../../hooks/useResponsive';
 import { RootState } from '../../../store';
 import {
@@ -9,6 +9,21 @@ import {
   addQuestionRecommendationChatToggleListener,
   notifyQuestionRecommendationChatState,
 } from '../utils/questionRecommendationChatEvents';
+
+const QuestionRecommendationChatRoom = dynamic(
+  () => import('./QuestionRecommendationChatRoom'),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        role="status"
+        className="flex h-full min-h-56 items-center justify-center bg-white text-sm font-bold text-grey04"
+      >
+        상담을 준비하고 있어요.
+      </div>
+    ),
+  }
+);
 
 const QuestionRecommendationChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);

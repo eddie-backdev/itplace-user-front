@@ -22,6 +22,7 @@ interface MapSectionProps {
   centerLocation?: { latitude: number; longitude: number } | null;
   initialCenterLocation?: { latitude: number; longitude: number } | null;
   initialMapLevel?: number;
+  onZoomStart?: () => void;
   onMapLevelChange?: (mapLevel: number) => void;
   onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
   activeTab: string;
@@ -45,6 +46,7 @@ const MapSection: React.FC<MapSectionProps> = ({
   centerLocation,
   initialCenterLocation,
   initialMapLevel,
+  onZoomStart,
   onMapLevelChange,
   onViewportChange,
   activeTab,
@@ -137,6 +139,7 @@ const MapSection: React.FC<MapSectionProps> = ({
         centerLocation={centerLocation}
         initialCenterLocation={initialCenterLocation}
         initialMapLevel={initialMapLevel}
+        onZoomStart={onZoomStart}
         onMapLevelChange={onMapLevelChange}
         onViewportChange={handleViewportChange}
         isRoadviewMode={isRoadviewMode}

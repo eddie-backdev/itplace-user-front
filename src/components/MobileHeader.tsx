@@ -2,11 +2,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { TbMenu2, TbX } from 'react-icons/tb';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '@/lib/navigation';
 import { showToast } from '../utils/toast';
 import { persistor } from '../store';
 import { RootState } from '../store';
-import { useLocation } from 'react-router-dom';
+import { useClientReady } from '../hooks/useClientReady';
+import { useLocation } from '@/lib/navigation';
 import { logout } from '../store/authSlice';
 import api from '../apis/axiosInstance';
 interface MobileHeaderProps {
@@ -59,6 +60,9 @@ const MobileHeader = ({
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
+  const isAuthRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
+  const isClientReady = useClientReady();
+  const isAuthReady = isClientReady && isAuthRehydrated;
   const isMain = pathname === '/';
 
   const handleLogout = async () => {
@@ -263,7 +267,14 @@ const MobileHeader = ({
               </ul>
             </li>
             <li>
-              {isLoggedIn ? (
+              {!isAuthReady ? (
+                <div
+                  className="w-full rounded-[12px] px-3 py-2 text-left text-body-3 text-grey04"
+                  aria-live="polite"
+                >
+                  로그인 상태 확인 중
+                </div>
+              ) : isLoggedIn ? (
                 <button
                   onClick={handleLogout}
                   className="w-full rounded-[12px] px-3 py-2 text-body-0 text-black hover:text-purple04 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
@@ -273,10 +284,7 @@ const MobileHeader = ({
               ) : (
                 <button
                   onClick={() => {
-                    navigate('/login', {
-                      state: { resetToLogin: true },
-                      replace: true,
-                    });
+                    navigate('/login?reset=1', { replace: true });
                     closeSidebar();
                   }}
                   className="w-full rounded-[12px] px-3 py-2 text-body-0 text-purple04 hover:text-purple05 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"

@@ -80,6 +80,11 @@ export const isValidCarrierGradePair = (carrier?: string | null, grade?: string 
   return MEMBERSHIP_GRADE_OPTIONS_BY_CARRIER[carrier].some((option) => option.code === grade);
 };
 
+export const getMembershipFilter = (carrier?: string | null, grade?: string | null) =>
+  isCarrierCode(carrier) && (!grade || isValidCarrierGradePair(carrier, grade))
+    ? { carrier, grade: grade || undefined }
+    : undefined;
+
 export const isGradeApplicableToProfile = ({
   benefitCarrier,
   benefitGrade,

@@ -131,4 +131,6 @@ const SearchSection: React.FC<SearchSectionProps> = React.memo(
   }
 );
 
+SearchSection.displayName = 'SearchSection';
+
 export default SearchSection;

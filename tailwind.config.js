@@ -1,7 +1,7 @@
 // tailwind.config.js
 import plugin from 'tailwindcss/plugin';
-export default {
-  content: ['./src/**/*.{js,ts,jsx,tsx,html}'],
+const tailwindConfig = {
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
       // 폰트 사이즈
@@ -133,3 +133,5 @@ export default {
     }),
   ],
 };
+
+export default tailwindConfig;

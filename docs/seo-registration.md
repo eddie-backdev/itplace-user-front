@@ -11,40 +11,34 @@
 - 제휴처 상세: `/benefits/partners/{partnerId}/{partnerSlug}`
 - 지도 탐색: `/map`
 
-프론트 빌드는 운영 사용자 API에서 제휴처 목록과 통신사별 실제 혜택 내용을 가져와 제휴처별 HTML, `sitemap.xml`, `_redirects`를 생성합니다. API 연결이 일시적으로 실패하면 `scripts/data/partner-catalog.json`과 `scripts/data/partner-benefit-details.json`의 마지막 정상 스냅샷을 사용합니다.
+Next.js 서버는 공개 사용자 API에서 제휴처 목록과 실제 혜택 내용을 조회해 공개 페이지의 초기 HTML을 렌더링합니다. 공개 데이터는 `no-store`로 요청마다 조회하고 같은 서버 렌더링 요청 안에서만 중복 호출을 합칩니다. API가 일시적으로 응답하지 않으면 해당 요청은 오류 상태 UI로 복구됩니다.
 
 - 제휴처 HTML에는 혜택명, 이용 채널, 등급별 조건, 이용 제한, 이용 방법이 포함됩니다.
 - 같은 통신사 응답에 동일 `benefitId`가 중복되면 정보가 더 풍부한 항목으로 합칩니다.
-- `/membership/`, `*.html` 같은 중복 URL은 canonical URL로 301 이동합니다.
+- 잘못된 제휴처 slug는 canonical URL로 영구 이동합니다.
 - 페이지 컴포넌트는 경로별로 분리해 첫 화면에서 불필요한 지도·혜택·로그인 코드를 받지 않습니다.
+- `app/robots.ts`와 `app/sitemap.ts`가 배포 런타임에서 검색엔진용 문서를 생성합니다.
 
 ## 로컬 검증
 
 ```zsh
-npm run build
+npm run verify:workers
 ```
 
-빌드에는 아래 검증이 포함됩니다.
+빌드와 자동 테스트에는 아래 검증이 포함됩니다.
 
 - 브랜드 홈 title, canonical, WebSite 구조화 데이터
-- 통신사 랜딩 페이지별 고유 title과 프리렌더 본문
-- 제휴처별 canonical URL, 실제 혜택 본문과 ItemList 구조화 데이터
+- 통신사 랜딩 페이지별 고유 title과 서버 렌더링 본문
+- 제휴처별 canonical URL, 실제 혜택 본문과 구조화 데이터
 - 동일 `benefitId` 중복 제거
-- trailing slash와 `.html` URL의 301 redirect 규칙
-- sitemap URL 중복, 제휴처 누락, noindex 페이지 유출 여부
+- App Router 엔트리와 Vite/React Router 제거 상태
 - robots.txt의 sitemap 선언
 
-운영 API의 제휴처 스냅샷을 수동으로 갱신해야 할 때만 다음 명령을 사용합니다.
-
-```zsh
-npm run seo:refresh
-```
-
-새 제휴처가 추가되거나 제휴처명·혜택 내용이 바뀐 뒤에는 사용자 프론트를 다시 배포해야 검색엔진이 읽는 HTML과 sitemap이 최신화됩니다. 브라우저 화면은 API에서 최신 정보를 조회하지만, JavaScript를 실행하지 않는 검색 수집기는 마지막 배포 시점의 프리렌더 HTML을 읽습니다.
+새 제휴처나 혜택 변경은 다음 조회의 서버 렌더링 HTML과 sitemap에 반영됩니다. sitemap은 API 장애나 불완전 응답일 때만 저장소의 비상 카탈로그를 사용하며, 갱신 명령은 README를 참고합니다. 데이터 변경만으로 재배포나 캐시 무효화를 수행할 필요는 없습니다.
 
 ## 대표 도메인 통일
 
-코드가 생성하는 canonical URL은 모두 `https://itplace.click`입니다. Cloudflare Pages의 `_redirects`는 같은 도메인의 경로만 처리하므로 `www.itplace.click`을 apex 도메인으로 보내는 규칙은 Cloudflare 대시보드에서 한 번 설정해야 합니다.
+코드가 생성하는 canonical URL은 모두 `https://itplace.click`입니다. `www.itplace.click`을 apex 도메인으로 보내는 규칙은 최종 배포 플랫폼에서 한 번 설정해야 합니다. 아래는 Cloudflare를 선택할 경우의 예시입니다.
 
 1. Cloudflare에서 **Bulk Redirects → Redirect Lists**로 이동합니다.
 2. Source URL을 `https://www.itplace.click/`, Target URL을 `https://itplace.click/`로 입력합니다.
@@ -108,4 +102,4 @@ curl -I https://www.itplace.click/membership
 2. 브랜드 검색어의 노출수, 클릭수, CTR, 평균 순위를 지난달과 비교합니다.
 3. 노출은 많지만 CTR이 낮은 페이지의 title과 description을 실제 검색 의도에 맞게 개선합니다.
 4. 동일 제휴처가 여러 이름으로 분리되지 않았는지 관리자 데이터 품질 화면에서 확인합니다.
-5. 신규 제휴처 또는 제휴처명 변경이 있으면 사용자 프론트를 재배포해 프리렌더 URL과 sitemap을 갱신합니다.
+5. 신규 제휴처 또는 제휴처명 변경이 5분 재검증 이후 HTML과 sitemap에 반영됐는지 확인합니다.

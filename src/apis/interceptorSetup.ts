@@ -8,6 +8,7 @@ import { clearCsrfToken, isUnsafeMethod } from './csrf';
 
 // 토큰 갱신 중인지 추적하는 플래그
 let isRefreshing = false;
+let isConfigured = false;
 // 갱신 중 대기하는 요청들을 저장하는 배열
 let failedQueue: Array<{
   resolve: (value: string | null) => void;
@@ -33,12 +34,14 @@ const handleLogout = () => {
   store.dispatch(logout());
   // redux-persist 초기화
   persistor.purge();
-  window.history.replaceState({ resetToLogin: true }, '', '/login');
-  window.dispatchEvent(new PopStateEvent('popstate'));
+  window.location.replace('/login?reset=1');
 };
 
 // Interceptor 설정 함수
 export const setupInterceptors = () => {
+  if (isConfigured) return;
+  isConfigured = true;
+
   // Response Interceptor
   api.interceptors.response.use(
     (response) => {

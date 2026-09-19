@@ -22,6 +22,8 @@ export interface KakaoCustomOverlay {
   setContent(content: HTMLElement): void;
   setMap(map: KakaoMap | KakaoRoadview | null): void;
   setPosition(position: KakaoLatLng): void;
+  setVisible(visible: boolean): void;
+  getVisible(): boolean;
   setZIndex(zIndex: number): void;
   getContent(): HTMLElement;
 }
@@ -58,7 +60,7 @@ export interface KakaoMouseEvent {
 
 export interface KakaoMaps {
   maps: {
-    load: (callback: () => void) => void;
+    load?: (callback: () => void) => void;
     // 기본 Map API
     LatLng: new (lat: number, lng: number) => KakaoLatLng;
     Map: new (container: HTMLElement, options: { center: KakaoLatLng; level: number }) => KakaoMap;

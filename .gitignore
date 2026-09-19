@@ -10,8 +10,20 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.next
+next-env.d.ts
+.open-next
+.wrangler
+.dev.vars*
+!.dev.vars.example
+out
+output
+graphify-out/
+.playwright-cli
+tsconfig.tsbuildinfo
 *.local
-*.env
+.env*
+!.env.example
 
 # Editor directories and files
 .vscode/*

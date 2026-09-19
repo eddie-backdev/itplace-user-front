@@ -174,6 +174,8 @@ test('viewport coverage reuses batches below the limit but refetches when the li
         }),
       },
     });
+    // React is fully substituted above; each case starts an independent hook harness.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const hook = useStoreData();
     const outer = { minLat: 1, minLng: 1, maxLat: 9, maxLng: 9 };
     const inner = { minLat: 2, minLng: 2, maxLat: 8, maxLng: 8 };

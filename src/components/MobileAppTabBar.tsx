@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from '@/lib/navigation';
 import { TbGift, TbHeart, TbHome, TbMap, TbUser } from 'react-icons/tb';
 
 const tabs = [

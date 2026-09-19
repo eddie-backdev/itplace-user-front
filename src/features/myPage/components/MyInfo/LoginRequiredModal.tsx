@@ -1,5 +1,5 @@
 import Modal from '../../../../components/Modal';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/lib/navigation';
 
 interface LoginRequiredModalProps {
   isOpen: boolean;
@@ -21,7 +21,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
           type: 'primary',
           onClick: () => {
             onClose();
-            navigate('/login', { replace: true, state: { resetToLogin: true } });
+            navigate('/login?reset=1', { replace: true });
           },
         },
       ]}

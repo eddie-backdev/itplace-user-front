@@ -8,7 +8,7 @@ import { Platform, MapLocation, MapBounds } from '../../types';
 import { CATEGORIES, LAYOUT } from '../../constants';
 import { useStoreData } from '../../hooks/useStoreData';
 import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from '@/lib/navigation';
 import { useLayoutEffect } from 'react';
 import { useResponsive } from '../../../../hooks/useResponsive';
 import { disableScroll, enableScroll } from '../../../../utils/scrollLock';
@@ -53,6 +53,7 @@ const MainPageLayout: React.FC = () => {
   const { isMobile } = useResponsive();
 
   const location = useLocation();
+  const [routeSearchParams] = useSearchParams();
 
   const getMaxHeight = useCallback(() => maxBottomSheetHeight, [maxBottomSheetHeight]);
 
@@ -131,6 +132,7 @@ const MainPageLayout: React.FC = () => {
     searchByKeyword, // 키워드 검색
     updateToCurrentLocation, // 현재 위치 업데이트
     userCoords, // 사용자 초기 위치
+    cancelMapViewportRequest, // 줌 전환 전에 이전 viewport 요청 무효화
     clearPlatforms, // 플랫폼 데이터 즉시 초기화
   } = useStoreData(currentMapCenter);
 
@@ -239,6 +241,16 @@ const MainPageLayout: React.FC = () => {
   const handleMapLevelChange = useCallback((mapLevel: number) => {
     setCurrentMapLevel(mapLevel);
   }, []);
+
+  const handleMapZoomStart = useCallback(() => {
+    if (mapViewportSearchTimerRef.current) {
+      clearTimeout(mapViewportSearchTimerRef.current);
+      mapViewportSearchTimerRef.current = null;
+    }
+
+    lastViewportSearchKeyRef.current = '';
+    cancelMapViewportRequest();
+  }, [cancelMapViewportRequest]);
 
   // 지도 이동/줌 완료 후 현재 화면 기준 혜택 자동 재조회
   const handleMapViewportChange = useCallback(
@@ -351,8 +363,7 @@ const MainPageLayout: React.FC = () => {
 
   // URL 쿼리 파라미터에서 검색어를 처리하는 useEffect
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const searchKeyword = searchParams.get('search');
+    const searchKeyword = routeSearchParams.get('search');
 
     if (searchKeyword && searchKeyword !== lastSearchedKeywordRef.current && userCoords) {
       // 검색어를 먼저 설정 (검색창에 표시)
@@ -362,11 +373,15 @@ const MainPageLayout: React.FC = () => {
       handleKeywordSearch(searchKeyword);
 
       // URL에서 쿼리 파라미터 제거 (중복 검색 방지)
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('search');
-      window.history.replaceState({}, '', newUrl.toString());
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.delete('search');
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`
+      );
     }
-  }, [location.search, handleKeywordSearch, userCoords]);
+  }, [handleKeywordSearch, routeSearchParams, userCoords]);
 
   // 혜택 상세 카드 핸들러
   const handleBenefitDetailRequest = useCallback((benefitIds: number[]) => {
@@ -674,6 +689,7 @@ const MainPageLayout: React.FC = () => {
               centerLocation={mapMoveCenterLocation}
               initialCenterLocation={currentMapCenterLocation}
               initialMapLevel={hasInitializedMapViewportRef.current ? currentMapLevel : undefined}
+              onZoomStart={handleMapZoomStart}
               onMapLevelChange={handleMapLevelChange}
               onViewportChange={handleMapViewportChange}
               activeTab={activeTab}
@@ -758,6 +774,7 @@ const MainPageLayout: React.FC = () => {
               centerLocation={mapMoveCenterLocation}
               initialCenterLocation={currentMapCenterLocation}
               initialMapLevel={hasInitializedMapViewportRef.current ? currentMapLevel : undefined}
+              onZoomStart={handleMapZoomStart}
               onMapLevelChange={handleMapLevelChange}
               onViewportChange={handleMapViewportChange}
               activeTab={activeTab}

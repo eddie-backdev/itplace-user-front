@@ -1,4 +1,4 @@
-import { useMediaQuery } from 'react-responsive';
+import { useSyncExternalStore } from 'react';
 
 export const BREAKPOINTS = {
   mobileMax: 767,
@@ -6,15 +6,35 @@ export const BREAKPOINTS = {
   laptopMax: 1535,
 } as const;
 
+const createMediaQueryStore = (query: string) => ({
+  subscribe: (onStoreChange: () => void) => {
+    if (typeof window === 'undefined' || !window.matchMedia) return () => undefined;
+    const mediaQuery = window.matchMedia(query);
+    mediaQuery.addEventListener('change', onStoreChange);
+    return () => mediaQuery.removeEventListener('change', onStoreChange);
+  },
+  getSnapshot: () =>
+    typeof window !== 'undefined' && Boolean(window.matchMedia?.(query).matches),
+  getServerSnapshot: () => false,
+});
+
+const mobileStore = createMediaQueryStore(`(max-width: ${BREAKPOINTS.mobileMax}px)`);
+const tabletStore = createMediaQueryStore(
+  `(min-width: ${BREAKPOINTS.mobileMax + 1}px) and (max-width: ${BREAKPOINTS.tabletMax}px)`
+);
+const laptopStore = createMediaQueryStore(
+  `(min-width: ${BREAKPOINTS.tabletMax + 1}px) and (max-width: ${BREAKPOINTS.laptopMax}px)`
+);
+const desktopStore = createMediaQueryStore(`(min-width: ${BREAKPOINTS.laptopMax + 1}px)`);
+
+const useMediaQueryStore = (store: ReturnType<typeof createMediaQueryStore>) =>
+  useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
+
 export const useResponsive = () => {
-  const isMobile = useMediaQuery({ query: `(max-width: ${BREAKPOINTS.mobileMax}px)` });
-  const isTablet = useMediaQuery({
-    query: `(min-width: ${BREAKPOINTS.mobileMax + 1}px) and (max-width: ${BREAKPOINTS.tabletMax}px)`,
-  });
-  const isLaptop = useMediaQuery({
-    query: `(min-width: ${BREAKPOINTS.tabletMax + 1}px) and (max-width: ${BREAKPOINTS.laptopMax}px)`,
-  });
-  const isDesktop = useMediaQuery({ query: `(min-width: ${BREAKPOINTS.laptopMax + 1}px)` });
+  const isMobile = useMediaQueryStore(mobileStore);
+  const isTablet = useMediaQueryStore(tabletStore);
+  const isLaptop = useMediaQueryStore(laptopStore);
+  const isDesktop = useMediaQueryStore(desktopStore);
 
   return { isMobile, isTablet, isLaptop, isDesktop };
 };

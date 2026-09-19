@@ -1,39 +1,35 @@
-import js from "@eslint/js";
-import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
-import tseslint from "typescript-eslint";
-import prettier from "eslint-plugin-prettier";
-import prettierConfig from "eslint-config-prettier";
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTypeScript from 'eslint-config-next/typescript';
+import prettierConfig from 'eslint-config-prettier';
 
-export default tseslint.config(
-  { ignores: ["dist"] },
-  prettierConfig, // ESLint와 Prettier 충돌 방지
+export default defineConfig([
+  ...nextVitals,
+  ...nextTypeScript,
+  prettierConfig,
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ["**/*.{ts,tsx}"],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-      parserOptions: {
-        ecmaFeatures: { jsx: true },
-        sourceType: "module",
-      },
-    },
-    plugins: {
-      "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
-      prettier: prettier,
-    },
     rules: {
-      ...reactHooks.configs.recommended.rules,
-      "prettier/prettier": "error",
-      "react-refresh/only-export-components": [
-        "warn",
-        { allowConstantExport: true },
-      ],
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "warn",
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      // GSAP가 직접 제어하는 랜딩 이미지, Kakao marker 이미지와 SafeImage의
+      // onError fallback은 네이티브 img 요소가 필요하다.
+      '@next/next/no-img-element': 'off',
+      // 이전 앱의 ref 기반 지도 이벤트 브리지와 effect 기반 비동기 로딩은
+      // React Compiler 최적화 대상이 아니다. 동작을 보존한 채 Next 규칙은 유지한다.
+      'react-hooks/immutability': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/static-components': 'off',
     },
-  }
-);
+  },
+  globalIgnores([
+    '.next/**',
+    '.open-next/**',
+    '.wrangler/**',
+    'out/**',
+    'output/**',
+    '.playwright-cli/**',
+    'next-env.d.ts',
+  ]),
+]);

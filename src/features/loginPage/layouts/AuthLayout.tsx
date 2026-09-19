@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from '@/lib/navigation';
 import { AxiosError } from 'axios';
 import MobileHeader from '../../../components/MobileHeader';
 import AuthFormCard from '../components/common/AuthFormCard';
@@ -20,6 +20,7 @@ import { setLoginSuccess } from '../../../store/authSlice';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import { useResponsive } from '../../../hooks/useResponsive';
 import { TbMapPin, TbSparkles, TbTicket, TbHeartHandshake } from 'react-icons/tb';
+import { consumeOAuthPreAuth } from '../utils/oauthPreAuthStorage';
 
 const emptyLocalSignupData = {
   phoneNumber: '',
@@ -127,7 +128,7 @@ const AuthLayout = () => {
     goToFindPassword,
   } = AuthTransition();
 
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [signUpData, setSignUpData] = useState(emptyLocalSignupData);
   const [oauthUserData, setOAuthUserData] = useState(emptyOAuthUserData);
   const [oauthLinkEmail, setOAuthLinkEmail] = useState('');
@@ -182,10 +183,9 @@ const AuthLayout = () => {
   }, [dispatch, navigate, setFormStep]);
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const step = params.get('step');
-    const verifiedType = params.get('verifiedType');
-    const oauth = params.get('oauth');
+    const step = searchParams.get('step');
+    const verifiedType = searchParams.get('verifiedType');
+    const oauth = searchParams.get('oauth');
 
     if (oauth === 'processing' && !isOAuthProcessing) {
       setIsOAuthProcessing(true);
@@ -196,25 +196,25 @@ const AuthLayout = () => {
     if (hasInitialized.current) return;
 
     if (step === 'oauthIntegration' && verifiedType === 'oauth') {
+      const preAuthData = consumeOAuthPreAuth();
       setOAuthUserData({
-        nickname: params.get('nickname') || '',
-        email: params.get('email') || '',
-        birthday: params.get('birthday') || '',
-        gender: params.get('gender') || '',
-        carrier: params.get('carrier') || '',
-        membershipGradeCode: params.get('membershipGradeCode') || '',
+        nickname: preAuthData?.nickname ?? '',
+        email: preAuthData?.email ?? '',
+        birthday: '',
+        gender: '',
+        carrier: '',
+        membershipGradeCode: '',
       });
       setFormStep('oauthIntegration');
       hasInitialized.current = true;
     }
-  }, [location.search, setFormStep, checkOAuthResult, isOAuthProcessing]);
+  }, [searchParams, setFormStep, checkOAuthResult, isOAuthProcessing]);
 
   useEffect(() => {
-    if (location.state?.resetToLogin) {
+    if (searchParams.get('reset') === '1') {
       goToLogin();
-      window.history.replaceState({}, '', '/login');
     }
-  }, [location.state, goToLogin]);
+  }, [goToLogin, searchParams]);
 
   const handleOAuthSignup = async ({
     nickname,

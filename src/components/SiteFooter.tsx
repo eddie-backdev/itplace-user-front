@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from '@/lib/navigation';
 
 const footerLinks = [
   { label: '통신사 멤버십', to: '/membership' },

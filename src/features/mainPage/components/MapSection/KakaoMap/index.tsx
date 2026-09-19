@@ -9,6 +9,11 @@ import {
 import CustomMarker from './CustomMarker';
 import { installCustomMarkerImageFallback } from './customMarkerFallback';
 import { CUSTOM_MARKER_METRICS, type CustomMarkerMode } from './markerMetrics';
+import {
+  getKakaoMapSdkStatus,
+  KAKAO_MAP_ERROR_EVENT,
+  KAKAO_MAP_READY_EVENT,
+} from '@/constants/kakaoMapSdk';
 
 interface KakaoMapProps {
   platforms: Platform[];
@@ -21,6 +26,7 @@ interface KakaoMapProps {
   centerLocation?: { latitude: number; longitude: number } | null;
   initialCenterLocation?: { latitude: number; longitude: number } | null;
   initialMapLevel?: number;
+  onZoomStart?: () => void;
   onMapLevelChange?: (mapLevel: number) => void;
   onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
   isRoadviewMode?: boolean;
@@ -63,6 +69,7 @@ interface ReconcileMetrics {
 
 const DUPLICATE_MARKER_RING_SIZE = 8;
 const DEFAULT_MAP_LEVEL = 4;
+const DEFAULT_MAP_LOCATION = { latitude: 37.5665, longitude: 126.978 };
 const CLUSTER_TAIL_HEIGHT = 9;
 const SERVER_CLUSTER_STYLE_VERSION = 'warm-green-pin-v16';
 const CLUSTER_DENSITY_COLORS = {
@@ -365,13 +372,13 @@ const createServerClusterElement = (cluster: MapCluster) => {
 };
 
 const logReconcileMetrics = (mode: 'custom' | 'server', metrics: ReconcileMetrics) => {
-  if (!import.meta.env.DEV) return;
+  if (process.env.NODE_ENV !== 'development') return;
 
   console.debug(`[KakaoMap] ${mode} marker reconcile`, metrics);
 };
 
 const getReconcileDuration = (startedAt: number) =>
-  import.meta.env.DEV ? performance.now() - startedAt : 0;
+  process.env.NODE_ENV === 'development' ? performance.now() - startedAt : 0;
 
 const toDisplayPositionMap = (
   platforms: Platform[],
@@ -469,6 +476,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   centerLocation,
   initialCenterLocation,
   initialMapLevel,
+  onZoomStart,
   onMapLevelChange,
   onViewportChange,
   isRoadviewMode = false,
@@ -480,6 +488,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const serverClusterRegistryRef = useRef(new Map<string, ServerClusterRegistryEntry>());
   const isAnimatingRef = useRef<boolean>(false);
   const isZoomingRef = useRef<boolean>(false);
+  const hasPendingZoomViewportChangeRef = useRef<boolean>(false);
   const areMarkersHiddenRef = useRef<boolean>(false);
   const markerRevealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const zoomSettledTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -488,6 +497,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const onPlatformSelectRef = useRef(onPlatformSelect);
   const onLocationChangeRef = useRef(onLocationChange);
   const onMapCenterChangeRef = useRef(onMapCenterChange);
+  const onZoomStartRef = useRef(onZoomStart);
   const onMapLevelChangeRef = useRef(onMapLevelChange);
   const onViewportChangeRef = useRef(onViewportChange);
   const initialCenterLocationRef = useRef(initialCenterLocation);
@@ -497,15 +507,17 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   onPlatformSelectRef.current = onPlatformSelect;
   onLocationChangeRef.current = onLocationChange;
   onMapCenterChangeRef.current = onMapCenterChange;
+  onZoomStartRef.current = onZoomStart;
   onMapLevelChangeRef.current = onMapLevelChange;
   onViewportChangeRef.current = onViewportChange;
   initialCenterLocationRef.current = initialCenterLocation;
   initialMapLevelRef.current = initialMapLevel;
   useServerClustersRef.current = useServerClusters;
-  const [userLocation, setUserLocation] = useState<MapLocation | null>(null);
+  const userLocationRef = useRef<MapLocation>(initialCenterLocation ?? DEFAULT_MAP_LOCATION);
   const [mapInitializationVersion, setMapInitializationVersion] = useState(0);
   const [currentMapLevel, setCurrentMapLevel] = useState(initialMapLevel ?? DEFAULT_MAP_LEVEL);
   const [visiblePlatforms, setVisiblePlatforms] = useState<Platform[] | null>(null);
+  const [sdkLoadError, setSdkLoadError] = useState(false);
   const markerMode: CustomMarkerMode = currentMapLevel >= 4 ? 'compact' : 'full';
   const displayPositionByMarkerKey = useMemo(
     () => toDisplayPositionMap(platforms, markerMode),
@@ -525,12 +537,37 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     });
   }, []);
 
+  const setServerClustersVisibility = useCallback((visibility: 'visible' | 'hidden') => {
+    const isVisible = visibility === 'visible';
+
+    serverClusterRegistryRef.current.forEach(({ overlay, element }) => {
+      overlay.setVisible(isVisible);
+      element.style.visibility = visibility;
+      element.style.pointerEvents = visibility === 'hidden' ? 'none' : '';
+    });
+  }, []);
+
+  const clearServerClusterRegistry = useCallback(() => {
+    const registry = serverClusterRegistryRef.current;
+    const removedCount = registry.size;
+
+    setServerClustersVisibility('hidden');
+    registry.forEach(({ overlay, element, clickHandler }) => {
+      element.removeEventListener('click', clickHandler);
+      overlay.setMap(null);
+    });
+    registry.clear();
+
+    return removedCount;
+  }, [setServerClustersVisibility]);
+
   const revealCustomMarkersAfterZoom = useCallback(() => {
     if (markerRevealTimerRef.current) {
       clearTimeout(markerRevealTimerRef.current);
     }
 
     markerRevealTimerRef.current = setTimeout(() => {
+      markerRevealTimerRef.current = null;
       if (useServerClustersRef.current) return;
       setCustomMarkersVisibility('visible');
     }, 120);
@@ -538,41 +575,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
   const notifyMapZoomState = useCallback((isZooming: boolean) => {
     window.dispatchEvent(new CustomEvent('itplace:map-zoom-state', { detail: { isZooming } }));
-  }, []);
-
-  const settleZoomStateAfterDelay = useCallback(() => {
-    if (zoomSettledTimerRef.current) {
-      clearTimeout(zoomSettledTimerRef.current);
-    }
-
-    zoomSettledTimerRef.current = setTimeout(() => {
-      isZoomingRef.current = false;
-      notifyMapZoomState(false);
-    }, 300);
-  }, [notifyMapZoomState]);
-
-  useEffect(() => {
-    const customMarkerRegistry = customMarkerRegistryRef.current;
-    const serverClusterRegistry = serverClusterRegistryRef.current;
-
-    return () => {
-      if (markerRevealTimerRef.current) {
-        clearTimeout(markerRevealTimerRef.current);
-      }
-      if (zoomSettledTimerRef.current) {
-        clearTimeout(zoomSettledTimerRef.current);
-      }
-      customMarkerRegistry.forEach(({ overlay, element, clickHandler }) => {
-        element.removeEventListener('click', clickHandler);
-        overlay.setMap(null);
-      });
-      customMarkerRegistry.clear();
-      serverClusterRegistry.forEach(({ overlay, element, clickHandler }) => {
-        element.removeEventListener('click', clickHandler);
-        overlay.setMap(null);
-      });
-      serverClusterRegistry.clear();
-    };
   }, []);
 
   const notifyViewportChange = useCallback(() => {
@@ -599,6 +601,46 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       },
       map.getLevel()
     );
+  }, []);
+
+  const settleZoomStateAfterDelay = useCallback(() => {
+    if (zoomSettledTimerRef.current) {
+      clearTimeout(zoomSettledTimerRef.current);
+    }
+
+    zoomSettledTimerRef.current = setTimeout(() => {
+      zoomSettledTimerRef.current = null;
+      if (!hasPendingZoomViewportChangeRef.current) return;
+
+      hasPendingZoomViewportChangeRef.current = false;
+      isZoomingRef.current = false;
+      notifyViewportChange();
+      notifyMapZoomState(false);
+    }, 300);
+  }, [notifyMapZoomState, notifyViewportChange]);
+
+  useEffect(() => {
+    const customMarkerRegistry = customMarkerRegistryRef.current;
+    const serverClusterRegistry = serverClusterRegistryRef.current;
+
+    return () => {
+      if (markerRevealTimerRef.current) {
+        clearTimeout(markerRevealTimerRef.current);
+      }
+      if (zoomSettledTimerRef.current) {
+        clearTimeout(zoomSettledTimerRef.current);
+      }
+      customMarkerRegistry.forEach(({ overlay, element, clickHandler }) => {
+        element.removeEventListener('click', clickHandler);
+        overlay.setMap(null);
+      });
+      customMarkerRegistry.clear();
+      serverClusterRegistry.forEach(({ overlay, element, clickHandler }) => {
+        element.removeEventListener('click', clickHandler);
+        overlay.setMap(null);
+      });
+      serverClusterRegistry.clear();
+    };
   }, []);
 
   // Viewport 내 플랫폼 필터링 함수
@@ -659,16 +701,15 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           };
-          setUserLocation(location);
+          userLocationRef.current = location;
           onLocationChangeRef.current?.(location);
         },
         () => {
           if (isCanceled) return;
 
           // 기본 위치 (서울시청)
-          const defaultLocation = { latitude: 37.5665, longitude: 126.978 };
-          setUserLocation(defaultLocation);
-          onLocationChangeRef.current?.(defaultLocation);
+          userLocationRef.current = DEFAULT_MAP_LOCATION;
+          onLocationChangeRef.current?.(DEFAULT_MAP_LOCATION);
         }
       );
     }
@@ -680,12 +721,11 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
   // 카카오맵 초기화
   useEffect(() => {
-    if (!userLocation || !mapContainer.current || mapRef.current) return;
+    if (!mapContainer.current || mapRef.current) return;
 
     let isDisposed = false;
     let initializeRetryTimer: ReturnType<typeof setTimeout> | null = null;
     let initialViewportTimer: ReturnType<typeof setTimeout> | null = null;
-    let kakaoMapsCheckInterval: ReturnType<typeof setInterval> | null = null;
     let initializedMap: KakaoMapType | null = null;
     const mapEventListeners: Array<{
       type: string;
@@ -702,9 +742,16 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     };
 
     const initializeMap = () => {
-      if (isDisposed || mapRef.current || !window.kakao || !window.kakao.maps) {
+      if (
+        isDisposed ||
+        mapRef.current ||
+        typeof window.kakao?.maps?.Map !== 'function' ||
+        typeof window.kakao?.maps?.LatLng !== 'function'
+      ) {
         return;
       }
+
+      setSdkLoadError(false);
 
       // 컨테이너 크기가 확정될 때까지 대기
       const containerWidth = mapContainer.current?.offsetWidth;
@@ -718,7 +765,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         return;
       }
 
-      const initialCenter = initialCenterLocationRef.current ?? userLocation;
+      const initialCenter = initialCenterLocationRef.current ?? userLocationRef.current;
       const options = {
         center: new window.kakao.maps.LatLng(initialCenter.latitude, initialCenter.longitude),
         level: initialMapLevelRef.current ?? DEFAULT_MAP_LEVEL,
@@ -732,11 +779,23 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
       // 줌 시작 - 애니메이션 상태 시작
       addMapEventListener(map, 'zoom_start', () => {
+        if (markerRevealTimerRef.current) {
+          clearTimeout(markerRevealTimerRef.current);
+          markerRevealTimerRef.current = null;
+        }
+        if (zoomSettledTimerRef.current) {
+          clearTimeout(zoomSettledTimerRef.current);
+          zoomSettledTimerRef.current = null;
+        }
+
         isAnimatingRef.current = true;
         isZoomingRef.current = true;
+        hasPendingZoomViewportChangeRef.current = true;
+        onZoomStartRef.current?.();
         suppressDragEndUntilRef.current = Date.now() + 700;
         notifyMapZoomState(true);
         setCustomMarkersVisibility('hidden');
+        clearServerClusterRegistry();
       });
 
       // 줌 변경 완료 - 상세 마커 크기와 viewport 결과를 갱신한다.
@@ -754,12 +813,14 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       });
 
       addMapEventListener(map, 'idle', () => {
-        if (!isZoomingRef.current) {
+        if (!hasPendingZoomViewportChangeRef.current) {
           return;
         }
 
+        hasPendingZoomViewportChangeRef.current = false;
         if (zoomSettledTimerRef.current) {
           clearTimeout(zoomSettledTimerRef.current);
+          zoomSettledTimerRef.current = null;
         }
 
         isAnimatingRef.current = false;
@@ -812,20 +873,18 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       }, 100);
     };
 
-    // 비동기로 삽입한 SDK의 지도 모듈까지 로드된 뒤 초기화한다.
-    if (window.kakao && window.kakao.maps) {
-      window.kakao.maps.load(initializeMap);
-    } else {
-      // 카카오맵 API 로드 대기
-      kakaoMapsCheckInterval = setInterval(() => {
-        if (window.kakao && window.kakao.maps) {
-          if (kakaoMapsCheckInterval) {
-            clearInterval(kakaoMapsCheckInterval);
-            kakaoMapsCheckInterval = null;
-          }
-          window.kakao.maps.load(initializeMap);
-        }
-      }, 100);
+    const handleSdkReady = () => initializeMap();
+    const handleSdkError = () => {
+      if (!mapRef.current) setSdkLoadError(true);
+    };
+
+    window.addEventListener(KAKAO_MAP_READY_EVENT, handleSdkReady);
+    window.addEventListener(KAKAO_MAP_ERROR_EVENT, handleSdkError);
+
+    if (getKakaoMapSdkStatus() === 'ready') {
+      initializeMap();
+    } else if (getKakaoMapSdkStatus() === 'error') {
+      handleSdkError();
     }
 
     return () => {
@@ -837,9 +896,8 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       if (initialViewportTimer) {
         clearTimeout(initialViewportTimer);
       }
-      if (kakaoMapsCheckInterval) {
-        clearInterval(kakaoMapsCheckInterval);
-      }
+      window.removeEventListener(KAKAO_MAP_READY_EVENT, handleSdkReady);
+      window.removeEventListener(KAKAO_MAP_ERROR_EVENT, handleSdkError);
 
       if (initializedMap && window.kakao?.maps?.event.removeListener) {
         mapEventListeners.forEach(({ type, handler }) => {
@@ -852,13 +910,14 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       }
     };
   }, [
+    clearServerClusterRegistry,
     notifyViewportChange,
     notifyMapZoomState,
     revealCustomMarkersAfterZoom,
     setCustomMarkersVisibility,
+    setServerClustersVisibility,
     settleZoomStateAfterDelay,
     updateVisiblePlatforms,
-    userLocation,
   ]);
 
   // platforms 데이터가 변경되면 visiblePlatforms 업데이트 (지연 처리)
@@ -919,19 +978,18 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   useLayoutEffect(() => {
     if (!mapRef.current) return;
 
-    const startedAt = import.meta.env.DEV ? performance.now() : 0;
+    const startedAt = process.env.NODE_ENV === 'development' ? performance.now() : 0;
     let added = 0;
     let updated = 0;
     let removed = 0;
     const registry = serverClusterRegistryRef.current;
 
+    // Kakao SDK가 이전 overlay DOM을 정리하기 전에 새 overlay를 붙여도
+    // 서로 다른 클러스터 세대가 동시에 그려지지 않도록 먼저 감춘다.
+    setServerClustersVisibility('hidden');
+
     if (!useServerClusters) {
-      registry.forEach(({ overlay, element, clickHandler }) => {
-        element.removeEventListener('click', clickHandler);
-        overlay.setMap(null);
-        removed += 1;
-      });
-      registry.clear();
+      removed += clearServerClusterRegistry();
 
       // 5→4 전환에서 서버 클러스터가 해제된 뒤 새 상세 마커가 hidden 상태를
       // 상속하지 않도록 visibility 기준을 먼저 복구한다.
@@ -1039,6 +1097,13 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       added += 1;
     });
 
+    // 줌 중에는 이전 행정구역 스냅샷과 새 스냅샷이 한 프레임이라도
+    // 함께 노출되지 않도록 숨긴 상태를 유지한다. 줌이 끝난 뒤 도착한
+    // 최신 클러스터 스냅샷을 reconcile할 때만 다시 표시한다.
+    setServerClustersVisibility(
+      isZoomingRef.current || hasPendingZoomViewportChangeRef.current ? 'hidden' : 'visible'
+    );
+
     logReconcileMetrics('server', {
       added,
       updated,
@@ -1046,13 +1111,20 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       count: registry.size,
       durationMs: getReconcileDuration(startedAt),
     });
-  }, [clusters, mapInitializationVersion, setCustomMarkersVisibility, useServerClusters]);
+  }, [
+    clusters,
+    clearServerClusterRegistry,
+    mapInitializationVersion,
+    setCustomMarkersVisibility,
+    setServerClustersVisibility,
+    useServerClusters,
+  ]);
 
   // 마커 업데이트 useEffect
   useEffect(() => {
     if (!mapRef.current || isAnimatingRef.current) return;
 
-    const startedAt = import.meta.env.DEV ? performance.now() : 0;
+    const startedAt = process.env.NODE_ENV === 'development' ? performance.now() : 0;
     const map = mapRef.current;
     const customRegistry = customMarkerRegistryRef.current;
     let added = 0;
@@ -1258,12 +1330,32 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   }, [centerLocation, mapInitializationVersion, updateVisiblePlatforms]);
 
   return (
-    <div className="w-full h-full">
+    <div className="relative h-full w-full">
       <div
         ref={mapContainer}
         className="w-full h-full rounded-[18px] max-md:rounded-none"
         style={{}}
       />
+      {sdkLoadError ? (
+        <div
+          role="alert"
+          className="absolute inset-0 flex items-center justify-center bg-warmCanvas/95 px-6 text-center"
+        >
+          <div className="max-w-sm rounded-2xl border border-warmBorder bg-white p-6 shadow-soft">
+            <p className="font-bold text-ink">지도를 불러오지 못했어요</p>
+            <p className="mt-2 text-sm leading-6 text-inkMuted">
+              네트워크 상태와 Kakao Maps 설정을 확인한 뒤 다시 시도해 주세요.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 min-h-10 rounded-xl bg-brand px-4 font-bold text-white"
+            >
+              다시 시도
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

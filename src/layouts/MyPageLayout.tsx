@@ -1,12 +1,12 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from '@/lib/navigation';
+import type { ReactNode } from 'react';
 import SideMenu from '../features/myPage/components/SideMenu';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import MobileHeader from '../components/MobileHeader';
 import NoResult from '../components/NoResult';
-import PageSeo from '../components/PageSeo';
 
-export default function MyPageLayout() {
+export default function MyPageLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
@@ -15,19 +15,10 @@ export default function MyPageLayout() {
 
   // ✅ Redux에서 로그인 상태 가져오기
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
-  const pageSeo = (
-    <PageSeo
-      title={isWhiteLayout ? '저장한 혜택 | 잇플레이스' : '마이페이지 | 잇플레이스'}
-      description="잇플레이스 회원 정보와 저장한 멤버십 혜택을 관리하는 페이지입니다."
-      path={pathname}
-      noIndex
-    />
-  );
 
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-grey01">
-        {pageSeo}
         <div className="hidden fixed top-0 left-0 w-full z-[9999] max-md:block">
           <MobileHeader title="마이잇플" />
         </div>
@@ -39,12 +30,7 @@ export default function MyPageLayout() {
               message1="로그인 후 마이페이지를 이용할 수 있어요"
               message2="회원 정보와 관심 혜택은 로그인 후 안전하게 확인할 수 있습니다."
               buttonText="로그인하기"
-              onButtonClick={() =>
-                navigate('/login', {
-                  state: { resetToLogin: true },
-                  replace: true,
-                })
-              }
+              onButtonClick={() => navigate('/login?reset=1', { replace: true })}
               secondaryButtonText="메인으로 가기"
               onSecondaryButtonClick={() => navigate('/')}
               message1FontSize="text-title-4 max-md:text-title-6"
@@ -59,7 +45,6 @@ export default function MyPageLayout() {
   // ✅ 로그인된 경우에는 마이페이지 레이아웃 정상 렌더
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#EDE7FE_0,#F8F8FA_38%,#FFFFFF_100%)]">
-      {pageSeo}
       <div className="hidden fixed top-0 left-0 w-full z-[9999] max-md:block">
         <MobileHeader title="마이잇플" />
       </div>
@@ -75,7 +60,7 @@ export default function MyPageLayout() {
 
         {/* 중앙+우측을 자식 페이지에서 구성 */}
         <div className="flex min-w-0 flex-1 items-stretch gap-4 max-lg:flex-col max-lg:gap-4">
-          <Outlet />
+          {children}
         </div>
       </div>
     </div>

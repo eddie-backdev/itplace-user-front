@@ -10,11 +10,12 @@ import {
   TbBookmark,
 } from 'react-icons/tb';
 import clsx from 'clsx';
-import { useLocation, Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, Link } from '@/lib/navigation';
+import { useNavigate } from '@/lib/navigation';
 import api from '../apis/axiosInstance';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
+import { useClientReady } from '../hooks/useClientReady';
 import { logout } from '../store/authSlice';
 import { persistor } from '../store';
 import { showToast } from '../utils/toast';
@@ -34,7 +35,7 @@ const menus = [
 const supportPaths = ['/about', '/guide', '/faq', '/contact', '/terms', '/privacy', '/membership'];
 
 const primaryNavItemClass =
-  'group relative flex h-[58px] w-full flex-col items-center justify-center rounded-2xl text-[11px] font-bold leading-tight text-grey05 transition-[color,transform] hover:text-grey06 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav';
+  'group relative flex h-16 w-full flex-col items-center justify-center rounded-2xl text-xs font-bold leading-tight text-grey05 transition-[color,transform] hover:text-grey06 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav';
 
 const utilityNavItemClass =
   'group relative flex h-[48px] w-full flex-col items-center justify-center rounded-2xl text-[10px] font-bold leading-tight text-grey05 transition-[color,transform] hover:text-grey06 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav';
@@ -47,6 +48,9 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
   const dispatch = useDispatch();
 
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
+  const isAuthRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
+  const isClientReady = useClientReady();
+  const isAuthReady = isClientReady && isAuthRehydrated;
   const [isQuestionRecommendationOpen, setIsQuestionRecommendationOpen] = useState(false);
   const isSupportActive =
     supportPaths.includes(location.pathname) || location.pathname.startsWith('/membership/');
@@ -57,6 +61,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
   }, []);
 
   const handleQuestionRecommendationClick = () => {
+    if (!isAuthReady) return;
     if (!isLoggedIn) {
       showToast('질문형 AI 추천은 로그인 후 사용할 수 있습니다.', 'info');
       return;
@@ -97,14 +102,17 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
         {/* 로고 영역 */}
         <Link
           to="/map"
-          className="mb-8 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] transition-transform hover:scale-[1.04] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav"
+          className="mb-4 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] transition-transform hover:scale-[1.04] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav"
           aria-label="ITPLACE 지도 홈"
         >
           <img src="/brand/itplace-mark-b-rail.svg" alt="" className="h-9 w-9" />
         </Link>
 
         {/* 주요 메뉴 */}
-        <nav className="flex w-full flex-1 flex-col items-center gap-y-2" aria-label="주요 메뉴">
+        <nav
+          className="flex w-full flex-1 flex-col items-center gap-y-2 border-t border-warmBorder pt-3"
+          aria-label="주요 메뉴"
+        >
           {menus.map((m) => {
             const Icon = m.icon;
             const isActive =
@@ -127,12 +135,12 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
               >
                 <Icon
                   className={clsx(
-                    'text-[21px] transition-[color,transform]',
+                    'text-2xl transition-[color,transform]',
                     isActive ? 'scale-110 text-brandStrong' : 'text-grey05 group-hover:text-grey06'
                   )}
                   strokeWidth={isActive ? 2.8 : 1.7}
                 />
-                <span className="mt-1 whitespace-nowrap leading-none">{m.label}</span>
+                <span className="mt-1.5 whitespace-nowrap leading-none">{m.label}</span>
               </Link>
             );
           })}
@@ -179,7 +187,12 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
             <span className="mt-1 whitespace-nowrap leading-none">안내</span>
           </Link>
 
-          {isLoggedIn ? (
+          {!isAuthReady ? (
+            <div className={utilityNavItemClass} aria-label="로그인 상태 확인 중">
+              <span className="h-[18px] w-[18px] animate-pulse rounded-full bg-grey02" />
+              <span className="mt-1 h-2 w-8 animate-pulse rounded bg-grey02" />
+            </div>
+          ) : isLoggedIn ? (
             <button className={utilityNavItemClass} onClick={handleLogout} aria-label="로그아웃">
               <TbLogout className="text-[18px]" strokeWidth={1.8} />
               <span className="mt-1 whitespace-nowrap leading-none">로그아웃</span>
@@ -187,10 +200,7 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
           ) : (
             <button
               onClick={() => {
-                navigate('/login', {
-                  state: { resetToLogin: true },
-                  replace: true,
-                });
+                navigate('/login?reset=1', { replace: true });
               }}
               className={utilityNavItemClass}
             >

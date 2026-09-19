@@ -1,5 +1,5 @@
 import { TbUser, TbUserFilled, TbStar, TbStarFilled } from 'react-icons/tb';
-import { NavLink } from 'react-router-dom';
+import { NavLink } from '@/lib/navigation';
 
 type MenuItem = {
   to: string;

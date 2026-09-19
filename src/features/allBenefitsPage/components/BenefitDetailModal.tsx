@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@/lib/navigation';
 import { TbExternalLink, TbMapPin, TbStar, TbStarFilled } from 'react-icons/tb';
 import Modal from '../../../components/DetailModal';
 import NoResult from '../../../components/NoResult';
