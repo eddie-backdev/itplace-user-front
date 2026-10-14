@@ -16,7 +16,16 @@ import {
 
 type SignUpFinalFormProps = {
   onGoToLogin: () => void;
-  phoneNumber: string;
+  onEmailVerificationExpired: () => void;
+  onValuesChange: (
+    data: Partial<{
+      nickname: string;
+      birthday: string;
+      gender: string;
+      carrier: string;
+      membershipGradeCode: string;
+    }>
+  ) => void;
   email: string;
   password: string;
   passwordConfirm: string;
@@ -29,7 +38,8 @@ type SignUpFinalFormProps = {
 
 const SignUpFinalForm = ({
   onGoToLogin,
-  phoneNumber,
+  onEmailVerificationExpired,
+  onValuesChange,
   email,
   password,
   passwordConfirm,
@@ -40,6 +50,7 @@ const SignUpFinalForm = ({
   initialMembershipGradeCode = '',
 }: SignUpFinalFormProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     gsap.fromTo(
@@ -61,6 +72,7 @@ const SignUpFinalForm = ({
 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData((previous) => ({ ...previous, [field]: value }));
+    onValuesChange({ [field]: field === 'birthday' ? birthDateInputToApiDate(value) : value });
 
     if (field === 'birthday') {
       validateField('birth', value, {
@@ -73,6 +85,8 @@ const SignUpFinalForm = ({
   };
 
   const handleNext = async () => {
+    if (isSubmitting) return;
+
     const isBirthValid = validateField('birth', formData.birthday, {
       email,
       password,
@@ -86,19 +100,22 @@ const SignUpFinalForm = ({
     }
 
     try {
+      setIsSubmitting(true);
       await signUpFinal({
         nickname: formData.nickname.trim(),
         email,
         password,
         passwordConfirm,
-        phoneNumber,
         gender: formData.gender,
         birthday: birthDateInputToApiDate(formData.birthday),
         carrier: formData.carrier,
         membershipGradeCode: formData.membershipGradeCode,
       });
 
-      showToast('회원가입이 완료되었습니다. 로그인 해주세요.', 'success');
+      showToast(
+        '회원가입이 완료되었습니다. 휴대폰 인증은 로그인 후 마이페이지에서 진행할 수 있어요.',
+        'success'
+      );
       setTimeout(() => onGoToLogin(), 0);
     } catch (error) {
       const axiosError = error as AxiosError<{ code: string; message: string }>;
@@ -113,11 +130,9 @@ const SignUpFinalForm = ({
           case 'DUPLICATE_EMAIL':
             message = '이미 사용 중인 이메일입니다.';
             break;
-          case 'DUPLICATE_PHONE_NUMBER':
-            message = '이미 가입된 휴대폰 번호입니다.';
-            break;
-          case 'SMS_VERIFICATION_FAILURE':
-            message = '휴대폰 인증이 만료되었습니다. 다시 인증해주세요.';
+          case 'EMAIL_VERIFICATION_FAILURE':
+            message = '이메일 인증이 만료되었습니다. 다시 인증해주세요.';
+            onEmailVerificationExpired();
             break;
           default:
             message = res.message || message;
@@ -125,11 +140,12 @@ const SignUpFinalForm = ({
       }
 
       showToast(message, 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const isProfileValid =
-    phoneNumber &&
     email &&
     password &&
     passwordConfirm &&
@@ -142,7 +158,7 @@ const SignUpFinalForm = ({
 
   return (
     <div ref={wrapperRef} className="flex w-full flex-col px-2 py-2">
-      <div className="mx-auto mb-5 w-[320px] text-left max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+      <div className="mx-auto mb-5 w-full max-w-[320px] text-left">
         <p className="text-body-3 font-semibold text-grey06 max-md:text-body-2">가입 정보</p>
         <p className="mt-2 text-body-5 text-grey04">혜택 추천에 필요한 정보를 입력해주세요.</p>
       </div>
@@ -160,10 +176,11 @@ const SignUpFinalForm = ({
           onChange={(value) => handleChange('birthday', value)}
         />
 
-        <div className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full flex gap-[14px]">
+        <div className="flex w-full max-w-[320px] gap-3">
           <button
             type="button"
-            className={`flex-1 h-[46px] max-lg:h-[34px] max-md:h-[46px] rounded-[16px] max-lg:rounded-[12px] border text-body-3 max-lg:text-body-4 transition ${
+            aria-pressed={formData.gender === 'MALE'}
+            className={`h-12 flex-1 rounded-xl border text-body-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
               formData.gender === 'MALE'
                 ? 'bg-purple04 text-white border-purple04'
                 : 'bg-white text-grey04 border-grey02'
@@ -174,7 +191,8 @@ const SignUpFinalForm = ({
           </button>
           <button
             type="button"
-            className={`flex-1 h-[46px] max-lg:h-[34px] max-md:h-[46px] rounded-[16px] max-lg:rounded-[12px] border text-body-3 max-lg:text-body-4 transition ${
+            aria-pressed={formData.gender === 'FEMALE'}
+            className={`h-12 flex-1 rounded-xl border text-body-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
               formData.gender === 'FEMALE'
                 ? 'bg-purple04 text-white border-purple04'
                 : 'bg-white text-grey04 border-grey02'
@@ -191,9 +209,8 @@ const SignUpFinalForm = ({
             membershipGradeCode={formData.membershipGradeCode}
             onCarrierChange={(carrier) => handleChange('carrier', carrier)}
             onGradeChange={(grade) => handleChange('membershipGradeCode', grade)}
-            gradeMenuPlacement="top"
           />
-          <p className="w-[320px] text-body-5 text-grey04 max-xl:w-[274px] max-lg:w-[205px] max-md:w-full">
+          <p className="w-full max-w-[320px] text-body-3 text-grey05">
             선택한 등급 기준으로 맞춤 혜택을 추천합니다.
           </p>
         </div>
@@ -201,9 +218,9 @@ const SignUpFinalForm = ({
 
       <div className="flex justify-center">
         <AuthButton
-          label="회원가입"
+          label={isSubmitting ? '가입 중...' : '회원가입'}
           onClick={() => void handleNext()}
-          variant={isProfileValid ? 'default' : 'disabled'}
+          variant={isProfileValid && !isSubmitting ? 'default' : 'disabled'}
           className="mt-[32px] max-md:mt-[28px] max-sm:mt-[28px]"
         />
       </div>

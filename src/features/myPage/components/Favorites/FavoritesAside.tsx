@@ -29,39 +29,15 @@ export default function FavoritesAside({
       </div>
     );
   }
-  // 찜한 혜택이 아예 없을 때
-  if (favorites.length === 0) {
-    return (
-      <>
-        <h1 className="text-title-2 text-black mb-4 text-center max-xl:text-title-4 max-xl:mb-4 max-xl:font-semibold max-xlg:text-left">
-          선택한 혜택
-        </h1>
-        <div className="flex flex-col items-center justify-center mt-20 max-xl:mt-10">
-          <img
-            src="/images/myPage/icon-nothing.webp"
-            alt="텅빈 찜 보관함"
-            className="w-[300px] h-auto max-xl:w-[260px] max-xlg:w-[160px]"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.onerror = null;
-              target.src = '/images/myPage/icon-nothing.png';
-            }}
-          />
-          <p className="text-grey05 text-body-0 mt-5 max-xl:text-body-1">
-            찜 보관함이 텅 비었어요!
-          </p>
-        </div>
-      </>
-    );
-  }
+  if (favorites.length === 0) return null;
 
   // 편집 모드일 때
   if (isEditing) {
     return (
       <FadeWrapper changeKey={selectedItems.length}>
-        <h1 className="text-title-2 text-black mb-4 text-center max-xl:text-title-4 max-xl:mb-4 max-xl:font-semibold max-xlg:text-left">
+        <h2 className="text-title-4 font-semibold text-ink mb-4 text-center max-xlg:text-left">
           선택한 혜택
-        </h1>
+        </h2>
         <div className="flex flex-col max-lg:flex-row items-center justify-center mt-7">
           <img
             src="/images/myPage/icon-file.webp"
@@ -89,9 +65,9 @@ export default function FavoritesAside({
     <FadeWrapper changeKey={selectedId}>
       {selectedId ? (
         <>
-          <h1 className="text-title-2 text-black mb-5 text-center max-xl:text-title-4 max-xl:mb-4 max-xl:font-semibold max-xlg:text-left">
+          <h2 className="text-title-4 font-semibold text-ink mb-4 text-center max-xlg:text-left">
             상세 혜택
-          </h1>
+          </h2>
           <BenefitDetailTabs
             benefitId={selectedId}
             image={favorites.find((f) => f.benefitId === selectedId)?.partnerImage ?? ''}

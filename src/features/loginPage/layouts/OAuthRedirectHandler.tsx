@@ -5,6 +5,7 @@ import { setLoginSuccess } from '../../../store/authSlice';
 import { kakaoOAuthLogin } from '../apis/auth';
 import { showToast } from '../../../utils/toast';
 import { storeOAuthPreAuth } from '../utils/oauthPreAuthStorage';
+import { clearOAuthReturnTo, consumeOAuthReturnTo } from '../utils/returnTo.mjs';
 
 const OAuthRedirectHandler = () => {
   const dispatch = useDispatch();
@@ -21,11 +22,13 @@ const OAuthRedirectHandler = () => {
       handledCallbackRef.current = callbackKey;
 
       if (error) {
+        clearOAuthReturnTo();
         navigate('/login', { replace: true });
         return;
       }
 
       if (!code) {
+        clearOAuthReturnTo();
         navigate('/login', { replace: true });
         return;
       }
@@ -44,6 +47,7 @@ const OAuthRedirectHandler = () => {
           const params = new URLSearchParams({
             step: 'oauthIntegration',
             verifiedType: 'oauth',
+            returnTo: consumeOAuthReturnTo(),
           });
           navigate(`/login?${params.toString()}`, { replace: true });
         } else if (responseCode === 'LOGIN_SUCCESS') {
@@ -64,11 +68,13 @@ const OAuthRedirectHandler = () => {
 
           // 로그인 성공 토스트
           showToast('로그인에 성공하셨습니다!', 'success');
-          navigate('/', { replace: true });
+          navigate(consumeOAuthReturnTo(), { replace: true });
         } else {
+          clearOAuthReturnTo();
           navigate('/login', { replace: true });
         }
       } catch {
+        clearOAuthReturnTo();
         navigate('/login', { replace: true });
       }
     };
@@ -76,7 +82,16 @@ const OAuthRedirectHandler = () => {
     handleKakaoCallback();
   }, [dispatch, navigate, searchParams]);
 
-  return <div>카카오 로그인 처리 중입니다...</div>;
+  return (
+    <main className="flex min-h-[100dvh] items-center justify-center bg-warmCanvas px-5 text-center">
+      <section className="w-full max-w-[440px] rounded-3xl border border-warmBorder bg-white px-8 py-12">
+        <h1 className="text-title-6 font-bold text-grey07">카카오 로그인 처리 중입니다</h1>
+        <p className="mt-2 text-body-3 leading-6 text-grey05">
+          계정 정보를 확인하고 있어요. 잠시만 기다려 주세요.
+        </p>
+      </section>
+    </main>
+  );
 };
 
 export default OAuthRedirectHandler;

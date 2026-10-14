@@ -4,6 +4,8 @@ export const BREAKPOINTS = {
   mobileMax: 767,
   tabletMax: 1023,
   laptopMax: 1535,
+  wideMin: 1600,
+  ultrawideMin: 2200,
 } as const;
 
 const createMediaQueryStore = (query: string) => ({
@@ -26,6 +28,8 @@ const laptopStore = createMediaQueryStore(
   `(min-width: ${BREAKPOINTS.tabletMax + 1}px) and (max-width: ${BREAKPOINTS.laptopMax}px)`
 );
 const desktopStore = createMediaQueryStore(`(min-width: ${BREAKPOINTS.laptopMax + 1}px)`);
+const wideStore = createMediaQueryStore(`(min-width: ${BREAKPOINTS.wideMin}px)`);
+const ultrawideStore = createMediaQueryStore(`(min-width: ${BREAKPOINTS.ultrawideMin}px)`);
 
 const useMediaQueryStore = (store: ReturnType<typeof createMediaQueryStore>) =>
   useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
@@ -35,6 +39,8 @@ export const useResponsive = () => {
   const isTablet = useMediaQueryStore(tabletStore);
   const isLaptop = useMediaQueryStore(laptopStore);
   const isDesktop = useMediaQueryStore(desktopStore);
+  const isWide = useMediaQueryStore(wideStore);
+  const isUltrawide = useMediaQueryStore(ultrawideStore);
 
-  return { isMobile, isTablet, isLaptop, isDesktop };
+  return { isMobile, isTablet, isLaptop, isDesktop, isWide, isUltrawide };
 };

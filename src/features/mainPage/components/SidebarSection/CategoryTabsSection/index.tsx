@@ -27,30 +27,12 @@ interface CategoryTabsSectionProps {
   showNavigationButtons?: boolean;
 }
 
-// 카테고리 색상 매핑
-const CATEGORY_COLOR_MAP: Record<string, string> = {
-  엑티비티: 'text-brand',
-  '뷰티/건강': 'text-brand',
-  쇼핑: 'text-brand',
-  '생활/편의': 'text-brand',
-  푸드: 'text-brand',
-  '문화/여가': 'text-brand',
-  교육: 'text-brand',
-  '여행/교통': 'text-brand',
-};
-
 const getCategoryIcon = (
   categoryId: string,
   isSelected: boolean
 ): React.ReactElement | undefined => {
-  const iconColor = isSelected ? 'text-white' : CATEGORY_COLOR_MAP[categoryId] || 'text-grey05';
-  const iconSize = isSelected
-    ? window.innerWidth < 768
-      ? 16
-      : 20
-    : window.innerWidth < 768
-      ? 14
-      : 20;
+  const iconColor = isSelected ? 'text-[#202120]' : 'text-[#69717e]';
+  const iconSize = 18;
 
   const iconMap: Record<string, React.ReactElement> = {
     엑티비티: <TbBuildingCarousel size={iconSize} className={iconColor} />,
@@ -79,11 +61,10 @@ const CategoryTabsSection: React.FC<CategoryTabsSectionProps> = ({
     const isSidebarMode = mode === 'sidebar';
 
     return {
-      container: `flex items-center ${isSidebarMode ? 'gap-2' : 'gap-3'} overflow-x-auto scrollbar-hide`,
-      button: `select-none flex-shrink-0 flex items-center justify-center gap-1.5 border font-bold transition-colors duration-200 ${
+      button: `select-none flex-shrink-0 flex items-center justify-center gap-1.5 border font-semibold transition-colors duration-200 ${
         isSidebarMode
-          ? `h-9 rounded-full px-3 text-body-3 max-sm:h-8 max-sm:px-3 max-sm:text-body-4`
-          : `h-11 rounded-xl px-5 text-body-3 shadow-[0_3px_12px_rgba(36,35,33,0.08)] max-xl:h-10 max-xl:px-4 max-sm:h-9 max-sm:px-3 max-sm:text-body-4`
+          ? `h-9 rounded-full px-3 text-body-3 max-md:min-h-11 max-sm:px-3 max-sm:text-body-4`
+          : `h-11 rounded-[10px] px-3 text-body-3 max-sm:px-3 max-sm:text-body-4`
       }`,
       showIcon: isMapMode, // 맵 모드에서만 아이콘 표시
     };
@@ -107,8 +88,8 @@ const CategoryTabsSection: React.FC<CategoryTabsSectionProps> = ({
       <div
         className={
           mode === 'map'
-            ? 'h-14 px-0 py-1 max-md:h-12 max-sm:h-11'
-            : 'h-12 px-0 max-md:mx-4 max-md:h-10 max-md:w-auto max-md:overflow-visible max-sm:mx-3'
+            ? 'h-11 w-max min-w-0 max-w-full px-0 py-0'
+            : 'h-12 px-0 max-md:mx-4 max-md:h-11 max-md:w-auto max-md:overflow-visible max-sm:mx-3'
         }
       >
         <Swiper
@@ -116,36 +97,30 @@ const CategoryTabsSection: React.FC<CategoryTabsSectionProps> = ({
             swiperRef.current = swiper;
           }}
           modules={[FreeMode]}
-          spaceBetween={
-            mode === 'sidebar'
-              ? window.innerWidth < 640
-                ? 12
-                : window.innerWidth < 768
-                  ? 14
-                  : 8
-              : window.innerWidth < 640
-                ? 6
-                : window.innerWidth < 768
-                  ? 8
-                  : 12
-          }
+          spaceBetween={8}
           slidesPerView="auto"
           freeMode={true}
           grabCursor={true}
-          className={`category-tabs-swiper ${mode === 'map' ? 'h-12 max-md:h-11 max-sm:h-10' : 'h-11 max-md:h-10'}`}
+          className={`category-tabs-swiper min-w-0 ${mode === 'map' ? 'h-11 w-max max-w-full' : 'h-11 max-md:h-11'}`}
         >
           {categories.map((category) => (
             <SwiperSlide key={category.id} style={{ width: 'auto' }}>
               <button
+                type="button"
                 onClick={() => onCategorySelect(category.id)}
+                aria-pressed={selectedCategory === category.id}
                 className={`${styles.button} ${
                   selectedCategory === category.id
-                    ? 'border-brand bg-brand text-white'
-                    : 'border-warmBorder bg-warmSurface text-grey06 hover:border-brand/30 hover:bg-brandSoft'
-                }`}
+                    ? mode === 'map'
+                      ? 'border-[#e6e6e3] bg-[#f1f1ee] text-[#202120]'
+                      : 'border-brand bg-brand text-white'
+                    : mode === 'map'
+                      ? 'border-transparent bg-white text-[#69717e] hover:bg-[#f6f7fa] hover:text-[#202120]'
+                      : 'border-warmBorder bg-warmSurface text-grey06 hover:border-brand/30 hover:bg-brandSoft'
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]`}
               >
                 {styles.showIcon && category.id !== '전체' && (
-                  <span className="flex-shrink-0">
+                  <span className="flex-shrink-0 [&_svg]:h-[18px] [&_svg]:w-[18px]">
                     {getCategoryIcon(category.id, selectedCategory === category.id)}
                   </span>
                 )}
@@ -160,16 +135,18 @@ const CategoryTabsSection: React.FC<CategoryTabsSectionProps> = ({
       {showNavigationButtons && (
         <div className="flex justify-end items-center gap-1 -mt-2 px-2 max-md:px-4 max-sm:px-3">
           <button
+            type="button"
             onClick={handlePrevSlide}
-            className="p-1 transition-all duration-200 hover:scale-110 active:scale-95"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="이전 카테고리"
           >
             <TbChevronLeft className="h-5 w-5 text-brand hover:text-brandStrong max-md:h-4 max-md:w-4 max-sm:h-3 max-sm:w-3" />
           </button>
 
           <button
+            type="button"
             onClick={handleNextSlide}
-            className="p-1 transition-all duration-200 hover:scale-110 active:scale-95"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="다음 카테고리"
           >
             <TbChevronRight className="h-5 w-5 text-brand hover:text-brandStrong max-md:h-4 max-md:w-4 max-sm:h-3 max-sm:w-3" />

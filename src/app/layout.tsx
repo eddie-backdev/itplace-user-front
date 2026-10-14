@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 import JsonLd from '@/components/JsonLd';
 import AppProviders from './AppProviders';
@@ -87,7 +86,7 @@ const websiteStructuredData = {
       inLanguage: 'ko-KR',
       potentialAction: {
         '@type': 'SearchAction',
-        target: `${SITE_ORIGIN}/map?search={search_term_string}`,
+        target: `${SITE_ORIGIN}/benefits?q={search_term_string}`,
         'query-input': 'required name=search_term_string',
       },
     },
@@ -112,30 +111,9 @@ const websiteStructuredData = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
-      {process.env.NODE_ENV === 'production' ? (
-        <head>
-          <script
-            async
-            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4461526272501765"
-            crossOrigin="anonymous"
-          />
-        </head>
-      ) : null}
       <body>
         <AppProviders>{children}</AppProviders>
         <JsonLd data={websiteStructuredData} />
-        <noscript>
-          <main>
-            <h1>잇플레이스 통신사 멤버십 혜택 검색</h1>
-            <p>{description}</p>
-            <nav aria-label="주요 페이지">
-              <Link href="/map">지도</Link>
-              <Link href="/benefits">전체 혜택</Link>
-              <Link href="/membership">통신사 멤버십</Link>
-              <Link href="/guide">이용 가이드</Link>
-            </nav>
-          </main>
-        </noscript>
       </body>
     </html>
   );

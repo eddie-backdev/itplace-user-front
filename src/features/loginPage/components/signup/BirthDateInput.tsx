@@ -14,6 +14,7 @@ type DateInputButtonProps = {
   value?: string;
   onClick?: () => void;
   placeholder?: string;
+  id?: string;
 };
 
 const START_YEAR = 1900;
@@ -22,13 +23,15 @@ const KOREAN_MONTHS = Array.from({ length: 12 }, (_, index) => `${index + 1}월`
 registerLocale('ko', ko);
 
 const DateInputButton = forwardRef<HTMLButtonElement, DateInputButtonProps>(
-  ({ value, onClick, placeholder }, ref) => (
+  ({ value, onClick, placeholder, id }, ref) => (
     <button
+      id={id}
       ref={ref}
       type="button"
       onClick={onClick}
-      className={`h-[52px] w-[320px] rounded-[18px] border bg-white px-4 text-left text-body-2 font-semibold shadow-[0_8px_20px_rgba(16,17,20,0.04)] transition hover:border-purple02 hover:bg-purple01/20 focus:border-purple04 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple01 max-xl:h-[46px] max-xl:w-[274px] max-xl:text-body-3 max-lg:h-[38px] max-lg:w-[205px] max-lg:rounded-[12px] max-lg:px-3 max-lg:text-body-4 max-md:h-[50px] max-md:w-full max-md:rounded-[16px] max-md:px-4 max-md:text-body-3 max-sm:h-[50px] max-sm:w-full ${
-        value ? 'border-grey02 text-grey06' : 'border-grey02 text-grey03'
+      aria-label={value ? `생년월일 ${value}` : '생년월일 선택'}
+      className={`h-12 w-full rounded-xl border bg-white px-4 text-left text-body-2 font-semibold transition hover:border-brand focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 ${
+        value ? 'border-grey02 text-grey06' : 'border-grey02 text-grey05'
       }`}
     >
       {value || placeholder}
@@ -52,81 +55,88 @@ const getYears = () => {
 
 export default function BirthDateInput({ value, onChange, name = 'birth' }: BirthDateInputProps) {
   return (
-    <DatePicker
-      name={name}
-      selected={parseBirthDateInput(value)}
-      onChange={(date) => {
-        if (date) {
-          onChange(formatDateToBirthInput(date));
-        }
-      }}
-      customInput={<DateInputButton />}
-      dateFormat="yyyy.MM.dd"
-      placeholderText="생년월일"
-      locale="ko"
-      calendarStartDay={0}
-      minDate={new Date('1900-01-01T00:00:00')}
-      maxDate={getYesterday()}
-      popperPlacement="bottom-start"
-      calendarClassName="itplace-birth-datepicker"
-      shouldCloseOnSelect
-      renderCustomHeader={({
-        date,
-        changeYear,
-        changeMonth,
-        decreaseMonth,
-        increaseMonth,
-        prevMonthButtonDisabled,
-        nextMonthButtonDisabled,
-      }) => (
-        <div className="itplace-birth-datepicker__header-row">
-          <select
-            aria-label="연도 선택"
-            className="itplace-birth-datepicker__select itplace-birth-datepicker__year-select"
-            value={date.getFullYear()}
-            onChange={(event) => changeYear(Number(event.target.value))}
-          >
-            {getYears().map((year) => (
-              <option key={year} value={year}>
-                {year}년
-              </option>
-            ))}
-          </select>
-
-          <div className="itplace-birth-datepicker__month-control">
-            <button
-              type="button"
-              aria-label="이전 달"
-              className="itplace-birth-datepicker__nav-button"
-              onClick={decreaseMonth}
-              disabled={prevMonthButtonDisabled}
-            >
-              ‹
-            </button>
+    <div className="w-full max-w-[320px]">
+      <label htmlFor={name} className="mb-1.5 block text-body-3 font-semibold text-grey06">
+        생년월일
+      </label>
+      <DatePicker
+        id={name}
+        name={name}
+        wrapperClassName="w-full"
+        selected={parseBirthDateInput(value)}
+        onChange={(date) => {
+          if (date) {
+            onChange(formatDateToBirthInput(date));
+          }
+        }}
+        customInput={<DateInputButton />}
+        dateFormat="yyyy.MM.dd"
+        placeholderText="생년월일"
+        locale="ko"
+        calendarStartDay={0}
+        minDate={new Date('1900-01-01T00:00:00')}
+        maxDate={getYesterday()}
+        popperPlacement="bottom-start"
+        calendarClassName="itplace-birth-datepicker"
+        shouldCloseOnSelect
+        renderCustomHeader={({
+          date,
+          changeYear,
+          changeMonth,
+          decreaseMonth,
+          increaseMonth,
+          prevMonthButtonDisabled,
+          nextMonthButtonDisabled,
+        }) => (
+          <div className="itplace-birth-datepicker__header-row">
             <select
-              aria-label="월 선택"
-              className="itplace-birth-datepicker__select itplace-birth-datepicker__month-select"
-              value={date.getMonth()}
-              onChange={(event) => changeMonth(Number(event.target.value))}
+              aria-label="연도 선택"
+              className="itplace-birth-datepicker__select itplace-birth-datepicker__year-select"
+              value={date.getFullYear()}
+              onChange={(event) => changeYear(Number(event.target.value))}
             >
-              {KOREAN_MONTHS.map((month, index) => (
-                <option key={month} value={index}>
-                  {month}
+              {getYears().map((year) => (
+                <option key={year} value={year}>
+                  {year}년
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              aria-label="다음 달"
-              className="itplace-birth-datepicker__nav-button"
-              onClick={increaseMonth}
-              disabled={nextMonthButtonDisabled}
-            >
-              ›
-            </button>
+
+            <div className="itplace-birth-datepicker__month-control">
+              <button
+                type="button"
+                aria-label="이전 달"
+                className="itplace-birth-datepicker__nav-button"
+                onClick={decreaseMonth}
+                disabled={prevMonthButtonDisabled}
+              >
+                ‹
+              </button>
+              <select
+                aria-label="월 선택"
+                className="itplace-birth-datepicker__select itplace-birth-datepicker__month-select"
+                value={date.getMonth()}
+                onChange={(event) => changeMonth(Number(event.target.value))}
+              >
+                {KOREAN_MONTHS.map((month, index) => (
+                  <option key={month} value={index}>
+                    {month}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                aria-label="다음 달"
+                className="itplace-birth-datepicker__nav-button"
+                onClick={increaseMonth}
+                disabled={nextMonthButtonDisabled}
+              >
+                ›
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    />
+        )}
+      />
+    </div>
   );
 }

@@ -112,15 +112,15 @@ const SearchSection: React.FC<SearchSectionProps> = React.memo(
     );
 
     return (
-      <div className="mb-4 w-full max-md:mb-0 max-md:flex max-md:items-center">
+      <div className="w-full">
         <form onSubmit={handleSearchSubmit} className="w-full">
           <SearchBar
-            placeholder="장소 · 브랜드 검색"
+            placeholder="매장·혜택 검색"
             value={searchQuery}
             onChange={handleSearchChange}
             onClear={handleSearchClear}
-            backgroundColor="bg-warmSurface"
-            className="h-12 w-full max-md:h-11"
+            backgroundColor="bg-white"
+            className="h-11 w-full rounded-[10px] shadow-none focus-within:!ring-[#0066cc]/30 [&>input:focus]:!border-[#0066cc]/40 [&>button]:right-0 [&>button]:top-0 [&>button]:h-11 [&>button]:w-11 [&>button]:translate-y-0 [&>button]:p-0 [&>button]:focus-visible:!ring-[#0066cc]"
             onKeyDown={handleKeyDown}
             onCompositionStart={handleCompositionStart}
             onCompositionEnd={handleCompositionEnd}

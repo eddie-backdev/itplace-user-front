@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { BREAKPOINTS, useResponsive } from '@/hooks/useResponsive';
 import {
   KAKAO_MAP_ERROR_EVENT,
   KAKAO_MAP_LOAD_TIMEOUT_MS,
@@ -12,18 +11,19 @@ import {
 
 const SCRIPT_ID = 'itplace-kakao-map-sdk';
 
-export default function KakaoMapScript() {
+interface KakaoMapScriptProps {
+  enabled?: boolean;
+}
+
+export default function KakaoMapScript({ enabled = false }: KakaoMapScriptProps) {
   const pathname = usePathname();
-  const { isMobile } = useResponsive();
 
   useEffect(() => {
-    if (pathname !== '/' && pathname !== '/map') return;
-    // Read the actual viewport before hydration finishes restoring media-query state.
-    if (pathname === '/' && window.matchMedia(`(max-width: ${BREAKPOINTS.mobileMax}px)`).matches)
-      return;
+    if (!enabled && pathname !== '/map') return;
 
     const key = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY?.trim();
     const loadTimeoutRef: { current?: number } = {};
+    let isActive = true;
 
     const clearLoadTimeout = () => {
       if (loadTimeoutRef.current !== undefined) {
@@ -33,11 +33,13 @@ export default function KakaoMapScript() {
     };
 
     const notifyError = () => {
+      if (!isActive) return;
       clearLoadTimeout();
       setKakaoMapSdkStatus('error');
       window.dispatchEvent(new Event(KAKAO_MAP_ERROR_EVENT));
     };
     const notifyReady = () => {
+      if (!isActive) return;
       clearLoadTimeout();
       if (
         typeof window.kakao?.maps?.Map !== 'function' ||
@@ -61,25 +63,37 @@ export default function KakaoMapScript() {
       else notifyReady();
     };
 
-    const handleScriptError = () => notifyError();
+    const handleScriptError = (script: HTMLScriptElement) => {
+      notifyError();
+      script.remove();
+    };
+    const ensureFailedScriptCleanup = (script: HTMLScriptElement) => {
+      if (script.dataset.retryCleanup) return;
+      script.dataset.retryCleanup = 'true';
+      script.addEventListener('error', () => script.remove(), { once: true });
+    };
     setKakaoMapSdkStatus('loading');
     loadTimeoutRef.current = window.setTimeout(notifyError, KAKAO_MAP_LOAD_TIMEOUT_MS);
 
     if (window.kakao?.maps) {
       initialize();
       return () => {
+        isActive = false;
         clearLoadTimeout();
       };
     }
 
     const existingScript = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     if (existingScript) {
+      ensureFailedScriptCleanup(existingScript);
       existingScript.addEventListener('load', initialize, { once: true });
-      existingScript.addEventListener('error', handleScriptError, { once: true });
+      const onError = () => handleScriptError(existingScript);
+      existingScript.addEventListener('error', onError, { once: true });
       return () => {
+        isActive = false;
         clearLoadTimeout();
         existingScript.removeEventListener('load', initialize);
-        existingScript.removeEventListener('error', handleScriptError);
+        existingScript.removeEventListener('error', onError);
       };
     }
 
@@ -87,16 +101,19 @@ export default function KakaoMapScript() {
     script.id = SCRIPT_ID;
     script.async = true;
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(key)}&autoload=false`;
+    ensureFailedScriptCleanup(script);
     script.addEventListener('load', initialize, { once: true });
-    script.addEventListener('error', handleScriptError, { once: true });
+    const onError = () => handleScriptError(script);
+    script.addEventListener('error', onError, { once: true });
     document.head.appendChild(script);
 
     return () => {
+      isActive = false;
       clearLoadTimeout();
       script.removeEventListener('load', initialize);
-      script.removeEventListener('error', handleScriptError);
+      script.removeEventListener('error', onError);
     };
-  }, [pathname, isMobile]);
+  }, [enabled, pathname]);
 
   return null;
 }

@@ -381,9 +381,9 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) 
   };
 
   return (
-    <div className="w-full bg-white rounded-t-[20px] shadow-lg flex flex-col h-full overflow-hidden max-md:bg-none max-md:shadow-none max-md:rounded-t-[15px]">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-white max-md:rounded-t-[15px]">
       {/* 상세 내용 전체를 하나의 흰색 스크롤 영역으로 묶어 긴 혜택 문구가 푸터/하단 배경을 침범하지 않게 한다. */}
-      <div className="flex-1 min-h-0 overflow-y-auto bg-white px-6 pt-6 pb-6 max-md:px-4 max-md:pt-4 max-md:pb-28">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-white px-5 pt-3 pb-6 max-md:px-4 max-md:pt-3 max-md:pb-28">
         <StoreDetailHeader
           platform={platform}
           imageUrl={detailData?.data?.image}
@@ -394,6 +394,7 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) 
           roadAddress={platform.roadAddress}
           address={platform.address}
           postCode={platform.postCode}
+          distance={platform.distance}
         />
         <StoreDetailBenefits
           platform={platform}
@@ -404,8 +405,8 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) 
         />
 
         {isLoading && !hasLocalBenefitDetails ? (
-          <div className="flex justify-center items-center h-40">
-            <LoadingSpinner className="h-12 w-12 border-4 border-purple04 border-t-transparent" />
+          <div className="flex h-40 items-center justify-center">
+            <LoadingSpinner className="h-12 w-12 border-4 border-[#0066cc] border-t-transparent" />
           </div>
         ) : detailData ? (
           <StoreDetailUsageGuide detailData={detailData} />
@@ -413,7 +414,7 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) 
       </div>
 
       {/* 고정 버튼 */}
-      <div className="relative z-10 flex-shrink-0 border-t border-grey02 bg-white px-6 pt-3 pb-2 max-md:px-4 max-md:pb-2">
+      <div className="relative z-10 flex-shrink-0 border-t border-[#e6e6e3] bg-white px-5 pt-3 pb-2 max-md:px-4 max-md:pb-2">
         <StoreDetailActionButton
           benefitId={selectedCarrierBenefitId}
           isFavorite={activeIsFavorite}

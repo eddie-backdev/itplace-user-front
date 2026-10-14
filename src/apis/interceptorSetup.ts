@@ -5,6 +5,7 @@ import { store } from '../store';
 import { logout } from '../store/authSlice';
 import { persistor } from '../store';
 import { clearCsrfToken, isUnsafeMethod } from './csrf';
+import { getLoginHref } from '../features/loginPage/utils/returnTo.mjs';
 
 // 토큰 갱신 중인지 추적하는 플래그
 let isRefreshing = false;
@@ -29,12 +30,13 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 };
 
 // 로그아웃 처리 함수
-const handleLogout = () => {
+const handleLogout = async () => {
   clearCsrfToken();
   store.dispatch(logout());
   // redux-persist 초기화
-  persistor.purge();
-  window.location.replace('/login?reset=1');
+  const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  await persistor.purge().catch(() => undefined);
+  window.location.replace(getLoginHref(returnTo));
 };
 
 // Interceptor 설정 함수
@@ -96,7 +98,7 @@ export const setupInterceptors = () => {
         } catch (refreshError) {
           // 토큰 갱신 실패 시 로그아웃 처리
           processQueue(refreshError as AxiosError, null);
-          handleLogout();
+          await handleLogout();
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;

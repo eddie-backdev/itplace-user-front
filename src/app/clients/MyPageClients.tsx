@@ -18,6 +18,11 @@ export const MyFavoritesPageClient = dynamic(() => import('@/screens/myPage/MyFa
   loading,
 });
 
+export const MyBenefitActivityPageClient = dynamic(
+  () => import('@/screens/myPage/MyBenefitActivityPage'),
+  { ssr: false, loading }
+);
+
 export function MyPageShell({ children }: { children: ReactNode }) {
   return (
     <AuthPersistenceGate>

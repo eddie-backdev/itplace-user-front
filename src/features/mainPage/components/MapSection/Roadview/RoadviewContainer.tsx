@@ -28,6 +28,7 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
 
   // 오버레이 관리용 ref 추가
   const currentOverlaysRef = useRef<KakaoCustomOverlay[]>([]);
+  const overlayRequestVersionRef = useRef(0);
 
   // selectedPlatform이 변경되면 selectedStoreId 업데이트
   useEffect(() => {
@@ -47,14 +48,14 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
         if (markerElement) {
           const storeId = parseInt(markerElement.getAttribute('data-store-id') || '0');
           const isSelected = newSelectedStoreId === storeId;
-          const accentColor = isSelected ? '#115C3A' : '#4EA77A';
+          const accentColor = isSelected ? '#0066CC' : '#A3ABB5';
           const markerName = markerElement.getAttribute('title') || '가맹점';
 
           overlay.setZIndex(isSelected ? 1000 : 1);
           markerElement.style.zIndex = isSelected ? '1000' : '1';
           markerElement.style.filter = isSelected
-            ? 'drop-shadow(0 5px 9px rgba(17, 92, 58, 0.32))'
-            : 'drop-shadow(1px 3px 5px rgba(36, 35, 33, 0.20))';
+            ? 'drop-shadow(0 5px 9px rgba(0, 102, 204, 0.20))'
+            : 'none';
           markerElement.style.transform = isSelected ? 'scale(1.06)' : 'none';
           markerElement.setAttribute(
             'aria-label',
@@ -92,6 +93,7 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
   >(null);
 
   updateRoadviewOverlaysRef.current = async (lat: number, lng: number, roadview: KakaoRoadview) => {
+    const requestVersion = ++overlayRequestVersionRef.current;
     try {
       // 사용자 현재 위치 가져오기
       let userLat: number | undefined;
@@ -105,6 +107,13 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
         // 사용자 위치를 가져올 수 없으면 undefined로 API 호출
       }
 
+      if (
+        roadviewObjRef.current !== roadview ||
+        overlayRequestVersionRef.current !== requestVersion
+      ) {
+        return;
+      }
+
       const response = await getStoreList({
         lat,
         lng,
@@ -112,6 +121,13 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
         userLat,
         userLng,
       });
+
+      if (
+        roadviewObjRef.current !== roadview ||
+        overlayRequestVersionRef.current !== requestVersion
+      ) {
+        return;
+      }
 
       // 기존 오버레이 제거
       currentOverlaysRef.current.forEach((overlay) => overlay.setMap(null));
@@ -156,18 +172,32 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
             updateMarkerSelection(newSelectedStoreId); // 즉시 시각적 업데이트
 
             const platformStore: Platform = {
+              id: `${storeInfo.storeId}-${partnerInfo.partnerId}`,
               storeId: storeInfo.storeId,
               partnerId: partnerInfo.partnerId,
+              partnerName: partnerInfo.partnerName,
               name: storeInfo.storeName,
+              category: partnerInfo.category,
               latitude: storeInfo.latitude,
               longitude: storeInfo.longitude,
               imageUrl: partnerInfo.image,
               business: storeInfo.business,
               city: storeInfo.city,
               town: storeInfo.town,
+              legalDong: storeInfo.legalDong,
               address: storeInfo.address,
+              roadName: storeInfo.roadName,
               roadAddress: storeInfo.roadAddress,
-            } as Platform;
+              postCode: storeInfo.postCode,
+              carrier: storeData.carrier,
+              benefits: storeData.tierBenefit.map(
+                (benefit) => `${benefit.grade}: ${benefit.context}`
+              ),
+              benefitDetails: storeData.tierBenefit,
+              rating: 0,
+              distance,
+              hasCoupon: storeInfo.hasCoupon,
+            };
 
             onPlatformSelectRef.current?.(platformStore);
           }
@@ -192,23 +222,67 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
 
   // 로드뷰 초기화
   useEffect(() => {
-    if (!clickedLatLng || !roadviewRef.current) return;
+    const host = roadviewRef.current;
+    if (!clickedLatLng || !host) return;
 
     const { lat, lng } = clickedLatLng;
+    let isActive = true;
+    let relayoutFrame: number | null = null;
+    let relayoutTimer: ReturnType<typeof setTimeout> | null = null;
+    let overlayTimer: ReturnType<typeof setTimeout> | null = null;
     const roadviewClient = new window.kakao.maps.RoadviewClient();
-    const roadview = new window.kakao.maps.Roadview(roadviewRef.current);
+    const roadview = new window.kakao.maps.Roadview(host);
+    const eventHandlers: Array<{ type: string; handler: (...args: unknown[]) => void }> = [];
 
     roadviewObjRef.current = roadview;
+
+    const listen = (type: string, handler: (...args: unknown[]) => void) => {
+      window.kakao.maps.event.addListener(roadview, type, handler);
+      eventHandlers.push({ type, handler });
+    };
+
+    const relayout = () => {
+      if (!isActive || !roadview.relayout) return;
+      const { width, height } = host.getBoundingClientRect();
+      if (width > 0 && height > 0) roadview.relayout();
+    };
+
+    const scheduleRelayout = () => {
+      if (relayoutTimer) clearTimeout(relayoutTimer);
+      relayoutTimer = setTimeout(relayout, 150);
+    };
+
+    const scheduleResizeRelayout = () => {
+      if (relayoutFrame !== null) return;
+      relayoutFrame = requestAnimationFrame(() => {
+        relayoutFrame = null;
+        relayout();
+      });
+    };
+
+    const resizeObserver = new ResizeObserver(scheduleResizeRelayout);
+    resizeObserver.observe(host);
+    scheduleRelayout();
+
+    listen('init', relayout);
+    listen('position_changed', () => {
+      if (!isActive) return;
+      const pos = roadview.getPosition();
+      updateRoadviewOverlaysRef.current?.(pos.getLat(), pos.getLng(), roadview);
+    });
 
     // 클릭한 위치 근처의 로드뷰 파노라마 ID 검색
     const latLng = new window.kakao.maps.LatLng(lat, lng);
     roadviewClient.getNearestPanoId(latLng, 50, (panoId: string | null) => {
+      if (!isActive || roadviewObjRef.current !== roadview) return;
+
       if (panoId) {
         roadview.setPanoId(panoId, latLng);
+        scheduleRelayout();
 
         // 로드뷰 로드 후 초기 오버레이 업데이트
-        setTimeout(() => {
-          updateRoadviewOverlaysRef.current?.(lat, lng, roadview);
+        overlayTimer = setTimeout(() => {
+          if (isActive) updateRoadviewOverlaysRef.current?.(lat, lng, roadview);
         }, 500);
       } else {
         showToast('해당 위치에 로드뷰가 없습니다.', 'info');
@@ -216,55 +290,43 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
       }
     });
 
-    // 로드뷰 위치 변경 시마다 오버레이 갱신
-    window.kakao.maps.event.addListener(roadview, 'position_changed', () => {
-      const pos = roadview.getPosition();
-      updateRoadviewOverlaysRef.current?.(pos.getLat(), pos.getLng(), roadview);
-    });
-
     return () => {
+      isActive = false;
+      overlayRequestVersionRef.current += 1;
+      resizeObserver.disconnect();
+      if (relayoutFrame !== null) cancelAnimationFrame(relayoutFrame);
+      if (relayoutTimer) clearTimeout(relayoutTimer);
+      if (overlayTimer) clearTimeout(overlayTimer);
+      eventHandlers.forEach(({ type, handler }) => {
+        window.kakao.maps.event.removeListener?.(roadview, type, handler);
+      });
       // 오버레이 정리
       currentOverlaysRef.current.forEach((overlay) => overlay.setMap(null));
       currentOverlaysRef.current = [];
-      roadviewObjRef.current = null;
+      if (roadviewObjRef.current === roadview) roadviewObjRef.current = null;
+      host.replaceChildren();
     };
   }, [clickedLatLng]);
 
   return (
-    <div className="absolute inset-0 z-[20]">
-      {/* 키프레임 애니메이션 정의 */}
-      <style>
-        {`
-          @keyframes bounceScale {
-            0%, 100% { transform: scale(1.2) translateY(0px); }
-            50% { transform: scale(1.2) translateY(-8px); }
-          }
-          
-          /* 모바일에서 카카오 로드뷰 기본 컨트롤 숨기기 */
-          @media (max-width: 768px) {
-            button[id*="_zoomout_button_"],
-            button[id*="_zoomin_button_"],
-            button[id*="_compass_button_"],
-            div[id*="bundlewrap"],
-            div[id*="_box_util_903"],
-            .bundlewrap,
-            [class*="bundlewrap_904"] {
-              display: none !important;
-            }
-          }
-        `}
-      </style>
-
+    <div className="absolute inset-x-0 top-0 bottom-0 z-[20] max-md:bottom-[var(--itplace-mobile-tab-bar-offset,64px)]">
       {/* 로드뷰 */}
-      <div ref={roadviewRef} className="w-full h-full rounded-[18px]" />
+      <div ref={roadviewRef} className="h-full w-full" />
 
       {/* 로드뷰 닫기 버튼 */}
-      <button
-        onClick={() => onCloseRef.current()}
-        className="absolute top-4 right-4 max-md:top-[60px] max-md:px-3 max-md:py-1.5 max-md:text-xs z-[1001] bg-black/70 text-white px-4 py-2 rounded-lg hover:bg-black/80 transition-colors"
-      >
-        돌아가기
-      </button>
+      <div className="absolute left-4 right-4 top-4 z-[1001] flex items-center justify-between gap-3 max-md:left-3 max-md:right-3 max-md:top-[calc(env(safe-area-inset-top)+12px)]">
+        <h2 className="rounded-xl border border-[#e6e6e3] bg-white px-3 py-2 text-sm font-semibold text-[#202120] shadow-[var(--itplace-shadow-card)]">
+          로드뷰
+        </h2>
+        <button
+          onClick={() => onCloseRef.current()}
+          type="button"
+          aria-label="로드뷰 닫고 지도로 돌아가기"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e6e6e3] bg-white px-4 text-sm font-semibold text-[#202120] shadow-[var(--itplace-shadow-card)] transition-colors hover:bg-[#f1f1ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
+        >
+          지도 화면으로 돌아가기
+        </button>
+      </div>
     </div>
   );
 };

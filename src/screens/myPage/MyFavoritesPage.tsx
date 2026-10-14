@@ -13,6 +13,7 @@ import { RootState } from '../../store';
 import BenefitDetailTabs from '../../features/myPage/components/Favorites/BenefitDetailTabs';
 import { useResponsive } from '../../hooks/useResponsive';
 import DetailModal from '../../components/DetailModal';
+import { Link } from '@/lib/navigation';
 
 export default function MyFavoritesPage() {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -23,6 +24,7 @@ export default function MyFavoritesPage() {
   const {
     loading,
     loadError,
+    membershipFilterError,
     allFavorites,
     totalElements,
     currentItems,
@@ -54,37 +56,55 @@ export default function MyFavoritesPage() {
       : allFavorites.find((favorite) => favorite.benefitId === selectedId);
 
   return (
-    <div className="flex h-[640px] flex-row items-stretch gap-4 w-full max-lg:h-auto max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-3">
+    <div className="flex w-full min-w-0 flex-1 items-stretch gap-4 max-lg:flex-col max-md:px-4 max-md:pb-8 max-md:pt-4">
       <MyPageContentLayout
-        // ✨ MainContent 영역
-
         main={
-          <div
-            className={`flex min-h-0 flex-1 flex-col ${isMobile && isEditing ? 'pb-[80px]' : ''}`}
-          >
-            {/* 상단 타이틀 */}
-            <div className="mb-4 max-md:hidden">
-              <p className="text-body-3-bold text-purple03">FAVORITES</p>
-              <h1 className="mt-1 text-title-4 font-semibold text-black">관심 혜택</h1>
-            </div>
-            {/* 토글 + 검색 */}
-            <div className="flex justify-between mb-2 gap-2 max-md:flex-col max-md:-mt-8">
+          <div className={`flex min-w-0 flex-1 flex-col ${isMobile && isEditing ? 'pb-20' : ''}`}>
+            <header className="mb-5">
+              <h1 className="text-title-4 font-bold tracking-tight text-ink max-md:text-title-5">
+                관심 혜택
+              </h1>
+              <p className="mt-1.5 text-sm leading-6 text-warmMuted">
+                저장한 혜택을 다시 찾고, 사용 기록까지 이어가세요.
+              </p>
+            </header>
+            <div className="mb-3 flex flex-wrap items-center gap-3 max-md:flex-col max-md:items-stretch">
               <BenefitFilterToggle
                 value={benefitFilter}
                 onChange={setBenefitFilter}
-                width="w-[240px] max-xl:w-[210px] max-xlg:w-[200px] max-md:w-full"
-                fontSize="text-title-7 max-xl:text-body-3"
+                width="w-full sm:w-[240px]"
+                heightClass="min-h-11"
+                className="!mb-0"
+                fontSize="text-sm"
                 disabledMyMembership={!hasMembershipProfile}
               />
               <SearchBar
-                placeholder="제휴처명으로 검색하기"
+                placeholder="브랜드 또는 혜택 검색"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 onClear={() => setKeyword('')}
-                backgroundColor="bg-grey01"
-                className="w-[240px] h-[44px] max-xl:w-[210px] max-xl:h-[42px] max-lg:w-[210px] max-md:w-full max-md:-mt-2"
+                backgroundColor="bg-white"
+                className="h-11 w-full sm:max-w-[320px]"
               />
             </div>
+            {benefitFilter === 'myMembership' &&
+              membershipFilterError &&
+              !loading &&
+              !loadError && (
+                <div
+                  role="status"
+                  className="mb-3 rounded-lg border border-brandSoft bg-brandSoft/50 px-3 py-2 text-sm leading-6 text-grey06"
+                >
+                  일부 혜택의 멤버십 조건을 확인하지 못해 저장한 혜택도 함께 표시하고 있어요.
+                  <button
+                    type="button"
+                    onClick={() => void reloadFavorites()}
+                    className="ml-2 min-h-11 font-semibold text-brandStrong underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+                  >
+                    다시 확인
+                  </button>
+                </div>
+              )}
             {/* 편집/전체선택 컨트롤 */}
             {currentItems.length > 0 && (
               <EditControls
@@ -121,7 +141,7 @@ export default function MyFavoritesPage() {
                 <LoadingSpinner />
               </div>
             ) : loadError ? (
-              <div className="mt-28 max-xl:mt-20">
+              <div className="mt-8 rounded-2xl border border-warmBorder bg-white">
                 <NoResult
                   variant="error"
                   message1="관심 혜택을 불러오지 못했어요"
@@ -134,7 +154,7 @@ export default function MyFavoritesPage() {
               </div>
             ) : keyword.trim() ? (
               currentItems.length === 0 ? (
-                <div className="mt-28 max-xl:mt-20">
+                <div className="mt-8 rounded-2xl border border-warmBorder bg-white">
                   <NoResult
                     message1="검색 결과가 없어요."
                     message2="다른 키워드로 검색해보세요."
@@ -145,6 +165,7 @@ export default function MyFavoritesPage() {
               ) : (
                 <BenefitCardList
                   items={currentItems}
+                  userCarrier={userCarrier}
                   selectedId={selectedId}
                   setSelectedId={setSelectedId}
                   isEditing={isEditing}
@@ -157,7 +178,7 @@ export default function MyFavoritesPage() {
                 />
               )
             ) : allFavorites.length === 0 ? (
-              <div className="mt-28 max-xl:mt-20">
+              <div className="mt-8 rounded-2xl border border-warmBorder bg-white">
                 <NoResult
                   message1={
                     benefitFilter === 'myMembership'
@@ -180,6 +201,7 @@ export default function MyFavoritesPage() {
             ) : (
               <BenefitCardList
                 items={currentItems}
+                userCarrier={userCarrier}
                 selectedId={selectedId}
                 setSelectedId={setSelectedId}
                 isEditing={isEditing}
@@ -197,7 +219,7 @@ export default function MyFavoritesPage() {
               (keyword.trim() && currentItems.length === 0) || // 검색 중이고 결과가 0
               (!keyword.trim() && allFavorites.length === 0) // 검색 안 했는데 전체도 0
             ) && (
-              <div className="mt-auto relative flex justify-center items-end max-md:mt-3 max-md:mb-6">
+              <div className="relative mt-6 flex items-end justify-center max-md:mb-4">
                 <Pagination
                   currentPage={currentPage}
                   itemsPerPage={itemsPerPage}
@@ -211,7 +233,7 @@ export default function MyFavoritesPage() {
                         setIsEditing(false);
                         setSelectedItems([]);
                       }}
-                      className="px-4 py-2 rounded-[16px] bg-grey01 hover:bg-grey02 text-title-8 text-grey04 max-xl:text-body-5"
+                      className="inline-flex min-h-11 items-center rounded-lg border border-warmBorder bg-white px-4 text-sm font-semibold text-grey05 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-xl:text-body-5"
                     >
                       편집 취소
                     </button>
@@ -220,7 +242,7 @@ export default function MyFavoritesPage() {
                         setPendingDeleteId(null);
                         setIsDeleteModalOpen(true);
                       }}
-                      className="px-4 py-2 rounded-[16px] bg-purple04 hover:bg-purple05 text-title-8 text-white max-xl:text-body-5"
+                      className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 max-xl:text-body-5"
                     >
                       삭제하기
                     </button>
@@ -230,19 +252,28 @@ export default function MyFavoritesPage() {
             )}
           </div>
         }
-        // ✨ RightAside 영역
         aside={
-          <div className="max-md:hidden">
-            <FavoritesAside
-              favorites={allFavorites}
-              isEditing={isEditing}
-              selectedItems={selectedItems}
-              selectedId={selectedId}
-              userCarrier={userCarrier}
-              userGrade={userGrade}
-              loading={loading}
-            />
-          </div>
+          allFavorites.length === 0 && !loading ? null : (
+            <div className="max-md:hidden">
+              <FavoritesAside
+                favorites={allFavorites}
+                isEditing={isEditing}
+                selectedItems={selectedItems}
+                selectedId={selectedId}
+                userCarrier={userCarrier}
+                userGrade={userGrade}
+                loading={loading}
+              />
+              {!loading && !isEditing && selectedFavorite ? (
+                <Link
+                  to={`/mypage/activity?benefitId=${selectedFavorite.benefitId}`}
+                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-brand px-4 text-sm font-semibold text-brandStrong transition-colors hover:bg-brandSoft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  사용 기록 남기기
+                </Link>
+              ) : null}
+            </div>
+          )
         }
       />
 
@@ -257,7 +288,7 @@ export default function MyFavoritesPage() {
               setIsEditing(false);
               setSelectedItems([]);
             }}
-            className="px-7 py-3 rounded-[12px] bg-white border border-grey02 text-grey03 text-body-3 font-medium"
+            className="min-h-11 rounded-xl border border-warmBorder bg-white px-5 text-sm font-semibold text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             취소
           </button>
@@ -270,7 +301,7 @@ export default function MyFavoritesPage() {
                 setIsDeleteModalOpen(true);
               }
             }}
-            className={`flex-1 py-3 ml-3 rounded-[12px] text-body-3 font-medium text-white transition-colors ${
+            className={`ml-3 min-h-11 flex-1 rounded-xl text-sm font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
               selectedItems.length > 0 ? 'bg-purple04' : 'bg-grey03 text-grey04'
             }`}
           >
@@ -293,6 +324,14 @@ export default function MyFavoritesPage() {
               userCarrier={userCarrier}
               userGrade={userGrade}
             />
+            {selectedFavorite ? (
+              <Link
+                to={`/mypage/activity?benefitId=${selectedFavorite.benefitId}`}
+                className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-brand px-4 text-sm font-semibold text-brandStrong transition-colors hover:bg-brandSoft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                사용 기록 남기기
+              </Link>
+            ) : null}
           </div>
         )}
       </DetailModal>

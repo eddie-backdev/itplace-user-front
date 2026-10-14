@@ -11,11 +11,11 @@ export default function FavoritesDeleteModal({ isOpen, onClose, onConfirm }: Pro
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="선택한 혜택을 삭제하시겠습니까?"
-      message="삭제하신 혜택은 다시 복구할 수 없습니다."
+      title="관심 혜택에서 제외할까요?"
+      message="관심 혜택 목록에서 삭제됩니다. 전체 혜택에서 다시 저장할 수 있어요."
       buttons={[
-        { label: '아니오', type: 'secondary', onClick: onClose },
-        { label: '삭제하기', type: 'primary', onClick: onConfirm },
+        { label: '취소', type: 'secondary', onClick: onClose },
+        { label: '관심 해제', type: 'primary', onClick: onConfirm },
       ]}
     />
   );

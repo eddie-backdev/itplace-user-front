@@ -1,12 +1,11 @@
 // src/pages/myPage/MyInfoPage.tsx
 import { useCallback, useEffect, useState } from 'react';
-import MyPageContentLayout from '../../features/myPage/layout/MyPageContentLayout';
 import UserInfoForm from '../../features/myPage/components/MyInfo/UserInfoForm';
 import MembershipInfo from '../../features/myPage/components/MyInfo/MembershipInfo';
-import FadeWrapper from '../../features/myPage/components/FadeWrapper';
 import PasswordChangeModal from '../../features/myPage/components/MyInfo/PasswordChangeModal';
 import UserDeleteModal from '../../features/myPage/components/MyInfo/UserDeleteModal';
 import MembershipProfileModal from '../../features/myPage/components/MyInfo/MembershipProfileModal';
+import PhoneVerificationModal from '../../features/myPage/components/MyInfo/PhoneVerificationModal';
 import api from '../../apis/axiosInstance';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import NoResult from '../../components/NoResult';
@@ -20,14 +19,15 @@ import { isValidCarrierGradePair } from '../../utils/membership';
 interface UserInfo {
   id: number;
   nickname: string;
-  email: string;
-  phoneNumber: string;
-  gender: string;
-  birthday: string;
+  email: string | null;
+  phoneNumber: string | null;
+  gender: string | null;
+  birthday: string | null;
   carrier: string | null;
   membershipGrade: string | null;
   membershipGradeCode: string | null;
   membershipVerified?: boolean;
+  phoneVerified?: boolean;
   hasLocalPassword?: boolean;
   socialAccount?: boolean;
 }
@@ -49,6 +49,7 @@ export default function MyInfoPage() {
 
   const [membershipModalOpen, setMembershipModalOpen] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
+  const [phoneVerificationModalOpen, setPhoneVerificationModalOpen] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -73,51 +74,64 @@ export default function MyInfoPage() {
     fetchUser();
   }, [fetchUser]);
 
-  // ✅ 로딩중일 경우
+  const handlePhoneVerificationComplete = useCallback(async () => {
+    await fetchUser();
+    setPhoneVerificationModalOpen(false);
+  }, [fetchUser]);
+
+  const pageHeader = (
+    <header>
+      <h1 className="text-title-4 font-semibold text-ink max-md:text-title-5">
+        회원 정보와 멤버십
+      </h1>
+      <p className="mt-1.5 text-sm leading-6 text-grey05">
+        계정 정보를 확인하고, 혜택을 볼 멤버십 프로필을 설정할 수 있어요.
+      </p>
+    </header>
+  );
+
+  // Keep the page title visible in loading and error states on every screen size.
   if (loading) {
     return (
-      <div className="flex h-[640px] flex-row items-stretch gap-4 w-full max-md:h-auto max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
-        <MyPageContentLayout
-          main={
-            <div className="flex justify-center items-center min-h-[220px]">
-              <LoadingSpinner />
-            </div>
-          }
-          aside={<></>}
-        />
+      <div className="flex min-w-0 flex-1 flex-col gap-5 pb-8 max-md:px-4">
+        {pageHeader}
+        <div
+          role="status"
+          aria-label="회원 정보를 불러오는 중"
+          className="flex min-h-[220px] items-center justify-center"
+        >
+          <LoadingSpinner />
+        </div>
       </div>
     );
   }
 
-  // ✅ user가 없을 경우
+  // User information may be absent when the initial request fails.
   if (!user) {
     return (
-      <div className="flex h-[640px] flex-row items-stretch gap-4 w-full max-md:h-auto max-md:flex-col-reverse max-md:px-5 max-md:pb-7">
-        <MyPageContentLayout
-          main={
-            <div className="flex min-h-[220px] items-center justify-center">
-              <NoResult
-                variant="error"
-                message1="회원 정보를 불러오지 못했어요"
-                message2={
-                  loadError
-                    ? '네트워크 상태를 확인한 뒤 다시 시도해 주세요.'
-                    : '잠시 후 다시 확인해 주세요.'
-                }
-                buttonText="다시 시도"
-                onButtonClick={fetchUser}
-                message1FontSize="text-title-5 max-xl:text-title-6"
-                message2FontSize="text-body-2 max-xl:text-body-3"
-              />
-            </div>
-          }
-          aside={<></>}
-        />
+      <div className="flex min-w-0 flex-1 flex-col gap-5 pb-8 max-md:px-4">
+        {pageHeader}
+        <div className="flex min-h-[220px] items-center justify-center">
+          <NoResult
+            variant="error"
+            message1="회원 정보를 불러오지 못했어요"
+            message2={
+              loadError
+                ? '네트워크 상태를 확인한 뒤 다시 시도해 주세요.'
+                : '잠시 후 다시 확인해 주세요.'
+            }
+            buttonText="다시 시도"
+            onButtonClick={fetchUser}
+            message1FontSize="text-title-5 max-xl:text-title-6"
+            message2FontSize="text-body-2 max-xl:text-body-3"
+          />
+        </div>
       </div>
     );
   }
 
   const handleMembershipProfileSave = async (carrier: string, membershipGradeCode: string) => {
+    if (profileSaving) return;
     if (!isValidCarrierGradePair(carrier, membershipGradeCode)) {
       showToast('통신사에 맞는 멤버십 등급을 선택해 주세요.', 'error');
       return;
@@ -236,42 +250,30 @@ export default function MyInfoPage() {
   };
 
   return (
-    <div className="flex h-[640px] flex-row items-stretch gap-4 w-full max-lg:h-auto max-lg:flex-col max-md:flex-col-reverse max-md:px-5 max-md:pb-7 max-md:pt-3">
-      <MyPageContentLayout
-        main={
-          <div className="min-h-0 flex-1">
-            <div className="mb-4 max-md:hidden">
-              <p className="text-body-3-bold text-purple03">MY INFO</p>
-              <h1 className="mt-1 text-title-4 font-semibold text-black">회원 정보</h1>
-              <p className="mt-1.5 text-body-3 text-grey04">
-                기본 회원 정보를 확인하고 수정할 수 있어요.
-              </p>
-            </div>
-            <UserInfoForm
-              nickname={user.nickname}
-              gender={user.gender}
-              birthday={user.birthday}
-              phoneNumber={user.phoneNumber}
-              email={user.email}
-              onChangePasswordClick={() => setIsPwModalOpen(true)}
-              onDeleteClick={() => setDeleteModalOpen(true)}
-            />
-          </div>
-        }
-        aside={
-          <FadeWrapper
-            changeKey={`${user.carrier ?? 'none'}-${user.membershipGradeCode ?? user.membershipGrade ?? 'none'}`}
-          >
-            <MembershipInfo
-              nickname={user.nickname}
-              carrier={user.carrier}
-              grade={user.membershipGradeCode ?? user.membershipGrade}
-              verified={user.membershipVerified}
-              onChangeProfileClick={() => setMembershipModalOpen(true)}
-            />
-          </FadeWrapper>
-        }
-      />
+    <div className="flex min-w-0 flex-1 flex-col gap-5 pb-8 max-md:px-4">
+      {pageHeader}
+      <div className="flex flex-col gap-5 wide:grid wide:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] wide:items-start">
+        <MembershipInfo
+          carrier={user.carrier}
+          grade={user.membershipGradeCode ?? user.membershipGrade}
+          verified={user.membershipVerified}
+          saving={profileSaving}
+          onChangeProfileClick={() => setMembershipModalOpen(true)}
+        />
+        <UserInfoForm
+          nickname={user.nickname}
+          gender={user.gender}
+          birthday={user.birthday}
+          phoneNumber={user.phoneNumber}
+          phoneVerified={user.phoneVerified ?? Boolean(user.phoneNumber)}
+          email={user.email}
+          hasLocalPassword={user.hasLocalPassword}
+          socialAccount={user.socialAccount}
+          onChangePasswordClick={() => setIsPwModalOpen(true)}
+          onPhoneVerificationClick={() => setPhoneVerificationModalOpen(true)}
+          onDeleteClick={() => setDeleteModalOpen(true)}
+        />
+      </div>
       <MembershipProfileModal
         isOpen={membershipModalOpen}
         carrier={user.carrier}
@@ -306,6 +308,13 @@ export default function MyInfoPage() {
         onPasswordChange={setPassword}
         onCancel={closeUserDeleteModal}
         onDelete={handleUserDelete}
+      />
+      <PhoneVerificationModal
+        isOpen={phoneVerificationModalOpen}
+        userId={user.id}
+        phoneNumber={user.phoneNumber}
+        onClose={() => setPhoneVerificationModalOpen(false)}
+        onVerified={handlePhoneVerificationComplete}
       />
     </div>
   );

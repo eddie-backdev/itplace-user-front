@@ -34,7 +34,7 @@ const CaptchaBox = ({ onCaptchaChange }: Props) => {
 
   return (
     <div className="w-full flex justify-center">
-      <div className="relative w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full flex justify-center">
+      <div className="relative flex w-full max-w-[320px] justify-center">
         <ReCAPTCHA
           ref={recaptchaRef}
           sitekey="6LcrTo4rAAAAAFQY8LXtuT0vRXs1QJTnbHStuKQC"

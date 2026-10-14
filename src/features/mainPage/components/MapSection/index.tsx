@@ -1,10 +1,13 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, Category, MapLocation, MapBounds, MapCluster } from '../../types';
 import CategoryTabsSection from '../SidebarSection/CategoryTabsSection';
 import KakaoMap from './KakaoMap';
 import MapControls from './MapControls';
 import RoadviewContainer from './Roadview/RoadviewContainer';
 import { showToast } from '../../../../utils/toast';
+import { toast } from 'react-toastify';
+
+const ROADVIEW_GUIDANCE_TOAST_ID = 'map-roadview-guidance';
 
 interface MapSectionProps {
   platforms: Platform[];
@@ -13,12 +16,13 @@ interface MapSectionProps {
   selectedPlatform?: Platform | null;
   onPlatformSelect: (platform: Platform | null) => void;
   onLocationChange?: (location: MapLocation) => void;
-  onMapCenterChange?: (location: MapLocation) => void;
+  onMapCenterChange?: (location: MapLocation, options?: { showSearchButton?: boolean }) => void;
   onLocationMove: (latitude: number, longitude: number) => void;
   categories: Category[];
   selectedCategory: string;
   onCategorySelect: (categoryId: string) => void;
   onSearchInMap?: () => void;
+  searchQuery?: string;
   centerLocation?: { latitude: number; longitude: number } | null;
   initialCenterLocation?: { latitude: number; longitude: number } | null;
   initialMapLevel?: number;
@@ -28,6 +32,10 @@ interface MapSectionProps {
   activeTab: string;
   mobileControlsBottomOffset?: number | string;
   mobileControlsTransitionEnabled?: boolean;
+  mobileSheetBottomInset?: number;
+  hideMobileCategory?: boolean;
+  hideMobileControls?: boolean;
+  onRoadviewVisibilityChange?: (isVisible: boolean) => void;
 }
 
 const MapSection: React.FC<MapSectionProps> = ({
@@ -43,6 +51,7 @@ const MapSection: React.FC<MapSectionProps> = ({
   selectedCategory,
   onCategorySelect,
   onSearchInMap,
+  searchQuery,
   centerLocation,
   initialCenterLocation,
   initialMapLevel,
@@ -52,6 +61,10 @@ const MapSection: React.FC<MapSectionProps> = ({
   activeTab,
   mobileControlsBottomOffset,
   mobileControlsTransitionEnabled,
+  mobileSheetBottomInset,
+  hideMobileCategory = false,
+  hideMobileControls = false,
+  onRoadviewVisibilityChange,
 }) => {
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [isRoadviewMode, setIsRoadviewMode] = useState(false);
@@ -60,21 +73,28 @@ const MapSection: React.FC<MapSectionProps> = ({
     lng: number;
   } | null>(null);
 
+  useEffect(() => {
+    if (!roadviewClickedLatLng) return;
+    return () => onRoadviewVisibilityChange?.(false);
+  }, [onRoadviewVisibilityChange, roadviewClickedLatLng]);
+
   // 지도 중심 변경 핸들러 (드래그 감지)
   const handleMapCenterChange = useCallback(
-    (location: MapLocation) => {
-      setShowSearchButton(activeTab !== 'nearby');
-      onMapCenterChange?.(location);
+    (location: MapLocation, options?: { showSearchButton?: boolean }) => {
+      if (options?.showSearchButton !== false) {
+        setShowSearchButton(activeTab !== 'nearby' || Boolean(searchQuery?.trim()));
+      }
+      onMapCenterChange?.(location, options);
     },
-    [activeTab, onMapCenterChange]
+    [activeTab, onMapCenterChange, searchQuery]
   );
 
   const handleViewportChange = useCallback(
     (bounds: MapBounds, center: MapLocation, mapLevel: number) => {
-      setShowSearchButton(false);
+      setShowSearchButton(activeTab !== 'nearby' || Boolean(searchQuery?.trim()));
       onViewportChange?.(bounds, center, mapLevel);
     },
-    [onViewportChange]
+    [activeTab, onViewportChange, searchQuery]
   );
 
   // 검색 실행 핸들러
@@ -87,37 +107,48 @@ const MapSection: React.FC<MapSectionProps> = ({
   const handleRoadviewToggle = useCallback(() => {
     if (isRoadviewMode) {
       // 로드뷰 모드 끄기
+      toast.dismiss(ROADVIEW_GUIDANCE_TOAST_ID);
       setIsRoadviewMode(false);
       setRoadviewClickedLatLng(null);
+      onRoadviewVisibilityChange?.(false);
     } else {
       // 로드뷰 모드 켜기
       setIsRoadviewMode(true);
-      showToast('지도를 클릭하면 로드뷰를 확인할 수 있어요!', 'info');
+      showToast('지도를 클릭하면 로드뷰를 확인할 수 있어요!', 'info', {
+        toastId: ROADVIEW_GUIDANCE_TOAST_ID,
+      });
     }
-  }, [isRoadviewMode]);
+  }, [isRoadviewMode, onRoadviewVisibilityChange]);
 
   // 지도 클릭 핸들러 (로드뷰 모드일 때만)
   const handleMapClick = useCallback(
     (lat: number, lng: number) => {
       if (isRoadviewMode) {
+        toast.dismiss(ROADVIEW_GUIDANCE_TOAST_ID);
         setRoadviewClickedLatLng({ lat, lng });
         setIsRoadviewMode(false); // 로드뷰 표시 후 모드 해제
+        onRoadviewVisibilityChange?.(true);
       }
     },
-    [isRoadviewMode]
+    [isRoadviewMode, onRoadviewVisibilityChange]
   );
 
   // 로드뷰 닫기 핸들러
   const handleRoadviewClose = useCallback(() => {
     setRoadviewClickedLatLng(null);
-  }, []);
+    onRoadviewVisibilityChange?.(false);
+  }, [onRoadviewVisibilityChange]);
 
   return (
     <div className="relative w-full h-full">
       {/* 카테고리 태그 - 주변 혜택 탭일 때만 지도 위 오버레이 */}
-      {activeTab === 'nearby' && (
-        <div className="pointer-events-none absolute left-5 right-5 top-4 z-10 overflow-hidden max-md:left-3 max-md:right-3 max-md:top-[64px]">
-          <div className="pointer-events-auto">
+      {activeTab === 'nearby' && !roadviewClickedLatLng && (
+        <div
+          aria-hidden={hideMobileCategory}
+          inert={hideMobileCategory}
+          className={`pointer-events-none absolute left-4 top-4 z-10 w-fit max-w-[calc(100%-2rem)] overflow-hidden rounded-xl border border-[#e6e6e3] bg-white p-1 shadow-[0_2px_8px_rgba(31,38,52,0.06)] md:max-lg:left-3 md:max-lg:top-3 md:max-lg:max-w-[calc(100%-1.5rem)] max-md:left-3 max-md:top-[64px] max-md:max-w-[calc(100%-1.5rem)] ${hideMobileCategory ? 'max-md:hidden' : ''}`}
+        >
+          <div className="pointer-events-auto min-w-0">
             <CategoryTabsSection
               categories={categories}
               selectedCategory={selectedCategory}
@@ -128,33 +159,44 @@ const MapSection: React.FC<MapSectionProps> = ({
         </div>
       )}
 
-      <KakaoMap
-        platforms={platforms}
-        clusters={clusters}
-        useServerClusters={useServerClusters}
-        selectedPlatform={selectedPlatform}
-        onPlatformSelect={onPlatformSelect}
-        onLocationChange={onLocationChange}
-        onMapCenterChange={handleMapCenterChange}
-        centerLocation={centerLocation}
-        initialCenterLocation={initialCenterLocation}
-        initialMapLevel={initialMapLevel}
-        onZoomStart={onZoomStart}
-        onMapLevelChange={onMapLevelChange}
-        onViewportChange={handleViewportChange}
-        isRoadviewMode={isRoadviewMode}
-        onMapClick={handleMapClick}
-      />
+      <div
+        aria-hidden={Boolean(roadviewClickedLatLng)}
+        inert={Boolean(roadviewClickedLatLng)}
+        className="h-full w-full"
+      >
+        <KakaoMap
+          platforms={platforms}
+          clusters={clusters}
+          useServerClusters={useServerClusters}
+          selectedPlatform={selectedPlatform}
+          onPlatformSelect={onPlatformSelect}
+          searchQuery={searchQuery}
+          mobileSheetBottomInset={mobileSheetBottomInset}
+          onLocationChange={onLocationChange}
+          onMapCenterChange={handleMapCenterChange}
+          centerLocation={centerLocation}
+          initialCenterLocation={initialCenterLocation}
+          initialMapLevel={initialMapLevel}
+          onZoomStart={onZoomStart}
+          onMapLevelChange={onMapLevelChange}
+          onViewportChange={handleViewportChange}
+          isRoadviewMode={isRoadviewMode}
+          onMapClick={handleMapClick}
+        />
+      </div>
 
-      <MapControls
-        onLocationMove={onLocationMove}
-        onSearchInMap={handleSearchInMap}
-        showSearchButton={showSearchButton}
-        isRoadviewMode={isRoadviewMode}
-        onRoadviewToggle={handleRoadviewToggle}
-        mobileBottomOffset={mobileControlsBottomOffset}
-        mobileBottomTransitionEnabled={mobileControlsTransitionEnabled}
-      />
+      {!roadviewClickedLatLng && (
+        <MapControls
+          onLocationMove={onLocationMove}
+          onSearchInMap={handleSearchInMap}
+          showSearchButton={showSearchButton}
+          isRoadviewMode={isRoadviewMode}
+          onRoadviewToggle={handleRoadviewToggle}
+          mobileBottomOffset={mobileControlsBottomOffset}
+          mobileBottomTransitionEnabled={mobileControlsTransitionEnabled}
+          hideMobileControls={hideMobileControls}
+        />
+      )}
 
       {/* 로드뷰 컨테이너 */}
       {roadviewClickedLatLng && (

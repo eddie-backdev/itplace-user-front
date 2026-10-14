@@ -31,7 +31,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
   const outerRadius = center - 2;
   const tailShoulderY = bubbleSize - Math.max(9, Math.round(bubbleSize * 0.18));
   const tailHalfWidth = Math.max(5, Math.round(bubbleSize * 0.12));
-  const accentColor = isSelected ? '#115C3A' : '#4EA77A';
+  const accentColor = isSelected ? '#0066CC' : '#A3ABB5';
 
   return (
     <button
@@ -47,8 +47,8 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
         lineHeight: 0,
         zIndex: isSelected ? 1000 : 1,
         filter: isSelected
-          ? 'drop-shadow(0 5px 9px rgba(17, 92, 58, 0.32))'
-          : 'drop-shadow(1px 3px 5px rgba(36, 35, 33, 0.20))',
+          ? 'drop-shadow(0 5px 9px rgba(0, 102, 204, 0.20))'
+          : 'none',
         transform: `translate(${offsetX}px, ${offsetY}px)${isSelected ? ' scale(1.06)' : ''}`,
         transformOrigin: 'center bottom',
         transition: 'filter 0.2s ease, transform 0.2s ease',
@@ -82,7 +82,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
       </svg>
 
       <span
-        className="absolute z-10 inline-flex items-center justify-center overflow-hidden rounded-full bg-grey01"
+        className="absolute z-10 inline-flex items-center justify-center overflow-hidden rounded-full bg-white"
         style={{
           width: imageSize,
           height: imageSize,
@@ -95,7 +95,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
           role="img"
           aria-label={`${displayName} 로고`}
           data-marker-fallback="true"
-          className={`inline-flex h-full w-full items-center justify-center bg-brandSoft font-extrabold text-brandStrong ${
+          className={`inline-flex h-full w-full items-center justify-center bg-[#f1f1ee] font-extrabold text-[#69717e] ${
             isCompact ? 'text-[10px]' : 'text-xs'
           } ${normalizedImageUrl ? 'hidden' : ''}`}
         >

@@ -55,19 +55,33 @@ export default function PasswordChangeModal({
       <div className="flex flex-col items-center gap-4 w-full max-w-[436px] mt-4">
         {/* 인풋 영역 */}
         <div className="flex flex-col gap-3 w-full">
-          <input
-            type="password"
-            className="w-full h-[50px] px-4 bg-grey01 rounded-[10px] text-body-2 placeholder-grey03"
-            placeholder="현재 비밀번호 입력"
-            value={currentPassword}
-            onChange={(e) => onCurrentChange(e.target.value)}
-            disabled={submitting}
-          />
+          <div className="flex flex-col gap-1">
+            <label htmlFor="current-password" className="text-body-3 font-semibold text-grey06">
+              현재 비밀번호
+            </label>
+            <input
+              id="current-password"
+              type="password"
+              name="currentPassword"
+              autoComplete="current-password"
+              className="h-[50px] w-full rounded-[10px] border border-warmBorder bg-grey01 px-4 text-body-2 placeholder:text-grey05 focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/20"
+              placeholder="현재 비밀번호 입력"
+              value={currentPassword}
+              onChange={(e) => onCurrentChange(e.target.value)}
+              disabled={submitting}
+            />
+          </div>
 
           <div className="flex flex-col gap-1">
+            <label htmlFor="new-password" className="text-body-3 font-semibold text-grey06">
+              새 비밀번호
+            </label>
             <input
+              id="new-password"
               type="password"
-              className="w-full h-[50px] px-4 bg-grey01 rounded-[10px] text-body-2 placeholder-grey03"
+              name="newPassword"
+              autoComplete="new-password"
+              className="h-[50px] w-full rounded-[10px] border border-warmBorder bg-grey01 px-4 text-body-2 placeholder:text-grey05 focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/20"
               placeholder="새 비밀번호 입력"
               value={newPassword}
               onChange={(e) => onNewChange(e.target.value)}
@@ -81,16 +95,23 @@ export default function PasswordChangeModal({
           </div>
 
           <div className="flex flex-col gap-1">
+            <label htmlFor="confirm-new-password" className="text-body-3 font-semibold text-grey06">
+              새 비밀번호 확인
+            </label>
             <input
+              id="confirm-new-password"
               type="password"
-              className="w-full h-[50px] px-4 bg-grey01 rounded-[10px] text-body-2 placeholder-grey03"
+              name="confirmNewPassword"
+              autoComplete="new-password"
+              aria-describedby={confirmPassword && !isPasswordMatch ? 'password-match-error' : undefined}
+              className="h-[50px] w-full rounded-[10px] border border-warmBorder bg-grey01 px-4 text-body-2 placeholder:text-grey05 focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/20"
               placeholder="새 비밀번호 확인"
               value={confirmPassword}
               onChange={(e) => onConfirmChange(e.target.value)}
               disabled={submitting}
             />
             {confirmPassword && !isPasswordMatch && (
-              <p className="text-caption text-red-500 text-left ml-1">
+              <p id="password-match-error" className="text-caption text-red-500 text-left ml-1">
                 비밀번호가 일치하지 않습니다.
               </p>
             )}
@@ -103,7 +124,7 @@ export default function PasswordChangeModal({
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className="flex-1 h-[56px] rounded-[10px] border border-grey02 text-grey04 hover:text-grey05 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 h-[56px] rounded-[10px] border border-grey02 text-grey06 hover:bg-grey01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-60"
           >
             취소
           </button>
@@ -116,7 +137,7 @@ export default function PasswordChangeModal({
             disabled={!isReady}
             className={`flex-1 h-[56px] rounded-[10px] text-title-6 transition duration-200 ${
               isReady
-                ? 'bg-purple04 text-white hover:bg-purple05'
+                ? 'bg-brand text-white hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2'
                 : 'bg-grey01 text-grey03 cursor-not-allowed'
             }`}
           >

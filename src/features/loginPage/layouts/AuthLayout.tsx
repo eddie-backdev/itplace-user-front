@@ -1,16 +1,13 @@
-import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
-import { useNavigate, useSearchParams } from '@/lib/navigation';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
+import { Link, useNavigate, useSearchParams } from '@/lib/navigation';
 import { AxiosError } from 'axios';
-import MobileHeader from '../../../components/MobileHeader';
-import AuthFormCard from '../components/common/AuthFormCard';
-import AuthSideCard from '../components/common/AuthSideCard';
 import { showToast } from '../../../utils/toast';
 import LoginForm from '../components/login/LoginForm';
 import FindPasswordForm from '../components/find/FindPasswordForm';
 import OAuthIntegrationForm from '../components/signup/OAuthIntegrationForm';
 import OAuthAccountLinkForm from '../components/signup/OAuthAccountLinkForm';
 import SignUpAccountForm from '../components/signup/SignUpAccountForm';
-import SignUpPhoneVerificationForm from '../components/signup/SignUpPhoneVerificationForm';
 import SignUpFinalForm from '../components/signup/SignUpFinalForm';
 import { oauthLink, oauthSignUp } from '../apis/user';
 import { getOAuthResult } from '../apis/auth';
@@ -18,12 +15,13 @@ import { AuthTransition } from '../hooks/AuthTransition';
 import { useDispatch } from 'react-redux';
 import { setLoginSuccess } from '../../../store/authSlice';
 import LoadingSpinner from '../../../components/LoadingSpinner';
-import { useResponsive } from '../../../hooks/useResponsive';
-import { TbMapPin, TbSparkles, TbTicket, TbHeartHandshake } from 'react-icons/tb';
 import { consumeOAuthPreAuth } from '../utils/oauthPreAuthStorage';
+import { clearOAuthReturnTo, consumeOAuthReturnTo, getSafeReturnTo } from '../utils/returnTo.mjs';
+import AuthBenefitsPreview, { type AuthPreviewPartner } from '../components/common/AuthBenefitsPreview';
+import styles from './AuthPageLayout.module.css';
 
 const emptyLocalSignupData = {
-  phoneNumber: '',
+  emailVerified: false,
   nickname: '',
   birthday: '',
   gender: '',
@@ -43,87 +41,14 @@ const emptyOAuthUserData = {
   membershipGradeCode: '',
 };
 
-const SignupFlowCard = ({ children }: { children: ReactNode }) => {
-  const motifs = [
-    {
-      label: '내 주변 혜택',
-      detail: '지도 기반 탐색',
-      icon: TbMapPin,
-      tone: 'from-accentBlue to-accentTeal',
-      iconColor: 'text-white',
-    },
-    {
-      label: '멤버십 등급',
-      detail: '맞춤 혜택',
-      icon: TbTicket,
-      tone: 'from-accentGold to-accentGoldDark',
-      iconColor: 'text-grey07',
-    },
-    {
-      label: '관심 혜택',
-      detail: '놓치지 않게',
-      icon: TbSparkles,
-      tone: 'from-accentRose to-accentRoseDark',
-      iconColor: 'text-white',
-    },
-  ];
-
-  return (
-    <section className="relative w-full max-w-[540px] overflow-hidden rounded-[30px] border border-purple02/70 bg-white shadow-[0_24px_60px_rgba(16,17,20,0.12)]">
-      <div className="relative overflow-hidden bg-gradient-to-br from-purple06 via-purple04 to-purple03 px-8 pb-5 pt-6 text-white max-lg:px-7">
-        <div className="absolute -right-12 -top-16 h-36 w-36 rounded-full bg-white/15 blur-2xl" />
-        <div className="absolute -bottom-16 left-10 h-36 w-36 rounded-full bg-purple03/25 blur-2xl" />
-
-        <div className="relative flex items-center justify-center gap-5">
-          {motifs.map((motif, index) => {
-            const Icon = motif.icon;
-            const isCenter = index === 1;
-            return (
-              <div key={motif.label} className="flex flex-col items-center">
-                <span
-                  className={`flex items-center justify-center rounded-[24px] bg-gradient-to-br ${motif.tone} ${motif.iconColor} shadow-[0_14px_30px_rgba(16,17,20,0.16)] ring-1 ring-white/25 ${
-                    isCenter ? 'h-[68px] w-[68px]' : 'mt-2 h-[54px] w-[54px]'
-                  }`}
-                >
-                  <Icon className={isCenter ? 'text-[32px]' : 'text-[25px]'} strokeWidth={1.7} />
-                </span>
-                <span className="mt-2 text-caption font-semibold text-white/90">{motif.label}</span>
-                <span className="mt-0.5 text-caption-2 text-white/65">{motif.detail}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="relative mt-4 text-center">
-          <div className="flex items-center justify-center gap-2 text-title-7 font-bold text-white/90">
-            <TbHeartHandshake className="text-[22px]" strokeWidth={1.8} />
-            IT:PLACE 회원가입
-          </div>
-          <p className="mt-2 text-title-6 font-bold leading-snug max-lg:text-title-7">
-            내 멤버십에 맞는 혜택을
-            <br />더 빠르게 찾아드릴게요
-          </p>
-        </div>
-      </div>
-
-      <div className="bg-white px-8 pb-8 pt-7 max-lg:px-7">
-        <div className="mx-auto flex w-full max-w-[360px] flex-col items-center">{children}</div>
-      </div>
-    </section>
-  );
-};
-
-const AuthLayout = () => {
+const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[] }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const {
     formStep,
     setFormStep,
-    formCardRef,
-    sideCardRef,
     goToLogin,
     goToSignUp,
-    goToSignUpAccount,
     goToSignUpFinal,
     goToFindPassword,
   } = AuthTransition();
@@ -134,10 +59,9 @@ const AuthLayout = () => {
   const [oauthLinkEmail, setOAuthLinkEmail] = useState('');
   const [isOAuthLinking, setIsOAuthLinking] = useState(false);
   const [isOAuthProcessing, setIsOAuthProcessing] = useState(false);
-  const { isMobile } = useResponsive();
   const hasInitialized = useRef(false);
+  const returnTo = getSafeReturnTo(searchParams.get('returnTo'));
   const isSignupFlow =
-    formStep === 'signUp' ||
     formStep === 'signUpAccount' ||
     formStep === 'signUpFinal' ||
     formStep === 'oauthIntegration' ||
@@ -166,21 +90,28 @@ const AuthLayout = () => {
         }
 
         showToast('로그인에 성공하셨습니다!', 'success');
-        navigate('/', { replace: true });
+        navigate(consumeOAuthReturnTo(returnTo), { replace: true });
       } else if (code === 'PRE_AUTHENTICATION_SUCCESS') {
-        navigate('/login?step=oauthIntegration&verifiedType=oauth', { replace: true });
+        const params = new URLSearchParams({
+          step: 'oauthIntegration',
+          verifiedType: 'oauth',
+          returnTo: consumeOAuthReturnTo(returnTo),
+        });
+        navigate(`/login?${params.toString()}`, { replace: true });
         setFormStep('oauthIntegration');
       } else {
+        clearOAuthReturnTo();
         showToast('로그인에 실패했습니다.', 'error');
-        navigate('/login', { replace: true });
+        navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
       }
     } catch {
+      clearOAuthReturnTo();
       showToast('로그인에 실패했습니다.', 'error');
-      navigate('/login', { replace: true });
+      navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
     } finally {
       setIsOAuthProcessing(false);
     }
-  }, [dispatch, navigate, setFormStep]);
+  }, [dispatch, navigate, returnTo, setFormStep]);
 
   useEffect(() => {
     const step = searchParams.get('step');
@@ -212,9 +143,10 @@ const AuthLayout = () => {
 
   useEffect(() => {
     if (searchParams.get('reset') === '1') {
-      goToLogin();
+      setFormStep('login');
+      navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
     }
-  }, [goToLogin, searchParams]);
+  }, [navigate, returnTo, searchParams, setFormStep]);
 
   const handleOAuthSignup = async ({
     nickname,
@@ -255,7 +187,8 @@ const AuthLayout = () => {
 
       showToast('회원가입이 완료되었습니다.', 'success');
       setOAuthUserData(emptyOAuthUserData);
-      navigate('/', { replace: true });
+      clearOAuthReturnTo();
+      navigate(returnTo, { replace: true });
     } catch (error) {
       const axiosError = error as AxiosError<{ code?: string; message?: string }>;
 
@@ -297,7 +230,8 @@ const AuthLayout = () => {
       }
 
       showToast('카카오 계정이 기존 계정에 연동되었습니다.', 'success');
-      navigate('/', { replace: true });
+      clearOAuthReturnTo();
+      navigate(returnTo, { replace: true });
     } catch (error) {
       const axiosError = error as AxiosError<{ code?: string; message?: string }>;
       const code = axiosError.response?.data?.code;
@@ -317,26 +251,83 @@ const AuthLayout = () => {
   };
 
   useEffect(() => {
-    if (isMobile) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [isMobile]);
-
-  useEffect(() => {
     if (isSignupFlow || isOAuthProcessing) {
       window.scrollTo(0, 0);
     }
   }, [formStep, isOAuthProcessing, isSignupFlow]);
 
+  const signupHeadings: Record<string, string> = {
+    signUpAccount: '이메일로 시작하세요',
+    signUpFinal: '멤버십 정보를 입력하세요',
+    oauthIntegration: '맞춤 혜택을 준비할게요',
+    oauthLink: '기존 계정을 연결하세요',
+  };
+
+  const signupDescriptions: Record<string, string> = {
+    signUpAccount: '이메일을 인증하고 로그인에 사용할 비밀번호를 설정합니다.',
+    signUpFinal: '선택한 통신사와 등급에 맞는 혜택을 찾아드려요.',
+    oauthIntegration: '카카오 계정으로 확인된 정보를 바탕으로 가입합니다.',
+    oauthLink: '기존 계정을 확인하면 카카오 로그인과 함께 사용할 수 있어요.',
+  };
+  const signupSteps = [
+    { key: 'signUpAccount', label: '계정 정보' },
+    { key: 'signUpFinal', label: '멤버십 정보' },
+  ];
+  const signupStepIndex = signupSteps.findIndex((step) => step.key === formStep);
+  const goToPreviousSignupStep = () => {
+    if (formStep === 'signUpFinal') setFormStep('signUpAccount');
+  };
+
   const renderFormContent = () => (
     <>
+      {isSignupFlow && (
+        <header className="mb-6 w-full">
+          <div className="mb-5 flex min-h-11 items-center justify-between gap-3">
+            {signupStepIndex > 0 ? (
+              <button
+                type="button"
+                onClick={goToPreviousSignupStep}
+                className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-grey05 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              >
+                이전 단계
+              </button>
+            ) : (
+              <span />
+            )}
+            <button
+              type="button"
+              onClick={goToLogin}
+              className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-brandStrong transition-colors hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              로그인으로 돌아가기
+            </button>
+          </div>
+          {signupStepIndex >= 0 && (
+            <ol aria-label="회원가입 진행 단계" className="mb-5 grid grid-cols-2 gap-2">
+              {signupSteps.map((step, index) => (
+                <li
+                  key={step.key}
+                  aria-current={index === signupStepIndex ? 'step' : undefined}
+                  className={`border-t-2 pt-2 text-xs font-medium ${
+                    index <= signupStepIndex
+                      ? 'border-brand text-brandStrong'
+                      : 'border-warmBorder text-grey04'
+                  }`}
+                >
+                  {index + 1}. {step.label}
+                </li>
+              ))}
+            </ol>
+          )}
+          <div className="text-left">
+            <h1 className="text-title-4 text-grey07">{signupHeadings[formStep]}</h1>
+            <p className="mt-2 text-body-3 leading-6 text-grey05">{signupDescriptions[formStep]}</p>
+          </div>
+        </header>
+      )}
       {formStep === 'login' && (
         <LoginForm
+          returnTo={returnTo}
           onGoToSignUp={() => {
             setSignUpData(emptyLocalSignupData);
             goToSignUp();
@@ -345,22 +336,18 @@ const AuthLayout = () => {
         />
       )}
 
-      {formStep === 'signUp' && (
-        <SignUpPhoneVerificationForm
-          initialPhoneNumber={signUpData.phoneNumber}
-          onNext={(phoneNumber) => {
-            setSignUpData((previous) => ({ ...previous, phoneNumber }));
-            goToSignUpAccount();
-          }}
-        />
-      )}
-
       {formStep === 'signUpAccount' && (
         <SignUpAccountForm
-          phoneNumber={signUpData.phoneNumber}
           initialEmail={signUpData.email}
           initialPassword={signUpData.password}
           initialPasswordConfirm={signUpData.passwordConfirm}
+          initialEmailVerified={signUpData.emailVerified}
+          onValuesChange={(accountData) =>
+            setSignUpData((previous) => ({ ...previous, ...accountData }))
+          }
+          onEmailVerifiedChange={(emailVerified) =>
+            setSignUpData((previous) => ({ ...previous, emailVerified }))
+          }
           onNext={(accountData) => {
             setSignUpData((previous) => ({ ...previous, ...accountData }));
             goToSignUpFinal();
@@ -371,7 +358,13 @@ const AuthLayout = () => {
       {formStep === 'signUpFinal' && (
         <SignUpFinalForm
           onGoToLogin={goToLogin}
-          phoneNumber={signUpData.phoneNumber}
+          onEmailVerificationExpired={() => {
+            setSignUpData((previous) => ({ ...previous, emailVerified: false }));
+            setFormStep('signUpAccount');
+          }}
+          onValuesChange={(profileData) =>
+            setSignUpData((previous) => ({ ...previous, ...profileData }))
+          }
           email={signUpData.email}
           password={signUpData.password}
           passwordConfirm={signUpData.passwordConfirm}
@@ -402,7 +395,7 @@ const AuthLayout = () => {
           onLink={handleOAuthLink}
           onBack={() => {
             setOAuthLinkEmail('');
-            setFormStep('oauthIntegration');
+            goToLogin();
           }}
         />
       )}
@@ -413,94 +406,46 @@ const AuthLayout = () => {
 
   if (isOAuthProcessing) {
     return (
-      <div
-        key="oauth-processing"
-        className="flex min-h-screen flex-col items-center justify-center bg-white px-6 text-center"
-      >
-        <LoadingSpinner />
-        <p className="mt-5 text-title-6 font-bold text-black max-sm:text-title-7">
-          카카오 로그인 처리 중입니다
-        </p>
-        <p className="mt-2 text-body-3 leading-6 text-grey04 max-sm:text-body-4">
-          계정 정보를 확인하고 있어요. 잠시만 기다려 주세요.
-        </p>
-      </div>
-    );
-  }
-
-  if (isSignupFlow) {
-    return (
-      <div
-        key="signup-flow"
-        className="relative min-h-[100dvh] overflow-hidden bg-gradient-to-br from-purple01/60 via-white to-grey01 max-md:fixed max-md:inset-0 max-md:h-[100dvh] max-md:bg-white max-md:overflow-hidden"
-      >
-        <div className="pointer-events-none absolute left-[7%] top-8 h-64 w-64 rounded-full bg-purple02/35 blur-3xl max-md:hidden" />
-        <div className="pointer-events-none absolute bottom-10 right-[8%] h-72 w-72 rounded-full bg-purple03/25 blur-3xl max-md:hidden" />
-        <div className="pointer-events-none absolute left-[58%] top-[18%] h-28 w-28 rounded-full border border-purple02/50 max-md:hidden" />
-
-        <div className="fixed top-0 left-0 z-[9999] hidden w-full max-md:block">
-          <MobileHeader title="회원가입" />
+      <div className={styles.page}>
+        <div className={styles.mobileBrand}>
+          <Link to="/" className={styles.brand} aria-label="잇플레이스 홈">
+            <Image src="/brand/itplace-mark-b-rail.svg" width={36} height={36} alt="" />
+            <span>잇플레이스</span>
+          </Link>
         </div>
-
-        <div
-          className="hidden h-full overflow-y-auto bg-white px-6 pb-8 pt-[86px] max-md:block"
-          style={{ WebkitOverflowScrolling: 'touch' }}
-        >
-          {isMobile && renderFormContent()}
-        </div>
-
-        <div className="relative flex min-h-[100dvh] w-full items-center justify-center overflow-y-auto px-6 py-12 max-xl:py-10 max-lg:items-start max-md:hidden">
-          <div className="flex w-full max-w-[540px] justify-center" style={{ transform: 'none' }}>
-            {!isMobile && <SignupFlowCard>{renderFormContent()}</SignupFlowCard>}
-          </div>
+        <div className={styles.processing}>
+          <LoadingSpinner />
+          <h1 className="mt-5 text-title-6 font-bold text-grey07">카카오 로그인 처리 중입니다</h1>
+          <p className="mt-2 text-body-3 leading-6 text-grey05">
+            계정 정보를 확인하고 있어요. 잠시만 기다려 주세요.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      key="auth-panel"
-      className="flex items-center justify-center min-h-screen bg-white max-md:overflow-hidden max-md:h-screen max-md:fixed max-md:inset-0 max-sm:overflow-hidden max-sm:max-h-screen max-sm:fixed max-sm:inset-0"
-    >
-      <div className="fixed top-0 left-0 w-full z-[9999] max-md:block hidden">
-        <MobileHeader title="로그인" />
+    <div className={styles.page}>
+      <div className={styles.mobileBrand}>
+        <Link to="/" className={styles.brand} aria-label="잇플레이스 홈">
+          <Image src="/brand/itplace-mark-b-rail.svg" width={36} height={36} alt="" />
+          <span>잇플레이스</span>
+        </Link>
+        <Link to="/benefits" className={styles.benefitsLink}>혜택 먼저 둘러보기</Link>
       </div>
-
-      <div className="max-md:block hidden w-full fixed max-md:fixed max-md:inset-0 max-sm:block max-sm:fixed max-sm:inset-0">
-        <div className="absolute left-0 top-0 h-[calc(60dvh-13rem+24px)] w-full">
-          <AuthSideCard />
+      <div className={styles.surface}>
+        <div className={styles.preview}>
+          <AuthBenefitsPreview partners={previewPartners} />
         </div>
-
-        <div className="absolute left-0 w-full" style={{ bottom: '0', top: 'calc(60dvh - 13rem)' }}>
-          <div
-            className="w-full rounded-t-[24px] bg-white px-6 pb-8 pt-8 shadow-2xl"
-            style={{
-              height: '100%',
-              overflowY: 'auto',
-              WebkitOverflowScrolling: 'touch',
-            }}
-          >
+        <div className={styles.formSide}>
+          <Link to="/" className={`${styles.brand} ${styles.desktopBrand}`} aria-label="잇플레이스 홈">
+            <Image src="/brand/itplace-mark-b-rail.svg" width={36} height={36} alt="" />
+            <span>잇플레이스</span>
+          </Link>
+          <section className={`${styles.formCard} ${isSignupFlow ? styles.signupCard : ''}`}>
             {renderFormContent()}
-          </div>
-        </div>
-      </div>
-
-      <div className="max-md:hidden relative mx-auto h-[700px] w-full max-w-[1400px] overflow-hidden max-xl:h-[600px] max-xl:max-w-[1200px] max-lg:h-[500px] max-lg:max-w-[900px] max-md:h-[450px] max-md:max-w-[768px]">
-        <div
-          ref={formCardRef}
-          className="absolute top-1/2 left-[calc(50%-520px)] h-[639px] w-[583px] translate-y-[-50%] max-xl:left-[calc(50%-446px)] max-xl:h-[548px] max-xl:w-[500px] max-lg:left-[calc(50%-335px)] max-lg:h-[430px] max-lg:w-[375px]"
-        >
-          <AuthFormCard radius={formStep === 'login' ? 'left' : 'right'}>
-            <>{renderFormContent()}</>
-          </AuthFormCard>
-        </div>
-
-        <div
-          ref={sideCardRef}
-          className="absolute top-1/2 translate-y-[-50%] w-[431px] max-xl:w-[370px] max-lg:w-[277px] h-[639px] max-xl:h-[548px] max-lg:h-[430px] z-0 left-[calc(50%+30.5px)] max-xl:left-[calc(50%+26px)] max-lg:left-[calc(50%+20px)]"
-        >
-          <AuthSideCard />
+          </section>
+          <Link to="/benefits" className={styles.desktopBenefitsLink}>혜택 먼저 둘러보기</Link>
         </div>
       </div>
     </div>

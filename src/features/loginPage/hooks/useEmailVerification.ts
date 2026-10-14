@@ -9,6 +9,7 @@ type Mode = 'signup' | 'reset';
 
 type UseEmailVerificationProps = {
   email: string;
+  initiallyVerified?: boolean;
   onVerifiedChange?: (verified: boolean) => void;
   mode?: Mode;
   onResetTokenChange?: (token: string) => void;
@@ -17,13 +18,14 @@ type UseEmailVerificationProps = {
 
 const useEmailVerification = ({
   email,
+  initiallyVerified = false,
   onVerifiedChange,
   mode = 'signup',
   onResetTokenChange, // ← 이 부분 추가!
   onDuplicateEmail,
 }: UseEmailVerificationProps) => {
   const [emailSent, setEmailSent] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(initiallyVerified);
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetToken, setResetToken] = useState('');

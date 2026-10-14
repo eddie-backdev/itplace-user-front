@@ -51,7 +51,7 @@ const OAuthIntegrationForm = ({
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="mb-5 w-[320px] text-left max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+      <div className="mb-5 w-full max-w-[320px] text-left">
         <p className="text-body-3 font-semibold text-grey06 max-md:text-body-2">카카오 가입 정보</p>
         <p className="mt-2 text-body-5 text-grey04">
           카카오에서 인증된 이메일을 사용하고, 부족한 정보만 입력합니다.
@@ -67,7 +67,7 @@ const OAuthIntegrationForm = ({
         />
       </div>
 
-      <div className="mb-[20px] w-[320px] rounded-[18px] border border-purple02 bg-purple01/35 px-4 py-3 text-left max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+      <div className="mb-5 w-full max-w-[320px] rounded-xl border border-warmBorder bg-grey01 px-4 py-3 text-left">
         <p className="text-body-5 font-semibold text-purple04">카카오 인증 이메일</p>
         <p className="mt-1 truncate text-body-2-bold text-grey06 max-lg:text-body-3-bold">
           {email || '카카오 인증 이메일을 확인할 수 없어요'}
@@ -85,7 +85,8 @@ const OAuthIntegrationForm = ({
         <button
           type="button"
           onClick={() => setGender('MALE')}
-          className={`w-[150px] max-xl:w-[128px] max-lg:w-[96px] max-md:flex-1 max-sm:flex-1 h-[48px] max-xl:h-[41px] max-lg:h-[32px] max-md:h-[46px] max-sm:h-[46px] rounded-[18px] max-xl:rounded-[15px] max-lg:rounded-[12px] max-md:rounded-[16px] max-sm:rounded-[16px] border text-body-2 max-md:text-body-3 max-sm:text-body-3 transition ${
+          aria-pressed={gender === 'MALE'}
+          className={`h-12 flex-1 rounded-xl border text-body-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
             gender === 'MALE'
               ? 'bg-purple04 text-white border-purple04'
               : 'bg-white text-grey04 border-grey02'
@@ -96,7 +97,8 @@ const OAuthIntegrationForm = ({
         <button
           type="button"
           onClick={() => setGender('FEMALE')}
-          className={`w-[150px] max-xl:w-[128px] max-lg:w-[96px] max-md:flex-1 max-sm:flex-1 h-[48px] max-xl:h-[41px] max-lg:h-[32px] max-md:h-[46px] max-sm:h-[46px] rounded-[18px] max-xl:rounded-[15px] max-lg:rounded-[12px] max-md:rounded-[16px] max-sm:rounded-[16px] border text-body-2 max-md:text-body-3 max-sm:text-body-3 transition ${
+          aria-pressed={gender === 'FEMALE'}
+          className={`h-12 flex-1 rounded-xl border text-body-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
             gender === 'FEMALE'
               ? 'bg-purple04 text-white border-purple04'
               : 'bg-white text-grey04 border-grey02'
@@ -112,9 +114,8 @@ const OAuthIntegrationForm = ({
           membershipGradeCode={membershipGradeCode}
           onCarrierChange={setCarrier}
           onGradeChange={setMembershipGradeCode}
-          gradeMenuPlacement="top"
         />
-        <p className="w-[320px] text-body-5 text-grey04 max-xl:w-[274px] max-lg:w-[205px] max-md:w-full">
+        <p className="w-full max-w-[320px] text-body-3 text-grey05">
           선택한 등급 기준으로 가입됩니다.
         </p>
       </div>

@@ -1,5 +1,12 @@
 import benefitDisplay from '../../../content/benefit-display.json';
 import type { CarrierCode } from '../../../utils/membership';
+import {
+  getCarrierBenefitDisplayName,
+  getMembershipOptionLabel,
+  getSourceOptionLabel,
+} from './benefitDisplay.mjs';
+
+export { getCarrierBenefitDisplayName, getMembershipOptionLabel, getSourceOptionLabel };
 
 export interface TierBenefit {
   carrier?: string | null;
@@ -11,6 +18,10 @@ export interface TierBenefit {
 export interface CarrierBenefitDetail {
   benefitId: number;
   benefitName: string;
+  displayName?: string;
+  membershipOptionType?: 'DISCOUNT' | 'POINT_ACCRUAL' | 'NOT_APPLICABLE' | 'UNKNOWN';
+  sourceOptionLabel?: string | null;
+  sourceBenefitName?: string;
   description?: string | null;
   benefitLimit?: string | null;
   manual?: string | null;

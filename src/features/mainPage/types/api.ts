@@ -26,6 +26,13 @@ export interface MapStorePreviewBatchData {
   partners: MapStorePreviewPartnerData[];
 }
 
+export interface MapStorePreviewPageApiResponse {
+  code: string;
+  status: string;
+  message: string;
+  data: MapStorePreviewBatchData & { hasMore: boolean; nextCursor: number | null };
+}
+
 export interface MapStorePreviewStoreData {
   storeId: number;
   partnerId: number;
@@ -208,6 +215,16 @@ export type CompactStoreInViewParams = Omit<
   StoreInViewParams,
   'userLat' | 'userLng' | 'includeBenefits'
 >;
+
+export type StorePreviewInViewPageParams = Omit<CompactStoreInViewParams, 'limit'> & {
+  userLat?: number;
+  userLng?: number;
+};
+export type NearbyStorePreviewPageParams = StoreListParams & {
+  category?: string;
+  userLat?: number;
+  userLng?: number;
+};
 
 // 즐겨찾기 API 타입
 export interface FavoriteRequest {

@@ -5,6 +5,7 @@ import PartnerBenefitPage from '@/screens/PartnerBenefitPage';
 import { createPageMetadata, SITE_ORIGIN } from '@/lib/metadata';
 import { getPublicPartnerBenefitDetailResult } from '@/server/userApi';
 import { getCarrierLabel, getMembershipFilter } from '@/utils/membership';
+import { getCarrierBenefitDisplayName, getMembershipOptionLabel } from '@/features/allBenefitsPage/apis/allBenefitsApi';
 import { createPartnerSlug } from '@/utils/partnerSeo';
 
 type PartnerPageProps = {
@@ -12,19 +13,24 @@ type PartnerPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const readMembershipQuery = async (searchParams: PartnerPageProps['searchParams']) => {
+const readPartnerQuery = async (searchParams: PartnerPageProps['searchParams']) => {
   const query = await searchParams;
   const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
-  return getMembershipFilter(first(query.carrier), first(query.grade));
+  return {
+    membership: getMembershipFilter(first(query.carrier), first(query.grade)),
+    membershipOnly: first(query.membership) === 'mine',
+  };
 };
 
-const withMembershipQuery = (path: string, membership: ReturnType<typeof getMembershipFilter>) => {
+const withMembershipQuery = (
+  path: string,
+  membership: ReturnType<typeof getMembershipFilter>,
+  membershipOnly: boolean
+) => {
   if (!membership) return encodeURI(path);
   const query = new URLSearchParams({ carrier: membership.carrier });
-  if (membership.grade) {
-    query.set('grade', membership.grade);
-    query.set('membership', 'mine');
-  }
+  if (membership.grade) query.set('grade', membership.grade);
+  if (membershipOnly) query.set('membership', 'mine');
   return `${encodeURI(path)}?${query}`;
 };
 
@@ -54,7 +60,7 @@ export async function generateMetadata({
 }: PartnerPageProps): Promise<Metadata> {
   const { partnerId, partnerSlug } = await params;
   const numericPartnerId = Number(partnerId);
-  const membership = await readMembershipQuery(searchParams);
+  const { membership, membershipOnly } = await readPartnerQuery(searchParams);
   const result = await getPublicPartnerBenefitDetailResult(
     numericPartnerId,
     membership?.carrier,
@@ -68,7 +74,11 @@ export async function generateMetadata({
 
   if (detail && (partnerId !== canonicalId || decodeSlug(partnerSlug) !== canonicalSlug)) {
     permanentRedirect(
-      withMembershipQuery(`/benefits/partners/${canonicalId}/${canonicalSlug}`, membership)
+      withMembershipQuery(
+        `/benefits/partners/${canonicalId}/${canonicalSlug}`,
+        membership,
+        membershipOnly
+      )
     );
   }
 
@@ -84,7 +94,7 @@ export async function generateMetadata({
 export default async function PartnerBenefitRoute({ params, searchParams }: PartnerPageProps) {
   const { partnerId, partnerSlug } = await params;
   const numericPartnerId = Number(partnerId);
-  const membership = await readMembershipQuery(searchParams);
+  const { membership, membershipOnly } = await readPartnerQuery(searchParams);
   if (!Number.isInteger(numericPartnerId) || numericPartnerId <= 0) notFound();
 
   const result = await getPublicPartnerBenefitDetailResult(
@@ -103,7 +113,7 @@ export default async function PartnerBenefitRoute({ params, searchParams }: Part
     detail &&
     (partnerId !== String(numericPartnerId) || decodeSlug(partnerSlug) !== canonicalSlug)
   ) {
-    permanentRedirect(withMembershipQuery(canonicalPath, membership));
+    permanentRedirect(withMembershipQuery(canonicalPath, membership, membershipOnly));
   }
   const description = getPartnerDescription(partnerName, detail?.carrierGroups);
   const structuredBenefits =
@@ -143,7 +153,7 @@ export default async function PartnerBenefitRoute({ params, searchParams }: Part
         position: index + 1,
         item: {
           '@type': 'Thing',
-          name: `${getCarrierLabel(carrier)} ${benefit.benefitName}`,
+          name: `${getCarrierLabel(carrier)} ${getCarrierBenefitDisplayName(benefit)}${getMembershipOptionLabel(benefit) ? ` · ${getMembershipOptionLabel(benefit)}` : ''}`,
           description: benefit.description || benefit.tierBenefits[0]?.context || undefined,
           url: `${SITE_ORIGIN}${canonicalPath}#benefit-${benefit.benefitId}`,
         },
@@ -158,6 +168,7 @@ export default async function PartnerBenefitRoute({ params, searchParams }: Part
         key={`${numericPartnerId}:${membership?.carrier ?? ''}:${membership?.grade ?? ''}`}
         initialDetail={detail}
         membership={membership}
+        membershipOnly={membershipOnly}
       />
     </>
   );

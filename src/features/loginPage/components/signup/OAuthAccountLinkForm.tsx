@@ -20,7 +20,7 @@ const OAuthAccountLinkForm = ({
 
   return (
     <div className="flex w-full flex-col items-center px-2 py-2">
-      <div className="mb-5 w-[320px] text-left max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+      <div className="mb-5 w-full max-w-[320px] text-left">
         <p className="text-body-3 font-semibold text-grey06 max-md:text-body-2">계정 연동 확인</p>
         <p className="mt-2 text-body-5 leading-5 text-grey04">
           이미 동일한 이메일로 가입된 자체 계정이 있습니다. 기존 비밀번호로 본인 확인 후 카카오
@@ -50,7 +50,7 @@ const OAuthAccountLinkForm = ({
         />
       </div>
 
-      <div className="mt-[26px] flex w-[320px] flex-col gap-3 max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+      <div className="mt-6 flex w-full max-w-[320px] flex-col gap-3">
         <AuthButton
           label={loading ? '연동 중...' : '계정 연동하기'}
           onClick={() => onLink(password)}
@@ -61,9 +61,9 @@ const OAuthAccountLinkForm = ({
           type="button"
           onClick={onBack}
           disabled={loading}
-          className="h-[44px] rounded-[16px] border border-grey02 text-body-3-bold text-grey04 transition hover:border-purple02 hover:text-purple04 disabled:opacity-60 max-lg:h-[38px] max-lg:text-body-4"
+          className="min-h-11 rounded-xl border border-grey02 text-body-3-bold text-grey04 transition hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
         >
-          다른 이메일로 가입하기
+          로그인으로 돌아가기
         </button>
       </div>
     </div>

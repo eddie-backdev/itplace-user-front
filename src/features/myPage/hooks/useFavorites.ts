@@ -1,29 +1,20 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { fetchFavoriteDetail, fetchFavorites, deleteFavorites } from '../apis/favorites';
 import { FavoriteDetail, FavoriteItem } from '../../../types/favorites';
 import { showToast } from '../../../utils/toast';
 import { useResponsive } from '../../../hooks/useResponsive';
 import { isGradeApplicableToProfile } from '../../../utils/membership';
 import { FavoriteBenefitFilter } from '../../../components/BenefitFilterToggle';
+import { isFavoriteTierApplicableToProfile } from '../utils/favoriteMembership.mjs';
 
 const isFavoriteApplicableToProfile = (
   detail: FavoriteDetail,
   userCarrier?: string | null,
   userGrade?: string | null
-) => {
-  if (!userCarrier || !userGrade) return false;
-
-  return detail.tiers.some(
-    (tier) =>
-      tier.isAll ||
-      isGradeApplicableToProfile({
-        benefitCarrier: tier.carrier,
-        benefitGrade: tier.grade,
-        userCarrier,
-        userGrade,
-      })
+) =>
+  detail.tiers.some((tier) =>
+    isFavoriteTierApplicableToProfile(tier, userCarrier, userGrade, isGradeApplicableToProfile)
   );
-};
 
 export function useFavorites(
   itemsPerPageInit = 6,
@@ -39,73 +30,113 @@ export function useFavorites(
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const { isMobile } = useResponsive();
+  const [membershipFilterError, setMembershipFilterError] = useState(false);
+  const requestVersionRef = useRef(0);
+  const { isMobile, isWide, isUltrawide } = useResponsive();
 
   // 페이지네이션
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(itemsPerPageInit);
+  const itemsPerPage = isUltrawide ? 10 : isWide ? 8 : itemsPerPageInit;
 
-  // 로딩 상태
-  const [loading, setLoading] = useState(false);
+  // Start in a loading state so the empty state never flashes before the first request.
+  const [loading, setLoading] = useState(true);
 
   const hasMembershipProfile = Boolean(userCarrier && userGrade);
 
-  // ✅ 전체 데이터 기반으로 totalElements 관리
-  const totalElements = allFavorites.length;
-
   // ✅ 한 번에 전체 데이터를 불러오기
   const loadFavorites = useCallback(async () => {
+    const requestVersion = ++requestVersionRef.current;
+    const isCurrentRequest = () => requestVersionRef.current === requestVersion;
     setLoading(true);
     try {
       setLoadError(false);
-      const res = await fetchFavorites(undefined, 0, 9999);
-      let favorites = res.data.content;
+      setMembershipFilterError(false);
+      const favorites: FavoriteItem[] = [];
+      let page = 0;
+      let hasNext = true;
+      while (hasNext && isCurrentRequest()) {
+        const response = await fetchFavorites(undefined, page, 100);
+        favorites.push(...response.data.content);
+        hasNext = response.data.hasNext;
+        page += 1;
+      }
+      if (!isCurrentRequest()) return;
 
       if (benefitFilter === 'myMembership') {
         if (!hasMembershipProfile) {
-          favorites = [];
+          setAllFavorites([]);
         } else {
-          const details = await Promise.all(
-            favorites.map(async (favorite) => {
-              try {
-                const detail = await fetchFavoriteDetail(favorite.benefitId);
-                return { favorite, detail: detail.data };
-              } catch (error) {
-                console.error('관심 혜택 상세 필터링 실패', error);
-                return { favorite, detail: null };
-              }
-            })
-          );
+          const details: Array<{
+            favorite: FavoriteItem;
+            detail: FavoriteDetail | null;
+            failed: boolean;
+          }> = [];
+          const detailBatchSize = 10;
+          for (let start = 0; start < favorites.length; start += detailBatchSize) {
+            if (!isCurrentRequest()) return;
+            const batch = await Promise.all(
+              favorites.slice(start, start + detailBatchSize).map(async (favorite) => {
+                try {
+                  const detail = await fetchFavoriteDetail(favorite.benefitId);
+                  return { favorite, detail: detail.data, failed: false };
+                } catch {
+                  return { favorite, detail: null, failed: true };
+                }
+              })
+            );
+            details.push(...batch);
+          }
+          if (!isCurrentRequest()) return;
 
-          favorites = details
+          const failedDetails = details.filter(({ failed }) => failed);
+          setMembershipFilterError(failedDetails.length > 0);
+          setAllFavorites(
+            details
             .filter(
-              ({ detail }) =>
-                detail && isFavoriteApplicableToProfile(detail, userCarrier, userGrade)
+              ({ detail, failed }) =>
+                failed ||
+                (detail && isFavoriteApplicableToProfile(detail, userCarrier, userGrade))
             )
-            .map(({ favorite }) => favorite);
+              .map(({ favorite }) => favorite)
+          );
         }
+      } else {
+        setAllFavorites(favorites);
       }
-
-      setAllFavorites(favorites);
     } catch (err) {
-      console.error('즐겨찾기 목록 불러오기 실패', err);
-      setLoadError(true);
-      setAllFavorites([]);
+      if (isCurrentRequest()) {
+        console.error('즐겨찾기 목록 불러오기 실패', err);
+        setLoadError(true);
+        setAllFavorites([]);
+      }
     } finally {
-      setLoading(false);
+      if (isCurrentRequest()) setLoading(false);
     }
   }, [benefitFilter, hasMembershipProfile, userCarrier, userGrade]);
 
   useEffect(() => {
-    loadFavorites();
+    void loadFavorites();
+    return () => {
+      requestVersionRef.current += 1;
+    };
   }, [loadFavorites]);
 
   // ✅ 검색 필터링 (프론트에서)
   const searchedFavorites = useMemo(() => {
     if (!keyword.trim()) return allFavorites;
     const lower = keyword.trim().toLowerCase();
-    return allFavorites.filter((fav) => fav.benefitName.toLowerCase().includes(lower));
+    return allFavorites.filter(
+      (fav) =>
+        fav.benefitName.toLowerCase().includes(lower) ||
+        fav.partnerName.toLowerCase().includes(lower)
+    );
   }, [allFavorites, keyword]);
+
+  const totalElements = searchedFavorites.length;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
 
   // ✅ currentItems: 검색 필터링 후 페이지네이션 적용
   const currentItems = useMemo(() => {
@@ -145,7 +176,7 @@ export function useFavorites(
     } else {
       setSelectedId(null);
     }
-  }, [searchedFavorites, isMobile]);
+  }, [searchedFavorites, isMobile, itemsPerPage]);
 
   // ✅ 단일 삭제
   const handleRemoveFavorite = async (benefitId: number) => {
@@ -179,6 +210,7 @@ export function useFavorites(
     allFavorites,
     currentItems,
     totalElements,
+    membershipFilterError,
     currentPage,
     itemsPerPage,
     selectedId,

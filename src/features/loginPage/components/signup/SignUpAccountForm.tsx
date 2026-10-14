@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import AuthButton from '../common/AuthButton';
-import AuthInput from '../common/AuthInput';
 import EmailVerificationBox from '../verification/EmailVerificationBox';
 import PasswordInputForm from '../common/PasswordInputForm';
 import useValidation from '../../hooks/useValidation';
@@ -11,7 +10,11 @@ type SignUpAccountFormProps = {
   initialEmail?: string;
   initialPassword?: string;
   initialPasswordConfirm?: string;
-  phoneNumber: string;
+  initialEmailVerified?: boolean;
+  onEmailVerifiedChange: (verified: boolean) => void;
+  onValuesChange: (
+    data: Partial<{ email: string; password: string; passwordConfirm: string }>
+  ) => void;
   onNext: (data: { email: string; password: string; passwordConfirm: string }) => void;
 };
 
@@ -19,14 +22,16 @@ const SignUpAccountForm = ({
   initialEmail = '',
   initialPassword = '',
   initialPasswordConfirm = '',
-  phoneNumber,
+  initialEmailVerified = false,
+  onEmailVerifiedChange,
+  onValuesChange,
   onNext,
 }: SignUpAccountFormProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState(initialPassword);
   const [passwordConfirm, setPasswordConfirm] = useState(initialPasswordConfirm);
-  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(initialEmailVerified);
   const { errors, validateAll, validateField } = useValidation();
 
   useEffect(() => {
@@ -62,23 +67,9 @@ const SignUpAccountForm = ({
 
   return (
     <div ref={wrapperRef} className="flex w-full flex-col items-center">
-      <div className="mb-4 w-[320px] text-left max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
+      <div className="mb-4 w-full max-w-[320px] text-left">
         <p className="text-body-3 font-semibold text-grey06 max-md:text-body-2">계정 정보</p>
         <p className="mt-1.5 text-body-5 text-grey04">이메일과 비밀번호를 설정해 주세요.</p>
-      </div>
-
-      <div className="mb-3 w-full flex justify-center">
-        <div className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
-          <p className="mb-1.5 text-caption font-semibold text-grey04">인증된 휴대폰 번호</p>
-          <AuthInput
-            name="verifiedPhoneNumber"
-            value={phoneNumber}
-            disabled
-            bgColor="bg-purple01/45"
-            textColor="text-purple05"
-            className="font-semibold"
-          />
-        </div>
       </div>
 
       <div className="w-full flex justify-center">
@@ -86,10 +77,16 @@ const SignUpAccountForm = ({
           email={email}
           onChangeEmail={(value) => {
             setEmailVerified(false);
+            onEmailVerifiedChange(false);
             setEmail(value);
+            onValuesChange({ email: value });
             validateField('email', value, { ...formData, email: value });
           }}
-          onVerifiedChange={setEmailVerified}
+          initiallyVerified={initialEmailVerified}
+          onVerifiedChange={(verified) => {
+            setEmailVerified(verified);
+            onEmailVerifiedChange(verified);
+          }}
           mode="signup"
         />
       </div>
@@ -100,6 +97,7 @@ const SignUpAccountForm = ({
           passwordConfirm={passwordConfirm}
           onChangePassword={(value) => {
             setPassword(value);
+            onValuesChange({ password: value });
             validateField('password', value, { ...formData, password: value });
             if (passwordConfirm) {
               validateField('passwordConfirm', passwordConfirm, {
@@ -110,6 +108,7 @@ const SignUpAccountForm = ({
           }}
           onChangeConfirm={(value) => {
             setPasswordConfirm(value);
+            onValuesChange({ passwordConfirm: value });
             validateField('passwordConfirm', value, { ...formData, passwordConfirm: value });
           }}
           passwordError={errors.password}

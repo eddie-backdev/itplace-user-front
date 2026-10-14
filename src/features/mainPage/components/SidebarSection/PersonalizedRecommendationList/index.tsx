@@ -259,11 +259,13 @@ const PersonalizedRecommendationList: React.FC<PersonalizedRecommendationListPro
           {!isChatOpen &&
             stores.map((store) => (
               <div key={`${store.partnerName}-${store.rank}`} className="relative">
-                <div
+                <button
+                  type="button"
+                  aria-label={`${store.partnerName} 추천 매장 상세 보기`}
                   onClick={() => {
                     onItemClick(store);
                   }}
-                  className="w-[330px] h-[60px] bg-grey01 rounded-[10px] px-4 flex items-center cursor-pointer hover:bg-purple01 transition-colors overflow-x-hidden max-md:w-auto max-md:h-[64px] max-md:px-3 max-sm:h-[64px] max-sm:px-2"
+                  className="flex h-[60px] w-[330px] items-center overflow-x-hidden rounded-[10px] bg-grey01 px-4 text-left transition-colors hover:bg-purple01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand max-md:h-[64px] max-md:w-auto max-md:px-3 max-sm:h-[64px] max-sm:px-2"
                 >
                   {/* 왼쪽 이미지 */}
                   <div className="w-[50px] h-[50px] bg-white rounded-[10px] overflow-hidden flex-shrink-0 mr-6 max-md:w-[40px] max-md:h-[40px] max-md:mr-4 max-sm:w-[35px] max-sm:h-[35px] max-sm:mr-3">
@@ -286,7 +288,7 @@ const PersonalizedRecommendationList: React.FC<PersonalizedRecommendationListPro
                   <div className={getBadgeClass(store.rank)}>
                     <span>{store.rank}위</span>
                   </div>
-                </div>
+                </button>
               </div>
             ))}
         </div>

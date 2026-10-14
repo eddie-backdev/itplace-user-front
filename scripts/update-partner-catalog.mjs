@@ -8,7 +8,7 @@ if (!configuredBaseUrl) {
   throw new Error('USER_API_BASE_URL 또는 NEXT_PUBLIC_APP_BASE_URL 환경 변수가 필요합니다.');
 }
 
-const pageSize = 200;
+const pageSize = 100;
 const maximumPages = 100;
 const partnersById = new Map();
 let page = 0;

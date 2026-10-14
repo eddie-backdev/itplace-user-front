@@ -33,12 +33,25 @@ const TermsPage = () => {
       <InfoPageShell
         title="이용약관"
         description="본 약관은 ITPLACE 웹 및 모바일 서비스 이용에 필요한 기본 기준을 설명합니다."
+        contents={termsSections.map((section, index) => ({
+          id: `terms-section-${index + 1}`,
+          label: section.title,
+        }))}
+        relatedLinks={[
+          { label: '개인정보처리방침', to: '/privacy' },
+          { label: '계정 삭제 안내', to: '/account-deletion' },
+          { label: '문의', to: '/contact' },
+        ]}
       >
-        <p className="text-sm font-bold text-grey05">시행일: 2026년 6월 27일</p>
-        {termsSections.map((section) => (
-          <section key={section.title}>
-            <h2 className="text-xl font-black tracking-[-0.02em] text-purple06">{section.title}</h2>
-            <p className="mt-4 leading-7 text-grey06">{section.body}</p>
+        <p className="text-sm font-medium text-warmMuted">시행일: 2026년 6월 27일</p>
+        {termsSections.map((section, index) => (
+          <section
+            key={section.title}
+            id={`terms-section-${index + 1}`}
+            className="surface-card scroll-mt-6 p-5 sm:p-7"
+          >
+            <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">{section.title}</h2>
+            <p className="mt-3 max-w-[80ch] text-[15px] leading-7 text-grey06">{section.body}</p>
           </section>
         ))}
       </InfoPageShell>

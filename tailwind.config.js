@@ -1,9 +1,11 @@
 // tailwind.config.js
-import plugin from 'tailwindcss/plugin';
 const tailwindConfig = {
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Apple SD Gothic Neo', 'Malgun Gothic', 'system-ui', 'sans-serif'],
+      },
       // 폰트 사이즈
       // text-[지정명]
       fontSize: {
@@ -37,22 +39,26 @@ const tailwindConfig = {
       // 컬러
       // bg-[지정명]
       colors: {
-        black: '#242321',
-        white: '#FFFEFB',
+        black: '#191F28',
+        white: '#FFFFFF',
         danger: '#D7263D',
         success: '#167A4C',
         successDark: '#115C3A',
         // ITPLACE semantic palette
         brand: '#167A4C',
         brandStrong: '#115C3A',
-        brandSoft: '#EDF8F2',
+        brandSoft: '#EAF5F0',
         benefit: '#FFD75A',
-        ink: '#242321',
-        warmMuted: '#6F6A60',
-        warmCanvas: '#F9F8F5',
-        warmSurface: '#FFFEFB',
-        warmBorder: '#E4E1D8',
-        warmNav: '#F3F0E8',
+        ink: '#252A34',
+        warmMuted: '#69717E',
+        warmCanvas: '#F6F7FA',
+        warmSurface: '#FFFFFF',
+        warmBorder: '#E7EAF0',
+        warmNav: '#FFFFFF',
+        softLavender: '#F1EEFC',
+        softMint: '#EAF5F0',
+        softPeach: '#FFF2E9',
+        lavenderInk: '#6654A8',
         accentBlue: '#33856A',
         accentTeal: '#42A77B',
         accentGold: '#FFD75A',
@@ -60,7 +66,7 @@ const tailwindConfig = {
         accentRose: '#EC4899',
         accentRoseDark: '#BE185D',
         // 기존 class 이름은 점진 마이그레이션을 위한 호환 alias다.
-        purple01: '#EDF8F2',
+        purple01: '#EAF5F0',
         purple02: '#C9E7D7',
         purple03: '#39A66F',
         purple04: '#167A4C',
@@ -71,27 +77,22 @@ const tailwindConfig = {
         orange03: '#FFD75A',
         orange04: '#7A5700',
         orange05: '#5F4300',
-        grey01: '#F9F8F5',
-        grey02: '#E4E1D8',
-        grey03: '#D3CFC4',
-        grey04: '#757064',
-        grey05: '#5F5B52',
-        grey06: '#3D3A34',
-        grey07: '#242321',
+        grey01: '#F6F7FA',
+        grey02: '#E7EAF0',
+        grey03: '#D1D6DB',
+        grey04: '#69717E',
+        grey05: '#69717E',
+        grey06: '#333D4B',
+        grey07: '#191F28',
         pink01: '#FFF0F4',
         pink02: '#FFD6E1',
         pink03: '#EF8DA9',
         pink04: '#C74A70',
         pink05: '#9F3152',
       },
-      // 그라데이션
-      // bg-[지정명]
-      backgroundImage: {
-        'gradient-header': 'linear-gradient(#167A4C 0%, #167A4C 32%, #0B452B 100%)',
-        'gradient-myPage': 'linear-gradient(90deg, #39A66F 0%, #167A4C 45%, #0B452B 100%)',
+      boxShadow: {
+        card: '0 2px 10px rgba(31, 38, 52, 0.035)',
       },
-      // 드롭 섀도우
-      // drop-shadow-[지정명]
       dropShadow: {
         basic: '0px 3px 12px rgba(16, 17, 20, 0.12)',
       },
@@ -103,6 +104,8 @@ const tailwindConfig = {
       lg: '1024px',
       xl: '1280px',
       '2xl': '1536px',
+      wide: '1600px',
+      ultrawide: '2200px',
       // max-width 기반 반대 방향 브레이크포인트 (웹 우선 대응)
       'max-xl': { max: '1536px' }, // 노트북 FHD 125% 배율 대비
       'max-xlg': { max: '1250px' }, // 태블릿 가로 1023px 이하
@@ -120,18 +123,6 @@ const tailwindConfig = {
       floating: 'floating 2s ease-in-out infinite',
     },
   },
-  plugins: [
-    // 헤더 글래스 모피즘
-    plugin(function ({ addUtilities }) {
-      addUtilities({
-        '.header-glass': {
-          boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.15), inset 2px 2px 6px rgba(0, 0, 0, 0.15)',
-          backdropFilter: 'blur(35px)',
-          WebkitBackdropFilter: 'blur(35px)', // Safari 대응
-        },
-      });
-    }),
-  ],
 };
 
 export default tailwindConfig;

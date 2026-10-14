@@ -1,134 +1,32 @@
-import { useRef, useEffect, useState } from 'react';
-import { useNavigate } from '@/lib/navigation';
-import gsap from 'gsap';
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from '@/lib/navigation';
+import { getSafeReturnTo } from '../utils/returnTo.mjs';
+
+export type AuthFormStep =
+  | 'login'
+  | 'signUpAccount'
+  | 'signUpFinal'
+  | 'findPassword'
+  | 'oauthIntegration'
+  | 'oauthLink';
 
 export const AuthTransition = () => {
   const navigate = useNavigate();
-  const formCardRef = useRef<HTMLDivElement>(null);
-  const sideCardRef = useRef<HTMLDivElement>(null);
-
-  const [formStep, setFormStep] = useState<
-    | 'login'
-    | 'signUp'
-    | 'signUpAccount'
-    | 'signUpFinal'
-    | 'findPassword'
-    | 'oauthIntegration'
-    | 'oauthLink'
-  >('login');
-
-  const getDistance = () => {
-    if (window.innerWidth <= 1023) {
-      return 307;
-    } else if (window.innerWidth <= 1536) {
-      return 409;
-    }
-    return 481;
-  };
-
-  useEffect(() => {
-    gsap.set(formCardRef.current, { x: 0 });
-    gsap.set(sideCardRef.current, { x: 0 });
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (formStep === 'findPassword') {
-        const newDistance = getDistance();
-        gsap.set(formCardRef.current, { x: newDistance });
-        gsap.set(sideCardRef.current, { x: -newDistance });
-        return;
-      }
-
-      gsap.set(formCardRef.current, { x: 0 });
-      gsap.set(sideCardRef.current, { x: 0 });
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [formStep]);
-
-  const animateToRight = (targetStep: typeof formStep) => {
-    const distance = getDistance();
-    const tl = gsap.timeline();
-
-    tl.to(formCardRef.current, {
-      x: distance,
-      duration: 0.5,
-      ease: 'power2.out',
-      onUpdate: () => {
-        const x = gsap.getProperty(formCardRef.current, 'x') as number;
-        if (x > distance / 2 && formStep !== targetStep) {
-          setFormStep(targetStep);
-        }
-      },
-    });
-
-    tl.to(
-      sideCardRef.current,
-      {
-        x: -distance,
-        duration: 0.5,
-        ease: 'power2.out',
-      },
-      '<'
-    );
-  };
+  const [searchParams] = useSearchParams();
+  const returnTo = getSafeReturnTo(searchParams.get('returnTo'));
+  const [formStep, setFormStep] = useState<AuthFormStep>('login');
 
   const goToLogin = () => {
-    navigate('/login', { replace: true });
-
-    if (formStep !== 'findPassword') {
-      gsap.set(formCardRef.current, { x: 0 });
-      gsap.set(sideCardRef.current, { x: 0 });
-      setFormStep('login');
-      return;
-    }
-
-    const distance = getDistance();
-    const tl = gsap.timeline();
-
-    tl.to(formCardRef.current, {
-      x: 0,
-      duration: 0.5,
-      ease: 'power2.out',
-      onUpdate: () => {
-        const x = gsap.getProperty(formCardRef.current, 'x') as number;
-        if (x < distance / 2) {
-          setFormStep('login');
-        }
-      },
-    });
-
-    tl.to(
-      sideCardRef.current,
-      {
-        x: 0,
-        duration: 0.5,
-        ease: 'power2.out',
-      },
-      '<'
-    );
+    setFormStep('login');
+    navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
   };
-
-  const goToSignUp = () => {
-    gsap.set(formCardRef.current, { x: 0 });
-    gsap.set(sideCardRef.current, { x: 0 });
-    setFormStep('signUp');
-  };
-  const goToSignUpAccount = () => setFormStep('signUpAccount');
-  const goToSignUpFinal = () => setFormStep('signUpFinal');
-  const goToFindPassword = () => animateToRight('findPassword');
 
   return {
     formStep,
     setFormStep,
-    formCardRef,
-    sideCardRef,
     goToLogin,
-    goToSignUp,
-    goToSignUpAccount,
-    goToSignUpFinal,
-    goToFindPassword,
+    goToSignUp: () => setFormStep('signUpAccount'),
+    goToSignUpFinal: () => setFormStep('signUpFinal'),
+    goToFindPassword: () => setFormStep('findPassword'),
   };
 };

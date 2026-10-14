@@ -14,7 +14,7 @@ export default function MyPageContentLayout({ main, aside }: MyPageContentLayout
   return (
     <>
       <MainContentWrapper>{main}</MainContentWrapper>
-      <RightAside>{aside}</RightAside>
+      {aside != null && <RightAside>{aside}</RightAside>}
     </>
   );
 }

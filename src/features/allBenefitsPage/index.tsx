@@ -1,530 +1,616 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { debounce } from 'lodash';
-import { Link, useSearchParams } from '@/lib/navigation';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../../store';
-import { useClientReady } from '../../hooks/useClientReady';
-import SearchBar from '../../components/SearchBar';
-import Pagination from '../../components/Pagination';
-import NoResult from '../../components/NoResult';
-import SafeImage from '../../components/SafeImage';
-import { TbChevronRight } from 'react-icons/tb';
-import { showToast } from '../../utils/toast';
 import {
-  getPartnerBenefits,
-  PartnerBenefitItem,
-  PartnerBenefitApiParams,
-  PartnerBenefitResponse,
-} from './apis/allBenefitsApi';
-import MobileHeader from '../../components/MobileHeader';
+  TbBook,
+  TbBuildingCarousel,
+  TbHeart,
+  TbHome,
+  TbLayoutGrid,
+  TbMovie,
+  TbPlane,
+  TbSearch,
+  TbShoppingBag,
+  TbToolsKitchen2,
+} from 'react-icons/tb';
+import type { IconType } from 'react-icons';
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+  type MouseEvent,
+} from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import { Link } from '@/lib/navigation';
+import type { RootState } from '@/store';
+import { useClientReady } from '@/hooks/useClientReady';
+import MobileHeader from '@/components/MobileHeader';
+import BenefitExplorerCard from './components/BenefitExplorerCard';
+import BenefitExplorerDetail from './components/BenefitExplorerDetail';
+import { getPartnerBenefits, type PartnerBenefitResponse } from './apis/allBenefitsApi';
 import {
   CARRIER_OPTIONS,
-  CarrierCode,
   getCarrierLabel,
   getMembershipGradeLabel,
+  getMembershipGradeOptions,
   isCarrierCode,
   isValidCarrierGradePair,
-} from '../../utils/membership';
-import { CATEGORIES } from '../mainPage/constants';
-import { getPartnerBenefitPath } from '../../utils/partnerSeo';
+} from '@/utils/membership';
+import { CATEGORIES } from '@/features/mainPage/constants';
+import { getPartnerBenefitPath } from '@/utils/partnerSeo';
+import styles from './BenefitsExplorer.module.css';
 
 const ITEMS_PER_PAGE = 15;
+const CATEGORY_ICONS: Record<string, IconType> = {
+  전체: TbLayoutGrid,
+  엑티비티: TbBuildingCarousel,
+  '뷰티/건강': TbHeart,
+  쇼핑: TbShoppingBag,
+  '생활/편의': TbHome,
+  푸드: TbToolsKitchen2,
+  '문화/여가': TbMovie,
+  교육: TbBook,
+  '여행/교통': TbPlane,
+};
+const DETAIL_BREAKPOINT = '(min-width: 1280px)';
+const subscribeToDetailBreakpoint = (callback: () => void) => {
+  const query = window.matchMedia(DETAIL_BREAKPOINT);
+  query.addEventListener('change', callback);
+  return () => query.removeEventListener('change', callback);
+};
+const getDetailBreakpointSnapshot = () => window.matchMedia(DETAIL_BREAKPOINT).matches;
+const getDetailBreakpointServerSnapshot = () => false;
 
-type AllBenefitsLayoutProps = { initialData?: PartnerBenefitResponse | null };
+type AllBenefitsLayoutProps = {
+  initialData?: PartnerBenefitResponse | null;
+  initialRequestKey?: string;
+};
+type QueryChanges = Record<string, string | null>;
 
-const AllBenefitsLayout: React.FC<AllBenefitsLayoutProps> = ({ initialData = null }) => {
-  const [searchParams] = useSearchParams();
+export default function AllBenefitsLayout({
+  initialData = null,
+  initialRequestKey,
+}: AllBenefitsLayoutProps) {
+  const searchParams = useSearchParams();
+  const keyword = searchParams.get('q')?.trim().slice(0, 100) ?? '';
+  const carrierValue = searchParams.get('carrier')?.trim();
+  const selectedCarrier = isCarrierCode(carrierValue) ? carrierValue : undefined;
+  const gradeValue = searchParams.get('grade')?.trim();
+  const selectedGrade = isValidCarrierGradePair(selectedCarrier, gradeValue)
+    ? gradeValue
+    : undefined;
+  const partnerValue = Number(searchParams.get('partner'));
+  const requestedPartnerId =
+    Number.isSafeInteger(partnerValue) && partnerValue > 0 ? partnerValue : null;
+  const categoryValue = searchParams.get('category')?.trim();
+  const selectedCategory =
+    CATEGORIES.find((category) => category.id === categoryValue)?.id ?? '전체';
+  const pageValue = Number(searchParams.get('page') ?? 1);
+  const currentPage = Number.isSafeInteger(pageValue) && pageValue > 0 ? pageValue : 1;
+  const membershipRequested = searchParams.get('membership') === 'mine';
+
   const { isLoggedIn: storedIsLoggedIn, user } = useSelector((state: RootState) => state.auth);
   const isAuthRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
   const isClientReady = useClientReady();
-  const isLoggedIn = isClientReady && isAuthRehydrated && storedIsLoggedIn;
-  const profileCarrier = isLoggedIn && isCarrierCode(user?.carrier) ? user.carrier : null;
+  const isAuthReady = isClientReady && isAuthRehydrated;
+  const isLoggedIn = isAuthReady && storedIsLoggedIn;
+  const profileCarrier = isLoggedIn && isCarrierCode(user?.carrier) ? user.carrier : undefined;
   const profileGrade = user?.membershipGradeCode || user?.membershipGrade || '';
   const hasMembershipProfile = Boolean(
     profileCarrier && profileGrade && isValidCarrierGradePair(profileCarrier, profileGrade)
   );
-  const membershipOnly = searchParams.get('membership') === 'mine' && hasMembershipProfile;
-  const membershipCarrier = membershipOnly ? profileCarrier : null;
-  const membershipGrade = membershipOnly ? profileGrade : undefined;
-  const setMembershipOnly = (enabled: boolean) => {
-    const next = new URL(window.location.href);
-    if (enabled) next.searchParams.set('membership', 'mine');
-    else next.searchParams.delete('membership');
-    // This filter uses the restored browser profile; a server navigation adds no data.
-    window.history.replaceState(null, '', `${next.pathname}${next.search}${next.hash}`);
-    setCurrentPage(1);
-  };
-  const initialSearchTerm = searchParams.get('q')?.trim() ?? '';
-  const initialCarrier = searchParams.get('carrier');
-  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearchTerm);
-  const [currentPage, setCurrentPage] = useState((initialData?.currentPage ?? 0) + 1);
-  const [selectedCategory, setSelectedCategory] = useState('전체');
-  const [selectedCarriers, setSelectedCarriers] = useState<CarrierCode[]>(() =>
-    isCarrierCode(initialCarrier) ? [initialCarrier] : []
-  );
-  const [isLoading, setIsLoading] = useState(!initialData);
-  const [partners, setPartners] = useState<PartnerBenefitItem[]>(initialData?.content ?? []);
-  const [totalElements, setTotalElements] = useState(initialData?.totalElements ?? 0);
-  const [hasNext, setHasNext] = useState(initialData?.hasNext ?? false);
-  const [loadError, setLoadError] = useState(false);
-  const latestRequestIdRef = useRef(0);
-  const hasInitialDataRef = useRef(Boolean(initialData));
-  const waitingForMembership =
-    searchParams.get('membership') === 'mine' && (!isClientReady || !isAuthRehydrated);
-
-  // API 호출 함수
-  const fetchBenefits = useCallback(
-    async (page: number = 0, keyword?: string, category?: string, append = false) => {
-      const requestId = ++latestRequestIdRef.current;
-      setIsLoading(true);
-      setLoadError(false);
-      if (!append) {
-        setPartners([]);
-        setTotalElements(0);
-        setHasNext(false);
-      }
-
-      try {
-        const params: PartnerBenefitApiParams = {
-          mainCategory: membershipCarrier ? undefined : 'BASIC_BENEFIT',
-          page: page,
-          size: ITEMS_PER_PAGE,
-        };
-
-        if (keyword) params.keyword = keyword;
-        if (selectedCarriers.length > 0) params.carriers = selectedCarriers;
-        if (membershipCarrier && membershipGrade) {
-          params.carriers = [membershipCarrier];
-          params.grade = membershipGrade;
-        }
-        if (category && category !== '전체') {
-          params.category = category;
-        }
-
-        const data = await getPartnerBenefits(params);
-
-        if (requestId !== latestRequestIdRef.current) return;
-
-        setPartners((previousPartners) =>
-          append ? [...previousPartners, ...data.content] : data.content
-        );
-        setTotalElements(data.totalElements);
-        setHasNext(data.hasNext);
-        setCurrentPage(data.currentPage + 1); // API는 0부터 시작, UI는 1부터 시작
-      } catch {
-        if (requestId !== latestRequestIdRef.current) return;
-        showToast('혜택 데이터를 불러오는 중 오류가 발생했습니다', 'error');
-        setLoadError(true);
-      } finally {
-        if (requestId === latestRequestIdRef.current) {
-          setIsLoading(false);
-        }
-      }
-    },
-    [selectedCarriers, membershipCarrier, membershipGrade]
+  const membershipOnly = membershipRequested && isLoggedIn && hasMembershipProfile;
+  const waitingForMembership = membershipRequested && !isAuthReady;
+  const effectiveCarrier = membershipOnly ? profileCarrier : selectedCarrier;
+  const effectiveGrade = membershipOnly ? profileGrade : selectedGrade;
+  const requestKey = [
+    keyword,
+    effectiveCarrier,
+    selectedCategory,
+    currentPage,
+    effectiveGrade,
+  ].join('|');
+  const hasMatchingInitialData = Boolean(initialData && initialRequestKey === requestKey);
+  const hasDesktopDetail = useSyncExternalStore(
+    subscribeToDetailBreakpoint,
+    getDetailBreakpointSnapshot,
+    getDetailBreakpointServerSnapshot
   );
 
-  // 초기 데이터 로드
+  const [result, setResult] = useState<{
+    data: PartnerBenefitResponse | null;
+    status: 'loading' | 'ready' | 'error';
+  }>({
+    data: hasMatchingInitialData ? initialData : null,
+    status: hasMatchingInitialData ? 'ready' : 'loading',
+  });
+  const [retry, setRetry] = useState(0);
+  const lastLoadedKeyRef = useRef(hasMatchingInitialData ? requestKey : null);
+
   useEffect(() => {
     if (waitingForMembership) return;
-    if (hasInitialDataRef.current && !membershipOnly) {
-      hasInitialDataRef.current = false;
-      return;
-    }
-    hasInitialDataRef.current = false;
-    void fetchBenefits(0, debouncedSearchTerm, selectedCategory);
-    return () => {
-      latestRequestIdRef.current += 1;
-    };
-  }, [fetchBenefits, debouncedSearchTerm, selectedCategory, waitingForMembership, membershipOnly]);
+    if (lastLoadedKeyRef.current === requestKey && retry === 0) return;
+    document.getElementById('benefit-card-scroll')?.scrollTo({ top: 0 });
+    let cancelled = false;
+    lastLoadedKeyRef.current = null;
+    setResult({ data: null, status: 'loading' });
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
-  };
-
-  // 디바운스된 검색 함수
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((searchQuery: string) => {
-        setDebouncedSearchTerm(searchQuery);
-      }, 500),
-    []
-  );
-
-  // 검색어 변경 시 디바운스 적용
-  useEffect(() => {
-    debouncedSearch(searchTerm);
-
-    // cleanup 함수로 디바운스 취소
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [searchTerm, debouncedSearch]);
-
-  const categories = CATEGORIES;
-
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-    setCurrentPage(1);
-  };
-
-  const handleCarrierChange = (carrier: CarrierCode | 'ALL') => {
-    setMembershipOnly(false);
-    if (membershipOnly) {
-      setSelectedCarriers(carrier === 'ALL' ? [] : [carrier]);
-      return;
-    }
-    if (carrier === 'ALL') {
-      setSelectedCarriers([]);
-      setCurrentPage(1);
-      return;
-    }
-
-    setSelectedCarriers((prevCarriers) =>
-      prevCarriers.includes(carrier)
-        ? prevCarriers.filter((selectedCarrier) => selectedCarrier !== carrier)
-        : [...prevCarriers, carrier]
+    void getPartnerBenefits({
+      mainCategory: effectiveGrade ? undefined : 'BASIC_BENEFIT',
+      page: currentPage - 1,
+      size: ITEMS_PER_PAGE,
+      keyword: keyword || undefined,
+      category: selectedCategory !== '전체' ? selectedCategory : undefined,
+      carriers: effectiveCarrier ? [effectiveCarrier] : undefined,
+      grade: effectiveGrade,
+    }).then(
+      (data) => {
+        if (cancelled) return;
+        lastLoadedKeyRef.current = requestKey;
+        setResult({ data, status: 'ready' });
+      },
+      () => {
+        if (!cancelled) setResult({ data: null, status: 'error' });
+      }
     );
-    setCurrentPage(1);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    requestKey,
+    keyword,
+    selectedCategory,
+    currentPage,
+    effectiveCarrier,
+    effectiveGrade,
+    membershipOnly,
+    waitingForMembership,
+    retry,
+  ]);
+
+  const hrefFor = (changes: QueryChanges) => {
+    const next = new URLSearchParams(searchParams.toString());
+    if (Object.keys(changes).some((key) => key !== 'partner')) next.delete('partner');
+    for (const [name, value] of Object.entries(changes)) {
+      if (value) next.set(name, value);
+      else next.delete(name);
+    }
+    const query = next.toString();
+    return query ? `/benefits?${query}` : '/benefits';
   };
 
-  // 페이지네이션 로직
-  // 페이지 변경 핸들러
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-    fetchBenefits(pageNumber - 1, debouncedSearchTerm, selectedCategory);
+  const updateQuery = (changes: QueryChanges) => {
+    const href = hrefFor(changes);
+    if (`${window.location.pathname}${window.location.search}` === href) return;
+    window.history.pushState(null, '', href);
   };
 
-  const handleLoadMore = () => {
-    fetchBenefits(currentPage, debouncedSearchTerm, selectedCategory, true);
+  const followFilter = (
+    event: MouseEvent<HTMLAnchorElement>,
+    changes: QueryChanges,
+    scrollToResults = false
+  ) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+      return;
+    event.preventDefault();
+    updateQuery(changes);
+    if (scrollToResults && window.matchMedia('(max-width: 767px)').matches) {
+      document.getElementById('benefit-results-title')?.closest('section')?.scrollIntoView({ block: 'start' });
+    }
   };
 
-  const carrierFilters: Array<{ code: CarrierCode | 'ALL'; label: string }> = [
-    { code: 'ALL', label: '전체' },
-    ...CARRIER_OPTIONS,
-  ];
+  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const submitted = new FormData(event.currentTarget).get('q');
+    updateQuery({
+      q: typeof submitted === 'string' ? submitted.trim().slice(0, 100) : null,
+      page: null,
+    });
+  };
 
-  const activeFilterCount =
-    (selectedCategory !== '전체' ? 1 : 0) + (membershipOnly ? 1 : selectedCarriers.length);
+  const resetChanges = {
+    q: null,
+    carrier: null,
+    grade: null,
+    category: null,
+    membership: null,
+    page: null,
+  };
+  const partners = result.data?.content ?? [];
+  const totalElements = result.data?.totalElements ?? 0;
+  const totalPages = result.data?.totalPages ?? Math.ceil(totalElements / ITEMS_PER_PAGE);
+  const isLoading = waitingForMembership || result.status === 'loading';
+  const pageGroupStart =
+    Math.floor((Math.min(currentPage, Math.max(totalPages, 1)) - 1) / 5) * 5 + 1;
+  const visiblePages = Array.from(
+    { length: Math.max(0, Math.min(5, totalPages - pageGroupStart + 1)) },
+    (_, index) => pageGroupStart + index
+  );
+  const hasFilters = Boolean(
+    keyword ||
+      selectedCarrier ||
+      selectedGrade ||
+      selectedCategory !== '전체' ||
+      membershipRequested
+  );
+  const numberFormatter = new Intl.NumberFormat('ko-KR');
+  const profileDescription = !isAuthReady
+    ? '멤버십 확인 중…'
+    : hasMembershipProfile
+      ? `${getCarrierLabel(profileCarrier)} · ${getMembershipGradeLabel(profileGrade)}`
+      : isLoggedIn
+        ? '통신사와 등급을 설정하면 내 조건으로 볼 수 있어요.'
+        : '통신사와 등급을 선택해 혜택을 살펴보세요.';
+  const selectedPartner =
+    partners.find((partner) => partner.partnerId === requestedPartnerId) ?? partners[0] ?? null;
 
-  const resetFilters = () => {
-    setMembershipOnly(false);
-    setSelectedCategory('전체');
-    setSelectedCarriers([]);
-    setSearchTerm('');
-    setDebouncedSearchTerm('');
-    setCurrentPage(1);
+  const pageLink = (page: number, label: string, disabled = false) =>
+    disabled ? (
+      <span aria-disabled="true" className={styles.pageNumber}>
+        {label}
+      </span>
+    ) : (
+      <Link
+        to={hrefFor({ page: page > 1 ? String(page) : null })}
+        prefetch={false}
+        onClick={(event) => followFilter(event, { page: page > 1 ? String(page) : null }, true)}
+        aria-label={label === String(page) ? `${page}페이지` : `${label} 페이지`}
+        aria-current={currentPage === page ? 'page' : undefined}
+        className={`${styles.pageNumber} ${currentPage === page ? styles.pageNumberSelected : ''}`}
+      >
+        {label}
+      </Link>
+    );
+
+  const detailQuery = new URLSearchParams();
+  if (effectiveCarrier) detailQuery.set('carrier', effectiveCarrier);
+  if (effectiveGrade) {
+    detailQuery.set('grade', effectiveGrade);
+    if (membershipOnly) detailQuery.set('membership', 'mine');
+  }
+  const detailHrefFor = (partnerId: number, partnerName: string) => {
+    const path = getPartnerBenefitPath(partnerId, partnerName);
+    return `${path}${detailQuery.size ? `?${detailQuery}` : ''}`;
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-grey01/70 pb-5 pt-[54px] md:min-h-0 md:flex-1 md:overflow-y-auto md:bg-white md:pb-0 md:pt-0">
-      {/* 모바일 헤더 */}
-      <div className="fixed top-0 left-0 w-full z-[9999] max-md:block hidden">
+    <div className={styles.page}>
+      <div className={styles.mobileHeader}>
         <MobileHeader title="전체 혜택" />
       </div>
-
-      {/* 전체 레이아웃 컨테이너 */}
-      <div className="w-full px-4 pb-8 pt-4 md:p-0">
-        <div className="md:grid md:min-h-full md:grid-cols-[370px_minmax(0,1fr)] md:items-stretch">
-          <aside
-            className="md:sticky md:top-0 md:h-full md:overflow-y-auto md:border-r md:border-grey02 md:bg-white md:px-5 md:py-8"
-            aria-label="혜택 탐색 패널"
-          >
-            <header className="sr-only md:not-sr-only md:mb-5">
-              <p className="text-body-3 font-bold text-purple04">혜택 탐색</p>
-              <h1 className="mt-2 text-title-3 font-bold text-grey07">전체 혜택</h1>
-              <p className="mt-2 break-keep text-body-3 leading-6 text-grey05">
-                제휴처를 찾고 통신사별 멤버십 혜택을 확인해보세요.
-              </p>
-            </header>
-
-            <section
-              aria-label="혜택 검색 및 필터"
-              className="rounded-[22px] border border-grey02 bg-white p-4 shadow-[0_10px_28px_rgba(16,17,20,0.04)] md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none"
+      <div className={styles.content}>
+        <header className={styles.header}>
+          <div className={styles.titleGroup}>
+            <h1 className={styles.title}>전체 혜택</h1>
+            <p role="status" aria-live="polite" className={styles.resultCount}>
+              {waitingForMembership
+                ? '내 멤버십 확인 중…'
+                : isLoading
+                  ? '혜택 불러오는 중…'
+                  : result.status === 'error'
+                    ? '목록을 불러오지 못했어요.'
+                    : `총 ${numberFormatter.format(totalElements)}개${totalPages > 1 ? ` · ${currentPage} / ${totalPages}페이지` : ''}`}
+            </p>
+          </div>
+          <div className={styles.headerActions}>
+            <details
+              className={styles.additionalFilters}
+              onKeyDown={(event) => {
+                if (event.key !== 'Escape') return;
+                event.preventDefault();
+                event.currentTarget.open = false;
+                event.currentTarget.querySelector('summary')?.focus();
+              }}
             >
-              <SearchBar
-                placeholder="제휴처명으로 검색"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                onClear={() => setSearchTerm('')}
-                className="h-[48px] w-full border border-grey02"
-                backgroundColor="bg-grey01/70"
-              />
-
-              <div className="mt-4 border-t border-warmBorder pt-4">
-                <label className="flex min-h-11 items-center justify-between gap-3 text-body-3 font-bold text-ink">
-                  내 멤버십 혜택만
-                  <input
-                    type="checkbox"
-                    checked={membershipOnly}
-                    disabled={!hasMembershipProfile}
-                    onChange={(event) => setMembershipOnly(event.target.checked)}
-                    aria-describedby="membership-filter-description"
-                    className="h-5 w-5 shrink-0 cursor-pointer accent-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:cursor-not-allowed"
-                  />
-                </label>
-                <p
-                  id="membership-filter-description"
-                  className="mt-1 text-body-4 leading-6 text-warmMuted"
-                >
-                  {hasMembershipProfile
-                    ? `${getCarrierLabel(profileCarrier)} · ${getMembershipGradeLabel(profileGrade)} 기준으로 찾아보세요.`
-                    : isLoggedIn
-                      ? '통신사와 멤버십 등급을 설정해 주세요.'
-                      : '로그인하면 내 통신사와 등급으로 볼 수 있어요.'}
-                </p>
-                {!hasMembershipProfile && (
-                  <Link
-                    to={isLoggedIn ? '/mypage/info' : '/login'}
-                    className="mt-1 inline-flex min-h-11 items-center rounded-lg text-body-4 font-bold text-brand underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+              <summary>
+                추가 필터
+                {effectiveGrade ? ` · ${getMembershipGradeLabel(effectiveGrade)}` : ''}
+                {membershipOnly ? ' · 내 멤버십 적용 중' : ''}
+              </summary>
+              <div className={styles.advancedPanel}>
+                <h2>등급과 내 멤버십</h2>
+                {effectiveCarrier ? (
+                  <form
+                    action="/benefits"
+                    method="get"
+                    className={styles.gradeControl}
+                    aria-label={`${getCarrierLabel(effectiveCarrier)} 멤버십 등급 필터`}
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      const submittedGrade = new FormData(event.currentTarget).get('grade');
+                      updateQuery({
+                        carrier: effectiveCarrier,
+                        grade: typeof submittedGrade === 'string' ? submittedGrade || null : null,
+                        membership: null,
+                        page: null,
+                      });
+                    }}
                   >
-                    {isLoggedIn ? '멤버십 설정하기' : '로그인하기'}
-                  </Link>
-                )}
-                {membershipOnly && (
-                  <p className="mt-1 text-body-4 leading-6 text-warmMuted">
-                    등급별 혜택이 확인된 제휴처만 표시해요. 이용 횟수·기간·제외 매장은 상세에서
-                    확인해 주세요.
-                  </p>
-                )}
-              </div>
-
-              <div className="mt-4 border-t border-grey02 pt-4 md:mt-5 md:pt-5">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-body-4 font-bold text-grey06">통신사</p>
-                  {activeFilterCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={resetFilters}
-                      className="min-h-10 rounded-lg px-2 text-body-4 font-bold text-purple04 transition-colors hover:bg-purple01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                    <input type="hidden" name="carrier" value={effectiveCarrier} />
+                    {keyword ? <input type="hidden" name="q" value={keyword} /> : null}
+                    {selectedCategory !== '전체' ? (
+                      <input type="hidden" name="category" value={selectedCategory} />
+                    ) : null}
+                    <label htmlFor="benefits-grade">등급</label>
+                    <select
+                      key={`${effectiveCarrier}:${effectiveGrade ?? ''}`}
+                      id="benefits-grade"
+                      name="grade"
+                      defaultValue={effectiveGrade ?? ''}
+                      onChange={(event) => event.currentTarget.form?.requestSubmit()}
                     >
-                      필터 초기화
-                    </button>
-                  )}
-                </div>
-                <div
-                  className="scrollbar-hide -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0"
-                  aria-label="통신사 필터"
-                >
-                  {carrierFilters.map((carrier) => {
-                    const isSelected = membershipCarrier
-                      ? carrier.code === membershipCarrier
-                      : carrier.code === 'ALL'
-                        ? selectedCarriers.length === 0
-                        : selectedCarriers.includes(carrier.code);
-
-                    return (
-                      <button
-                        key={carrier.code}
-                        type="button"
-                        aria-pressed={isSelected}
-                        onClick={() => handleCarrierChange(carrier.code)}
-                        className={`min-h-10 shrink-0 rounded-full border px-4 text-body-4 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
-                          isSelected
-                            ? 'border-purple04 bg-purple04 text-white'
-                            : 'border-grey02 bg-white text-grey06 hover:border-purple03 hover:text-purple05'
-                        }`}
-                      >
-                        {carrier.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="mt-4 border-t border-grey02 pt-4 md:mt-5 md:pt-5">
-                <p className="mb-2 text-body-4 font-bold text-grey06">카테고리</p>
-                <div
-                  className="scrollbar-hide -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0"
-                  aria-label="카테고리 필터"
-                >
-                  {categories.map((category) => {
-                    const isSelected = selectedCategory === category.id;
-
-                    return (
-                      <button
-                        key={category.id}
-                        type="button"
-                        aria-pressed={isSelected}
-                        onClick={() => handleCategoryChange(category.id)}
-                        className={`min-h-10 shrink-0 rounded-full border px-3 text-body-4 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
-                          isSelected
-                            ? 'border-purple04 bg-purple04 text-white'
-                            : 'border-grey02 bg-white text-grey06 hover:border-purple03 hover:text-purple05'
-                        }`}
-                      >
-                        {category.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
-          </aside>
-
-          <section
-            className="mt-10 min-w-0 md:mt-0 md:px-6 md:pb-14 md:pt-24 xl:px-8 2xl:px-10"
-            aria-labelledby="benefit-results-title"
-          >
-            <div className="mb-3 flex min-h-10 items-center justify-between gap-3 md:mb-4">
-              <div className="flex min-w-0 items-center gap-2">
-                <h2
-                  id="benefit-results-title"
-                  className="text-title-6 font-bold text-grey07 md:text-title-5"
-                >
-                  {membershipOnly ? '내 멤버십 혜택 제휴처' : '혜택 제휴처'}
-                </h2>
-                <span className="shrink-0 text-body-4 font-medium text-grey05">
-                  {totalElements.toLocaleString()}개
-                </span>
-              </div>
-              {isLoading && partners.length > 0 && (
-                <span className="shrink-0 text-body-4 font-medium text-purple04" role="status">
-                  목록 업데이트 중
-                </span>
-              )}
-            </div>
-
-            <div
-              className={`grid grid-cols-1 gap-3 transition-opacity md:gap-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 ${
-                isLoading && partners.length > 0 ? 'opacity-60' : 'opacity-100'
-              }`}
-              aria-busy={isLoading}
-            >
-              {isLoading && partners.length === 0 ? (
-                Array.from({ length: ITEMS_PER_PAGE }, (_, index) => (
-                  <div
-                    key={index}
-                    className="min-h-[116px] animate-pulse rounded-[18px] border border-grey02 bg-white p-3.5 md:min-h-[148px] md:p-4"
-                    aria-hidden="true"
-                  >
-                    <div className="flex gap-4">
-                      <div className="h-14 w-14 shrink-0 rounded-[14px] bg-grey02 md:h-16 md:w-16" />
-                      <div className="flex-1 space-y-3 pt-1">
-                        <div className="h-5 w-3/4 rounded bg-grey02" />
-                        <div className="h-4 w-full rounded bg-grey01" />
-                        <div className="h-4 w-2/3 rounded bg-grey01" />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : partners.length > 0 ? (
-                partners.map((partner) => (
-                  <article
-                    key={partner.partnerId}
-                    className="group relative min-w-0 overflow-hidden rounded-[18px] border border-grey02 bg-white transition-all hover:border-purple02 hover:shadow-[0_10px_24px_rgba(16,17,20,0.06)]"
-                  >
-                    <Link
-                      to={`${getPartnerBenefitPath(partner.partnerId, partner.partnerName)}${
-                        membershipCarrier && membershipGrade
-                          ? `?${new URLSearchParams({ carrier: membershipCarrier, grade: membershipGrade, membership: 'mine' })}`
-                          : ''
-                      }`}
-                      aria-label={`${partner.partnerName} ${membershipOnly ? '내 멤버십' : '통신사별'} 혜택 보기`}
-                      className="flex min-h-[112px] w-full items-center gap-3 p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple02 md:min-h-[132px] md:gap-4 md:p-4"
-                    >
-                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[14px] bg-grey01 p-2 md:h-16 md:w-16">
-                        <SafeImage
-                          src={partner.image}
-                          alt={`${partner.partnerName} 로고`}
-                          fallbackLabel={partner.partnerName}
-                          className="h-full w-full object-contain"
+                      <option value="">모든 등급</option>
+                      {getMembershipGradeOptions(effectiveCarrier).map((grade) => (
+                        <option key={grade.code} value={grade.code}>
+                          {grade.label}
+                        </option>
+                      ))}
+                    </select>
+                  </form>
+                ) : (
+                  <p className={styles.filterHint}>통신사를 선택하면 등급별 혜택을 볼 수 있어요.</p>
+                )}
+                <div className={styles.membershipBody}>
+                  {isLoggedIn ? (
+                    <>
+                      <label className={styles.membershipToggle}>
+                        <input
+                          type="checkbox"
+                          checked={membershipOnly}
+                          disabled={!hasMembershipProfile}
+                          onChange={(event) =>
+                            updateQuery({
+                              membership: event.target.checked ? 'mine' : null,
+                              page: null,
+                            })
+                          }
+                          aria-describedby="membership-filter-description"
                         />
-                      </span>
+                        내 멤버십 혜택만 보기
+                      </label>
+                      <p id="membership-filter-description">{profileDescription}</p>
+                      {isAuthReady && !hasMembershipProfile ? (
+                        <Link to="/mypage/info" className={styles.inlineLink}>
+                          멤버십 설정
+                        </Link>
+                      ) : null}
+                    </>
+                  ) : (
+                    <p>{profileDescription}</p>
+                  )}
+                  {effectiveGrade ? (
+                    <p className={styles.membershipNote}>
+                      선택 등급의 혜택입니다. 횟수·기간·매장 조건은 상세에서 확인하세요.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </details>
+            {hasFilters ? (
+              <Link
+                to={hrefFor(resetChanges)}
+                prefetch={false}
+                onClick={(event) => followFilter(event, resetChanges)}
+                className={styles.resetLink}
+              >
+                초기화
+              </Link>
+            ) : null}
+          </div>
+        </header>
 
-                      <span className="min-w-0 flex-1">
-                        <span className="block line-clamp-1 text-[15px] font-bold leading-[1.4] text-grey07 md:text-[16px]">
-                          {partner.partnerName}
-                        </span>
-                        <span className="mt-1 block text-body-4 font-medium text-grey05">
-                          {partner.category || '카테고리 미분류'}
-                        </span>
-                        <span className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                          {partner.carriers.map((carrier) => (
-                            <span
-                              key={carrier}
-                              className="rounded-full bg-purple01 px-2.5 py-1 text-[11px] font-bold leading-none text-purple05"
-                            >
-                              {getCarrierLabel(carrier)}
-                            </span>
-                          ))}
-                        </span>
-                      </span>
-                      <TbChevronRight
-                        className="h-5 w-5 shrink-0 text-grey04 transition-transform group-hover:translate-x-0.5 group-hover:text-purple04"
-                        aria-hidden="true"
+        <section aria-label="혜택 필터" className={styles.filters}>
+          <div className={styles.filterToolbar}>
+            <nav aria-label="통신사 필터" className={styles.carrierTabs}>
+              {[{ code: undefined, label: '전체' }, ...CARRIER_OPTIONS].map((carrier) => {
+                const selected = effectiveCarrier === carrier.code;
+                const changes = {
+                  carrier: carrier.code ?? null,
+                  grade: null,
+                  membership: null,
+                  page: null,
+                };
+                return (
+                  <Link
+                    key={carrier.code ?? 'all'}
+                    to={hrefFor(changes)}
+                    prefetch={false}
+                    onClick={(event) => followFilter(event, changes)}
+                    aria-current={selected ? 'true' : undefined}
+                    aria-label={carrier.code ? `${carrier.label} 통신사` : '모든 통신사'}
+                    className={`${styles.carrierTab} ${!carrier.code ? styles.allFilterTab : ''} ${selected ? styles.carrierTabSelected : ''}`}
+                  >
+                    {carrier.code ? carrier.label : '모든 통신사'}
+                  </Link>
+                );
+              })}
+            </nav>
+            <nav aria-label="카테고리 필터" className={styles.categoryTabs}>
+              {CATEGORIES.map((category) => {
+                const selected = selectedCategory === category.id;
+                const CategoryIcon = CATEGORY_ICONS[category.id] ?? TbLayoutGrid;
+                const isAll = category.id === '전체';
+                const changes = {
+                  category: category.id === '전체' ? null : category.id,
+                  page: null,
+                };
+                return (
+                  <Link
+                    key={category.id}
+                    to={hrefFor(changes)}
+                    prefetch={false}
+                    onClick={(event) => followFilter(event, changes)}
+                    aria-current={selected ? 'true' : undefined}
+                    aria-label={isAll ? '모든 카테고리' : undefined}
+                    className={`${styles.categoryTab} ${isAll ? styles.allFilterTab : ''} ${selected ? styles.categoryTabSelected : ''}`}
+                  >
+                    {isAll ? (
+                      <span>모든 카테고리</span>
+                    ) : (
+                      <>
+                        <CategoryIcon size={16} aria-hidden="true" />
+                        <span>{category.name}</span>
+                      </>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+            <form
+              action="/benefits"
+              method="get"
+              role="search"
+              onSubmit={submitSearch}
+              className={styles.searchForm}
+            >
+              <label htmlFor="benefits-search" className="sr-only">
+                혜택 검색
+              </label>
+              {selectedCarrier ? (
+                <input type="hidden" name="carrier" value={selectedCarrier} />
+              ) : null}
+              {selectedCategory !== '전체' ? (
+                <input type="hidden" name="category" value={selectedCategory} />
+              ) : null}
+              {!membershipOnly && selectedGrade ? (
+                <input type="hidden" name="grade" value={selectedGrade} />
+              ) : null}
+              {membershipOnly ? <input type="hidden" name="membership" value="mine" /> : null}
+              <TbSearch size={18} aria-hidden="true" className={styles.searchIcon} />
+              <input
+                key={keyword}
+                id="benefits-search"
+                type="search"
+                name="q"
+                defaultValue={keyword}
+                maxLength={100}
+                autoComplete="off"
+                placeholder="혜택 검색"
+                className={styles.searchInput}
+              />
+              <button type="submit" className={styles.searchButton}>
+                검색
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <section aria-labelledby="benefit-results-title" className={styles.resultsSection}>
+          {hasDesktopDetail && selectedPartner ? (
+            <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+              {selectedPartner.partnerName} 혜택을 선택했습니다.
+            </p>
+          ) : null}
+          <div className={styles.resultsHeading}>
+            <h2 id="benefit-results-title" className="sr-only">
+              {membershipOnly
+                ? '내 조건에 맞는 혜택'
+                : effectiveGrade
+                  ? `${getMembershipGradeLabel(effectiveGrade)} 조건의 혜택`
+                  : keyword
+                    ? `“${keyword}” 검색 결과`
+                    : '혜택 제휴처'}
+            </h2>
+          </div>
+          <div className={styles.explorer}>
+            <div className={styles.listColumn}>
+              {isLoading ? (
+                <div
+                  aria-busy="true"
+                  aria-label="혜택 목록 불러오는 중"
+                  id="benefit-card-scroll"
+                  className={styles.cardGrid}
+                >
+                  {Array.from({ length: 6 }, (_, index) => (
+                    <div key={index} aria-hidden="true" className={styles.skeletonCard} />
+                  ))}
+                </div>
+              ) : result.status === 'error' ? (
+                <div className={styles.emptyState}>
+                  <h3>혜택을 불러오지 못했어요</h3>
+                  <p>연결 상태를 확인하고 다시 시도해 주세요.</p>
+                  <button type="button" onClick={() => setRetry((value) => value + 1)}>
+                    다시 시도
+                  </button>
+                </div>
+              ) : partners.length > 0 ? (
+                <div id="benefit-card-scroll" className={styles.cardGrid}>
+                  {partners.map((partner) => {
+                    const href = detailHrefFor(partner.partnerId, partner.partnerName);
+                    return (
+                      <BenefitExplorerCard
+                        key={partner.partnerId}
+                        partner={partner}
+                        href={href}
+                        carrier={effectiveCarrier}
+                        grade={effectiveGrade}
+                        selected={
+                          hasDesktopDetail && partner.partnerId === selectedPartner?.partnerId
+                        }
+                        onSelect={(event) => {
+                          if (
+                            !hasDesktopDetail ||
+                            event.button !== 0 ||
+                            event.metaKey ||
+                            event.ctrlKey ||
+                            event.shiftKey ||
+                            event.altKey
+                          ) {
+                            return;
+                          }
+                          event.preventDefault();
+                          const href = hrefFor({ partner: String(partner.partnerId) });
+                          window.history.replaceState(null, '', href);
+                        }}
                       />
-                    </Link>
-                  </article>
-                ))
-              ) : loadError ? (
-                <div className="col-span-1 flex h-[320px] items-center justify-center lg:col-span-2 xl:col-span-3 2xl:col-span-4">
-                  <NoResult
-                    variant="error"
-                    message1="혜택 제휴처를 불러오지 못했어요"
-                    message2="잠시 후 다시 시도하거나 필터를 초기화한 뒤 확인해 주세요."
-                    buttonText="다시 시도"
-                    onButtonClick={() =>
-                      fetchBenefits(currentPage - 1, debouncedSearchTerm, selectedCategory)
-                    }
-                    secondaryButtonText="필터 초기화"
-                    onSecondaryButtonClick={resetFilters}
-                    message1FontSize="text-title-4 max-xl:text-title-6"
-                    message2FontSize="text-body-1 max-xl:text-body-3"
-                  />
+                    );
+                  })}
                 </div>
               ) : (
-                <div className="col-span-1 flex h-[320px] items-center justify-center lg:col-span-2 xl:col-span-3 2xl:col-span-4">
-                  <NoResult
-                    message1={
-                      membershipOnly
-                        ? '내 조건에 맞는 혜택을 찾지 못했어요'
-                        : '앗! 일치하는 결과를 찾을 수 없어요!'
-                    }
-                    message2={
-                      membershipOnly
-                        ? '검색어나 카테고리를 바꾸거나 전체 혜택을 확인해 주세요.'
-                        : '다른 제휴처명이나 카테고리로 다시 찾아보세요.'
-                    }
-                    buttonText={membershipOnly ? '전체 혜택 보기' : undefined}
-                    onButtonClick={membershipOnly ? resetFilters : undefined}
-                    message1FontSize="text-title-4 max-xl:text-title-6"
-                    message2FontSize="text-body-1 max-xl:text-body-3"
-                  />
+                <div className={styles.emptyState}>
+                  <h3>
+                    {currentPage > 1 && totalElements > 0
+                      ? '이 페이지에는 표시할 혜택이 없어요'
+                      : membershipOnly
+                        ? '내 조건에 맞는 혜택이 없어요'
+                        : '일치하는 혜택을 찾지 못했어요'}
+                  </h3>
+                  <p>검색어나 통신사, 카테고리를 바꿔서 확인해 보세요.</p>
+                  <Link
+                    to={hrefFor(resetChanges)}
+                    prefetch={false}
+                    onClick={(event) => followFilter(event, resetChanges)}
+                  >
+                    전체 혜택 보기
+                  </Link>
                 </div>
               )}
+              {!isLoading && result.status === 'ready' && totalPages > 1 ? (
+                <nav aria-label="혜택 목록 페이지" className={styles.pagination}>
+                  {pageLink(currentPage - 1, '이전', currentPage <= 1)}
+                  {visiblePages.map((page) => (
+                    <span key={page}>{pageLink(page, String(page))}</span>
+                  ))}
+                  {pageLink(currentPage + 1, '다음', currentPage >= totalPages)}
+                </nav>
+              ) : null}
             </div>
-
-            {hasNext && partners.length > 0 ? (
-              <div className="mt-5 flex justify-center md:hidden">
-                <button
-                  type="button"
-                  onClick={handleLoadMore}
-                  disabled={isLoading}
-                  className="min-h-12 w-full rounded-[14px] border border-purple02 bg-white px-5 text-body-3 font-bold text-purple05 transition-colors hover:bg-purple01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:cursor-wait disabled:opacity-60"
-                >
-                  {isLoading ? '혜택을 불러오는 중' : '혜택 더 보기'}
-                </button>
+            {hasDesktopDetail && selectedPartner ? (
+              <div className={styles.detailColumn}>
+                <BenefitExplorerDetail
+                  key={`${selectedPartner.partnerId}|${effectiveCarrier ?? ''}|${effectiveGrade ?? ''}`}
+                  partner={selectedPartner}
+                  carrier={effectiveCarrier}
+                  grade={effectiveGrade}
+                  detailHref={detailHrefFor(selectedPartner.partnerId, selectedPartner.partnerName)}
+                />
               </div>
             ) : null}
-            <div className="mt-8 hidden justify-center md:mt-10 md:flex">
-              <Pagination
-                currentPage={currentPage}
-                itemsPerPage={ITEMS_PER_PAGE}
-                totalItems={totalElements}
-                onPageChange={handlePageChange}
-                compact
-              />
-            </div>
-          </section>
-        </div>
+          </div>
+        </section>
       </div>
     </div>
   );
-};
-
-export default AllBenefitsLayout;
+}

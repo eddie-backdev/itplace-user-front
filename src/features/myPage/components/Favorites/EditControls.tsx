@@ -17,9 +17,9 @@ export default function EditControls({
   setSelectedItems,
 }: EditControlsProps) {
   return (
-    <div className="flex items-center justify-end gap-3 mr-1 mb-1 max-md:mt-6 max-md:mb-2">
+    <div className="mb-1 mr-1 flex min-h-11 items-center justify-end gap-3 max-md:mt-3 max-md:mb-2">
       {isEditing ? (
-        <label className="flex items-center text-grey05 text-body-0-bold max-xl:text-body-2-bold">
+        <label className="flex min-h-11 cursor-pointer items-center text-grey05 text-body-0-bold max-xl:text-body-2-bold">
           <input
             type="checkbox"
             className="mr-1 w-4 h-4 accent-purple04 appearance-none rounded-[4px] border border-grey03 checked:bg-[url('/images/myPage/icon-check.png')] bg-no-repeat bg-center checked:border-purple04"
@@ -46,11 +46,12 @@ export default function EditControls({
         </label>
       ) : (
         <button
+          type="button"
           onClick={() => {
             setIsEditing(true);
             setSelectedItems([]);
           }}
-          className="text-grey05 text-body-0-bold max-xl:text-body-2-bold"
+          className="inline-flex min-h-11 items-center rounded-lg px-3 text-grey05 text-body-0-bold transition-colors hover:bg-brandSoft hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-xl:text-body-2-bold"
         >
           편집
         </button>

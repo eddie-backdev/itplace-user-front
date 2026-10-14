@@ -47,19 +47,24 @@ const fetchPublicData = async <T>(url: URL): Promise<T | null> => {
 export type PartnerListQuery = {
   keyword?: string;
   carrier?: string;
+  grade?: string;
+  category?: string;
   page?: number;
   size?: number;
 };
 
 const getPublicPartnerBenefitsCached = cache(
-  async (keyword = '', carrier = '', page = 0, size = 15) => {
+  async (keyword = '', carrier = '', page = 0, size = 15, category = '', grade = '') => {
     const url = new URL('/api/v1/benefits/partners', USER_API_BASE_URL);
-    url.searchParams.set('mainCategory', 'BASIC_BENEFIT');
+    const hasValidGrade = Boolean(grade && getMembershipFilter(carrier, grade));
+    if (!hasValidGrade) url.searchParams.set('mainCategory', 'BASIC_BENEFIT');
     url.searchParams.set('page', String(page));
     url.searchParams.set('size', String(size));
     url.searchParams.set('sort', 'POPULARITY');
     if (keyword) url.searchParams.set('keyword', keyword);
     if (carrier) url.searchParams.set('carriers', carrier);
+    if (category) url.searchParams.set('category', category);
+    if (hasValidGrade) url.searchParams.set('grade', grade);
     return fetchPublicData<PartnerBenefitResponse>(url);
   }
 );
@@ -67,6 +72,8 @@ const getPublicPartnerBenefitsCached = cache(
 export const getPublicPartnerBenefits = ({
   keyword = '',
   carrier = '',
+  grade = '',
+  category = '',
   page = 0,
   size = 15,
 }: PartnerListQuery = {}) =>
@@ -74,7 +81,9 @@ export const getPublicPartnerBenefits = ({
     keyword.trim().slice(0, 100),
     carrier.trim(),
     Math.max(0, Math.trunc(page)),
-    Math.min(200, Math.max(1, Math.trunc(size)))
+    Math.min(100, Math.max(1, Math.trunc(size))),
+    category.trim(),
+    grade.trim()
   );
 
 export const getPublicPartnerBenefitDetailResult = cache(

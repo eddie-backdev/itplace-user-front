@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import SiteShell from './SiteShell';
 import NotFoundPageClient from './clients/NotFoundPageClient';
 
 export const metadata: Metadata = {
@@ -10,5 +11,9 @@ export const metadata: Metadata = {
 };
 
 export default function NotFound() {
-  return <NotFoundPageClient />;
+  return (
+    <SiteShell>
+      <NotFoundPageClient />
+    </SiteShell>
+  );
 }

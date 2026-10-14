@@ -5,7 +5,6 @@ export const signUpFinal = async (payload: {
   email: string;
   password: string;
   passwordConfirm: string;
-  phoneNumber: string;
   gender: string;
   birthday: string;
   carrier: string;

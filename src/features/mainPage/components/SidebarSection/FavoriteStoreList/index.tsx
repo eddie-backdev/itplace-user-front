@@ -12,6 +12,8 @@ interface FavoriteStoreListProps {
   totalFavoritesCount: number;
   onItemClick: (favorite: FavoriteBenefit) => void;
   isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
@@ -19,12 +21,14 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
   totalFavoritesCount,
   onItemClick,
   isLoading = false,
+  error,
+  onRetry,
 }) => {
   const isLoggedIn = useSelector((state: RootState) => !!state.auth.user);
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-0 max-md:min-h-56">
-        <LoadingSpinner className="h-12 w-12 border-4 border-purple04 border-t-transparent" />
+        <LoadingSpinner className="h-10 w-10 border-4 border-grey03 border-t-grey05" />
         <p className="mt-4 text-body-4 text-grey04">관심 혜택을 불러오는 중...</p>
       </div>
     );
@@ -33,7 +37,7 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
   // 로그인하지 않은 경우
   if (!isLoggedIn) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4">
+      <div className="flex-1 flex flex-col items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4 [&_button]:min-h-11 [&_button]:rounded-lg [&_button]:px-4 [&_button]:focus-visible:ring-[#0066cc] [&_button.bg-purple04]:bg-[#0066cc] [&_button.bg-purple04]:hover:bg-[#0057b8]">
         <NoResult
           message1="로그인이 필요해요!"
           message2="로그인 후 관심 혜택을 이용해 보세요"
@@ -42,6 +46,22 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
           buttonText="로그인하러 가기"
           buttonRoute="/login"
           isLoginRequired={true}
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center px-4 text-center max-md:min-h-56 [&_button]:min-h-11 [&_button]:rounded-lg [&_button]:px-4 [&_button]:focus-visible:ring-[#0066cc]">
+        <NoResult
+          variant="error"
+          message1="관심 혜택을 불러오지 못했어요"
+          message2="잠시 후 다시 시도해 주세요."
+          message1FontSize="text-title-6"
+          message2FontSize="text-body-3"
+          buttonText="다시 시도"
+          onButtonClick={onRetry}
         />
       </div>
     );
@@ -61,7 +81,7 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
           };
 
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4">
+      <div className="flex-1 flex flex-col items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4 [&_button]:min-h-11 [&_button]:rounded-lg [&_button]:px-4 [&_button]:focus-visible:ring-[#0066cc] [&_button.bg-purple04]:bg-[#0066cc] [&_button.bg-purple04]:hover:bg-[#0057b8]">
         <NoResult
           {...noResultProps}
           message1FontSize="text-title-6"
@@ -73,27 +93,28 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
   }
 
   return (
-    <div className="space-y-3 max-md:space-y-3 px-5 max-md:px-4 max-sm:px-3">
+    <div className="px-3">
       {favorites.map((favorite) => (
-        <div
+        <button
+          type="button"
           key={favorite.benefitId}
           onClick={() => onItemClick(favorite)}
-          className="w-[330px] h-[60px] bg-grey01 rounded-[10px] px-4 flex items-center cursor-pointer hover:bg-purple01 transition-colors overflow-x-hidden max-md:w-auto max-md:h-[50px] max-md:px-3 max-sm:h-[64px] max-sm:px-2"
+          className="flex min-h-[68px] w-full items-center gap-3 border-b border-[#e6e6e3] px-2 text-left hover:bg-[#f8f8f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0066cc]"
         >
           {/* 왼쪽: 파트너 이미지 */}
-          <div className="w-[50px] h-[50px] rounded-[10px] overflow-hidden flex-shrink-0 mr-6 max-md:w-[40px] max-md:h-[40px] max-md:mr-4 max-sm:w-[35px] max-sm:h-[35px] max-sm:mr-3 bg-white">
+          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg">
             <SafeImage
               src={favorite.partnerImage}
               alt={`${favorite.partnerName} 로고`}
               fallbackLabel={favorite.partnerName}
-              className="w-full h-full object-contain"
-              fallbackClassName="bg-purple04 text-white text-body-4 max-md:text-body-5 max-sm:text-body-6"
+              className="h-full w-full object-contain"
+              fallbackClassName="bg-[#f1f1ee] text-[#69717e] text-body-4"
             />
           </div>
 
           {/* 중앙: 파트너 이름 */}
-          <div className="flex-1">
-            <span className="text-body-3-bold text-grey06 max-md:text-body-4-bold">
+          <div className="min-w-0 flex-1">
+            <span className="block truncate text-[14px] font-semibold text-[#202120]">
               {favorite.partnerName}
             </span>
           </div>
@@ -105,7 +126,7 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
               className="text-grey04 max-md:w-4 max-md:h-4 max-sm:w-3.5 max-sm:h-3.5"
             />
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );

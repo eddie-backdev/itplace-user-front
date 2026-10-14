@@ -74,13 +74,13 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
   return (
     <>
       {shouldShowLoading && (
-        <div className="mb-6 max-xl:mb-4">
-          <h3 className="text-title-6 text-grey06 mb-2 max-xl:text-title-7 max-xl:mb-1.5">
+        <div className="mb-5">
+          <h3 className="mb-2 text-sm font-semibold text-[#202120]">
             상세 혜택
           </h3>
           <div className="space-y-2">
-            <div className="h-24 animate-pulse rounded-2xl bg-grey01 max-md:rounded-xl" />
-            <div className="h-20 animate-pulse rounded-2xl bg-grey01 max-md:rounded-xl" />
+            <div className="h-24 animate-pulse rounded-xl bg-[#f6f6f4]" />
+            <div className="h-20 animate-pulse rounded-xl bg-[#f6f6f4]" />
           </div>
         </div>
       )}
@@ -88,16 +88,17 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
       {!shouldShowLoading && (
         <>
           {carrierOptions.length > 1 && (
-            <div className="mb-4 flex flex-wrap gap-2 max-xl:mb-3">
+            <div className="mb-4 flex flex-wrap gap-2 border-b border-[#e6e6e3] pb-3">
               {carrierOptions.map((carrier) => (
                 <button
                   key={carrier}
                   type="button"
                   onClick={() => onCarrierChange(carrier)}
-                  className={`rounded-full border px-3 py-1.5 text-body-4 transition-colors max-md:px-2.5 max-md:py-1 ${
+                  aria-pressed={activeCarrier === carrier}
+                  className={`inline-flex min-h-11 items-center rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc] ${
                     activeCarrier === carrier
-                      ? 'border-purple04 bg-purple04 text-white'
-                      : 'border-grey02 bg-white text-grey05 hover:border-purple02 hover:text-purple04'
+                      ? 'border-[#0066cc] bg-white text-[#0066cc]'
+                      : 'border-[#e6e6e3] bg-white text-[#69717e] hover:bg-[#f1f1ee] hover:text-[#202120]'
                   }`}
                 >
                   {getCarrierLabel(carrier)}
@@ -106,39 +107,35 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
             </div>
           )}
 
-          <div className={`${hasBenefits ? 'mb-6 max-xl:-mt-2 max-xl:mb-4' : ''}`}>
-            <h3 className="text-title-6 text-grey06 mb-2 max-xl:text-title-7 max-xl:mb-1.5">
+          <div className={`${hasBenefits ? 'mb-5' : ''}`}>
+            <h3 className="mb-2 text-sm font-semibold text-[#202120]">
               상세 혜택
             </h3>
 
             {hasBenefits ? (
-              <div className="space-y-3 max-xl:space-y-2">
+              <div className="divide-y divide-[#e6e6e3]">
                 {visibleBenefitGroups.map((group) => (
                   <section
                     key={group.key}
-                    className={`rounded-2xl border px-3.5 py-3 max-md:rounded-xl max-md:px-3 max-md:py-2.5 ${
-                      activeCarrier === group.key
-                        ? 'border-purple03 bg-purple01/70'
-                        : 'border-grey02 bg-grey01/40'
-                    }`}
+                    className="min-w-0 py-3 first:pt-1 last:pb-1"
                   >
                     <div className="mb-2 flex items-center gap-2 max-md:mb-1.5">
-                      <span className="rounded-full bg-white px-2.5 py-1 text-body-4 font-bold text-purple04 shadow-sm max-md:text-body-5">
+                      <span className="text-sm font-semibold text-[#202120]">
                         {group.label}
                       </span>
-                      <span className="text-body-5 text-grey04">
+                      <span className="text-xs text-[#69717e]">
                         {group.benefits.length}개 혜택
                       </span>
                     </div>
 
-                    <div className="space-y-3 max-xl:space-y-2">
+                    <div className="space-y-3">
                       {groupBenefitsByUsageChannel(group.benefits).map((section) => (
                         <div
                           key={`${group.key}-${section.channel}`}
-                          className="space-y-2 max-xl:space-y-1.5"
+                          className="min-w-0 space-y-1.5"
                         >
-                          <div className="flex items-center gap-2 pl-1">
-                            <span className="rounded-full bg-purple01 px-2 py-0.5 text-body-5 font-bold text-purple04">
+                          <div className="flex min-h-7 items-center">
+                            <span className="text-xs font-medium text-[#69717e]">
                               {section.label}
                             </span>
                           </div>
@@ -150,30 +147,29 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
                             return (
                               <div
                                 key={`${group.key}-${benefit.channel}-${benefit.grades.join('-')}-${index}`}
-                                className={`rounded-xl bg-white px-3 py-2.5 max-md:px-2.5 ${
-                                  isHighlighted ? 'ring-1 ring-orange04/40' : ''
-                                }`}
+                                className="min-w-0 py-2"
                               >
                                 <div className="mb-1.5 flex min-w-0 items-center gap-2">
                                   <TbCheck
                                     size={20}
-                                    className={`flex-shrink-0 max-md:w-4 max-md:h-4 ${
-                                      isHighlighted ? 'text-orange04' : 'text-grey04'
+                                    className={`shrink-0 ${
+                                      isHighlighted ? 'text-[#0066cc]' : 'text-[#69717e]'
                                     }`}
+                                    aria-hidden="true"
                                   />
                                   <span
-                                    className={`min-w-0 rounded-full bg-grey01 px-2 py-0.5 text-body-3 leading-6 max-xl:text-body-4 ${
+                                    className={`min-w-0 break-words text-sm leading-5 ${
                                       isHighlighted
-                                        ? 'text-orange04 font-bold'
-                                        : 'text-grey05 font-medium'
+                                        ? 'font-semibold text-[#0066cc]'
+                                        : 'font-medium text-[#202120]'
                                     }`}
                                   >
                                     {benefit.grades.map(getGradeDisplayName).join(', ')}
                                   </span>
                                 </div>
                                 <p
-                                  className={`min-w-0 whitespace-pre-line break-words pl-7 text-body-3 leading-7 max-xl:text-body-4 max-md:pl-6 ${
-                                    isHighlighted ? 'text-orange04 font-bold' : 'text-grey05'
+                                  className={`min-w-0 whitespace-pre-line break-words pl-7 text-sm leading-6 max-md:pl-7 ${
+                                    isHighlighted ? 'font-medium text-[#202120]' : 'text-[#69717e]'
                                   }`}
                                 >
                                   {benefit.context}
@@ -187,8 +183,8 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
                   </section>
                 ))}
                 {visibleBenefitGroups.length === 0 && (
-                  <div className="rounded-2xl border border-grey02 bg-grey01/40 px-4 py-6 text-center max-md:rounded-xl">
-                    <p className="text-body-3 text-grey05 max-md:text-body-4">
+                  <div className="px-2 py-5 text-center">
+                    <p className="text-sm text-[#69717e]">
                       선택한 통신사에서 제공하는 혜택이 없어요.
                     </p>
                   </div>
@@ -207,7 +203,7 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
             )}
 
             {/* 구분선 - 혜택이 있을 때만 표시 */}
-            {hasBenefits && <div className="border-b border-grey03 w-full mt-4 max-xl:mt-3" />}
+            {hasBenefits && <div className="mt-4 w-full border-b border-[#e6e6e3]" />}
           </div>
         </>
       )}

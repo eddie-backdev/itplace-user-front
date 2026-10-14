@@ -1,0 +1,10 @@
+Carrier brand marks used for provider identification. Updated 2026-10-06.
+
+skt.svg — blue T brand mark, official SK Telecom BI asset, unmodified.
+https://www.sktelecom.com/images/introduce-re/brand-download-bi.svg
+https://www.sktelecom.com/html/introduce/brand.html
+
+kt.svg — official KT mark; viewBox tightened to normalize optical size; paths and colors unchanged.
+https://cfm.kt.com/images/v2/layout/gnb-ktlogo.svg
+
+lgu.svg — pink U+ symbol reused from existing public/images/landing/hero/uplus-tv.svg. Only the U+ path is retained; TV lettering excluded; path geometry and color unchanged.

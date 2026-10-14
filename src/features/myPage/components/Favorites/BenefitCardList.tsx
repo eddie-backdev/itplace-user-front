@@ -2,9 +2,12 @@
 import SafeImage from '../../../../components/SafeImage';
 import { TbStarFilled } from 'react-icons/tb';
 import { FavoriteItem } from '../../../../types/favorites';
+import { getPartnerBenefitPreview } from '../../../../utils/benefitPreview';
+import { getCarrierLabel, isCarrierCode } from '../../../../utils/membership';
 
 interface BenefitCardListProps {
   items: FavoriteItem[]; // 현재 페이지에 보여줄 아이템들
+  userCarrier?: string | null;
   selectedId: number | null;
   setSelectedId: (id: number) => void;
 
@@ -21,6 +24,7 @@ interface BenefitCardListProps {
  */
 export default function BenefitCardList({
   items,
+  userCarrier,
   selectedId,
   setSelectedId,
   isEditing,
@@ -29,8 +33,14 @@ export default function BenefitCardList({
   onRequestDelete,
 }: BenefitCardListProps) {
   return (
-    <div className="grid grid-cols-3 gap-3 min-h-[300px] max-xl:min-h-[260px] max-xlg:grid-cols-2 max-md:gap-3">
+    <div className="grid min-h-[220px] grid-cols-3 items-stretch gap-3 max-xlg:grid-cols-2 wide:grid-cols-4 ultrawide:grid-cols-5 max-md:min-h-0 max-md:grid-cols-1 max-md:gap-3">
       {items.map((item) => {
+        const previewSource = { partnerName: item.partnerName, previews: item.previews };
+        const preview =
+          getPartnerBenefitPreview(
+            previewSource,
+            isCarrierCode(userCarrier) ? userCarrier : undefined
+          ) ?? getPartnerBenefitPreview(previewSource);
         const isCardSelected = isEditing
           ? selectedItems.includes(item.benefitId)
           : selectedId === item.benefitId;
@@ -39,8 +49,8 @@ export default function BenefitCardList({
         return (
           <article
             key={item.benefitId}
-            className={`relative flex aspect-[4/3] w-full cursor-pointer flex-col items-center rounded-[16px] border-none bg-white p-3 shadow-[0_10px_28px_rgba(16,17,20,0.10)] transition hover:-translate-y-1 hover:shadow-[0_16px_34px_rgba(16,17,20,0.14)] max-xl:aspect-[4/3] max-md:max-h-none max-md:aspect-[4/3] max-sm:aspect-[12/13] ${
-              isCardSelected ? 'ring-2 ring-purple04 bg-purple01/30' : ''
+            className={`relative flex min-h-[184px] w-full min-w-0 cursor-pointer flex-col items-center rounded-xl border border-warmBorder bg-white p-4 pt-12 text-left transition-colors hover:border-brand/40 hover:bg-warmCanvas max-md:min-h-0 ${
+              isCardSelected ? 'border-brand ring-2 ring-brand/30 bg-brandSoft/40' : ''
             }`}
           >
             {/* 편집 모드일 때 체크박스 표시 */}
@@ -73,7 +83,7 @@ export default function BenefitCardList({
                 aria-label={`${item.benefitName} 상세 보기`}
                 aria-expanded={isCardSelected}
                 onClick={() => setSelectedId(item.benefitId)}
-                className="absolute inset-0 z-0 cursor-pointer rounded-[16px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple02"
+                className="absolute inset-0 z-0 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
               />
             )}
 
@@ -82,26 +92,57 @@ export default function BenefitCardList({
               <button
                 type="button"
                 onClick={() => onRequestDelete(item.benefitId)}
-                aria-label={`${item.benefitName} 즐겨찾기 해제`}
-                className="pointer-events-auto absolute right-4 top-4 z-20 rounded-full bg-orange01 p-1 text-orange04 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-xl:right-4 max-xl:top-4"
+                aria-label={`${item.partnerName || item.benefitName} 즐겨찾기 해제`}
+                className="pointer-events-auto absolute right-2 top-2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-brandSoft text-brandStrong transition-colors hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 title="즐겨찾기 해제"
               >
                 <TbStarFilled size={20} aria-hidden="true" />
               </button>
             )}
 
-            <div className="pointer-events-none relative z-10 flex h-full w-full flex-col items-center">
-              {/* 카드 이미지 및 제목 */}
-              <SafeImage
-                src={item.partnerImage}
-                alt={`${item.benefitName} 로고`}
-                fallbackLabel={item.partnerName || item.benefitName}
-                className="mt-1.5 h-[58px] w-[58px] object-contain max-xl:h-[52px] max-xl:w-[52px] max-xlg:mt-1 max-md:h-[98px] max-md:w-[98px] max-sm:h-[60px] max-sm:w-[60px]"
-              />
-              <div className="flex flex-grow" />
-              <p className="mt-1.5 line-clamp-2 min-h-[2.4rem] break-keep text-center text-body-2-bold leading-snug text-grey05 max-xl:text-body-3-bold max-xlg:mt-3 max-xlg:line-clamp-3 max-lg:text-title-8 max-md:text-title-6 max-sm:text-title-7">
-                {item.benefitName}
-              </p>
+            <div className="pointer-events-none relative z-10 flex min-h-[128px] w-full flex-col gap-3 max-md:min-h-0">
+              <div className="flex min-w-0 items-center gap-3">
+                <SafeImage
+                  src={item.partnerImage}
+                  alt={`${item.partnerName || item.benefitName} 로고`}
+                  fallbackLabel={item.partnerName || item.benefitName}
+                  className="h-11 w-11 shrink-0 rounded-lg border border-warmBorder bg-white p-1 object-contain"
+                />
+                <div className="min-w-0">
+                  <p className="break-words text-sm font-semibold leading-5 text-ink">
+                    {item.partnerName || item.benefitName}
+                  </p>
+                  {item.partnerName && item.partnerName !== item.benefitName ? (
+                    <p className="mt-0.5 break-words text-xs leading-5 text-warmMuted">
+                      {item.benefitName}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              {preview ? (
+                <div className="border-t border-warmBorder pt-2.5">
+                  <p className="text-xs leading-5 text-warmMuted">
+                    {getCarrierLabel(preview.carrier)} · {preview.grades}
+                  </p>
+                  <p className="mt-1 break-words text-sm font-semibold leading-5 text-ink">
+                    {preview.title}
+                  </p>
+                  {preview.condition ? (
+                    <p className="mt-1 whitespace-pre-line break-words text-xs leading-5 text-grey05">
+                      {preview.condition}
+                    </p>
+                  ) : null}
+                  {preview.limit ? (
+                    <p className="mt-2 break-words text-xs leading-5 text-warmMuted">
+                      한도 · {preview.limit}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="border-t border-warmBorder pt-2.5 text-xs leading-5 text-warmMuted">
+                  통신사별 적용 조건은 상세에서 확인해 주세요.
+                </p>
+              )}
             </div>
           </article>
         );

@@ -11,11 +11,14 @@ import {
 
 interface StoreCardsSectionProps {
   platforms: Platform[];
+  isClusterView?: boolean;
   selectedPlatform?: Platform | null;
   onPlatformSelect: (platform: Platform) => void;
   currentLocation: string;
   isLoading: boolean;
   error?: string | null;
+  mapUnavailable?: boolean;
+  searchQuery?: string;
   displayMode?: 'summary' | 'list';
   backButton?: {
     onBack: () => void;
@@ -39,6 +42,30 @@ type SummaryDrilldown = {
   platforms: Platform[];
 };
 
+interface StoreListRowsProps {
+  platforms: Platform[];
+  selectedPlatform?: Platform | null;
+  onPlatformSelect: (platform: Platform) => void;
+}
+
+const StoreListRows = React.memo(
+  ({ platforms, selectedPlatform, onPlatformSelect }: StoreListRowsProps) => (
+    <>
+      {platforms.map((platform) => (
+        <div key={platform.id}>
+          <StoreCard
+            platform={platform}
+            isSelected={selectedPlatform?.id === platform.id}
+            onSelect={onPlatformSelect}
+          />
+        </div>
+      ))}
+      <div className="h-8 max-md:h-10 max-sm:h-8" />
+    </>
+  )
+);
+StoreListRows.displayName = 'StoreListRows';
+
 const uniquePlatforms = (platforms: Platform[]) => {
   const byId = new Map<string, Platform>();
   platforms.forEach((platform) => {
@@ -58,11 +85,14 @@ const formatCarrierBadge = (carrierKey: string, carrierLabel: string) => {
 
 const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   platforms,
+  isClusterView = false,
   selectedPlatform,
   onPlatformSelect,
   currentLocation,
   isLoading,
   error,
+  mapUnavailable = false,
+  searchQuery = '',
   displayMode = 'list',
   backButton,
 }) => {
@@ -201,21 +231,19 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   }, [displayMode, platforms]);
 
   const renderHeader = (title: string, subtitle?: string, onBack?: () => void) => (
-    <div className="mb-3 max-md:mb-2 max-md:px-4 max-sm:px-3">
+    <div className="mb-2 px-4 max-sm:px-3">
       <div className={`${onBack ? 'flex items-start justify-between gap-3' : ''}`}>
         <div>
-          <h3 className="text-[18px] font-bold tracking-[-0.02em] text-ink max-md:text-[16px]">
-            {title}
-          </h3>
+          <h3 className="text-[15px] font-semibold leading-5 text-[#202120]">{title}</h3>
           {subtitle && (
-            <p className="mt-0.5 truncate text-[11px] text-grey04 max-md:text-[10px]">{subtitle}</p>
+            <p className="mt-0.5 truncate text-[12px] leading-4 text-[#69717e]">{subtitle}</p>
           )}
         </div>
         {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="flex shrink-0 items-center rounded-full border border-warmBorder px-3 py-1.5 text-body-5 font-bold text-grey05 transition-colors hover:border-brand/30 hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="flex min-h-11 shrink-0 items-center rounded-lg border border-[#e6e6e3] px-3 text-[12px] font-medium text-[#252525] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
           >
             돌아가기
           </button>
@@ -224,30 +252,50 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
     </div>
   );
 
-  const renderDivider = () => (
-    <div className="mb-0 w-full border-b border-warmBorder max-md:mx-4 max-md:w-auto max-sm:mx-3" />
+  const renderDivider = () => <div className="mb-0 w-full border-b border-[#e6e6e3]" />;
+
+  const renderCompactHeader = (title: string, location: string) => (
+    <div className="mb-2 flex min-w-0 items-baseline gap-1 px-4 max-sm:px-3">
+      <h3 className="shrink-0 whitespace-nowrap text-[15px] font-semibold leading-5 text-[#202120]">
+        {title}
+      </h3>
+      <span aria-hidden="true" className="shrink-0 text-[12px] leading-4 text-[#9aa0a8]">
+        ·
+      </span>
+      <p className="min-w-0 truncate text-[12px] leading-4 text-[#69717e]">{location}</p>
+    </div>
   );
 
   const renderStoreList = (
     items: Platform[],
     title = currentLocation,
     subtitle?: string,
-    onBack?: () => void
+    onBack?: () => void,
+    compactHeader = false
   ) => (
-    <div className="flex-1 min-h-0 flex flex-col">
-      {renderHeader(title, subtitle, onBack)}
+    <div className="flex-1 min-h-0 flex flex-col" aria-busy={isLoading}>
+      {compactHeader
+        ? renderCompactHeader(title, subtitle ?? '')
+        : renderHeader(title, subtitle, onBack)}
       {renderDivider()}
-      <div className="-mx-5 min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-10 pt-1.5 max-md:mx-0 max-md:overflow-y-scroll max-md:pb-24 max-md:pt-1">
-        {items.map((platform) => (
-          <div key={platform.id}>
-            <StoreCard
-              platform={platform}
-              isSelected={selectedPlatform?.id === platform.id}
-              onSelect={onPlatformSelect}
-            />
-          </div>
-        ))}
-        <div className="h-8 max-md:h-10 max-sm:h-8"></div>
+      {isLoading && (
+        <div
+          role="status"
+          className="flex shrink-0 items-center gap-2 px-5 py-2 text-[12px] text-grey04 max-md:px-4"
+        >
+          <span
+            aria-hidden="true"
+            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent"
+          />
+          검색 결과를 업데이트하고 있어요
+        </div>
+      )}
+      <div className="-mx-4 min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-10 pt-1.5 max-md:mx-0 max-md:overflow-y-scroll max-md:pb-24 max-md:pt-1">
+        <StoreListRows
+          platforms={items}
+          selectedPlatform={selectedPlatform}
+          onPlatformSelect={onPlatformSelect}
+        />
       </div>
     </div>
   );
@@ -259,15 +307,15 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
           src={entry.imageUrl}
           alt={`${entry.title} 로고`}
           fallbackLabel={entry.badge || entry.title}
-          className="h-10 w-10 shrink-0 rounded-xl object-contain"
-          fallbackClassName="bg-brandSoft text-body-4-bold text-brandStrong"
+          className="h-10 w-10 shrink-0 rounded-lg object-contain"
+          fallbackClassName="bg-[#f1f1ee] text-body-4-bold text-grey05"
           loading="lazy"
         />
       );
     }
 
     return (
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brandSoft px-1 text-center text-[11px] font-bold leading-tight text-brandStrong">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#f1f1ee] px-1 text-center text-[11px] font-semibold leading-tight text-grey05">
         {entry.badge || entry.title}
       </span>
     );
@@ -284,7 +332,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
           platforms: entry.platforms,
         })
       }
-      className="flex w-full items-center gap-3 rounded-xl border border-warmBorder bg-warmSurface px-4 py-3 text-left transition-colors hover:border-brand/30 hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+      className="flex w-full items-center gap-3 rounded-xl border border-[#e6e6e3] bg-white px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
     >
       {renderSummaryVisual(entry)}
       <span className="min-w-0 flex-1">
@@ -312,21 +360,50 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   };
 
   const hasPlatforms = platforms.length > 0;
-  const shouldShowBlockingLoading = isLoading && (!hasPlatforms || displayMode !== 'summary');
+  const shouldShowBlockingLoading = isLoading && !hasPlatforms;
+
+  if (mapUnavailable && !hasPlatforms && displayMode === 'list') {
+    const query = searchQuery.trim();
+    const benefitsHref = query ? `/benefits?q=${encodeURIComponent(query)}` : '/benefits';
+
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center px-5 py-8 text-center max-md:min-h-56">
+        <div
+          role="alert"
+          className="w-full max-w-[360px] rounded-2xl border border-warmBorder bg-warmSurface p-6 shadow-soft max-md:p-5"
+        >
+          <h3 className="text-title-6 font-semibold text-ink">지도를 열지 못했어요</h3>
+          <p className="mt-2 text-body-4 leading-6 text-inkMuted">
+            {query
+              ? `“${query}” 검색은 전체 혜택에서 계속할 수 있어요.`
+              : '전체 혜택 목록에서 제휴처를 계속 둘러볼 수 있어요.'}
+          </p>
+          <div className="mt-5 flex flex-col gap-2">
+            <a
+              href={benefitsHref}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#0066cc] px-4 text-body-3-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc] focus-visible:ring-offset-2"
+            >
+              전체 혜택에서 찾기
+            </a>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-warmBorder bg-white px-4 text-body-3-bold text-grey05 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc] focus-visible:ring-offset-2"
+            >
+              다시 시도
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (shouldShowBlockingLoading) {
     return (
       <div className="flex-1 flex flex-col">
-        <h3 className="text-lg font-bold text-grey06 mb-4 max-md:text-title-7 max-md:mb-3 max-sm:text-title-7 max-sm:mb-2 max-md:px-4 max-sm:px-3">
-          근처 제휴처를 찾고 있습니다...
-        </h3>
-        <div className="border-b border-grey03 w-[330px] max-md:w-full mb-0 max-md:mx-4 max-sm:mx-3" />
-
         <div className="flex-1 flex flex-col items-center justify-center">
           <LoadingSpinner />
-          <div className="mt-4 text-grey04 text-sm max-md:text-xs max-md:mt-3 max-sm:text-xs max-sm:mt-2">
-            제휴처 데이터를 불러오는 중...
-          </div>
+          <div className="mt-4 text-[13px] text-grey04">매장 정보를 불러오는 중...</div>
         </div>
       </div>
     );
@@ -334,7 +411,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
 
   if (error) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center max-md:mt-12">
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
         <NoResult
           variant="error"
           message1="오류가 발생했어요!"
@@ -347,15 +424,29 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
     );
   }
 
+  if (isClusterView) {
+    return (
+      <div className="flex-1 flex flex-col" aria-busy={isLoading}>
+        {renderHeader('지역별 혜택 둘러보기')}
+        {renderDivider()}
+        <div className="flex-1 flex items-center justify-center px-6 text-center text-body-3 leading-6 text-grey04">
+          지도에서 지역을 선택하거나 확대하면 매장별 혜택을 볼 수 있어요.
+        </div>
+      </div>
+    );
+  }
+
   if (!hasPlatforms) {
     return (
       <div className="flex-1 flex flex-col">
-        {renderHeader(currentLocation)}
+        {displayMode === 'list' && !backButton
+          ? renderCompactHeader('0개 매장', currentLocation)
+          : renderHeader(currentLocation)}
         {renderDivider()}
 
         <div className="flex-1 flex items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4">
           <NoResult
-            message1="주변 제휴처가 없어요!"
+            message1="주변 매장이 없어요!"
             message2="다른 키워드나 지역에서 검색해보세요."
             message1FontSize="text-title-6 "
             message2FontSize="text-body-3"
@@ -371,7 +462,13 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   }
 
   if (!summary) {
-    return renderStoreList(platforms, `내 주변 혜택 ${platforms.length}`, currentLocation);
+    return renderStoreList(
+      platforms,
+      `${platforms.length}개 매장`,
+      currentLocation,
+      undefined,
+      true
+    );
   }
 
   if (drilldown) {
@@ -381,7 +478,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   }
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col">
+    <div className="flex-1 min-h-0 flex flex-col" aria-busy={isLoading}>
       {renderHeader(
         '현재 지도 영역의 혜택',
         summary.hasBenefitDetails
@@ -389,6 +486,18 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
           : `${currentLocation} · ${summary.totalStores}개 매장 · ${summary.totalPartners}개 제휴처`
       )}
       {renderDivider()}
+      {isLoading && (
+        <div
+          role="status"
+          className="flex shrink-0 items-center gap-2 px-5 py-2 text-[12px] text-grey04 max-md:px-4"
+        >
+          <span
+            aria-hidden="true"
+            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent"
+          />
+          검색 결과를 업데이트하고 있어요
+        </div>
+      )}
 
       <div className="-mx-5 flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-5 pb-10 pt-4 max-md:mx-0 max-md:px-4 max-md:pb-24">
         <div className="space-y-6">
@@ -402,4 +511,6 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   );
 };
 
-export default StoreCardsSection;
+StoreCardsSection.displayName = 'StoreCardsSection';
+
+export default React.memo(StoreCardsSection);

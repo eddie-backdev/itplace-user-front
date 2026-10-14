@@ -1,12 +1,21 @@
 import SiteFooter from '../components/SiteFooter';
 import AllBenefitsLayout from '../features/allBenefitsPage';
 import type { PartnerBenefitResponse } from '../features/allBenefitsPage/apis/allBenefitsApi';
+import styles from '../features/allBenefitsPage/BenefitsExplorer.module.css';
 
-const AllBenefitsPage = ({ initialData }: { initialData?: PartnerBenefitResponse | null }) => {
+const AllBenefitsPage = ({
+  initialData,
+  initialRequestKey,
+}: {
+  initialData?: PartnerBenefitResponse | null;
+  initialRequestKey?: string;
+}) => {
   return (
-    <div className="md:flex md:h-screen md:flex-col md:overflow-hidden">
-      <AllBenefitsLayout initialData={initialData} />
-      <div className="max-md:hidden md:shrink-0">
+    <div className={styles.benefitsShell}>
+      <div className={styles.benefitsWorkspace}>
+        <AllBenefitsLayout initialData={initialData} initialRequestKey={initialRequestKey} />
+      </div>
+      <div className={styles.benefitsFooter}>
         <SiteFooter />
       </div>
     </div>

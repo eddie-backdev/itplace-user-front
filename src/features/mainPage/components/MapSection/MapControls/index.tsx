@@ -12,6 +12,7 @@ interface MapControlsProps {
   onRoadviewToggle?: () => void;
   mobileBottomOffset?: number | string;
   mobileBottomTransitionEnabled?: boolean;
+  hideMobileControls?: boolean;
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
@@ -23,6 +24,7 @@ const MapControls: React.FC<MapControlsProps> = ({
   onRoadviewToggle,
   mobileBottomOffset = 160,
   mobileBottomTransitionEnabled = false,
+  hideMobileControls = false,
 }) => {
   const normalizedMobileBottomOffset =
     typeof mobileBottomOffset === 'number' ? `${mobileBottomOffset}px` : mobileBottomOffset;
@@ -35,7 +37,9 @@ const MapControls: React.FC<MapControlsProps> = ({
     <>
       {/* 현재 지도에서 검색 버튼 */}
       {showSearchButton && (
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none max-md:top-[100px] max-md:bottom-auto">
+        <div
+          className={`absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none max-md:top-[126px] max-md:bottom-auto ${hideMobileControls ? 'max-md:hidden' : ''}`}
+        >
           <div className="pointer-events-auto">
             <SearchInMapButton onClick={onSearchInMap} />
           </div>
@@ -44,7 +48,7 @@ const MapControls: React.FC<MapControlsProps> = ({
 
       {/* 로드뷰 버튼과 현재 위치 버튼 */}
       <div
-        className="absolute bottom-6 right-6 z-[9997] pointer-events-none max-md:bottom-[var(--mobile-map-controls-bottom)] max-md:right-4"
+        className={`absolute bottom-6 right-6 z-[9997] pointer-events-none max-md:bottom-[var(--mobile-map-controls-bottom)] max-md:right-4 ${hideMobileControls ? 'max-md:hidden' : ''}`}
         style={mobileControlStyle}
       >
         <div className="pointer-events-auto flex flex-col gap-3 max-md:flex-row max-md:gap-2">

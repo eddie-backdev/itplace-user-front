@@ -1,84 +1,71 @@
-// src/features/myPage/components/MyInfo/MembershipInfo.tsx
 import React from 'react';
-import { getCarrierLabel, getMembershipGradeLabel } from '../../../../utils/membership';
+import Link from 'next/link';
+import { getCarrierLabel, getMembershipGradeLabel, isValidCarrierGradePair } from '../../../../utils/membership';
 
 type Props = {
-  nickname: string;
   carrier?: string | null;
   grade?: string | null;
   verified?: boolean;
+  saving?: boolean;
   onChangeProfileClick?: () => void;
 };
 
 const MembershipInfo: React.FC<Props> = ({
-  nickname,
   carrier,
   grade,
-  verified = false,
+  verified,
+  saving = false,
   onChangeProfileClick,
 }) => {
-  const hasProfile = Boolean(carrier && grade);
-  const displayCarrier = getCarrierLabel(carrier);
-  const displayGrade = getMembershipGradeLabel(grade);
-  const displayName = nickname?.trim() || '회원';
+  const hasProfile = Boolean(carrier && grade && isValidCarrierGradePair(carrier, grade));
+  const verificationStatus =
+    verified === true
+      ? '통신사 인증 완료'
+      : verified === false
+        ? '직접 선택한 정보 · 통신사 인증 전'
+        : '통신사 인증 상태를 확인할 수 없어요';
 
   return (
-    <div className="flex flex-col gap-4">
+    <section
+      aria-labelledby="membership-profile-heading"
+      className="rounded-2xl border border-warmBorder bg-white p-5 sm:p-6"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h2 id="membership-profile-heading" className="text-lg font-semibold text-ink">
+            나의 멤버십
+          </h2>
+          {hasProfile ? (
+            <>
+              <p className="mt-2 break-words text-xl font-bold text-brandStrong">
+                {getCarrierLabel(carrier)} · {getMembershipGradeLabel(grade)}
+              </p>
+              <p className="mt-1 text-sm text-grey05">{verificationStatus}</p>
+            </>
+          ) : (
+            <p className="mt-2 text-sm leading-6 text-grey05">
+              멤버십 프로필을 등록하면 해당 통신사와 등급의 혜택을 모아볼 수 있어요.
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onChangeProfileClick}
+          disabled={saving}
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {saving ? '저장 중…' : hasProfile ? '멤버십 정보 변경' : '멤버십 정보 등록'}
+        </button>
+      </div>
       {hasProfile ? (
-        <>
-          <div>
-            <p className="text-body-3-bold text-purple03">나의 멤버십</p>
-            <p className="mt-2 text-black text-title-3 max-xl:text-title-4 max-xl:font-semibold max-md:text-grey05">
-              안녕하세요, <span className="text-purple04">{displayName}</span>님
-            </p>
-          </div>
-          <div className="rounded-[20px] bg-purple01/55 p-4">
-            <p className="text-body-1 text-grey05 max-xl:text-body-2">선택한 멤버십 프로필은</p>
-            <p className="mt-2 text-title-5 text-purple05 max-xl:text-title-7">
-              {displayCarrier} · {displayGrade}
-            </p>
-            <p className="mt-3 text-body-4 text-grey04 max-xl:text-body-5">
-              {verified ? '통신사 인증 완료' : '자가 선택 정보 · 통신사 실인증 전'}
-            </p>
-          </div>
-          <div className="bg-gradient-myPage text-white text-[44px] font-bold text-center rounded-[22px] px-5 py-5 mt-2 shadow-[0_14px_28px_rgba(113,50,245,0.20)] max-xl:text-[36px] max-xl:px-4 max-xl:py-4 max-xlg:text-[30px] max-md:text-title-4 max-md:mt-0 max-md:py-4">
-            {displayGrade}
-          </div>
-          <div className="rounded-[16px] border border-purple01 bg-white px-4 py-3">
-            <p className="text-body-3 text-grey04">
-              통신 3사 혜택을 선택한 등급 기준으로 추천하고 보여드려요.
-            </p>
-            <button
-              type="button"
-              onClick={onChangeProfileClick}
-              className="mt-3 w-full rounded-[14px] bg-purple04 px-4 py-2.5 text-body-3-bold text-white transition hover:bg-purple05"
-            >
-              멤버십 정보 변경
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          <p className="text-body-3-bold text-purple03">나의 멤버십</p>
-          <p className="text-black text-title-3 max-xl:text-title-4 max-xl:font-semibold max-md:text-grey05">
-            안녕하세요, <span className="text-purple04">{displayName}</span>님
-          </p>
-          <div className="rounded-[22px] border border-dashed border-purple02 bg-purple01/35 px-5 py-6">
-            <p className="text-title-6 text-purple05">아직 멤버십 프로필이 없어요</p>
-            <p className="mt-3 text-body-2 text-grey05 max-xl:text-body-3">
-              통신사와 등급을 선택하면 맞춤 혜택을 더 쉽게 확인할 수 있어요.
-            </p>
-            <button
-              type="button"
-              onClick={onChangeProfileClick}
-              className="mt-4 w-full rounded-[14px] bg-purple04 px-4 py-2.5 text-body-3-bold text-white transition hover:bg-purple05"
-            >
-              멤버십 정보 등록
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+        <Link
+          href="/benefits?membership=mine"
+          className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-warmBorder px-4 text-sm font-semibold text-brandStrong transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          이 조건으로 혜택 보기
+        </Link>
+      ) : null}
+    </section>
   );
 };
 

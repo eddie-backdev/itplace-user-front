@@ -6,6 +6,7 @@ import LoadingSpinner from '../../../../components/LoadingSpinner';
 
 type Props = {
   email: string;
+  initiallyVerified?: boolean;
   onChangeEmail: (val: string) => void;
   onVerifiedChange?: (verified: boolean) => void;
   mode?: 'signup' | 'reset';
@@ -15,6 +16,7 @@ type Props = {
 
 const EmailVerificationBox = ({
   email,
+  initiallyVerified = false,
   onChangeEmail,
   onVerifiedChange,
   mode,
@@ -30,7 +32,14 @@ const EmailVerificationBox = ({
     sendCode,
     verifyCode,
     loading, // useEmailVerification 내부 로딩
-  } = useEmailVerification({ email, onVerifiedChange, mode, onResetTokenChange, onDuplicateEmail });
+  } = useEmailVerification({
+    email,
+    initiallyVerified,
+    onVerifiedChange,
+    mode,
+    onResetTokenChange,
+    onDuplicateEmail,
+  });
 
   // 이메일이 변경되면 인증번호 입력 초기화
   useEffect(() => {
@@ -47,22 +56,29 @@ const EmailVerificationBox = ({
   };
 
   return (
-    <div className="w-full max-w-[320px] max-xl:max-w-[274px] max-lg:max-w-[205px] max-md:max-w-none max-sm:max-w-none">
+    <div className="w-full max-w-[320px]">
+      {emailVerified && (
+        <p role="status" className="mb-2 text-sm font-medium text-brandStrong">
+          이메일 인증 완료
+        </p>
+      )}
       {/* 이메일 입력 */}
       <div className="relative">
         <AuthInput
           name="email"
+          type="email"
           placeholder="이메일"
           value={email}
           onChange={(e) => onChangeEmail(e.target.value)}
           disabled={emailVerified}
+          className={!emailVerified ? 'pr-24' : ''}
         />
         {!emailVerified && (
           <button
             type="button"
             onClick={handleSendCode}
             disabled={!email || manualLoading}
-            className={`absolute right-[12px] max-xl:right-[10px] max-lg:right-[8px] max-md:right-[11px] max-sm:right-[12px] top-[12px] max-xl:top-[10px] max-lg:top-[8px] max-md:top-[11px] max-sm:top-[12px] w-[69px] max-xl:w-[59px] max-lg:w-[44px] max-md:w-[54px] max-sm:w-[60px] h-[26px] max-xl:h-[22px] max-lg:h-[17px] max-md:h-[20px] max-sm:h-[22px] rounded-[10px] max-xl:rounded-[9px] max-lg:rounded-[7px] max-md:rounded-[8px] max-sm:rounded-[9px] text-body-4 max-xl:text-body-5 max-lg:text-body-5 max-md:text-body-5 max-sm:text-body-4 transition flex items-center justify-center
+            className={`absolute right-1 top-[31px] h-10 min-w-[68px] rounded-lg px-2 text-body-3-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
               ${!email ? 'bg-grey02 text-grey04' : 'bg-purple04 text-white'}`}
           >
             {manualLoading ? (
@@ -83,13 +99,15 @@ const EmailVerificationBox = ({
           <AuthInput
             name="verificationCode"
             placeholder="인증번호 입력"
+            autoComplete="one-time-code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
+            className="pr-24"
           />
           <button
             type="button"
             onClick={() => verifyCode(code)}
-            className="absolute right-[12px] max-xl:right-[10px] max-lg:right-[8px] max-md:right-[11px] max-sm:right-[12px] top-[12px] max-xl:top-[10px] max-lg:top-[8px] max-md:top-[11px] max-sm:top-[12px] w-[69px] max-xl:w-[59px] max-lg:w-[44px] max-md:w-[54px] max-sm:w-[60px] h-[26px] max-xl:h-[22px] max-lg:h-[17px] max-md:h-[20px] max-sm:h-[22px] bg-purple04 text-white text-body-4 max-xl:text-body-5 max-lg:text-body-5 max-md:text-body-5 max-sm:text-body-4 rounded-[10px] max-xl:rounded-[9px] max-lg:rounded-[7px] max-md:rounded-[8px] max-sm:rounded-[9px]"
+            className="absolute right-1 top-[31px] h-10 min-w-[68px] rounded-lg bg-brand px-2 text-body-3-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             확인
           </button>
@@ -101,7 +119,7 @@ const EmailVerificationBox = ({
         <div
           role="status"
           aria-live="polite"
-          className="fixed left-[calc(50%+40.5px)] top-6 z-[10001] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/70 bg-grey07/90 px-4 py-2.5 text-body-3-bold text-white shadow-[0_14px_34px_rgba(16,17,20,0.22)] backdrop-blur-md max-md:left-1/2 max-md:top-auto max-md:bottom-6 max-md:text-body-4-bold"
+          className="fixed left-[calc(50%_+_var(--itplace-sidebar-width)_/_2)] top-6 z-[10001] flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/70 bg-grey07/90 px-4 py-2.5 text-body-3-bold text-white shadow-[0_14px_34px_rgba(16,17,20,0.22)] backdrop-blur-md max-md:left-1/2 max-md:top-auto max-md:bottom-6 max-md:text-body-4-bold"
         >
           <LoadingSpinner className="h-4 w-4 border-2 border-white/70 border-t-transparent" />
           <span>인증 메일 전송 중</span>

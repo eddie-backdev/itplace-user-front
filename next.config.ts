@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
   redirects() {
     return [
       { source: '/main', destination: '/', permanent: true },
-      { source: '/mypage', destination: '/mypage/info', permanent: false },
+      { source: '/mypage', destination: '/mypage/activity', permanent: false },
       {
         source: '/mypage/history',
         destination: '/mypage/favorites',

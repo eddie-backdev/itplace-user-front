@@ -1,3 +1,5 @@
+'use client';
+
 import { ImgHTMLAttributes, useMemo, useState } from 'react';
 import { getImageFallbackText, normalizeImageSrc } from '../utils/image';
 

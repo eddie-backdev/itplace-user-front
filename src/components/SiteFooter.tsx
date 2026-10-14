@@ -15,21 +15,21 @@ const currentYear = new Date().getFullYear();
 
 const SiteFooter = () => {
   return (
-    <footer className="border-t border-grey02 bg-grey01/60 px-5 py-3 text-grey05 md:px-12">
-      <div className="mx-auto flex max-w-[1280px] flex-col items-center gap-3 md:flex-row md:justify-between md:gap-5">
-        <p className="shrink-0 whitespace-nowrap text-body-4 font-medium text-grey04">
+    <footer className="border-t border-warmBorder bg-warmCanvas py-5 text-warmMuted">
+      <div className="workspace-container flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-5">
+        <p className="shrink-0 whitespace-nowrap text-body-4 font-medium text-warmMuted">
           © {currentYear} IT:PLACE
         </p>
 
         <nav
           aria-label="서비스 정책 및 도움말"
-          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-body-4 md:justify-end"
+          className="flex flex-wrap items-center gap-x-4 text-[13px] md:justify-end"
         >
           {footerLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className="whitespace-nowrap font-medium text-grey05 transition-colors hover:text-purple04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-sm font-medium text-warmMuted hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
               {link.label}
             </Link>

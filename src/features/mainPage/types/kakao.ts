@@ -12,6 +12,7 @@ export interface KakaoLatLngBounds {
 export interface KakaoMap {
   getLevel(): number;
   setCenter(latlng: KakaoLatLng): void;
+  panBy(dx: number, dy: number): void;
   setLevel(level: number, options?: { anchor?: KakaoLatLng }): void;
   getCenter(): KakaoLatLng;
   getBounds(): KakaoLatLngBounds;
@@ -31,6 +32,7 @@ export interface KakaoCustomOverlay {
 export interface KakaoRoadview {
   getPosition(): KakaoLatLng;
   setPanoId(panoId: string, latLng: KakaoLatLng): void;
+  relayout?(): void;
 }
 
 export interface KakaoRoadviewClient {

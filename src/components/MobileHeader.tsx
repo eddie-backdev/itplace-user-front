@@ -1,4 +1,5 @@
-// src/components/MobileHeader.tsx
+'use client';
+
 import { useEffect, useRef, useState } from 'react';
 import { TbMenu2, TbX } from 'react-icons/tb';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,6 +11,7 @@ import { useClientReady } from '../hooks/useClientReady';
 import { useLocation } from '@/lib/navigation';
 import { logout } from '../store/authSlice';
 import api from '../apis/axiosInstance';
+import { getLoginHref } from '../features/loginPage/utils/returnTo.mjs';
 interface MobileHeaderProps {
   title?: string;
   backgroundColor?: string; // Tailwind 클래스명 등
@@ -19,9 +21,12 @@ interface MobileHeaderProps {
 }
 
 const menus = [
-  { label: '잇플 맵', path: '/map' },
+  { label: '홈', path: '/' },
+  { label: '주변 매장', path: '/map' },
   { label: '전체 혜택', path: '/benefits' },
-  { label: '마이페이지', path: '/mypage/info', match: '/mypage' },
+  { label: '즐겨찾기', path: '/mypage/favorites' },
+  { label: '마이', path: '/mypage/activity', match: '/mypage' },
+  { label: '회원 정보', path: '/mypage/info', match: '/mypage/info' },
 ];
 
 const supportMenus = [
@@ -56,7 +61,7 @@ const MobileHeader = ({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  const { pathname } = useLocation();
+  const { pathname, search, hash } = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
@@ -64,6 +69,7 @@ const MobileHeader = ({
   const isClientReady = useClientReady();
   const isAuthReady = isClientReady && isAuthRehydrated;
   const isMain = pathname === '/';
+  const currentPath = `${pathname}${search}${hash}`;
 
   const handleLogout = async () => {
     try {
@@ -161,23 +167,23 @@ const MobileHeader = ({
     <>
       <header
         className={
-          `w-full h-[54px] fixed top-0 left-0 flex items-center px-4 z-[9999] border-grey01 max-md:flex ${backgroundColor} ` +
+          `w-full h-[54px] fixed top-0 left-0 flex items-center px-4 z-[9999] border-warmBorder max-md:flex ${backgroundColor} ` +
           (isMain ? 'border-b-none' : 'border-b')
         }
       >
         <div className="flex flex-row items-center h-full w-full">
           <button
             ref={menuButtonRef}
-            className="w-8 flex items-center justify-center mr-3 h-full flex-shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="메뉴"
             aria-expanded={isSidebarOpen}
             aria-controls="mobile-navigation-drawer"
             onClick={handleMenuClick}
           >
-            <TbMenu2 className={`w-5 h-5 ${iconColor ?? 'text-black'}`} />
+            <TbMenu2 className={`h-5 w-5 ${iconColor ?? 'text-ink'}`} />
           </button>
           {title && (
-            <span className="text-body-2 text-black leading-none flex items-center h-full mt-[5px]">
+            <span className="flex h-full items-center text-sm font-medium leading-none text-ink">
               {title}
             </span>
           )}
@@ -190,7 +196,7 @@ const MobileHeader = ({
         <div
           aria-hidden="true"
           data-itplace-transient-layer="open"
-          className="fixed inset-0 z-[var(--itplace-layer-transient-backdrop)] bg-black bg-opacity-50"
+          className="fixed inset-0 z-[var(--itplace-layer-transient-backdrop)] bg-ink/25"
           onClick={closeSidebar}
         />
       )}
@@ -206,20 +212,22 @@ const MobileHeader = ({
         data-itplace-transient-layer={isSidebarOpen ? 'open' : undefined}
         inert={!isSidebarOpen}
         tabIndex={-1}
-        className={`fixed left-0 top-0 z-[var(--itplace-layer-transient-surface)] flex h-full w-[280px] flex-col overflow-hidden bg-white transform transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 z-[var(--itplace-layer-transient-surface)] flex h-full w-[min(320px,88vw)] flex-col overflow-hidden border-r border-warmBorder bg-warmNav ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* 사이드바 헤더 */}
-        <div className="flex items-center justify-between p-4 border-b border-grey01">
-          <h2 className="text-body-0-bold items-center text-purple04 mt-1">IT: PLACE</h2>
+        <div className="flex items-center justify-between border-b border-warmBorder px-4 py-2">
+          <h2 className="flex min-h-11 items-center text-[15px] font-semibold tracking-[-0.02em] text-ink">
+            잇플레이스
+          </h2>
           <button
             ref={closeButtonRef}
-            className="flex h-10 w-10 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+            className="flex h-11 w-11 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             onClick={closeSidebar}
             aria-label="모바일 메뉴 닫기"
           >
-            <TbX className="w-6 h-6 text-black" />
+            <TbX className="h-5 w-5 text-ink" />
           </button>
         </div>
 
@@ -228,20 +236,26 @@ const MobileHeader = ({
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4"
           style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
         >
-          <ul className="space-y-6">
+          <ul className="space-y-5">
             {menus.map((menu) => {
               const isActive =
-                menu.path === '/' ? pathname === '/' : pathname.startsWith(menu.match ?? menu.path);
+                menu.path === '/'
+                  ? pathname === '/'
+                  : menu.match === '/mypage'
+                    ? pathname.startsWith('/mypage') &&
+                      !pathname.startsWith('/mypage/favorites') &&
+                      !pathname.startsWith('/mypage/info')
+                    : pathname.startsWith(menu.match ?? menu.path);
 
               return (
                 <li key={menu.path}>
                   <Link
                     to={menu.path}
                     aria-current={isActive ? 'page' : undefined}
-                    className={`block rounded-[12px] px-3 py-2 text-body-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
+                    className={`flex min-h-11 items-center rounded-xl px-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       isActive
-                        ? 'bg-purple01 text-purple04 font-semibold'
-                        : 'text-black hover:text-purple04'
+                        ? 'bg-brandSoft text-brandStrong'
+                        : 'text-ink hover:bg-warmCanvas hover:text-brandStrong'
                     }`}
                     onClick={closeSidebar}
                   >
@@ -250,14 +264,14 @@ const MobileHeader = ({
                 </li>
               );
             })}
-            <li className="border-t border-grey01 pt-5">
-              <p className="mb-3 px-3 text-caption font-bold text-grey04">서비스 안내</p>
-              <ul className="space-y-2">
+            <li className="border-t border-warmBorder pt-4">
+              <p className="mb-2 px-3 text-xs font-medium text-warmMuted">도움말</p>
+              <ul className="space-y-1">
                 {supportMenus.map((menu) => (
                   <li key={menu.path}>
                     <Link
                       to={menu.path}
-                      className="block rounded-[12px] px-3 py-2 text-body-3 text-grey06 transition-colors hover:text-purple04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                      className="flex min-h-11 items-center rounded-xl px-3 text-sm text-warmMuted hover:bg-warmCanvas hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                       onClick={closeSidebar}
                     >
                       {menu.label}
@@ -269,7 +283,7 @@ const MobileHeader = ({
             <li>
               {!isAuthReady ? (
                 <div
-                  className="w-full rounded-[12px] px-3 py-2 text-left text-body-3 text-grey04"
+                  className="min-h-11 w-full rounded-xl px-3 text-left text-sm text-warmMuted"
                   aria-live="polite"
                 >
                   로그인 상태 확인 중
@@ -277,17 +291,17 @@ const MobileHeader = ({
               ) : isLoggedIn ? (
                 <button
                   onClick={handleLogout}
-                  className="w-full rounded-[12px] px-3 py-2 text-body-0 text-black hover:text-purple04 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                  className="min-h-11 w-full rounded-xl px-3 text-left text-sm font-medium text-ink hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   로그아웃
                 </button>
               ) : (
                 <button
                   onClick={() => {
-                    navigate('/login?reset=1', { replace: true });
+                    navigate(getLoginHref(currentPath), { replace: true });
                     closeSidebar();
                   }}
-                  className="w-full rounded-[12px] px-3 py-2 text-body-0 text-purple04 hover:text-purple05 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                  className="min-h-11 w-full rounded-xl px-3 text-left text-sm font-medium text-brandStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   로그인
                 </button>

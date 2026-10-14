@@ -75,14 +75,17 @@ const FindPasswordStep2 = ({ onGoToLogin, email, resetPasswordToken }: Props) =>
     !errors?.passwordConfirm;
 
   return (
-    <div ref={wrapperRef} className="flex flex-col items-center">
-      <div className="text-title-4 max-xl:text-title-5 max-lg:text-title-6 max-md:text-title-6 max-sm:text-title-7 text-left w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full">
-        <p>
-          <span className="font-bold">새 비밀번호</span>를 입력해주세요
+    <div ref={wrapperRef} className="flex w-full flex-col items-start">
+      <div className="w-full max-w-[400px] text-left">
+        <h1 className="text-[28px] font-semibold leading-[1.3] tracking-[-0.035em] text-ink">
+          새 비밀번호를 설정하세요
+        </h1>
+        <p className="mt-2 text-[14px] leading-6 text-warmMuted sm:text-[15px]">
+          새 비밀번호와 확인 값을 입력해주세요.
         </p>
       </div>
 
-      <div className="mt-[50px] max-xl:mt-[43px] max-lg:mt-[34px] max-md:mt-[30px] max-sm:mt-[30px]">
+      <div className="mt-7 w-full max-w-[400px]">
         <PasswordInputForm
           password={password}
           passwordConfirm={passwordConfirm}
@@ -93,20 +96,26 @@ const FindPasswordStep2 = ({ onGoToLogin, email, resetPasswordToken }: Props) =>
         />
       </div>
 
-      {serverError && <ErrorMessage message={serverError} />}
+      {serverError && (
+        <div className="mt-4 w-full max-w-[400px] break-words">
+          <ErrorMessage message={serverError} />
+        </div>
+      )}
 
       <AuthButton
-        className="mt-[100px] max-xl:mt-[85px] max-lg:mt-[70px] max-md:mt-[50px] max-sm:mt-[50px]"
+        className="mt-6 h-[52px] !max-w-[400px]"
         label="비밀번호 변경"
         onClick={handleSubmit}
         variant={isValid ? 'default' : 'disabled'}
       />
 
-      <AuthFooter
-        leftText="비밀번호가 기억나셨다면?"
-        rightText="로그인 하러 가기"
-        onRightClick={onGoToLogin}
-      />
+      <div className="w-full max-w-[400px]">
+        <AuthFooter
+          leftText="비밀번호가 기억나셨다면?"
+          rightText="로그인 하러 가기"
+          onRightClick={onGoToLogin}
+        />
+      </div>
     </div>
   );
 };

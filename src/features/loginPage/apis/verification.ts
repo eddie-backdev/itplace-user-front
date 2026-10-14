@@ -30,10 +30,14 @@ export const issueSmsVerificationCode = async (phoneNumber: string, signal?: Abo
   return response.data.data as SmsVerificationIssueResponse;
 };
 
-export const confirmSmsVerificationCode = async (phoneNumber: string, signal?: AbortSignal) => {
+export const confirmSmsVerificationCode = async (
+  phoneNumber: string,
+  verificationText: string,
+  signal?: AbortSignal
+) => {
   return await api.post(
     '/api/v1/verification/sms/confirm',
-    { phoneNumber },
+    { phoneNumber, verificationText },
     { signal, timeout: 10000 }
   );
 };

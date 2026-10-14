@@ -6,7 +6,12 @@ import {
   type PartnerBenefitDetailResponse,
   type TierBenefit,
 } from './partnerBenefitModel';
-export { normalizePartnerBenefitDetail } from './partnerBenefitModel';
+export {
+  getCarrierBenefitDisplayName,
+  getMembershipOptionLabel,
+  getSourceOptionLabel,
+  normalizePartnerBenefitDetail,
+} from './partnerBenefitModel';
 export type {
   CarrierBenefitDetail,
   CarrierBenefitGroup,
@@ -47,12 +52,22 @@ export interface BenefitApiParams {
   carriers?: string[];
 }
 
+export interface PartnerBenefitPreview {
+  carrier: CarrierCode;
+  benefitId: number;
+  benefitName: string;
+  benefitLimit: string | null;
+  usageType: 'ONLINE' | 'OFFLINE' | 'BOTH';
+  tierBenefits: Pick<TierBenefit, 'grade' | 'context' | 'isAll'>[];
+}
+
 export interface PartnerBenefitItem {
   partnerId: number;
   partnerName: string;
   category: string | null;
   image: string | null;
   carriers: CarrierCode[];
+  previews?: PartnerBenefitPreview[];
 }
 
 export interface PartnerBenefitResponse {

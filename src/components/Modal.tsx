@@ -78,24 +78,68 @@ const Modal: React.FC<ModalProps> = ({
     }
 
     previousFocusRef.current = document.activeElement as HTMLElement | null;
+    if (closeButtonRef.current && !closeButtonRef.current.disabled) {
+      closeButtonRef.current.focus();
+    } else {
+      modalRef.current?.focus();
+    }
     disableScroll();
 
-    const timer = window.setTimeout(() => {
-      closeButtonRef.current?.focus();
-    }, 0);
+    const modalRoot = modalRef.current?.closest<HTMLElement>('[data-itplace-modal-root]');
+    const hiddenBackground: Array<{
+      element: HTMLElement;
+      inert: boolean;
+      ariaHidden: string | null;
+    }> = [];
+    if (modalRoot) {
+      Array.from(document.body.children).forEach((child) => {
+        if (child === modalRoot || !(child instanceof HTMLElement)) return;
+        hiddenBackground.push({
+          element: child,
+          inert: child.inert,
+          ariaHidden: child.getAttribute('aria-hidden'),
+        });
+        child.inert = true;
+        child.setAttribute('aria-hidden', 'true');
+      });
+    }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !busyRef.current) {
         onCloseRef.current();
+        return;
+      }
+
+      if (event.key === 'Tab' && modalRef.current) {
+        const focusable = Array.from(
+          modalRef.current.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter((element) => element.getAttribute('aria-hidden') !== 'true');
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!first || !last) {
+          event.preventDefault();
+        } else if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      window.clearTimeout(timer);
       document.removeEventListener('keydown', handleKeyDown);
       enableScroll();
+      hiddenBackground.forEach(({ element, inert, ariaHidden }) => {
+        element.inert = inert;
+        if (ariaHidden === null) element.removeAttribute('aria-hidden');
+        else element.setAttribute('aria-hidden', ariaHidden);
+      });
       previousFocusRef.current?.focus?.();
     };
   }, [isOpen]);
@@ -116,8 +160,9 @@ const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div
+      data-itplace-modal-root
       data-itplace-transient-layer="open"
-      className="fixed inset-0 z-[var(--itplace-layer-transient-backdrop)] flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-[var(--itplace-layer-transient-backdrop)] flex min-h-[100dvh] items-center justify-center overflow-y-auto overscroll-contain bg-black/40 px-3 py-2 sm:py-4"
       onPointerDown={handleOverlayPointerDown}
       onClick={handleOverlayClick}
     >
@@ -128,16 +173,18 @@ const Modal: React.FC<ModalProps> = ({
         aria-busy={busy || undefined}
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={message || subMessage ? descriptionId : undefined}
-        className={`relative ${widthClass ?? 'w-full max-w-[500px]'} bg-white rounded-[20px] shadow-xl p-10 flex flex-col items-center max-sm:p-5 max-sm:w-[90%]`}
+        tabIndex={-1}
+        className={`relative max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain ${widthClass ?? 'w-full max-w-[500px]'} bg-white rounded-[20px] shadow-xl p-10 flex flex-col items-center sm:max-h-[calc(100dvh-2rem)] max-sm:p-5 max-sm:w-full`}
         style={shadowStyle}
       >
         {/* 닫기 버튼 */}
         <button
           ref={closeButtonRef}
+          type="button"
           onClick={onClose}
           disabled={busy}
           aria-label="모달 닫기"
-          className="absolute top-5 right-5 rounded-full text-grey04 hover:text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:cursor-not-allowed disabled:opacity-40"
+          className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full text-grey04 hover:text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:cursor-not-allowed disabled:opacity-40 sm:right-4 sm:top-4"
         >
           <TbX size={24} className="max-sm:w-5 max-sm:h-5" />
         </button>
@@ -176,6 +223,8 @@ const Modal: React.FC<ModalProps> = ({
         {input && (
           <input
             type={inputType}
+            name="modalInput"
+            aria-label={inputPlaceholder || '입력'}
             className="w-full max-w-[436px] h-[50px] mt-[20px] px-[20px] bg-grey01 rounded-[10px] text-body-2 text-grey05 placeholder-grey03 max-sm:text-body-3"
             placeholder={inputPlaceholder}
             value={inputValue}
@@ -193,15 +242,15 @@ const Modal: React.FC<ModalProps> = ({
             {buttons.map((btn, idx) => {
               const typeClass =
                 btn.type === 'primary'
-                  ? 'bg-purple04 text-white hover:bg-purple05'
-                  : 'border border-grey02 text-grey04 hover:text-grey05 hover:border-grey04';
+                  ? 'bg-brand text-white hover:bg-brandStrong'
+                  : 'border border-grey02 text-grey06 hover:bg-grey01 hover:border-grey04';
 
               return (
                 <button
                   key={idx}
                   type="button"
                   disabled={busy}
-                  className={`flex-1 h-[56px] rounded-[10px] text-title-6 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:cursor-not-allowed disabled:opacity-60 ${typeClass} max-xl:h-[52px] max-sm:h-[46px] max-sm:text-title-7`}
+                  className={`flex-1 h-[56px] rounded-[10px] text-title-6 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${typeClass} max-xl:h-[52px] max-sm:h-[46px] max-sm:text-title-7`}
                   onClick={btn.onClick}
                 >
                   {btn.label}

@@ -17,7 +17,7 @@ const tabs = [
     match: (path: string) => path.startsWith('/mypage/favorites'),
   },
   {
-    to: '/mypage/info',
+    to: '/mypage/activity',
     label: '마이',
     icon: TbUser,
     match: (path: string) => path.startsWith('/mypage') && !path.startsWith('/mypage/favorites'),
@@ -30,7 +30,7 @@ const MobileAppTabBar = () => {
   return (
     <nav
       aria-label="모바일 주요 탭"
-      className="itplace-mobile-app-tab-bar fixed bottom-0 left-0 right-0 z-[var(--itplace-layer-app-tab-bar)] border-t border-warmBorder bg-warmSurface/95 px-3 pt-1 shadow-[0_-6px_18px_rgba(36,35,33,0.06)] backdrop-blur md:hidden"
+      className="itplace-mobile-app-tab-bar fixed bottom-0 left-0 right-0 z-[var(--itplace-layer-app-tab-bar)] border-t border-warmBorder bg-warmNav px-3 pt-1 md:hidden"
       style={{
         height: 'var(--itplace-mobile-tab-bar-offset, 64px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -47,18 +47,16 @@ const MobileAppTabBar = () => {
               to={tab.to}
               aria-label={`${tab.label} 탭으로 이동`}
               aria-current={selected ? 'page' : undefined}
-              className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[14px] px-1 py-1.5 transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                selected ? 'text-brandStrong' : 'text-grey04'
+              className={`relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                selected ? 'bg-softMint text-brandStrong' : 'text-warmMuted'
               }`}
             >
               <Icon
-                className={`h-[22px] w-[22px] transition-transform ${
-                  selected ? 'scale-105 stroke-[2.8]' : 'stroke-[1.9]'
-                }`}
+                className={`h-[21px] w-[21px] ${selected ? 'stroke-[2.2]' : 'stroke-[1.8]'}`}
                 aria-hidden="true"
               />
               <span
-                className={`text-[11px] leading-[14px] ${selected ? 'font-bold' : 'font-semibold'}`}
+                className={`text-[12px] leading-[15px] ${selected ? 'font-semibold' : 'font-medium'}`}
               >
                 {tab.label}
               </span>

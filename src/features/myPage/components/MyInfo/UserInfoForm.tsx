@@ -1,14 +1,25 @@
-// src/features/myPage/components/MyInfo/UserInfoForm.tsx
 import React from 'react';
 
 type Props = {
-  nickname: string;
-  gender: string;
-  birthday: string;
-  phoneNumber: string;
-  email: string;
+  nickname: string | null;
+  gender: string | null;
+  birthday: string | null;
+  phoneNumber: string | null;
+  phoneVerified: boolean;
+  email: string | null;
+  hasLocalPassword?: boolean;
+  socialAccount?: boolean;
   onChangePasswordClick?: () => void;
+  onPhoneVerificationClick?: () => void;
   onDeleteClick?: () => void;
+};
+
+const displayValue = (value: string | null | undefined) => value?.trim() || '미등록';
+
+const displayGender = (gender: string | null) => {
+  if (gender === 'MALE') return '남성';
+  if (gender === 'FEMALE') return '여성';
+  return '미등록';
 };
 
 const UserInfoForm: React.FC<Props> = ({
@@ -16,60 +27,111 @@ const UserInfoForm: React.FC<Props> = ({
   gender,
   birthday,
   phoneNumber,
+  phoneVerified,
   email,
+  hasLocalPassword,
+  socialAccount,
   onChangePasswordClick,
+  onPhoneVerificationClick,
   onDeleteClick,
 }) => {
+  const rows = [
+    { label: '닉네임', value: displayValue(nickname) },
+    { label: '성별', value: displayGender(gender) },
+    {
+      label: '생년월일',
+      value: birthday?.trim() ? birthday.replace(/-/g, '.') : '미등록',
+    },
+    { label: '이메일', value: displayValue(email), breakAll: true },
+  ];
+
   return (
-    <div className="flex justify-center">
-      <div className="flex w-full max-w-[720px] min-w-[560px] flex-col gap-3 max-xl:min-w-[370px] max-xlg:w-full max-md:min-w-0">
-        <InfoRow label="닉네임" value={nickname} />
-        <InfoRow label="성별" value={gender === 'MALE' ? '남성' : '여성'} />
-        <InfoRow label="생년월일" value={birthday.replace(/-/g, '.')} />
-        <InfoRow label="휴대폰 번호" value={phoneNumber} />
-        <InfoRow label="이메일" value={email} />
+    <section
+      aria-labelledby="account-info-heading"
+      className="rounded-2xl border border-warmBorder bg-white p-5 sm:p-6"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="account-info-heading" className="text-lg font-semibold text-ink">
+          기본 회원 정보
+        </h2>
+        <p className="text-sm text-grey05">가입 정보는 확인용으로 표시돼요.</p>
+      </div>
 
-        <div className="flex items-center gap-4 rounded-[18px] border border-grey02 bg-white px-4 py-3 max-md:flex-col max-md:items-start max-md:gap-2">
-          <div className="w-full max-w-[140px] text-title-6 text-black font-bold max-xl:max-w-[120px] max-md:max-w-none max-md:text-body-3-bold max-md:text-grey05">
-            비밀번호
+      <dl className="mt-3 divide-y divide-warmBorder">
+        {rows.map(({ label, value, breakAll }) => (
+          <div
+            key={label}
+            className="grid grid-cols-[minmax(6rem,0.35fr)_minmax(0,1fr)] gap-3 py-3 sm:grid-cols-[9rem_minmax(0,1fr)]"
+          >
+            <dt className="text-sm font-medium text-grey05">{label}</dt>
+            <dd className={`min-w-0 text-sm leading-6 text-ink ${breakAll ? 'break-all' : 'break-words'}`}>
+              {value}
+            </dd>
           </div>
-          <div className="flex-1 w-full">
-            <div className="flex-1 flex items-center justify-between">
-              <span className="tracking-widest select-none text-grey04">●●●●●●●●</span>
-              <button
-                type="button"
-                className="rounded-full bg-purple01 px-4 py-2 text-body-2-bold text-purple04 transition hover:bg-purple02 max-xl:text-body-3-bold"
-                onClick={onChangePasswordClick}
-              >
-                변경하기
-              </button>
-            </div>
-          </div>
+        ))}
+        <div className="grid grid-cols-[minmax(6rem,0.35fr)_minmax(0,1fr)] gap-3 py-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+          <dt className="text-sm font-medium text-grey05">휴대폰 번호</dt>
+          <dd className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 text-sm leading-6 text-ink">
+            <span>{displayValue(phoneNumber)}</span>
+            {phoneVerified ? (
+              <span className="rounded-full bg-softMint px-2.5 py-1 text-xs font-semibold text-brandStrong">
+                  인증 완료
+              </span>
+            ) : (
+              <>
+                <span className="rounded-full bg-warmCanvas px-2.5 py-1 text-xs font-semibold text-grey05">
+                  미인증
+                </span>
+                <button
+                  type="button"
+                  onClick={onPhoneVerificationClick}
+                  className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-3 text-sm font-semibold text-ink hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  휴대폰 번호 인증
+                </button>
+              </>
+            )}
+          </dd>
         </div>
+      </dl>
 
-        <div className="flex justify-end mt-4">
+      <div className="mt-4 border-t border-warmBorder pt-4">
+        <h3 className="text-sm font-semibold text-ink">계정 보안</h3>
+        {hasLocalPassword === false ? (
+          <p className="mt-2 text-sm leading-6 text-grey05">
+            {socialAccount
+              ? '소셜 로그인 계정입니다. 이 계정에는 변경할 비밀번호가 등록되어 있지 않아요.'
+              : '이 계정에는 변경할 비밀번호가 등록되어 있지 않아요.'}
+          </p>
+        ) : (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm text-grey05">비밀번호</p>
+              <span aria-label="비밀번호가 설정되어 있음" className="tracking-widest text-grey04">
+                ●●●●●●●●
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={onChangePasswordClick}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-4 text-sm font-semibold text-grey06 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              비밀번호 변경
+            </button>
+          </div>
+        )}
+        <div className="mt-4 flex justify-end border-t border-warmBorder pt-4">
           <button
             type="button"
-            className="rounded-[14px] border border-grey02 bg-white px-5 py-3 text-body-2-bold text-grey04 transition hover:border-danger hover:text-danger max-md:w-full"
             onClick={onDeleteClick}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg px-4 text-sm font-semibold text-grey05 transition-colors hover:bg-warmCanvas hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
           >
-            회원탈퇴
+            회원 탈퇴
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
-
-const InfoRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex items-center gap-4 rounded-[18px] border border-grey02 bg-white px-4 py-3 max-md:flex-col max-md:items-start max-md:gap-2">
-    <div className="w-full max-w-[140px] text-title-6 text-black font-bold max-xl:max-w-[120px] max-md:max-w-none max-md:text-body-3-bold max-md:text-grey05">
-      {label}
-    </div>
-    <div className="flex-1 w-full text-body-1 text-grey05 max-xl:text-body-2 max-md:text-grey04">
-      {value || '\u00A0'}
-    </div>
-  </div>
-);
 
 export default UserInfoForm;

@@ -11,7 +11,11 @@ const require = createRequire(import.meta.url);
 const loadModule = (path, dependencies = {}) => {
   const filename = new URL(`../${path}`, import.meta.url);
   const { outputText } = ts.transpileModule(readFileSync(filename, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, esModuleInterop: true },
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+      esModuleInterop: true,
+    },
   });
   const exports = {};
   runInThisContext(`(function(require, exports) { ${outputText}\n})`, {
@@ -142,9 +146,123 @@ test('only unavailable compact routes fall back; failures and cancellation do no
   }
 });
 
-test('viewport coverage reuses batches below the limit but refetches when the limit is reached', async () => {
-  for (const [count, expectedCalls] of [[0, 1], [299, 1], [300, 2]]) {
+const pageEnvelope = (stores, partners, hasMore, nextCursor) => ({
+  code: 'SUCCESS', status: 'SUCCESS', message: '성공',
+  data: { stores, partners, hasMore, nextCursor },
+});
+
+test('paged viewport and nearby preview APIs accumulate every page, expanding each page before deduplication', async () => {
+  const signal = new AbortController().signal;
+  const calls = [];
+  request = async (url, config) => {
+    calls.push({ url, params: config.params, signal: config.signal });
+    const { afterStoreId } = config.params;
+    if (url.includes('/in-view/')) {
+      if (afterStoreId === 0) return { data: pageEnvelope(
+        Array.from({ length: 300 }, (_, i) => store(i + 1, { distance: 601 - i })),
+        [{ partnerId: 9, partnerName: '페이지 1', category: '카페', tierBenefit: benefits }], true, 300
+      ) };
+      if (afterStoreId === 300) return { data: pageEnvelope(
+        Array.from({ length: 300 }, (_, i) => store(i + 301, { distance: 301 - i })),
+        [{ partnerId: 9, partnerName: '페이지 2', category: '카페', tierBenefit: [] }], true, 600
+      ) };
+      return { data: pageEnvelope([store(601, { distance: 0 })], [], false, null) };
+    }
+    if (afterStoreId === 0) return { data: pageEnvelope([store(1, { distance: 3 })], batch.partners, true, 1) };
+    return { data: pageEnvelope([], [], false, null) };
+  };
+
+  const viewport = await api.getAllStorePreviewsInView({
+    minLat: 1, minLng: 2, maxLat: 3, maxLng: 4, category: '카페', pageSize: 25,
+  }, signal);
+  assert.equal(calls.length, 3, JSON.stringify(calls.map(({ url, params }) => ({ url, params }))));
+  assert.equal(viewport.data.length, 601);
+  assert.deepEqual(viewport.data.map(({ distance }) => distance), [...viewport.data.map(({ distance }) => distance)].sort((a, b) => a - b));
+  assert.equal(viewport.data.find(({ storeId }) => storeId === 1).partnerName, '페이지 1');
+  assert.deepEqual(viewport.data.find(({ storeId }) => storeId === 1).tierBenefit, benefits);
+  assert.deepEqual(viewport.data.find(({ storeId }) => storeId === 301).tierBenefit, []);
+  assert.deepEqual(calls.slice(0, 3).map(({ params }) => params.afterStoreId), [0, 300, 600]);
+  assert.ok(calls.slice(0, 3).every(({ url, params, signal: actualSignal }) =>
+    url === '/api/v1/maps/stores/in-view/previews/compact/page' &&
+    params.pageSize === 300 && params.category === '카페' && actualSignal === signal
+  ));
+
+  calls.length = 0;
+  const nearby = await api.getAllNearbyStorePreviews({
+    lat: 37.5, lng: 127.1, userLat: 0, userLng: 0, radiusMeters: 1000, category: '카페', pageSize: 1,
+  }, signal);
+  assert.equal(nearby.data.length, 1);
+  assert.equal(nearby.data[0].distance, 3);
+  assert.deepEqual(calls.map(({ params }) => params.afterStoreId), [0, 1]);
+  assert.ok(calls.every(({ url, params, signal: actualSignal }) =>
+    url === '/api/v1/maps/nearby/category/previews/compact/page' &&
+    params.pageSize === 300 && params.category === '카페' &&
+    params.userLat === 0 && params.userLng === 0 && actualSignal === signal
+  ));
+});
+
+test('paged previews handle exact page boundaries, empty final pages and overlapping IDs', async () => {
+  let page = 0;
+  request = async () => {
+    page++;
+    if (page === 1) return { data: pageEnvelope(Array.from({ length: 300 }, (_, i) => store(i + 1, { distance: 2 })), batch.partners, true, 300) };
+    return { data: pageEnvelope([], [], false, null) };
+  };
+  const exact = await api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 });
+  assert.equal(exact.data.length, 300);
+  assert.equal(page, 2);
+
+  page = 0;
+  request = async (_url, config) => {
+    page++;
+    if (page === 1) return { data: pageEnvelope([store(1, { distance: 5 }), store(2, { distance: 6 })], batch.partners, true, 2) };
+    assert.equal(config.params.afterStoreId, 2);
+    return { data: pageEnvelope([store(2, { distance: 0 }), store(3, { distance: 1 })], [], false, null) };
+  };
+  const overlap = await api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 });
+  assert.deepEqual(overlap.data.map(({ storeId }) => storeId), [3, 1, 2]);
+  assert.equal(overlap.data.find(({ storeId }) => storeId === 2).distance, 6);
+});
+
+test('paged previews reject aborts, failures, malformed metadata and nonadvancing cursors', async () => {
+  const controller = new AbortController();
+  let calls = 0;
+  request = async (_url, config) => {
+    calls++;
+    assert.equal(config.signal, controller.signal);
+    controller.abort();
+    return { data: pageEnvelope([store(1)], batch.partners, true, 1) };
+  };
+  await assert.rejects(api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 }, controller.signal));
+  assert.equal(calls, 1);
+
+  const preaborted = new AbortController();
+  preaborted.abort();
+  calls = 0;
+  request = async () => { calls++; return { data: pageEnvelope([], [], false, null) }; };
+  await assert.rejects(api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 }, preaborted.signal));
+  assert.equal(calls, 0);
+
+  const pageOne = pageEnvelope([store(1)], batch.partners, true, 1);
+  request = async (_url, config) => {
+    if (config.params.afterStoreId === 0) return { data: pageOne };
+    throw new Error('second page failed');
+  };
+  await assert.rejects(api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 }), /second page failed/);
+
+  for (const malformed of [
+    { ...pageOne, data: { ...pageOne.data, hasMore: undefined } },
+    { ...pageOne, data: { ...pageOne.data, nextCursor: 0 } },
+  ]) {
+    request = async () => ({ data: malformed });
+    await assert.rejects(api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 }));
+  }
+});
+
+test('viewport coverage reuses completed paged results, including 300+ stores', async () => {
+  for (const count of [0, 299, 300, 601]) {
     const requests = [];
+    let committedPlatforms = [];
     const { useStoreData } = loadModule('src/features/mainPage/hooks/useStoreData.ts', {
       // Keep callbacks and refs alive for consecutive viewport events; skip mount effects.
       react: {
@@ -155,9 +273,13 @@ test('viewport coverage reuses batches below the limit but refetches when the li
       },
       '../api/storeApi': {
         getAddressFromCoordinates: async () => '검증 위치',
-        getCompactStorePreviewsInView: async (params) => {
+        getAllStorePreviewsInView: async (params) => {
           requests.push(params);
-          return { data: { stores: Array.from({ length: count }, (_, id) => store(id)), partners: batch.partners } };
+          return {
+            data: Array.from({ length: count }, (_, id) => ({
+              ...store(id), distance: id, partnerName: '브랜드', category: '카페', tierBenefit: [],
+            })),
+          };
         },
       },
       '../utils/dataTransform': transforms,
@@ -167,7 +289,7 @@ test('viewport coverage reuses batches below the limit but refetches when the li
         useApiCall: () => ({
           data: [],
           execute: async (task, onSuccess) => {
-            await task();
+            committedPlatforms = await task();
             onSuccess?.();
             return true;
           },
@@ -181,7 +303,205 @@ test('viewport coverage reuses batches below the limit but refetches when the li
     const inner = { minLat: 2, minLng: 2, maxLat: 8, maxLng: 8 };
     assert.equal(await hook.searchInMapBounds(outer, 5, 5, 4), true);
     assert.equal(await hook.searchInMapBounds(inner, 5, 5, 3), true);
-    assert.equal(requests.length, expectedCalls, `response count ${count}`);
-    assert.ok(requests.every((params) => params.limit === 300));
+    assert.equal(requests.length, 1, `response count ${count}`);
+    assert.equal(committedPlatforms.length, count, `retained platforms ${count}`);
+    assert.ok(requests.every((params) => !('limit' in params)));
+    if (count === 299) {
+      const originalNow = Date.now;
+      Date.now = () => originalNow() + 31_000;
+      try {
+        assert.equal(await hook.searchInMapBounds(inner, 5, 5, 3), true);
+      } finally {
+        Date.now = originalNow;
+      }
+      assert.equal(requests.length, 2, 'expired coverage refetches');
+    }
+    if (count === 601) {
+      const outside = { minLat: -5, minLng: -5, maxLat: 0, maxLng: 0 };
+      assert.equal(await hook.searchInMapBounds(outside, -2, -2, 3), true);
+      assert.equal(requests.length, 2, 'bounds outside completed coverage refetch');
+    }
   }
+});
+
+test('cluster zoom uses bounds clusters for cleared search and defers current-location details to viewport updates', async () => {
+  const clusterRequests = [];
+  let nearbyCalls = 0;
+  const { useStoreData } = loadModule('src/features/mainPage/hooks/useStoreData.ts', {
+    react: {
+      useState: (value) => [value, () => {}],
+      useEffect: () => {},
+      useCallback: (callback) => callback,
+      useRef: (current) => ({ current }),
+    },
+    '../api/storeApi': {
+      getAddressFromCoordinates: async () => '검증 위치',
+      getStoreClustersInView: async (params) => {
+        clusterRequests.push(params);
+        return { data: [] };
+      },
+      getAllNearbyStorePreviews: async () => { nearbyCalls++; return { data: [] }; },
+    },
+    '../utils/dataTransform': transforms,
+    '../utils/mapUtils': loadModule('src/features/mainPage/utils/mapUtils.ts'),
+    '../constants': { DEFAULT_RADIUS: 1000 },
+    './useApiCall': {
+      useApiCall: () => ({
+        data: [],
+        execute: async (task) => {
+          try { await task(); return true; } catch { return false; }
+        },
+      }),
+    },
+  });
+
+  // React is substituted above; effects are skipped to isolate explicit map events.
+  const hook = useStoreData();
+  const bounds = { minLat: 1, minLng: 1, maxLat: 9, maxLng: 9 };
+  assert.equal(await hook.searchInMapBounds(bounds, 5, 5, 5), true);
+  await hook.searchByKeyword('', 5, 5, 5);
+  await hook.updateToCurrentLocation(6, 6, 5);
+
+  assert.equal(clusterRequests.length, 2);
+  assert.ok(clusterRequests.every((params) => params.mapLevel === 5 && params.minLat === 1));
+  assert.equal(nearbyCalls, 0);
+});
+
+test('viewport coverage is invalidated when the selected category changes', async () => {
+  const states = [];
+  const refs = [];
+  let stateIndex = 0;
+  let refIndex = 0;
+  const categories = [];
+  const { useStoreData } = loadModule('src/features/mainPage/hooks/useStoreData.ts', {
+    react: {
+      useState: (initial) => {
+        const index = stateIndex++;
+        states[index] ??= initial;
+        return [states[index], (next) => { states[index] = typeof next === 'function' ? next(states[index]) : next; }];
+      },
+      useEffect: () => {},
+      useCallback: (callback) => callback,
+      useRef: (current) => {
+        const index = refIndex++;
+        refs[index] ??= { current };
+        return refs[index];
+      },
+    },
+    '../api/storeApi': {
+      getAddressFromCoordinates: async () => '검증 위치',
+      getAllStorePreviewsInView: async (params) => {
+        categories.push(params.category);
+        return { data: [] };
+      },
+    },
+    '../utils/dataTransform': transforms,
+    '../utils/mapUtils': loadModule('src/features/mainPage/utils/mapUtils.ts'),
+    '../constants': { DEFAULT_RADIUS: 1000 },
+    './useApiCall': {
+      useApiCall: () => ({
+        data: [],
+        execute: async (task, onSuccess) => {
+          try { const result = await task(); onSuccess?.(result); return true; } catch { return false; }
+        },
+      }),
+    },
+  });
+  const render = () => {
+    stateIndex = 0;
+    refIndex = 0;
+    // React is substituted above; effects are skipped to retain a focused viewport harness.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useStoreData();
+  };
+
+  let hook = render();
+  const outer = { minLat: 1, minLng: 1, maxLat: 9, maxLng: 9 };
+  const inner = { minLat: 2, minLng: 2, maxLat: 8, maxLng: 8 };
+  assert.equal(await hook.searchInMapBounds(outer, 5, 5, 4), true);
+  assert.equal(await hook.searchInMapBounds(inner, 5, 5, 4), true);
+  assert.equal(categories.length, 1);
+
+  hook.setCategoryOnly('카페', 4);
+  hook = render();
+  assert.equal(await hook.searchInMapBounds(inner, 5, 5, 4), true);
+  assert.deepEqual(categories, [undefined, '카페']);
+});
+
+test('late initial geolocation updates user coordinates without committing stale nearby data or address', async () => {
+  const states = [];
+  const refs = [];
+  let stateIndex = 0;
+  let refIndex = 0;
+  let effects = [];
+  let resolveLocation;
+  const location = new Promise((resolve) => { resolveLocation = resolve; });
+  const detailedRequests = [];
+  const addressRequests = [];
+  const { useStoreData } = loadModule('src/features/mainPage/hooks/useStoreData.ts', {
+    react: {
+      useState: (initial) => {
+        const index = stateIndex++;
+        states[index] ??= initial;
+        return [states[index], (next) => { states[index] = typeof next === 'function' ? next(states[index]) : next; }];
+      },
+      useEffect: (effect) => { effects.push(effect); },
+      useCallback: (callback) => callback,
+      useRef: (current) => {
+        const index = refIndex++;
+        refs[index] ??= { current };
+        return refs[index];
+      },
+    },
+    '../api/storeApi': {
+      getCurrentLocation: () => location,
+      getAddressFromCoordinates: async (lat, lng) => {
+        addressRequests.push([lat, lng]);
+        return `주소 ${lat},${lng}`;
+      },
+      getAllStorePreviewsInView: async (params) => {
+        detailedRequests.push(params.category);
+        return { data: [] };
+      },
+    },
+    '../utils/dataTransform': transforms,
+    '../utils/mapUtils': loadModule('src/features/mainPage/utils/mapUtils.ts'),
+    '../constants': { DEFAULT_RADIUS: 1000 },
+    './useApiCall': {
+      useApiCall: () => ({
+        data: [],
+        execute: async (task, onSuccess) => {
+          try { const result = await task(); onSuccess?.(result); return true; } catch { return false; }
+        },
+      }),
+    },
+  });
+  const render = () => {
+    stateIndex = 0;
+    refIndex = 0;
+    effects = [];
+    // React is substituted above; the harness manually runs only the relevant effects.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useStoreData();
+  };
+
+  let hook = render();
+  void effects[1]();
+  const bounds = { minLat: 1, minLng: 1, maxLat: 9, maxLng: 9 };
+  assert.equal(await hook.searchInMapBounds(bounds, 5, 5, 4), true);
+  assert.deepEqual(detailedRequests, [undefined]);
+
+  resolveLocation({ lat: 37.5, lng: 127.1 });
+  await new Promise((resolve) => setImmediate(resolve));
+  hook = render();
+  assert.deepEqual(hook.userCoords, { lat: 37.5, lng: 127.1 });
+  assert.deepEqual(detailedRequests, [undefined], 'stale initial request does not fetch nearby stores');
+  assert.deepEqual(addressRequests, [[5, 5]], 'stale initial address does not replace viewport address');
+
+  hook.setCategoryOnly('카페', 4);
+  hook = render();
+  effects[2](); // user-coordinate effect clears the initial-load guard
+  hook = render();
+  await effects[3](); // category reload now uses the settled user coordinates and current bounds
+  assert.deepEqual(detailedRequests, [undefined, '카페']);
 });

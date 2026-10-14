@@ -5,7 +5,7 @@ import partnerNotes from '../content/partner-notes.json';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from '@/lib/navigation';
+import { Link, useLocation, useNavigate, useParams } from '@/lib/navigation';
 import {
   TbArrowLeft,
   TbChevronDown,
@@ -16,12 +16,16 @@ import {
 } from 'react-icons/tb';
 import NoResult from '../components/NoResult';
 import SafeImage from '../components/SafeImage';
+import NearbyStoresButton from '../features/allBenefitsPage/components/NearbyStoresButton';
 import SiteFooter from '../components/SiteFooter';
 import { showToast } from '../utils/toast';
 import {
   addFavorite,
   CarrierBenefitDetail,
+  getCarrierBenefitDisplayName,
   getPartnerBenefitDetail,
+  getMembershipOptionLabel,
+  getSourceOptionLabel,
   PartnerBenefitDetailResponse,
   removeFavorite,
 } from '../features/allBenefitsPage/apis/allBenefitsApi';
@@ -32,11 +36,13 @@ import {
   getMembershipGradeLabel,
 } from '../utils/membership';
 import { getCarrierMembershipPath, getPartnerBenefitPath } from '../utils/partnerSeo';
+import { getLoginHref } from '../features/loginPage/utils/returnTo.mjs';
+import { getPartnerNoteForCarrier } from '../utils/partnerNotes';
 
 const getUsageTypeLabel = (usageType: CarrierBenefitDetail['usageType']) => {
   if (usageType === 'ONLINE') return '온라인';
   if (usageType === 'OFFLINE') return '오프라인';
-  return '이용 채널은 상세 조건 확인';
+  return '온라인·오프라인';
 };
 
 const groupTierBenefitConditions = (
@@ -62,17 +68,25 @@ const groupTierBenefitConditions = (
 const PartnerBenefitPage = ({
   initialDetail = null,
   membership,
+  membershipOnly = false,
 }: {
   initialDetail?: PartnerBenefitDetailResponse | null;
   membership?: { carrier: CarrierCode; grade?: string };
+  membershipOnly?: boolean;
 }) => {
   const { partnerId: partnerIdParam, partnerSlug = '' } = useParams<{
     partnerId: string;
     partnerSlug: string;
   }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const membershipCarrier = membership?.carrier ?? null;
   const membershipGrade = membership?.grade ?? null;
+  const benefitsListQuery = new URLSearchParams();
+  if (membershipCarrier) benefitsListQuery.set('carrier', membershipCarrier);
+  if (membershipGrade) benefitsListQuery.set('grade', membershipGrade);
+  if (membershipOnly) benefitsListQuery.set('membership', 'mine');
+  const benefitsListHref = benefitsListQuery.size ? `/benefits?${benefitsListQuery}` : '/benefits';
   const partnerId = Number(partnerIdParam);
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const isAuthRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
@@ -111,13 +125,23 @@ const PartnerBenefitPage = ({
           const query = membershipCarrier
             ? new URLSearchParams({
                 carrier: membershipCarrier,
-                ...(membershipGrade ? { grade: membershipGrade, membership: 'mine' } : {}),
+                ...(membershipGrade ? { grade: membershipGrade } : {}),
+                ...(membershipOnly ? { membership: 'mine' } : {}),
               }).toString()
             : '';
-          navigate(`${canonicalPath}${query ? `?${query}` : ''}`, { replace: true });
+          navigate(`${canonicalPath}${query ? `?${query}` : ''}${location.hash}`, {
+            replace: true,
+          });
         }
         setDetail(response);
         setSelectedCarrier((currentCarrier) => {
+          const anchoredBenefitId = window.location.hash.match(/^#benefit-(\d+)$/)?.[1];
+          const anchoredGroup = anchoredBenefitId
+            ? response.carrierGroups.find((group) =>
+                group.benefits.some((benefit) => benefit.benefitId === Number(anchoredBenefitId))
+              )
+            : null;
+          if (anchoredGroup) return anchoredGroup.carrier;
           if (
             currentCarrier &&
             response.carrierGroups.some((group) => group.carrier === currentCarrier)
@@ -143,8 +167,10 @@ const PartnerBenefitPage = ({
       partnerId,
       partnerIdParam,
       partnerSlug,
+      location.hash,
       membershipCarrier,
       membershipGrade,
+      membershipOnly,
     ]
   );
 
@@ -162,12 +188,31 @@ const PartnerBenefitPage = ({
     };
   }, [initialDetail, isAuthRehydrated, isLoggedIn, loadDetail, partnerId]);
 
+  useEffect(() => {
+    if (status !== 'ready' || !detail || !window.location.hash.startsWith('#benefit-')) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(window.location.hash.slice(1))?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [detail, selectedCarrier, status]);
+
   const selectedGroup = useMemo(
     () => detail?.carrierGroups.find((group) => group.carrier === selectedCarrier) ?? null,
     [detail, selectedCarrier]
   );
-  const partnerNote = partnerNotes.find((note) => note.partnerId === partnerId);
+  const partnerNote = getPartnerNoteForCarrier(partnerNotes, partnerId, selectedCarrier);
   const isSingleSelectedBenefit = selectedGroup?.benefits.length === 1;
+  const comparisonRows =
+    detail?.carrierGroups.flatMap((group) =>
+      group.benefits.map((benefit) => ({
+        carrier: group.carrier,
+        benefit,
+        conditions: groupTierBenefitConditions(benefit.tierBenefits),
+      }))
+    ) ?? [];
 
   const canonicalPath = detail
     ? getPartnerBenefitPath(detail.partnerId, detail.partnerName)
@@ -178,7 +223,7 @@ const PartnerBenefitPage = ({
   const toggleFavorite = async (benefit: CarrierBenefitDetail) => {
     if (!isFavoriteStateReady || pendingFavoriteId !== null) return;
     if (!isLoggedIn) {
-      navigate('/login?reset=1');
+      navigate(getLoginHref(`${location.pathname}${location.search}${location.hash}`));
       return;
     }
     setPendingFavoriteId(benefit.benefitId);
@@ -221,26 +266,29 @@ const PartnerBenefitPage = ({
 
   return (
     <>
-      <div className="flex min-h-screen flex-col bg-purple01/35 text-grey07">
-        <main className="flex-1 px-4 py-5 md:px-8 md:py-7">
-          <div className="mx-auto max-w-7xl">
+      <div className="flex min-h-screen min-w-0 flex-col bg-[var(--itplace-color-surface-subtle)] text-[var(--itplace-color-text)]">
+        <div className="workspace-container flex-1 py-6 lg:py-8">
+          <div>
             <Link
-              to={membershipCarrier ? '/benefits?membership=mine' : '/benefits'}
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl px-1 font-bold text-grey06 transition hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+              to={benefitsListHref}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-medium text-grey05 transition-colors hover:text-brandStrong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               <TbArrowLeft className="h-5 w-5" aria-hidden="true" />
               전체 혜택
             </Link>
 
             {membershipCarrier && membershipGrade && (
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-warmBorder bg-warmSurface px-4 py-2">
-                <p className="text-body-3 font-bold text-brandStrong">
-                  {getCarrierLabel(membershipCarrier)} · {getMembershipGradeLabel(membershipGrade)}{' '}
-                  혜택만 보고 있어요
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brandSoft px-4 py-2">
+                <p className="text-sm text-grey06">
+                  <span className="font-semibold text-ink">
+                    {getCarrierLabel(membershipCarrier)} ·{' '}
+                    {getMembershipGradeLabel(membershipGrade)}
+                  </span>{' '}
+                  조건으로 보고 있어요
                 </p>
                 <Link
                   to={`${canonicalPath}?carrier=${membershipCarrier}`}
-                  className="inline-flex min-h-11 items-center rounded-lg px-2 text-body-4 font-bold text-brand underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+                  className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-grey06 underline underline-offset-4 hover:text-brandStrong focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
                 >
                   모든 등급 보기
                 </Link>
@@ -248,18 +296,18 @@ const PartnerBenefitPage = ({
             )}
 
             {status === 'loading' ? (
-              <div className="mt-3 space-y-4" aria-label="제휴처 혜택 로딩 중">
-                <div className="h-36 animate-pulse rounded-[28px] bg-white" />
-                <div className="h-16 animate-pulse rounded-2xl bg-white" />
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="h-72 animate-pulse rounded-3xl bg-white" />
-                  <div className="h-72 animate-pulse rounded-3xl bg-white" />
+              <div className="mt-4 space-y-4" aria-label="제휴처 혜택 로딩 중">
+                <div className="h-16 animate-pulse rounded-xl border border-warmBorder bg-white motion-reduce:animate-none" />
+                <div className="h-11 animate-pulse rounded-xl border border-warmBorder bg-white motion-reduce:animate-none" />
+                <div className="grid gap-4 md:grid-cols-2 wide:grid-cols-3">
+                  <div className="h-56 animate-pulse rounded-[20px] border border-warmBorder bg-white motion-reduce:animate-none" />
+                  <div className="h-56 animate-pulse rounded-[20px] border border-warmBorder bg-white motion-reduce:animate-none" />
                 </div>
               </div>
             ) : null}
 
             {status === 'error' ? (
-              <div className="mt-3 flex min-h-[480px] items-center justify-center rounded-[28px] border border-grey02 bg-white">
+              <div className="mt-3 flex min-h-[360px] items-center justify-center">
                 <NoResult
                   variant="error"
                   message1="제휴처 혜택을 불러오지 못했어요"
@@ -283,185 +331,69 @@ const PartnerBenefitPage = ({
 
             {status === 'ready' && detail && detail.carrierGroups.length > 0 ? (
               <>
-                <section className="relative mx-auto mt-3 w-full max-w-6xl overflow-hidden rounded-[28px] border border-purple02 bg-white px-5 py-5 shadow-[0_16px_44px_rgba(113,50,245,0.09)] md:px-7 md:py-6">
-                  <div
-                    className="absolute -right-12 -top-20 h-52 w-52 rounded-full bg-purple01/70"
-                    aria-hidden="true"
-                  />
-                  <div className="relative grid min-w-0 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-center">
-                    <div className="flex min-w-0 items-center gap-4 md:gap-5 lg:pr-7">
-                      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-grey01 bg-white p-2.5 shadow-[0_8px_24px_rgba(16,17,20,0.06)] md:h-24 md:w-24">
-                        <SafeImage
-                          src={detail.image}
-                          alt={`${detail.partnerName} 로고`}
-                          fallbackLabel={detail.partnerName}
-                          className="h-full w-full object-contain"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="inline-flex rounded-full bg-purple01 px-2.5 py-1 text-xs font-bold text-purple05">
-                          {detail.category || '카테고리 미분류'}
-                        </span>
-                        <h1 className="mt-2 break-keep text-2xl font-black tracking-[-0.04em] text-grey07 md:text-4xl">
-                          {detail.partnerName} 멤버십 혜택
-                        </h1>
-                        <p className="mt-2 break-keep text-sm font-medium text-grey05 md:text-base">
-                          {carrierNames.join(' · ')}에서 제공하는 혜택 {totalBenefitCount}개
-                        </p>
-                      </div>
+                <section className="surface-card mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 p-4 sm:p-5">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--itplace-color-mint)] p-1.5">
+                      <SafeImage
+                        src={detail.image}
+                        alt={`${detail.partnerName} 로고`}
+                        width={48}
+                        height={48}
+                        fallbackLabel={detail.partnerName}
+                        className="h-full w-full object-contain"
+                      />
                     </div>
-
-                    <div className="mt-5 border-t border-purple02/80 pt-4 lg:mt-0 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-purple04">내 주변에서 사용하기</p>
-                          <h2 className="mt-1 break-keep text-lg font-black leading-snug text-grey07">
-                            가까운 {detail.partnerName} 매장 찾기
-                          </h2>
-                        </div>
-                        <Link
-                          to={`/map?search=${encodeURIComponent(detail.partnerName)}`}
-                          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-purple05 px-4 text-sm font-bold text-white shadow-[0_8px_20px_rgba(113,50,245,0.18)] transition hover:bg-purple04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple03"
-                        >
-                          <TbMapPin className="h-5 w-5" aria-hidden="true" />
-                          매장 찾기
-                        </Link>
-                      </div>
-                      <p className="mt-2 break-keep text-xs leading-5 text-grey05">
-                        방문 전 실제 매장 적용 여부를 확인해 주세요.
+                    <div className="min-w-0 flex-1">
+                      <h1 className="text-balance text-[24px] font-semibold leading-tight tracking-[-0.03em] text-ink sm:text-[28px]">
+                        {detail.partnerName} 멤버십 혜택
+                      </h1>
+                      <p className="mt-1.5 text-sm leading-6 text-grey05">
+                        {detail.category ? `${detail.category} · ` : ''}
+                        {carrierNames.join(' · ')} · 혜택 {totalBenefitCount}개
                       </p>
                     </div>
                   </div>
-                </section>
 
-                {partnerNote ? (
-                  <section
-                    className="mx-auto mt-4 max-w-6xl rounded-3xl border border-purple02 bg-white p-5 md:p-7"
-                    aria-labelledby="partner-editorial-note"
-                  >
-                    <h2 id="partner-editorial-note" className="text-xl font-black text-grey07">
-                      {partnerNote.title}
-                    </h2>
-                    {partnerNote.paragraphs.map((paragraph) => (
-                      <p key={paragraph} className="mt-3 leading-7 text-grey06">
-                        {paragraph}
-                      </p>
-                    ))}
-                    <p className="mt-4 text-sm leading-6 text-grey05">
-                      이 해설의 원문 확인일:{' '}
-                      <time dateTime={partnerNote.checkedAt}>{partnerNote.checkedAt}</time> ·{' '}
-                      <a
-                        href={partnerNote.sourceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-bold text-purple05 underline"
-                      >
-                        {partnerNote.sourceLabel}
-                      </a>
+                  <div className="min-w-0">
+                    <NearbyStoresButton
+                      partner={{
+                        partnerId: detail.partnerId,
+                        partnerName: detail.partnerName,
+                        image: detail.image,
+                      }}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-brandSoft px-4 text-sm font-semibold text-brandStrong transition-colors hover:bg-[var(--itplace-color-mint)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    >
+                      <TbMapPin className="h-5 w-5" aria-hidden="true" />
+                      주변 매장 찾기
+                    </NearbyStoresButton>
+                    <p className="text-sm leading-5 text-grey05">
+                      방문 전 매장 적용 여부를 확인하세요.
                     </p>
-                  </section>
-                ) : null}
-
-                <section
-                  className="mx-auto mt-4 max-w-6xl rounded-3xl border border-grey02 bg-white p-5 md:p-7"
-                  aria-labelledby="carrier-comparison"
-                >
-                  <h2 id="carrier-comparison" className="text-xl font-black text-grey07">
-                    {membershipGrade ? '내 등급의 혜택 조건' : '통신사별 조건 한눈에 비교'}
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-grey05">
-                    같은 등급 이름이라도 통신사별 적용 조건은 다릅니다. 내 통신사·등급의 조건과 실제
-                    이용 방법을 함께 확인하세요.
-                  </p>
-                  <div
-                    className="mt-4 overflow-x-auto"
-                    role="region"
-                    aria-label="통신사별 혜택 비교표"
-                    tabIndex={0}
-                  >
-                    <table className="w-full min-w-[560px] border-collapse text-left text-sm leading-6">
-                      <caption className="sr-only">
-                        {detail.partnerName} 통신사별 혜택과 이용 제한
-                      </caption>
-                      <thead className="bg-purple01 text-grey07">
-                        <tr>
-                          <th scope="col" className="p-3">
-                            통신사
-                          </th>
-                          <th scope="col" className="p-3">
-                            혜택
-                          </th>
-                          <th scope="col" className="p-3">
-                            등급별 조건
-                          </th>
-                          <th scope="col" className="p-3">
-                            이용 제한
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {detail.carrierGroups.flatMap((group) =>
-                          group.benefits.map((benefit) => {
-                            const conditions = groupTierBenefitConditions(benefit.tierBenefits);
-                            return (
-                              <tr
-                                key={`${group.carrier}-${benefit.benefitId}`}
-                                id={`benefit-${benefit.benefitId}`}
-                                className="border-b border-grey02 align-top"
-                              >
-                                <th scope="row" className="whitespace-nowrap p-3 font-bold">
-                                  {getCarrierLabel(group.carrier)}
-                                </th>
-                                <td className="p-3">{benefit.benefitName}</td>
-                                <td className="p-3">
-                                  {conditions.length === 0 ? (
-                                    <p>
-                                      {benefit.description ||
-                                        '등급별 조건은 공식 안내에서 확인하세요.'}
-                                    </p>
-                                  ) : null}
-                                  {conditions.map((condition) => (
-                                    <p key={condition.context}>
-                                      <strong>{condition.gradeLabels.join(' · ')}</strong>:{' '}
-                                      {condition.context}
-                                    </p>
-                                  ))}
-                                </td>
-                                <td className="p-3">{benefit.benefitLimit || '이용 방법 확인'}</td>
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
                   </div>
                 </section>
 
                 <section
-                  className="sticky top-3 z-20 mx-auto mt-4 w-full max-w-6xl rounded-2xl border border-grey02 bg-white/95 px-4 py-3 shadow-[0_10px_30px_rgba(16,17,20,0.07)] backdrop-blur md:px-5"
+                  className="sticky top-0 z-20 bg-[var(--itplace-color-surface-subtle)] py-2"
                   aria-labelledby="carrier-benefit-selector"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex min-w-0 flex-wrap items-center gap-3">
-                      <h2
-                        id="carrier-benefit-selector"
-                        className="shrink-0 text-sm font-black text-grey07"
-                      >
+                      <h2 id="carrier-benefit-selector" className="sr-only">
                         통신사 선택
                       </h2>
                       {detail.carrierGroups.length === 1 ? (
                         <span
                           id={`carrier-label-${detail.carrierGroups[0].carrier}`}
-                          className="inline-flex min-h-10 items-center rounded-full bg-purple05 px-4 text-sm font-bold text-white"
+                          className="inline-flex min-h-11 items-center rounded-full bg-brandSoft px-4 text-sm font-semibold text-brandStrong"
                         >
                           {getCarrierLabel(detail.carrierGroups[0].carrier)}
-                          <span className="ml-2 text-white/75">
+                          <span className="ml-2 text-xs font-normal text-grey05">
                             {detail.carrierGroups[0].benefits.length}
                           </span>
                         </span>
                       ) : (
                         <div
-                          className="flex flex-wrap gap-2"
+                          className="flex flex-wrap gap-1 rounded-full border border-warmBorder bg-white p-1"
                           role="tablist"
                           aria-label="혜택 통신사 선택"
                         >
@@ -475,17 +407,37 @@ const PartnerBenefitPage = ({
                                 role="tab"
                                 aria-selected={isSelected}
                                 aria-controls="selected-carrier-benefits"
+                                tabIndex={isSelected ? 0 : -1}
                                 onClick={() => setSelectedCarrier(group.carrier)}
-                                className={`min-h-10 rounded-full border px-4 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
+                                onKeyDown={(event) => {
+                                  const index = detail.carrierGroups.findIndex(
+                                    (item) => item.carrier === group.carrier
+                                  );
+                                  const lastIndex = detail.carrierGroups.length - 1;
+                                  const nextIndex =
+                                    event.key === 'ArrowRight'
+                                      ? (index + 1) % detail.carrierGroups.length
+                                      : event.key === 'ArrowLeft'
+                                        ? (index + lastIndex) % detail.carrierGroups.length
+                                        : event.key === 'Home'
+                                          ? 0
+                                          : event.key === 'End'
+                                            ? lastIndex
+                                            : null;
+                                  if (nextIndex === null) return;
+                                  event.preventDefault();
+                                  const nextCarrier = detail.carrierGroups[nextIndex].carrier;
+                                  setSelectedCarrier(nextCarrier);
+                                  document.getElementById(`carrier-tab-${nextCarrier}`)?.focus();
+                                }}
+                                className={`min-h-11 rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
                                   isSelected
-                                    ? 'border-purple04 bg-purple05 text-white shadow-[0_5px_14px_rgba(113,50,245,0.18)]'
-                                    : 'border-grey02 bg-white text-grey06 hover:border-purple02 hover:text-purple05'
+                                    ? 'bg-brandSoft text-brandStrong'
+                                    : 'text-grey05 hover:bg-[var(--itplace-color-surface-subtle)] hover:text-ink'
                                 }`}
                               >
                                 {getCarrierLabel(group.carrier)}
-                                <span
-                                  className={`ml-2 ${isSelected ? 'text-white/75' : 'text-grey04'}`}
-                                >
+                                <span className="ml-2 text-xs font-normal text-grey05">
                                   {group.benefits.length}
                                 </span>
                               </button>
@@ -497,7 +449,7 @@ const PartnerBenefitPage = ({
                     {selectedGroup ? (
                       <Link
                         to={getCarrierMembershipPath(selectedGroup.carrier)}
-                        className="hidden min-h-10 items-center gap-1 rounded-xl px-3 text-sm font-bold text-purple05 transition hover:bg-purple01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 sm:inline-flex"
+                        className="hidden min-h-11 items-center gap-1 rounded-md px-2 text-sm font-medium text-grey05 transition-colors hover:text-brandStrong focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand sm:inline-flex"
                       >
                         {getCarrierLabel(selectedGroup.carrier)} 멤버십 안내
                         <TbExternalLink className="h-4 w-4" aria-hidden="true" />
@@ -506,203 +458,475 @@ const PartnerBenefitPage = ({
                   </div>
                 </section>
 
-                <section
-                  id="selected-carrier-benefits"
-                  className="mx-auto mt-4 w-full max-w-6xl"
-                  role={detail.carrierGroups.length > 1 ? 'tabpanel' : 'region'}
-                  aria-labelledby={
-                    selectedGroup
-                      ? `${detail.carrierGroups.length > 1 ? 'carrier-tab' : 'carrier-label'}-${selectedGroup.carrier}`
-                      : undefined
+                <div
+                  className={
+                    isSingleSelectedBenefit && partnerNote
+                      ? 'mt-5 wide:grid wide:grid-cols-[minmax(0,820px)_minmax(0,1fr)] wide:items-start wide:gap-x-8 wide:gap-y-8'
+                      : ''
                   }
                 >
-                  <div className="mb-3 flex items-end justify-between gap-3 px-5">
-                    <div>
-                      <p className="text-xs font-bold text-purple04">선택한 멤버십</p>
-                      <h2 className="mt-1 text-xl font-black tracking-[-0.03em] text-grey07 md:text-2xl">
-                        {selectedGroup ? getCarrierLabel(selectedGroup.carrier) : ''} 핵심 혜택
-                      </h2>
-                    </div>
-                    <span className="shrink-0 text-sm font-bold text-grey04">
-                      총 {selectedGroup?.benefits.length ?? 0}개
-                    </span>
-                  </div>
-
-                  <div>
-                    <div
-                      className={
-                        isSingleSelectedBenefit
-                          ? 'mx-auto grid w-full max-w-3xl gap-4'
-                          : 'grid items-stretch gap-4 md:grid-cols-2'
+                  <div
+                    className={
+                      isSingleSelectedBenefit && partnerNote
+                        ? 'wide:col-start-1 wide:row-start-1'
+                        : ''
+                    }
+                  >
+                    <section
+                      id="selected-carrier-benefits"
+                      className={isSingleSelectedBenefit && partnerNote ? '' : 'mt-5'}
+                      role={detail.carrierGroups.length > 1 ? 'tabpanel' : 'region'}
+                      aria-labelledby={
+                        selectedGroup
+                          ? `${detail.carrierGroups.length > 1 ? 'carrier-tab' : 'carrier-label'}-${selectedGroup.carrier}`
+                          : undefined
                       }
                     >
-                      {selectedGroup?.benefits.map((benefit) => {
-                        const orderedGrades = getCarrierGradeOrder(
-                          selectedGroup.carrier,
-                          benefit.tierBenefits.map((tierBenefit) => tierBenefit.grade)
-                        );
-                        const orderedTierBenefits = orderedGrades
-                          .map((grade) =>
-                            benefit.tierBenefits.find((tierBenefit) => tierBenefit.grade === grade)
-                          )
-                          .filter((tierBenefit) => tierBenefit !== undefined);
-                        const conditionGroups = groupTierBenefitConditions(orderedTierBenefits);
-                        const normalizedDescription = benefit.description?.trim() ?? '';
-                        const hasDistinctDescription =
-                          normalizedDescription.length > 0 &&
-                          !conditionGroups.some((group) => group.context === normalizedDescription);
-                        const hasUsageDetails = hasDistinctDescription || Boolean(benefit.manual);
-                        const shouldCompareConditions =
-                          isSingleSelectedBenefit && conditionGroups.length > 1;
+                      <div className="mb-3 flex items-end justify-between gap-3">
+                        <div>
+                          <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">
+                            {selectedGroup ? getCarrierLabel(selectedGroup.carrier) : ''} 혜택 조건
+                          </h2>
+                        </div>
+                        <span className="shrink-0 text-xs text-grey05">
+                          총 {selectedGroup?.benefits.length ?? 0}개
+                        </span>
+                      </div>
 
-                        return (
-                          <article
-                            key={benefit.benefitId}
-                            className="flex h-full flex-col overflow-hidden rounded-3xl border border-grey02 bg-white p-5 shadow-[0_10px_28px_rgba(16,17,20,0.05)]"
-                          >
-                            <header className="flex items-start justify-between gap-3">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="rounded-full bg-grey01 px-3 py-1 text-xs font-bold text-grey05">
-                                    {getUsageTypeLabel(benefit.usageType)}
-                                  </span>
-                                </div>
-                                <h3 className="mt-2 break-keep text-xl font-black leading-snug text-grey07">
-                                  {benefit.benefitName}
-                                </h3>
-                              </div>
-                              <button
-                                type="button"
-                                aria-label={
-                                  !isFavoriteStateReady
-                                    ? '관심 혜택 상태 확인 중'
-                                    : benefit.isFavorite
-                                      ? '관심 혜택에서 제거'
-                                      : '관심 혜택에 추가'
-                                }
-                                disabled={
-                                  !isFavoriteStateReady || pendingFavoriteId === benefit.benefitId
-                                }
-                                onClick={() => void toggleFavorite(benefit)}
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-accentRose transition hover:bg-purple01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:opacity-50"
+                      <div>
+                        <div
+                          className={
+                            isSingleSelectedBenefit
+                              ? 'grid w-full max-w-[820px] gap-4'
+                              : selectedGroup && selectedGroup.benefits.length < 3
+                                ? 'grid items-stretch gap-4 md:grid-cols-2 wide:grid-cols-2'
+                                : 'grid items-stretch gap-4 md:grid-cols-2 wide:grid-cols-3'
+                          }
+                        >
+                          {selectedGroup?.benefits.map((benefit) => {
+                            const orderedGrades = getCarrierGradeOrder(
+                              selectedGroup.carrier,
+                              benefit.tierBenefits.map((tierBenefit) => tierBenefit.grade)
+                            );
+                            const orderedTierBenefits = orderedGrades
+                              .map((grade) =>
+                                benefit.tierBenefits.find(
+                                  (tierBenefit) => tierBenefit.grade === grade
+                                )
+                              )
+                              .filter((tierBenefit) => tierBenefit !== undefined);
+                            const conditionGroups = groupTierBenefitConditions(orderedTierBenefits);
+                            const normalizedDescription = benefit.description?.trim() ?? '';
+                            const hasDistinctDescription =
+                              normalizedDescription.length > 0 &&
+                              !conditionGroups.some(
+                                (group) => group.context === normalizedDescription
+                              );
+                            const hasUsageDetails =
+                              hasDistinctDescription || Boolean(benefit.manual);
+
+                            return (
+                              <article
+                                key={benefit.benefitId}
+                                id={`benefit-${benefit.benefitId}`}
+                                className="surface-card scroll-mt-28 flex h-full min-w-0 flex-col p-4 sm:p-5"
                               >
-                                {benefit.isFavorite ? (
-                                  <TbStarFilled className="h-5 w-5" />
-                                ) : (
-                                  <TbStar className="h-5 w-5" />
-                                )}
-                              </button>
-                            </header>
-
-                            <div className="mt-4 flex flex-1 flex-col gap-3">
-                              {conditionGroups.length > 0 ? (
-                                <div
-                                  className={`grid divide-purple02/60 rounded-2xl bg-purple01/60 px-4 ${
-                                    shouldCompareConditions
-                                      ? 'divide-y md:grid-cols-2 md:divide-x md:divide-y-0'
-                                      : 'divide-y'
-                                  }`}
-                                >
-                                  {conditionGroups.map((conditionGroup) => (
-                                    <div
-                                      key={`${benefit.benefitId}-${conditionGroup.context}`}
-                                      className={`py-3.5 ${
-                                        shouldCompareConditions
-                                          ? 'md:px-4 md:first:pl-0 md:last:pr-0'
-                                          : ''
-                                      }`}
-                                    >
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {conditionGroup.gradeLabels.map((gradeLabel) => (
-                                          <span
-                                            key={gradeLabel}
-                                            className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-purple05"
-                                          >
-                                            {gradeLabel}
-                                          </span>
-                                        ))}
-                                      </div>
-                                      <p className="mt-2.5 max-w-[68ch] whitespace-pre-line break-words font-black leading-6 text-grey07">
-                                        {conditionGroup.context}
-                                      </p>
+                                <header className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="text-sm font-medium text-grey05">
+                                        {getUsageTypeLabel(benefit.usageType)}
+                                      </span>
                                     </div>
-                                  ))}
-                                </div>
-                              ) : benefit.description ? (
-                                <div className="rounded-2xl bg-purple01/60 p-4">
-                                  <p className="max-w-[68ch] whitespace-pre-line break-words font-black leading-6 text-grey07">
-                                    {benefit.description}
-                                  </p>
-                                </div>
-                              ) : null}
+                                    <h3 className="mt-1.5 text-balance text-lg font-semibold leading-snug tracking-[-0.015em] text-ink">
+                                      {getCarrierBenefitDisplayName(benefit)}
+                                    </h3>
+                                    {getMembershipOptionLabel(benefit) && (
+                                      <span className="mt-1.5 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                                        {getMembershipOptionLabel(benefit)}
+                                      </span>
+                                    )}
+                                    {getSourceOptionLabel(benefit) && (
+                                      <p className="mt-1 text-xs leading-5 text-grey05">
+                                        원본 선택명: {getSourceOptionLabel(benefit)}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    aria-label={
+                                      !isFavoriteStateReady
+                                        ? '관심 혜택 상태 확인 중'
+                                        : benefit.isFavorite
+                                          ? '관심 혜택에서 제거'
+                                          : '관심 혜택에 추가'
+                                    }
+                                    disabled={
+                                      !isFavoriteStateReady ||
+                                      pendingFavoriteId === benefit.benefitId
+                                    }
+                                    onClick={() => void toggleFavorite(benefit)}
+                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-accentGoldDark transition-colors hover:bg-grey01 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-50"
+                                  >
+                                    {benefit.isFavorite ? (
+                                      <TbStarFilled className="h-5 w-5" aria-hidden="true" />
+                                    ) : (
+                                      <TbStar className="h-5 w-5" aria-hidden="true" />
+                                    )}
+                                  </button>
+                                </header>
 
-                              {benefit.benefitLimit ? (
-                                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 rounded-xl bg-grey01/70 px-4 py-3">
-                                  <p className="text-sm font-bold text-grey05">이용 제한</p>
-                                  <p className="whitespace-pre-line break-words text-left text-sm font-bold leading-5 text-grey06">
-                                    {benefit.benefitLimit}
-                                  </p>
-                                </div>
-                              ) : null}
-
-                              {hasUsageDetails ? (
-                                <details className="group rounded-xl border border-grey02 px-4 py-3">
-                                  <summary className="flex min-h-6 cursor-pointer list-none items-center justify-between gap-3 font-bold text-grey06 marker:content-none">
-                                    이용 조건·방법
-                                    <TbChevronDown
-                                      className="h-5 w-5 shrink-0 transition-transform group-open:rotate-180"
-                                      aria-hidden="true"
-                                    />
-                                  </summary>
-                                  <div className="mt-3 border-t border-grey02 pt-3 text-sm leading-6 text-grey06">
-                                    {hasDistinctDescription ? (
-                                      <p className="max-w-[76ch] whitespace-pre-line break-words font-bold text-grey07">
+                                <div className="mt-4 flex flex-1 flex-col gap-3">
+                                  {conditionGroups.length > 0 ? (
+                                    <dl className="divide-y divide-warmBorder">
+                                      {conditionGroups.map((conditionGroup) => (
+                                        <div
+                                          key={`${benefit.benefitId}-${conditionGroup.context}`}
+                                          className="grid gap-1.5 py-3 sm:grid-cols-[136px_minmax(0,1fr)]"
+                                        >
+                                          <dt className="flex flex-col items-start gap-1.5">
+                                            <span className="text-sm font-medium text-grey05">
+                                              적용 등급
+                                            </span>
+                                            <span className="flex flex-wrap gap-1">
+                                              {conditionGroup.gradeLabels.map((gradeLabel) => (
+                                                <span
+                                                  key={gradeLabel}
+                                                  className="rounded-full bg-brandSoft px-2 py-0.5 text-xs font-medium text-brandStrong"
+                                                >
+                                                  {gradeLabel}
+                                                </span>
+                                              ))}
+                                            </span>
+                                          </dt>
+                                          <dd className="max-w-[68ch] whitespace-pre-line break-words text-base leading-7 text-ink">
+                                            <span className="mb-1 block text-sm font-medium text-grey05">
+                                              혜택 내용
+                                            </span>
+                                            {conditionGroup.context}
+                                          </dd>
+                                        </div>
+                                      ))}
+                                    </dl>
+                                  ) : benefit.description ? (
+                                    <div>
+                                      <span className="mb-1 block text-sm font-medium text-grey05">
+                                        혜택 내용
+                                      </span>
+                                      <p className="max-w-[68ch] whitespace-pre-line break-words text-base leading-7 text-ink">
                                         {benefit.description}
                                       </p>
-                                    ) : null}
-                                    {benefit.manual ? (
-                                      <p
-                                        className={`max-w-[76ch] whitespace-pre-line break-words ${
-                                          hasDistinctDescription ? 'mt-3' : ''
-                                        }`}
-                                      >
-                                        {benefit.manual}
-                                      </p>
-                                    ) : null}
-                                  </div>
-                                </details>
-                              ) : null}
+                                    </div>
+                                  ) : null}
 
-                              {selectedGroup ? (
-                                <a
-                                  href={
-                                    benefit.sourceUrl ||
-                                    benefit.url ||
-                                    benefitDisplay.carrierSources[selectedGroup.carrier].url
-                                  }
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="mt-auto inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-grey02 px-4 text-sm font-bold text-grey06 transition hover:border-purple02 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 sm:w-auto sm:self-start"
-                                >
-                                  {benefit.sourceUrl
-                                    ? '통신사 공식 원문 확인'
-                                    : benefit.url
-                                      ? '혜택 제공처 안내 확인'
-                                      : benefitDisplay.carrierSources[selectedGroup.carrier].label}
-                                  <TbExternalLink className="h-5 w-5" aria-hidden="true" />
-                                </a>
-                              ) : null}
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
+                                  {benefit.benefitLimit ? (
+                                    <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 py-1">
+                                      <dt className="text-sm font-medium text-grey05">이용 한도</dt>
+                                      <dd className="whitespace-pre-line break-words text-[15px] leading-6 text-grey06">
+                                        {benefit.benefitLimit}
+                                      </dd>
+                                    </dl>
+                                  ) : null}
+
+                                  {hasUsageDetails ? (
+                                    <details className="group border-t border-warmBorder">
+                                      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-md text-sm font-medium text-grey06 marker:content-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+                                        이용 방법·추가 조건
+                                        <TbChevronDown
+                                          className="h-5 w-5 shrink-0 transition-transform group-open:rotate-180"
+                                          aria-hidden="true"
+                                        />
+                                      </summary>
+                                      <div className="pb-3 text-[15px] leading-7 text-grey06">
+                                        {hasDistinctDescription ? (
+                                          <p className="max-w-[76ch] whitespace-pre-line break-words text-grey07">
+                                            {benefit.description}
+                                          </p>
+                                        ) : null}
+                                        {benefit.manual ? (
+                                          <p
+                                            className={`max-w-[76ch] whitespace-pre-line break-words ${
+                                              hasDistinctDescription ? 'mt-3' : ''
+                                            }`}
+                                          >
+                                            {benefit.manual}
+                                          </p>
+                                        ) : null}
+                                      </div>
+                                    </details>
+                                  ) : null}
+
+                                  {selectedGroup ? (
+                                    <a
+                                      href={
+                                        benefit.sourceUrl ||
+                                        benefit.url ||
+                                        benefitDisplay.carrierSources[selectedGroup.carrier].url
+                                      }
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="mt-auto inline-flex min-h-11 items-center gap-1.5 self-start rounded-md text-sm font-medium text-brandStrong transition-colors hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                                    >
+                                      {benefit.sourceUrl
+                                        ? '통신사 공식 원문 확인'
+                                        : benefit.url
+                                          ? '혜택 제공처 안내 확인'
+                                          : benefitDisplay.carrierSources[selectedGroup.carrier]
+                                              .label}
+                                      <TbExternalLink className="h-5 w-5" aria-hidden="true" />
+                                    </a>
+                                  ) : null}
+                                  <Link
+                                    to={`/mypage/activity?benefitId=${benefit.benefitId}`}
+                                    className="inline-flex min-h-11 items-center self-start rounded-md border border-brand px-3 text-sm font-semibold text-brandStrong transition-colors hover:bg-brandSoft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                                  >
+                                    사용 기록 남기기
+                                  </Link>
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </section>
+                    {partnerNote ? (
+                      <section
+                        className={`mt-5 max-w-[820px] ${
+                          isSingleSelectedBenefit ? 'wide:mt-5 wide:max-w-[820px]' : ''
+                        }`}
+                        aria-labelledby="partner-payment-checks"
+                      >
+                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <h2
+                            id="partner-payment-checks"
+                            className="text-base font-semibold text-ink"
+                          >
+                            주문 전에 확인할 세 가지
+                          </h2>
+                          <p className="text-sm text-grey05">{partnerNote.scope}</p>
+                        </div>
+                        <ul className="mt-2 grid gap-2 text-[15px] leading-7 text-grey06 sm:grid-cols-3">
+                          {partnerNote.checks.map((check) => (
+                            <li key={check} className="flex gap-2">
+                              <span
+                                className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand"
+                                aria-hidden="true"
+                              />
+                              {check}
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    ) : null}
                   </div>
-                </section>
+                  <section
+                    className={`surface-card mt-8 p-4 sm:p-5 ${
+                      isSingleSelectedBenefit && partnerNote
+                        ? 'wide:col-span-2 wide:row-start-2 wide:mt-0'
+                        : ''
+                    }`}
+                    aria-labelledby="carrier-comparison"
+                  >
+                    <h2 id="carrier-comparison" className="text-lg font-semibold text-ink">
+                      {membershipGrade
+                        ? '내 등급의 혜택 조건'
+                        : membershipCarrier
+                          ? `${getCarrierLabel(membershipCarrier)} 혜택 조건`
+                          : '통신사별 조건 한눈에 비교'}
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-grey05">
+                      같은 등급 이름이라도 통신사별 적용 조건은 다릅니다. 내 통신사·등급의 조건과
+                      실제 이용 방법을 함께 확인하세요.
+                    </p>
+                    <div className="mt-4 divide-y divide-warmBorder md:hidden">
+                      {comparisonRows.map(({ carrier, benefit, conditions }) => (
+                        <article
+                          key={`${carrier}-${benefit.benefitId}`}
+                          className="py-4 first:pt-0 last:pb-0"
+                        >
+                          <p className="text-xs font-semibold text-brandStrong">
+                            {getCarrierLabel(carrier)}
+                          </p>
+                          <h3 className="mt-1 text-sm font-semibold leading-6 text-ink">
+                            {getCarrierBenefitDisplayName(benefit)}
+                          </h3>
+                          {getMembershipOptionLabel(benefit) && (
+                            <span className="mt-1 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                              {getMembershipOptionLabel(benefit)}
+                            </span>
+                          )}
+                          {getSourceOptionLabel(benefit) && (
+                            <p className="mt-1 text-xs leading-5 text-grey05">
+                              원본 선택명: {getSourceOptionLabel(benefit)}
+                            </p>
+                          )}
+                          <dl className="mt-3 space-y-3 text-sm leading-6">
+                            <div>
+                              <dt className="font-medium text-grey05">등급별 조건</dt>
+                              <dd className="mt-1 whitespace-pre-line break-words text-grey06">
+                                {conditions.length === 0 ? (
+                                  <p>
+                                    {benefit.description ||
+                                      '등급별 조건은 공식 안내에서 확인하세요.'}
+                                  </p>
+                                ) : null}
+                                {conditions.map((condition) => (
+                                  <p key={condition.context} className="mt-1 first:mt-0">
+                                    <strong className="font-semibold">
+                                      {condition.gradeLabels.join(' · ')}
+                                    </strong>
+                                    : {condition.context}
+                                  </p>
+                                ))}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="font-medium text-grey05">이용 제한</dt>
+                              <dd className="mt-1 whitespace-pre-line break-words text-grey06">
+                                {benefit.benefitLimit || '이용 방법 확인'}
+                              </dd>
+                            </div>
+                          </dl>
+                        </article>
+                      ))}
+                    </div>
+                    <div
+                      className="mt-4 hidden max-w-[1600px] overflow-x-auto rounded-xl border border-warmBorder bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand md:block"
+                      role="region"
+                      aria-label="통신사별 혜택 비교표"
+                      tabIndex={0}
+                    >
+                      <table className="w-full min-w-[560px] border-collapse text-left text-sm leading-6">
+                        <caption className="sr-only">
+                          {detail.partnerName} 통신사별 혜택과 이용 제한
+                        </caption>
+                        <thead className="bg-grey01 text-ink">
+                          <tr>
+                            <th scope="col" className="p-3">
+                              통신사
+                            </th>
+                            <th scope="col" className="p-3">
+                              혜택
+                            </th>
+                            <th scope="col" className="p-3">
+                              등급별 조건
+                            </th>
+                            <th scope="col" className="p-3">
+                              이용 제한
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {comparisonRows.map(({ carrier, benefit, conditions }) => (
+                            <tr
+                              key={`${carrier}-${benefit.benefitId}`}
+                              className="scroll-mt-28 border-b border-grey02 align-top"
+                            >
+                              <th scope="row" className="whitespace-nowrap p-3 font-bold">
+                                {getCarrierLabel(carrier)}
+                              </th>
+                              <td className="p-3">
+                                {getCarrierBenefitDisplayName(benefit)}
+                                {getMembershipOptionLabel(benefit) && (
+                                  <span className="ml-2 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                                    {getMembershipOptionLabel(benefit)}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-3">
+                                {conditions.length === 0 ? (
+                                  <p>
+                                    {benefit.description ||
+                                      '등급별 조건은 공식 안내에서 확인하세요.'}
+                                  </p>
+                                ) : null}
+                                {conditions.map((condition) => (
+                                  <p key={condition.context}>
+                                    <strong>{condition.gradeLabels.join(' · ')}</strong>:{' '}
+                                    {condition.context}
+                                  </p>
+                                ))}
+                              </td>
+                              <td className="p-3">{benefit.benefitLimit || '이용 방법 확인'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+
+                  {partnerNote ? (
+                    <section
+                      className={`surface-card mt-8 p-4 sm:p-5 ${
+                        isSingleSelectedBenefit && partnerNote
+                          ? 'wide:col-start-2 wide:row-start-1 wide:mt-0'
+                          : ''
+                      }`}
+                      aria-labelledby="partner-editorial-note"
+                    >
+                      <p className="text-sm font-medium text-grey05">{partnerNote.scope}</p>
+                      <h2
+                        id="partner-editorial-note"
+                        className="mt-2 scroll-mt-24 max-w-[48ch] text-balance text-lg font-semibold leading-snug text-ink"
+                      >
+                        {partnerNote.title}
+                      </h2>
+                      <div
+                        className={`mt-4 grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] ${
+                          isSingleSelectedBenefit && partnerNote ? 'wide:grid-cols-1' : ''
+                        }`}
+                      >
+                        <div className="max-w-[70ch] space-y-3 text-[15px] leading-7 text-grey06">
+                          {partnerNote.paragraphs.map((paragraph) => (
+                            <p key={paragraph}>{paragraph}</p>
+                          ))}
+                        </div>
+                        <aside
+                          className="rounded-xl bg-[var(--itplace-color-lavender)] p-4"
+                          aria-label="이용 상황 예시"
+                        >
+                          <h3 className="text-base font-semibold text-ink">
+                            {partnerNote.example.title}
+                          </h3>
+                          <p className="mt-3 text-[15px] leading-7 text-grey06">
+                            {partnerNote.example.body}
+                          </p>
+                          <p className="mt-3 text-sm leading-6 text-grey05">
+                            {partnerNote.example.note}
+                          </p>
+                        </aside>
+                      </div>
+                      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm leading-6 text-grey05">
+                        <p>
+                          해설의 공식 안내 확인일{' '}
+                          <time dateTime={partnerNote.checkedAt}>{partnerNote.checkedAt}</time>
+                        </p>
+                        {[
+                          { label: partnerNote.sourceLabel, url: partnerNote.sourceUrl },
+                          ...(partnerNote.additionalSources ?? []),
+                        ].map((source) => (
+                          <a
+                            key={source.url}
+                            href={source.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-11 items-center gap-1 rounded-md font-bold text-brandStrong underline underline-offset-4 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                          >
+                            {source.label}
+                            <TbExternalLink className="h-4 w-4" aria-hidden="true" />
+                          </a>
+                        ))}
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-grey05">
+                        확인일은 이 해설의 기준입니다. 위 비교표 전체의 갱신일을 뜻하지 않습니다.
+                      </p>
+                    </section>
+                  ) : null}
+                </div>
               </>
             ) : null}
           </div>
-        </main>
+        </div>
         <SiteFooter />
       </div>
     </>

@@ -2,22 +2,39 @@ import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import SidebarSection from '../SidebarSection';
 import MapSection from '../MapSection';
 import SearchSection from '../SidebarSection/SearchSection';
-import SpeechBubble from '../SidebarSection/PersonalizedRecommendationList/SpeechBubble';
-import BenefitDetailCard from '../SidebarSection/PersonalizedRecommendationList/BenefitDetailCard';
-import { Platform, MapLocation, MapBounds } from '../../types';
-import { CATEGORIES, LAYOUT } from '../../constants';
+import { Platform, MapLocation, MapBounds, MapCluster } from '../../types';
+import { CATEGORIES } from '../../constants';
 import { useStoreData } from '../../hooks/useStoreData';
-import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
+import { TbChevronLeft } from 'react-icons/tb';
+import styles from './Layout.module.css';
 import { useLocation, useSearchParams } from '@/lib/navigation';
 import { useLayoutEffect } from 'react';
 import { useResponsive } from '../../../../hooks/useResponsive';
 import { disableScroll, enableScroll } from '../../../../utils/scrollLock';
+import {
+  getKakaoMapSdkStatus,
+  KAKAO_MAP_ERROR_EVENT,
+  KAKAO_MAP_READY_EVENT,
+} from '@/constants/kakaoMapSdk';
 
-const BOTTOM_SHEET_MIN_HEIGHT = 300;
 const BOTTOM_SHEET_MID_HEIGHT = 430;
 const MOBILE_APP_TAB_BAR_HEIGHT = 64;
-const BOTTOM_SHEET_VIEWPORT_OFFSET = 105 + MOBILE_APP_TAB_BAR_HEIGHT;
+const MOBILE_MAP_MIN_EXPOSED_HEIGHT = 64;
+const MOBILE_MAP_MAX_EXPOSED_HEIGHT = 200;
 const MOBILE_MAP_CONTROLS_GAP = 12;
+const EMPTY_MAP_CLUSTERS: MapCluster[] = [];
+const getBottomSheetMinHeight = (viewportHeight: number) =>
+  Math.min(300, Math.max(128, viewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - 280));
+const getBottomSheetMaxHeight = (viewportHeight: number) => {
+  const exposedMapHeight = Math.min(
+    MOBILE_MAP_MAX_EXPOSED_HEIGHT,
+    MOBILE_MAP_MIN_EXPOSED_HEIGHT + (Math.max(0, viewportHeight - 448) * 136) / 120
+  );
+  return Math.max(
+    getBottomSheetMinHeight(viewportHeight),
+    viewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - exposedMapHeight
+  );
+};
 
 /**
  * 메인페이지 레이아웃 컴포넌트
@@ -25,41 +42,74 @@ const MOBILE_MAP_CONTROLS_GAP = 12;
  */
 
 const MainPageLayout: React.FC = () => {
+  const [isMapUnavailable, setIsMapUnavailable] = useState(
+    () => getKakaoMapSdkStatus() === 'error'
+  );
+
+  useEffect(() => {
+    const handleMapError = () => setIsMapUnavailable(true);
+    const handleMapReady = () => setIsMapUnavailable(false);
+    window.addEventListener(KAKAO_MAP_ERROR_EVENT, handleMapError);
+    window.addEventListener(KAKAO_MAP_READY_EVENT, handleMapReady);
+
+    return () => {
+      window.removeEventListener(KAKAO_MAP_ERROR_EVENT, handleMapError);
+      window.removeEventListener(KAKAO_MAP_READY_EVENT, handleMapReady);
+    };
+  }, []);
+
   // UI 상태 관리
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null); // 선택된 가맹점
+  const [isRoadviewOpen, setIsRoadviewOpen] = useState(false);
   const [filteredPlatforms, setFilteredPlatforms] = useState<Platform[]>([]); // 검색 결과 가맹점 목록
   const [activeTab, setActiveTab] = useState<string>('nearby'); // 사이드바 활성 탭 ('주변 혜택', '관심 혜택', '맞춤 AI 추천')
   const [searchQuery, setSearchQuery] = useState<string>(''); // 검색어 상태
+  const hasEditedSearchQueryRef = useRef(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false); // 사이드바 접힘 상태
 
   // 바텀시트 상태 관리
-  const [bottomSheetHeight, setBottomSheetHeight] = useState<number>(BOTTOM_SHEET_MIN_HEIGHT); // 바텀시트 높이
+  const [bottomSheetMinHeight, setBottomSheetMinHeight] = useState(() =>
+    typeof window === 'undefined' ? 300 : getBottomSheetMinHeight(window.innerHeight)
+  );
+  const bottomSheetMinHeightRef = useRef(bottomSheetMinHeight);
+  bottomSheetMinHeightRef.current = bottomSheetMinHeight;
+  const [bottomSheetHeight, setBottomSheetHeight] = useState<number>(bottomSheetMinHeight); // 바텀시트 높이
   const [maxBottomSheetHeight, setMaxBottomSheetHeight] = useState<number>(() =>
     typeof window === 'undefined'
       ? BOTTOM_SHEET_MID_HEIGHT
-      : Math.max(BOTTOM_SHEET_MIN_HEIGHT, window.innerHeight - BOTTOM_SHEET_VIEWPORT_OFFSET)
+      : getBottomSheetMaxHeight(window.innerHeight)
+  );
+  const [mobileViewportHeight, setMobileViewportHeight] = useState(() =>
+    typeof window === 'undefined' ? 568 : window.innerHeight
   );
   const [isDragging, setIsDragging] = useState<boolean>(false); // 드래그 상태
   const [startY, setStartY] = useState<number>(0); // 드래그 시작 Y 좌표
   const [startHeight, setStartHeight] = useState<number>(0); // 드래그 시작 시 높이
   const [isAnimating, setIsAnimating] = useState(false);
+  const didDragSheetHandleRef = useRef(false);
   const isMapZoomingRef = useRef(false);
   const hasInitializedMapViewportRef = useRef(false);
   const mapViewportSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastViewportSearchKeyRef = useRef<string>('');
-  const lastViewportHeightRef = useRef<number>(
-    typeof window === 'undefined' ? 0 : window.innerHeight
-  );
   const { isMobile } = useResponsive();
 
   const location = useLocation();
   const [routeSearchParams] = useSearchParams();
+  const recoverySearchQuery =
+    searchQuery.trim() ||
+    (!hasEditedSearchQueryRef.current ? routeSearchParams.get('search')?.trim() : '') ||
+    '';
+
+  const handleSearchChange = useCallback((query: string) => {
+    hasEditedSearchQueryRef.current = true;
+    setSearchQuery(query);
+  }, []);
 
   const getMaxHeight = useCallback(() => maxBottomSheetHeight, [maxBottomSheetHeight]);
 
   const clampBottomSheetHeight = useCallback(
-    (height: number) => Math.max(BOTTOM_SHEET_MIN_HEIGHT, Math.min(maxBottomSheetHeight, height)),
-    [maxBottomSheetHeight]
+    (height: number) => Math.max(bottomSheetMinHeight, Math.min(maxBottomSheetHeight, height)),
+    [bottomSheetMinHeight, maxBottomSheetHeight]
   );
 
   // 스냅 포인트로 이동할 때 부드럽게 애니메이션
@@ -77,19 +127,8 @@ const MainPageLayout: React.FC = () => {
 
   // 바텀시트를 초기 상태로 리셋하는 함수
   const resetBottomSheet = useCallback(() => {
-    animateTo(BOTTOM_SHEET_MIN_HEIGHT);
-  }, [animateTo]);
-
-  // 말풍선 상태
-  const [speechBubble, setSpeechBubble] = useState<{
-    isVisible: boolean;
-    message: string;
-    partnerName: string;
-  }>({
-    isVisible: false,
-    message: '',
-    partnerName: '',
-  });
+    animateTo(bottomSheetMinHeight);
+  }, [animateTo, bottomSheetMinHeight]);
 
   // 혜택 상세 카드 상태
   const [benefitDetailCard, setBenefitDetailCard] = useState<{
@@ -150,6 +189,7 @@ const MainPageLayout: React.FC = () => {
     (categoryId: string) => {
       setIsCategoryChanging(true); // 카테고리 변경 중 플래그
       setSelectedPlatform(null); // 선택된 가맹점 초기화
+      setBenefitDetailCard({ isVisible: false, benefitIds: [] });
       setFilteredPlatforms([]); // 검색 결과 초기화
       setSearchQuery(''); // 검색어 초기화
       setIsShowingRecommendationStoreResults(false); // 추천 매장 결과 숨기기
@@ -174,6 +214,7 @@ const MainPageLayout: React.FC = () => {
   const handlePlatformSelect = useCallback(
     (platform: Platform | null) => {
       setSelectedPlatform(platform);
+      setBenefitDetailCard({ isVisible: false, benefitIds: [] });
 
       if (!platform) {
         return;
@@ -185,7 +226,7 @@ const MainPageLayout: React.FC = () => {
         return;
       }
 
-      // 데스크톱에서는 접힌 좌측 패널을 펼친 뒤 상세 정보를 표시한다.
+      // 데스크톱에서는 접힌 우측 패널을 펼친 뒤 매장 상세를 표시한다.
       if (isSidebarCollapsed) {
         setIsSidebarCollapsed(false);
         setTimeout(() => {
@@ -233,9 +274,13 @@ const MainPageLayout: React.FC = () => {
   // 현 지도에서 검색 핸들러
   const handleSearchInMap = useCallback(() => {
     if (currentMapCenter && searchInCurrentMap) {
-      searchInCurrentMap(currentMapCenter.lat, currentMapCenter.lng, currentMapLevel);
+      if (searchQuery.trim()) {
+        searchByKeyword(searchQuery, currentMapLevel, currentMapCenter.lat, currentMapCenter.lng);
+      } else {
+        searchInCurrentMap(currentMapCenter.lat, currentMapCenter.lng, currentMapLevel);
+      }
     }
-  }, [currentMapCenter, currentMapLevel, searchInCurrentMap]);
+  }, [currentMapCenter, currentMapLevel, searchInCurrentMap, searchByKeyword, searchQuery]);
 
   // 맵 레벨 변경 핸들러
   const handleMapLevelChange = useCallback((mapLevel: number) => {
@@ -319,6 +364,17 @@ const MainPageLayout: React.FC = () => {
   // 마지막 검색어 추적 (중복 검색 방지용)
   const lastSearchedKeywordRef = useRef<string>('');
 
+  const handleActiveTabChange = useCallback(
+    (tab: string) => {
+      if (tab !== activeTab) {
+        setSelectedPlatform(null);
+        setBenefitDetailCard({ isVisible: false, benefitIds: [] });
+      }
+      setActiveTab(tab);
+    },
+    [activeTab]
+  );
+
   // 키워드 검색 핸들러
   const handleKeywordSearch = useCallback(
     (keyword: string) => {
@@ -329,6 +385,7 @@ const MainPageLayout: React.FC = () => {
 
       lastSearchedKeywordRef.current = keyword;
       setSelectedPlatform(null); // 선택된 가맹점 초기화
+      setBenefitDetailCard({ isVisible: false, benefitIds: [] });
       setFilteredPlatforms([]); // 검색 결과 초기화
       setSearchQuery(keyword); // 검색어 저장 (빈 문자열도 포함)
       setActiveTab('nearby'); // 주변 혜택 탭으로 전환
@@ -342,24 +399,6 @@ const MainPageLayout: React.FC = () => {
     },
     [searchByKeyword, currentMapLevel, currentMapCenter, userCoords]
   );
-
-  // 말풍선 표시 핸들러 (검색 없이 말풍선만 표시)
-  const handleShowSpeechBubble = useCallback((message: string, partnerName: string) => {
-    setSpeechBubble({
-      isVisible: true,
-      message,
-      partnerName,
-    });
-  }, []);
-
-  // 말풍선 닫기 핸들러
-  const handleSpeechBubbleClose = useCallback(() => {
-    setSpeechBubble({
-      isVisible: false,
-      message: '',
-      partnerName: '',
-    });
-  }, []);
 
   // URL 쿼리 파라미터에서 검색어를 처리하는 useEffect
   useEffect(() => {
@@ -384,12 +423,20 @@ const MainPageLayout: React.FC = () => {
   }, [handleKeywordSearch, routeSearchParams, userCoords]);
 
   // 혜택 상세 카드 핸들러
-  const handleBenefitDetailRequest = useCallback((benefitIds: number[]) => {
-    setBenefitDetailCard({
-      isVisible: true,
-      benefitIds,
-    });
-  }, []);
+  const handleBenefitDetailRequest = useCallback(
+    (benefitIds: number[]) => {
+      setSelectedPlatform(null);
+      setBenefitDetailCard({
+        isVisible: true,
+        benefitIds,
+      });
+      if (isSidebarCollapsed) {
+        setIsSidebarCollapsed(false);
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+      }
+    },
+    [isSidebarCollapsed]
+  );
 
   const handleBenefitDetailCardClose = useCallback(() => {
     setBenefitDetailCard({
@@ -436,7 +483,7 @@ const MainPageLayout: React.FC = () => {
     // 4. DOM 업데이트 후 재실행 및 바텀시트 초기화
     const timeoutId = requestAnimationFrame(() => {
       resetScroll();
-      setBottomSheetHeight(BOTTOM_SHEET_MIN_HEIGHT);
+      setBottomSheetHeight(bottomSheetMinHeightRef.current);
     });
 
     return () => {
@@ -454,21 +501,12 @@ const MainPageLayout: React.FC = () => {
       }
 
       const viewportHeight = window.innerHeight;
-      const viewportHeightDelta = Math.abs(viewportHeight - lastViewportHeightRef.current);
-
-      if (viewportHeightDelta > 0 && viewportHeightDelta < 80) {
-        return;
-      }
-
-      lastViewportHeightRef.current = viewportHeight;
-      const nextMaxHeight = Math.max(
-        BOTTOM_SHEET_MIN_HEIGHT,
-        viewportHeight - BOTTOM_SHEET_VIEWPORT_OFFSET
-      );
+      setMobileViewportHeight(viewportHeight);
+      const nextMinHeight = getBottomSheetMinHeight(viewportHeight);
+      const nextMaxHeight = getBottomSheetMaxHeight(viewportHeight);
+      setBottomSheetMinHeight(nextMinHeight);
       setMaxBottomSheetHeight(nextMaxHeight);
-      setBottomSheetHeight((height) =>
-        Math.max(BOTTOM_SHEET_MIN_HEIGHT, Math.min(nextMaxHeight, height))
-      );
+      setBottomSheetHeight((height) => Math.max(nextMinHeight, Math.min(nextMaxHeight, height)));
     };
 
     updateSheetBounds();
@@ -490,6 +528,7 @@ const MainPageLayout: React.FC = () => {
   }, [isMobile]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    didDragSheetHandleRef.current = false;
     setIsDragging(true);
     setStartY(e.touches[0].clientY);
     setStartHeight(bottomSheetHeight);
@@ -498,13 +537,14 @@ const MainPageLayout: React.FC = () => {
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
     const deltaY = startY - e.touches[0].clientY;
+    if (Math.abs(deltaY) > 4) didDragSheetHandleRef.current = true;
     setBottomSheetHeight(clampBottomSheetHeight(startHeight + deltaY));
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
     const snapPoints = [
-      BOTTOM_SHEET_MIN_HEIGHT,
+      bottomSheetMinHeight,
       Math.min(BOTTOM_SHEET_MID_HEIGHT, getMaxHeight()),
       getMaxHeight(),
     ];
@@ -516,6 +556,7 @@ const MainPageLayout: React.FC = () => {
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      didDragSheetHandleRef.current = false;
       setIsDragging(true);
       setStartY(e.clientY);
       setStartHeight(bottomSheetHeight);
@@ -529,6 +570,7 @@ const MainPageLayout: React.FC = () => {
 
       const currentY = e.clientY;
       const deltaY = startY - currentY;
+      if (Math.abs(deltaY) > 4) didDragSheetHandleRef.current = true;
       setBottomSheetHeight(clampBottomSheetHeight(startHeight + deltaY));
     },
     [isDragging, startY, startHeight, clampBottomSheetHeight]
@@ -538,7 +580,7 @@ const MainPageLayout: React.FC = () => {
     setIsDragging(false);
 
     const snapPoints = [
-      BOTTOM_SHEET_MIN_HEIGHT,
+      bottomSheetMinHeight,
       Math.min(BOTTOM_SHEET_MID_HEIGHT, getMaxHeight()),
       getMaxHeight(),
     ];
@@ -548,7 +590,40 @@ const MainPageLayout: React.FC = () => {
     );
 
     animateTo(closestSnapPoint);
-  }, [bottomSheetHeight, animateTo, getMaxHeight]);
+  }, [bottomSheetHeight, animateTo, getMaxHeight, bottomSheetMinHeight]);
+
+  const handleSheetHandleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (event.detail > 0 && didDragSheetHandleRef.current) {
+      didDragSheetHandleRef.current = false;
+      return;
+    }
+
+    didDragSheetHandleRef.current = false;
+    const snapPoints = [
+      ...new Set([
+        bottomSheetMinHeight,
+        Math.min(BOTTOM_SHEET_MID_HEIGHT, getMaxHeight()),
+        getMaxHeight(),
+      ]),
+    ];
+    const currentIndex = snapPoints.reduce(
+      (nearestIndex, point, index) =>
+        Math.abs(point - bottomSheetHeight) < Math.abs(snapPoints[nearestIndex] - bottomSheetHeight)
+          ? index
+          : nearestIndex,
+      0
+    );
+    animateTo(snapPoints[(currentIndex + 1) % snapPoints.length]);
+  };
+
+  const canExpandBottomSheet = getMaxHeight() > bottomSheetMinHeight;
+  const sheetHandleLabel = !canExpandBottomSheet
+    ? '목록 표시 중'
+    : bottomSheetHeight >= getMaxHeight()
+      ? '매장 목록 접기'
+      : bottomSheetHeight > bottomSheetMinHeight
+        ? '매장 목록 더 펼치기'
+        : '매장 목록 펼치기';
 
   // 추천 매장 조회 결과 핸들러
   const handleRecommendationStoreResults = useCallback(
@@ -614,238 +689,238 @@ const MainPageLayout: React.FC = () => {
 
   return (
     <>
-      {/* 데스크톱 레이아웃 */}
-      <div className="relative hidden h-screen overflow-hidden bg-warmSurface md:flex">
-        {/* 사이드바 컨테이너 */}
-        <div
-          className="flex-shrink-0 h-full transition-all duration-300 ease-in-out"
-          style={{
-            width: isSidebarCollapsed ? '0px' : `${LAYOUT.SIDEBAR_WIDTH}px`,
-            minWidth: isSidebarCollapsed ? '0px' : `${LAYOUT.SIDEBAR_MIN_WIDTH}px`,
-          }}
-        >
-          <div
-            className={`h-full transition-all duration-300 ease-in-out ${
-              isSidebarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
-            }`}
-            style={{
-              width: `${LAYOUT.SIDEBAR_WIDTH}px`,
-              minWidth: `${LAYOUT.SIDEBAR_MIN_WIDTH}px`,
-            }}
-          >
-            <SidebarSection
-              platforms={stablePlatforms}
-              selectedPlatform={selectedPlatform}
-              onPlatformSelect={handlePlatformSelect}
-              currentLocation={currentLocation}
-              isLoading={isLoading}
-              error={error}
-              activeTab={activeTab}
-              onActiveTabChange={setActiveTab}
-              onKeywordSearch={handleKeywordSearch}
-              searchQuery={searchQuery}
-              onBenefitDetailRequest={handleBenefitDetailRequest}
-              onShowSpeechBubble={handleShowSpeechBubble}
-              userCoords={userCoords}
-              onRecommendationStoreResults={handleRecommendationStoreResults}
-              onSearchPartner={handleKeywordSearch}
-              onBottomSheetReset={resetBottomSheet}
-            />
+      {!isMobile && (
+        <>
+          {/* 데스크톱 레이아웃 */}
+          <div className={styles.desktopFrame}>
+            {/* 지도는 남는 폭을 사용해 오른쪽 패널을 열고 닫아도 중심이 유지된다. */}
+            <div className={styles.mapViewport}>
+              <MapSection
+                platforms={stablePlatforms}
+                clusters={isServerClusterContext ? mapClusters : EMPTY_MAP_CLUSTERS}
+                useServerClusters={shouldUseServerClusterMode}
+                selectedPlatform={selectedPlatform}
+                onPlatformSelect={handlePlatformSelect}
+                onLocationChange={handleLocationChange}
+                onMapCenterChange={handleMapCenterChange}
+                onLocationMove={handleLocationMove}
+                categories={CATEGORIES}
+                selectedCategory={selectedCategory || '전체'}
+                onCategorySelect={handleCategorySelect}
+                onSearchInMap={handleSearchInMap}
+                centerLocation={mapMoveCenterLocation}
+                initialCenterLocation={currentMapCenterLocation}
+                initialMapLevel={hasInitializedMapViewportRef.current ? currentMapLevel : undefined}
+                onZoomStart={handleMapZoomStart}
+                onMapLevelChange={handleMapLevelChange}
+                onViewportChange={handleMapViewportChange}
+                activeTab={activeTab}
+                searchQuery={recoverySearchQuery}
+                onRoadviewVisibilityChange={setIsRoadviewOpen}
+              />
+            </div>
+
+            {/* 검색·매장·혜택 상세 패널은 오른쪽에 고정한다. */}
+            <div
+              id="map-search-panel"
+              aria-hidden={isSidebarCollapsed}
+              inert={isSidebarCollapsed}
+              className={`${styles.searchPanel} ${isSidebarCollapsed ? styles.searchPanelCollapsed : ''}`}
+            >
+              <div className={styles.searchPanelInner}>
+                <SidebarSection
+                  platforms={stablePlatforms}
+                  isClusterView={shouldUseServerClusterMode}
+                  selectedPlatform={selectedPlatform}
+                  onPlatformSelect={handlePlatformSelect}
+                  currentLocation={currentLocation}
+                  isLoading={isLoading}
+                  error={error}
+                  activeTab={activeTab}
+                  mapUnavailable={isMapUnavailable}
+                  recoverySearchQuery={recoverySearchQuery}
+                  onSearchChange={handleSearchChange}
+                  onActiveTabChange={handleActiveTabChange}
+                  onKeywordSearch={handleKeywordSearch}
+                  searchQuery={searchQuery}
+                  onBenefitDetailRequest={handleBenefitDetailRequest}
+                  benefitDetailIds={
+                    benefitDetailCard.isVisible ? benefitDetailCard.benefitIds : null
+                  }
+                  onBenefitDetailClose={handleBenefitDetailCardClose}
+                  userCoords={userCoords}
+                  onRecommendationStoreResults={handleRecommendationStoreResults}
+                  onSearchPartner={handleKeywordSearch}
+                  onBottomSheetReset={resetBottomSheet}
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSidebarToggle}
+              aria-expanded={!isSidebarCollapsed}
+              aria-controls="map-search-panel"
+              aria-label={isSidebarCollapsed ? '검색 패널 열기' : '검색 패널 접기'}
+              className={`${styles.panelToggle} ${isSidebarCollapsed ? styles.panelToggleCollapsed : ''}`}
+            >
+              <TbChevronLeft
+                size={16}
+                strokeWidth={2.2}
+                aria-hidden="true"
+                className={`${styles.panelToggleIcon} ${isSidebarCollapsed ? '' : styles.panelToggleIconOpen}`}
+              />
+            </button>
           </div>
-        </div>
+        </>
+      )}
 
-        {/* 검색 패널 토글 */}
-        <button
-          type="button"
-          onClick={handleSidebarToggle}
-          aria-expanded={!isSidebarCollapsed}
-          aria-label={isSidebarCollapsed ? '검색 패널 열기' : '검색 패널 접기'}
-          className="absolute top-1/2 z-40 flex h-14 w-6 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-warmBorder bg-warmSurface text-grey04 shadow-[3px_0_12px_rgba(36,35,33,0.08)] transition-all duration-300 ease-in-out hover:bg-brandSoft hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-          style={{ left: isSidebarCollapsed ? 0 : LAYOUT.SIDEBAR_WIDTH }}
-        >
-          {isSidebarCollapsed ? (
-            <TbChevronRight size={18} strokeWidth={2.2} aria-hidden="true" />
-          ) : (
-            <TbChevronLeft size={18} strokeWidth={2.2} aria-hidden="true" />
-          )}
-        </button>
-
-        {/* 맵 영역 */}
-        <div className="flex-1 h-full transition-all duration-300 ease-in-out">
-          {!isMobile && (
-            <MapSection
-              platforms={stablePlatforms}
-              clusters={isServerClusterContext ? mapClusters : []}
-              useServerClusters={shouldUseServerClusterMode}
-              selectedPlatform={selectedPlatform}
-              onPlatformSelect={handlePlatformSelect}
-              onLocationChange={handleLocationChange}
-              onMapCenterChange={handleMapCenterChange}
-              onLocationMove={handleLocationMove}
-              categories={CATEGORIES}
-              selectedCategory={selectedCategory || '전체'}
-              onCategorySelect={handleCategorySelect}
-              onSearchInMap={handleSearchInMap}
-              centerLocation={mapMoveCenterLocation}
-              initialCenterLocation={currentMapCenterLocation}
-              initialMapLevel={hasInitializedMapViewportRef.current ? currentMapLevel : undefined}
-              onZoomStart={handleMapZoomStart}
-              onMapLevelChange={handleMapLevelChange}
-              onViewportChange={handleMapViewportChange}
-              activeTab={activeTab}
-            />
-          )}
-        </div>
-
-        {/* 혜택 상세 카드 */}
-        {benefitDetailCard.isVisible && !isSidebarCollapsed && (
-          <div
-            className="absolute z-30 transition-all duration-300 ease-in-out"
-            style={{
-              left: isSidebarCollapsed ? '120px' : '476px',
-              bottom: '245px',
-              transform: 'translateX(-20%)',
-              width: '410px',
-            }}
-          >
-            <BenefitDetailCard
-              benefitIds={benefitDetailCard.benefitIds}
-              onClose={handleBenefitDetailCardClose}
-            />
-          </div>
-        )}
-
-        {/* 지도 말풍선 */}
-        {!isSidebarCollapsed && (
-          <div
-            className="absolute z-20 transition-all duration-300 ease-in-out"
-            style={{
-              left: isSidebarCollapsed ? '120px' : '476px',
-              bottom: '80px',
-              transform: 'translateX(-20%)',
-            }}
-          >
-            <SpeechBubble
-              message={speechBubble.message}
-              partnerName={speechBubble.partnerName}
-              isVisible={speechBubble.isVisible}
-              onClose={handleSpeechBubbleClose}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* 모바일 레이아웃 */}
-      <div className="flex h-screen flex-col overflow-hidden bg-warmCanvas md:hidden">
-        {/* 토스트 컨테이너 z-index 조정 */}
-        <style>
-          {`
+      {isMobile && (
+        <>
+          {/* 모바일 레이아웃 */}
+          <div className="flex h-screen flex-col overflow-hidden bg-warmCanvas md:hidden">
+            {/* 토스트 컨테이너 z-index 조정 */}
+            <style>
+              {`
             .Toastify__toast-container {
               z-index: var(--itplace-layer-toast) !important;
             }
           `}
-        </style>
+            </style>
 
-        {/* 지도 탐색의 첫 행동인 검색을 상단에 고정한다. */}
-        <div className="absolute left-3 right-3 top-3 z-[10000] rounded-xl shadow-[0_5px_18px_rgba(36,35,33,0.10)]">
-          <SearchSection
-            onSearchChange={(query) => setSearchQuery(query)}
-            onKeywordSearch={handleKeywordSearch}
-            defaultValue={searchQuery}
-          />
-        </div>
-
-        {/* 지도 - 전체 화면 */}
-        <div className="absolute inset-0">
-          {isMobile && (
-            <MapSection
-              platforms={stablePlatforms}
-              clusters={isServerClusterContext ? mapClusters : []}
-              useServerClusters={shouldUseServerClusterMode}
-              selectedPlatform={selectedPlatform}
-              onPlatformSelect={handlePlatformSelect}
-              onLocationChange={handleLocationChange}
-              onMapCenterChange={handleMapCenterChange}
-              onLocationMove={handleLocationMove}
-              categories={CATEGORIES}
-              selectedCategory={selectedCategory || '전체'}
-              onCategorySelect={handleCategorySelect}
-              onSearchInMap={handleSearchInMap}
-              centerLocation={mapMoveCenterLocation}
-              initialCenterLocation={currentMapCenterLocation}
-              initialMapLevel={hasInitializedMapViewportRef.current ? currentMapLevel : undefined}
-              onZoomStart={handleMapZoomStart}
-              onMapLevelChange={handleMapLevelChange}
-              onViewportChange={handleMapViewportChange}
-              activeTab={activeTab}
-              mobileControlsBottomOffset={`calc(var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px) + ${
-                bottomSheetHeight + MOBILE_MAP_CONTROLS_GAP
-              }px)`}
-              mobileControlsTransitionEnabled={isAnimating}
-            />
-          )}
-
-          {/* 바텀시트 */}
-          <div
-            className={`fixed left-0 right-0 z-[9998] flex flex-col rounded-t-[24px] border-t border-warmBorder bg-warmSurface shadow-[0_-10px_30px_rgba(36,35,33,0.10)] ${
-              isAnimating ? 'transition-all duration-300 ease-out' : ''
-            }`}
-            style={{
-              height: `${bottomSheetHeight}px`,
-              bottom: `var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px)`,
-              minHeight: `${BOTTOM_SHEET_MIN_HEIGHT}px`,
-              maxHeight: `${getMaxHeight()}px`,
-              overflow: 'hidden',
-              transition: isAnimating ? 'all 0.3s ease-out' : 'none',
-            }}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          >
-            {/* 드래그 핸들 */}
+            {/* 지도 탐색의 첫 행동인 검색을 상단에 고정한다. */}
             <div
-              className="flex h-5 w-full cursor-grab items-center justify-center active:cursor-grabbing"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onMouseDown={handleMouseDown}
+              aria-hidden={isRoadviewOpen}
+              inert={isRoadviewOpen}
+              className={`absolute left-3 right-3 top-3 z-[10000] rounded-xl shadow-[0_5px_18px_rgba(36,35,33,0.10)] ${isRoadviewOpen ? 'invisible' : ''}`}
             >
-              <div className="h-1 w-9 rounded-full bg-grey03" />
-            </div>
-
-            {/* 사이드바 콘텐츠 */}
-            <div
-              className="flex-1 min-h-0 max-h-full"
-              style={{
-                overflowY: bottomSheetHeight > BOTTOM_SHEET_MIN_HEIGHT ? 'auto' : 'hidden',
-              }}
-            >
-              <SidebarSection
-                platforms={stablePlatforms}
-                selectedPlatform={selectedPlatform}
-                onPlatformSelect={handlePlatformSelect}
-                currentLocation={currentLocation}
-                isLoading={isLoading}
-                error={error}
-                activeTab={activeTab}
-                onActiveTabChange={setActiveTab}
+              <SearchSection
+                onSearchChange={handleSearchChange}
                 onKeywordSearch={handleKeywordSearch}
-                searchQuery={searchQuery}
-                onBenefitDetailRequest={handleBenefitDetailRequest}
-                onShowSpeechBubble={handleShowSpeechBubble}
-                userCoords={userCoords}
-                onRecommendationStoreResults={handleRecommendationStoreResults}
-                onSearchPartner={handleKeywordSearch}
-                onBottomSheetReset={resetBottomSheet}
-                // 모바일 드래그 이벤트 핸들러들 추가
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
+                defaultValue={searchQuery}
               />
             </div>
+
+            {/* 지도 - 전체 화면 */}
+            <div className="absolute inset-0">
+              <MapSection
+                platforms={stablePlatforms}
+                clusters={isServerClusterContext ? mapClusters : EMPTY_MAP_CLUSTERS}
+                useServerClusters={shouldUseServerClusterMode}
+                selectedPlatform={selectedPlatform}
+                onPlatformSelect={handlePlatformSelect}
+                onLocationChange={handleLocationChange}
+                onMapCenterChange={handleMapCenterChange}
+                onLocationMove={handleLocationMove}
+                categories={CATEGORIES}
+                selectedCategory={selectedCategory || '전체'}
+                onCategorySelect={handleCategorySelect}
+                onSearchInMap={handleSearchInMap}
+                centerLocation={mapMoveCenterLocation}
+                initialCenterLocation={currentMapCenterLocation}
+                initialMapLevel={hasInitializedMapViewportRef.current ? currentMapLevel : undefined}
+                onZoomStart={handleMapZoomStart}
+                onMapLevelChange={handleMapLevelChange}
+                onViewportChange={handleMapViewportChange}
+                activeTab={activeTab}
+                searchQuery={recoverySearchQuery}
+                mobileControlsBottomOffset={`calc(var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px) + ${
+                  bottomSheetHeight + MOBILE_MAP_CONTROLS_GAP
+                }px)`}
+                mobileControlsTransitionEnabled={isAnimating}
+                mobileSheetBottomInset={MOBILE_APP_TAB_BAR_HEIGHT + bottomSheetHeight}
+                hideMobileCategory={
+                  isMobile &&
+                  mobileViewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - bottomSheetHeight < 122
+                }
+                hideMobileControls={
+                  isMobile &&
+                  mobileViewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - bottomSheetHeight < 176
+                }
+                onRoadviewVisibilityChange={setIsRoadviewOpen}
+              />
+
+              {/* 바텀시트 */}
+              <div
+                aria-hidden={isRoadviewOpen}
+                inert={isRoadviewOpen}
+                className={`${isRoadviewOpen ? 'hidden' : 'fixed left-0 right-0 z-[9998] flex flex-col rounded-t-[24px] border-t border-warmBorder bg-warmSurface shadow-[0_-10px_30px_rgba(36,35,33,0.10)]'} ${
+                  isAnimating ? 'transition-all duration-300 ease-out' : ''
+                }`}
+                style={{
+                  height: `${bottomSheetHeight}px`,
+                  bottom: `var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px)`,
+                  minHeight: `${bottomSheetMinHeight}px`,
+                  maxHeight: `${getMaxHeight()}px`,
+                  overflow: 'hidden',
+                  transition: isAnimating ? 'all 0.3s ease-out' : 'none',
+                }}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                {/* 드래그 핸들 */}
+                <button
+                  type="button"
+                  aria-label={sheetHandleLabel}
+                  aria-expanded={bottomSheetHeight > bottomSheetMinHeight}
+                  aria-controls="map-store-sheet-content"
+                  disabled={!canExpandBottomSheet}
+                  onClick={handleSheetHandleClick}
+                  className="flex h-11 w-full shrink-0 select-none touch-none cursor-grab items-center justify-center gap-2 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0066cc] disabled:cursor-not-allowed"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onMouseDown={handleMouseDown}
+                >
+                  <div className="h-1 w-9 rounded-full bg-grey03" aria-hidden="true" />
+                  <span className="text-xs font-medium text-[#69717e]">
+                    {sheetHandleLabel.replace('매장 ', '')}
+                  </span>
+                </button>
+
+                {/* 사이드바 콘텐츠 */}
+                <div
+                  id="map-store-sheet-content"
+                  className="flex-1 min-h-0 max-h-full"
+                  style={{
+                    overflowY: bottomSheetHeight > bottomSheetMinHeight ? 'auto' : 'hidden',
+                  }}
+                >
+                  <SidebarSection
+                    platforms={stablePlatforms}
+                    isClusterView={shouldUseServerClusterMode}
+                    selectedPlatform={selectedPlatform}
+                    onPlatformSelect={handlePlatformSelect}
+                    currentLocation={currentLocation}
+                    isLoading={isLoading}
+                    error={error}
+                    activeTab={activeTab}
+                    mapUnavailable={isMapUnavailable}
+                    recoverySearchQuery={recoverySearchQuery}
+                    onActiveTabChange={handleActiveTabChange}
+                    onKeywordSearch={handleKeywordSearch}
+                    searchQuery={searchQuery}
+                    onBenefitDetailRequest={handleBenefitDetailRequest}
+                    benefitDetailIds={
+                      benefitDetailCard.isVisible ? benefitDetailCard.benefitIds : null
+                    }
+                    onBenefitDetailClose={handleBenefitDetailCardClose}
+                    userCoords={userCoords}
+                    onRecommendationStoreResults={handleRecommendationStoreResults}
+                    onSearchPartner={handleKeywordSearch}
+                    onBottomSheetReset={resetBottomSheet}
+                    // 모바일 드래그 이벤트 핸들러들 추가
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </>
   );
 };

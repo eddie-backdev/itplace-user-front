@@ -1,16 +1,7 @@
 {
-  "generatedAt": "2026-08-09T18:13:45.050Z",
-  "source": "https://userapi.itplace.click/api/v1/benefits/partners",
+  "generatedAt": "2026-10-04T17:13:19.874Z",
+  "source": "http://localhost:8080/api/v1/benefits/partners",
   "partners": [
-    {
-      "partnerId": 5,
-      "partnerName": "굽네치킨",
-      "category": "푸드",
-      "image": "https://images.itplace.click/img/goobne.jpg",
-      "carriers": [
-        "LGU"
-      ]
-    },
     {
       "partnerId": 112,
       "partnerName": "GS25",
@@ -19,6 +10,15 @@
       "carriers": [
         "SKT",
         "KT",
+        "LGU"
+      ]
+    },
+    {
+      "partnerId": 5,
+      "partnerName": "굽네치킨",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/goobne.jpg",
+      "carriers": [
         "LGU"
       ]
     },
@@ -126,15 +126,6 @@
       "image": "https://images.itplace.click/img/partner-b07521eb777b84e8/logo-8b98b0892497f3f4.png",
       "carriers": [
         "LGU"
-      ]
-    },
-    {
-      "partnerId": 218,
-      "partnerName": "쿤달",
-      "category": null,
-      "image": "https://images.itplace.click/img/%EC%BF%A4%EB%8B%AC.png",
-      "carriers": [
-        "SKT"
       ]
     },
     {
@@ -295,6 +286,15 @@
       "carriers": [
         "SKT",
         "LGU"
+      ]
+    },
+    {
+      "partnerId": 415,
+      "partnerName": "버거킹",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-beae1759542d129b/logo-b15f3982ca4f691a.png",
+      "carriers": [
+        "KT"
       ]
     },
     {
@@ -753,7 +753,8 @@
       "category": null,
       "image": "https://images.itplace.click/img/partner-cf8b448ab4e9382c/logo-29f736b0210bf473.png",
       "carriers": [
-        "SKT"
+        "SKT",
+        "KT"
       ]
     },
     {
@@ -764,15 +765,6 @@
       "carriers": [
         "SKT",
         "KT"
-      ]
-    },
-    {
-      "partnerId": 264,
-      "partnerName": "루덴시아",
-      "category": null,
-      "image": "https://images.itplace.click/img/%EB%A3%A8%EB%8D%B4%EC%8B%9C%EC%95%84.png",
-      "carriers": [
-        "SKT"
       ]
     },
     {
@@ -1164,15 +1156,6 @@
       ]
     },
     {
-      "partnerId": 76,
-      "partnerName": "지니뮤직",
-      "category": "APP/기기",
-      "image": "https://images.itplace.click/img/genie.png",
-      "carriers": [
-        "LGU"
-      ]
-    },
-    {
       "partnerId": 351,
       "partnerName": "집업페이",
       "category": null,
@@ -1198,15 +1181,6 @@
       "image": "https://images.itplace.click/img/%EC%B9%B4%ED%8E%98%EB%B2%A0%EB%84%A4.png",
       "carriers": [
         "KT"
-      ]
-    },
-    {
-      "partnerId": 258,
-      "partnerName": "캐리마켓",
-      "category": null,
-      "image": "https://images.itplace.click/img/%EC%BA%90%EB%A6%AC%EB%A7%88%EC%BC%93.png",
-      "carriers": [
-        "SKT"
       ]
     },
     {
@@ -1793,15 +1767,6 @@
       ]
     },
     {
-      "partnerId": 82,
-      "partnerName": "케이팝머치",
-      "category": "문화/여가",
-      "image": "https://images.itplace.click/img/kpopmerch.png",
-      "carriers": [
-        "LGU"
-      ]
-    },
-    {
       "partnerId": 92,
       "partnerName": "티웨이항공",
       "category": "여행/교통",
@@ -2199,15 +2164,6 @@
       ]
     },
     {
-      "partnerId": 393,
-      "partnerName": "폴라리스오피스",
-      "category": "생활/편의",
-      "image": "https://images.itplace.click/img/%ED%8F%B4%EB%9D%BC%EB%A6%AC%EC%8A%A4%EC%98%A4%ED%94%BC%EC%8A%A4.png",
-      "carriers": [
-        "LGU"
-      ]
-    },
-    {
       "partnerId": 419,
       "partnerName": "프린트베이커리",
       "category": "문화/여가",
@@ -2541,6 +2497,15 @@
       ]
     },
     {
+      "partnerId": 440,
+      "partnerName": "인천공항 고메브릿지 푸드코트",
+      "category": "푸드",
+      "image": "https://images.itplace.click/img/partner-96eb6e5931226f0c/logo-3685be472a473d83.png",
+      "carriers": [
+        "LGU"
+      ]
+    },
+    {
       "partnerId": 130,
       "partnerName": "롯데월드 어드벤처 부산",
       "category": "엑티비티",
@@ -2576,6 +2541,15 @@
       "image": "https://images.itplace.click/img/%EA%B7%B8%EB%9E%98%EB%B9%84%ED%8B%B0%EC%A1%B0%EC%84%A0%EC%84%9C%EC%9A%B8%ED%8C%90%EA%B5%90.png",
       "carriers": [
         "LGU"
+      ]
+    },
+    {
+      "partnerId": 439,
+      "partnerName": "롯데마트&슈퍼",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-626da1db4dcf92a1/logo-d6bbc8e4183815d6.png",
+      "carriers": [
+        "KT"
       ]
     },
     {
@@ -2670,6 +2644,15 @@
       ]
     },
     {
+      "partnerId": 441,
+      "partnerName": "우파루 오딧세이",
+      "category": "문화/여가",
+      "image": "https://images.itplace.click/img/partner-5ff66744a3f7eee6/logo-66778519fc68cf7b.png",
+      "carriers": [
+        "LGU"
+      ]
+    },
+    {
       "partnerId": 85,
       "partnerName": "클럽디 오아시스",
       "category": "엑티비티",
@@ -2711,6 +2694,15 @@
       "partnerName": "추억의 국민학교 떡볶이",
       "category": null,
       "image": "https://images.itplace.click/img/%EC%B6%94%EC%96%B5%EC%9D%98%EA%B5%AD%EB%AF%BC%ED%95%99%EA%B5%90%EB%96%A1%EB%B3%B6%EC%9D%B4.png",
+      "carriers": [
+        "KT"
+      ]
+    },
+    {
+      "partnerId": 442,
+      "partnerName": "초대 혜택",
+      "category": null,
+      "image": "https://images.itplace.click/img/partner-cca97e57e8f828e7/logo-90a3a4483d5ad0db.png",
       "carriers": [
         "KT"
       ]
@@ -3321,6 +3313,15 @@
       "partnerName": "YBM NET",
       "category": "교육",
       "image": "https://images.itplace.click/img/ybmnet.png",
+      "carriers": [
+        "LGU"
+      ]
+    },
+    {
+      "partnerId": 443,
+      "partnerName": "zel",
+      "category": "쇼핑",
+      "image": "https://images.itplace.click/img/zel-63a68958cbf802a9/logo-6298765f954b6662.png",
       "carriers": [
         "LGU"
       ]

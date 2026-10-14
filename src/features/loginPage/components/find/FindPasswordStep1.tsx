@@ -40,14 +40,17 @@ const FindPasswordStep1 = ({ email, onChangeEmail, onGoToLogin, onGoNextStep }: 
   };
 
   return (
-    <div ref={wrapperRef} className="w-full flex flex-col">
-      <div className="w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full mx-auto">
-        <p className="text-title-5 max-xl:text-title-6 max-lg:text-title-7 max-md:text-title-6 max-sm:text-title-6 text-grey05 mt-[16px] max-md:mt-[12px] max-sm:mt-[12px]">
-          비밀번호를 재설정할 <strong>가입 이메일</strong>을 입력해주세요.
+    <div ref={wrapperRef} className="flex w-full flex-col items-start">
+      <div className="w-full max-w-[400px] text-left">
+        <h1 className="text-[28px] font-semibold leading-[1.3] tracking-[-0.035em] text-ink">
+          비밀번호를 재설정하세요
+        </h1>
+        <p className="mt-2 text-[14px] leading-6 text-warmMuted sm:text-[15px]">
+          비밀번호를 재설정할 가입 이메일을 입력해주세요.
         </p>
       </div>
 
-      <div className="mt-[20px] max-xl:mt-[17px] max-lg:mt-[13px] max-md:mt-[16px] max-sm:mt-[16px] w-full flex justify-center">
+      <div className="mt-7 w-full max-w-[400px]">
         <EmailVerificationBox
           email={email}
           onChangeEmail={onChangeEmail}
@@ -57,16 +60,16 @@ const FindPasswordStep1 = ({ email, onChangeEmail, onGoToLogin, onGoNextStep }: 
         />
       </div>
 
-      <div className="flex justify-center">
+      <div className="mt-6 w-full max-w-[400px]">
         <AuthButton
           label="다음"
           onClick={handleNextClick}
           variant={emailVerified && resetToken ? 'default' : 'disabled'}
-          className="mt-[150px] max-xl:mt-[130px] max-lg:mt-[100px] max-md:mt-[60px] max-sm:mt-[60px]"
+          className="h-[52px] !max-w-[400px]"
         />
       </div>
 
-      <div className="mt-[8px] max-md:mt-[6px] max-sm:mt-[8px] w-full flex justify-center">
+      <div className="w-full max-w-[400px]">
         <AuthFooter
           leftText="이미 회원이신가요?"
           rightText="로그인 하러 가기"

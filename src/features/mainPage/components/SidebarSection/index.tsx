@@ -10,6 +10,7 @@ import StoreCardsSection from './AllBenefit';
 import FavoriteStoreList from './FavoriteStoreList';
 import PersonalizedRecommendationList from './PersonalizedRecommendationList';
 import StoreDetailCard from './StoreDetail';
+import BenefitDetailCard from './PersonalizedRecommendationList/BenefitDetailCard';
 import CategoryTabsSection from './CategoryTabsSection';
 import { useFavoritesList } from '../../hooks/useFavoritesList';
 import { getPersonalizedRecommendations } from '../../api/personalizedRecommendationApi';
@@ -28,6 +29,7 @@ interface Tab {
 
 interface SidebarSectionProps {
   platforms: Platform[];
+  isClusterView?: boolean;
   selectedPlatform?: Platform | null;
   onPlatformSelect: (platform: Platform | null) => void;
   currentLocation: string;
@@ -35,10 +37,14 @@ interface SidebarSectionProps {
   error?: string | null;
   onSearchChange?: (query: string) => void;
   activeTab: string;
+  mapUnavailable?: boolean;
+  recoverySearchQuery?: string;
   onActiveTabChange: (tab: string) => void;
   onKeywordSearch?: (keyword: string) => void;
   searchQuery?: string;
   onBenefitDetailRequest?: (benefitIds: number[]) => void;
+  benefitDetailIds?: number[] | null;
+  onBenefitDetailClose?: () => void;
   onShowSpeechBubble?: (message: string, partnerName: string) => void;
   userCoords?: { lat: number; lng: number } | null;
   onRecommendationStoreResults?: (results: Platform[], isShowing: boolean) => void;
@@ -52,6 +58,7 @@ interface SidebarSectionProps {
 
 const SidebarSection: React.FC<SidebarSectionProps> = ({
   platforms,
+  isClusterView = false,
   selectedPlatform,
   onPlatformSelect,
   currentLocation,
@@ -59,10 +66,14 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   error,
   onSearchChange,
   activeTab: requestedTab,
+  mapUnavailable = false,
+  recoverySearchQuery = '',
   onActiveTabChange,
   onKeywordSearch,
   searchQuery,
   onBenefitDetailRequest,
+  benefitDetailIds,
+  onBenefitDetailClose,
   onShowSpeechBubble,
   userCoords,
   onRecommendationStoreResults,
@@ -76,6 +87,11 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   const user = useSelector((state: RootState) => state.auth.user);
   const { isMobile, isTablet } = useResponsive();
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
+  const detailRegionRef = useRef<HTMLDivElement>(null);
+  const resultsRegionRef = useRef<HTMLDivElement>(null);
+  const detailTriggerRef = useRef<HTMLElement | null>(null);
+  const shouldRestoreDetailFocusRef = useRef(false);
+  const hasInlineBenefitDetail = Boolean(benefitDetailIds && benefitDetailIds.length > 0);
   const [selectedCategory, setSelectedCategory] = useState('전체');
 
   // 맞춤 AI 추천 상태
@@ -100,9 +116,12 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   // 즐겨찾기 데이터 관리 (관심 혜택 탭일 때만 로드)
-  const { favorites, isLoading: isFavoritesLoading } = useFavoritesList(
-    activeTab === 'favorites' ? selectedCategory : undefined
-  );
+  const {
+    favorites,
+    isLoading: isFavoritesLoading,
+    error: favoritesError,
+    refreshFavorites,
+  } = useFavoritesList(activeTab === 'favorites' ? selectedCategory : undefined);
   const [allFavorites, setAllFavorites] = useState<FavoriteBenefit[]>([]);
   const [favoritesRevision, setFavoritesRevision] = useState(0);
 
@@ -221,27 +240,54 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   }, [activeTab]);
 
   // 선택한 혜택 상세를 현재 사이드바 안에서 연다.
-  const handleCardClick = (platform: Platform) => {
-    onPlatformSelect(platform);
-  };
+  const handleCardClick = useCallback(
+    (platform: Platform) => {
+      if (
+        document.activeElement instanceof HTMLElement &&
+        document.activeElement !== document.body
+      ) {
+        detailTriggerRef.current = document.activeElement;
+      }
+      onPlatformSelect(platform);
+    },
+    [onPlatformSelect]
+  );
 
   // 상세보기에서 닫기
   const handleDetailClose = () => {
-    setViewMode('list');
     onPlatformSelect(null); // selectedPlatform 초기화
   };
 
-  // 외부에서 플랫폼 선택 시 (맵 마커 클릭 등) 상세보기로 전환
+  // 매장 또는 추천 혜택 상세는 같은 결과 패널 안에서 연다.
   useEffect(() => {
-    if (selectedPlatform && viewMode === 'list') {
+    const hasDetail = Boolean(selectedPlatform || hasInlineBenefitDetail);
+    if (hasDetail && viewMode === 'list') {
+      if (
+        !detailTriggerRef.current &&
+        document.activeElement instanceof HTMLElement &&
+        document.activeElement !== document.body
+      ) {
+        detailTriggerRef.current = document.activeElement;
+      }
       setViewMode('detail');
-    }
-  }, [selectedPlatform, viewMode, activeTab]);
-
-  // 플랫폼 선택이 해제되면 리스트 모드로 돌아가기
-  useEffect(() => {
-    if (!selectedPlatform && viewMode === 'detail') {
+    } else if (!hasDetail && viewMode === 'detail') {
+      shouldRestoreDetailFocusRef.current = true;
       setViewMode('list');
+    }
+  }, [hasInlineBenefitDetail, selectedPlatform, viewMode]);
+
+  // 상세를 열면 제목 영역에 초점을 주고, 닫으면 열었던 목록 항목으로 복귀한다.
+  useEffect(() => {
+    if (viewMode === 'detail') {
+      detailRegionRef.current?.focus({ preventScroll: true });
+    } else if (shouldRestoreDetailFocusRef.current) {
+      shouldRestoreDetailFocusRef.current = false;
+      const trigger = detailTriggerRef.current;
+      detailTriggerRef.current = null;
+      requestAnimationFrame(() => {
+        const focusTarget = trigger?.isConnected ? trigger : resultsRegionRef.current;
+        focusTarget?.focus({ preventScroll: true });
+      });
     }
   }, [selectedPlatform, viewMode]);
 
@@ -465,153 +511,183 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   };
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden border-r border-warmBorder bg-warmSurface max-md:overflow-visible max-md:border-r-0 max-md:bg-transparent max-md:shadow-none">
-      {viewMode === 'list' ? (
-        // 리스트 모드: 기존 UI
-        <div className="mx-5 mb-4 mt-4 flex min-h-0 flex-1 flex-col max-md:mx-0 max-md:mb-0 max-md:mt-0 max-md:w-full">
-          {/* 검색 영역 - 데스크톱에서만 표시 */}
-          <div
-            className="flex-shrink-0 pb-4 max-md:touch-manipulation max-md:pb-2"
-            // 모바일과 태블릿에서만 터치 이벤트 적용 (탭 및 헤더 영역)
-            onTouchStart={isMobile || isTablet ? onTouchStart : undefined}
-            onTouchMove={isMobile || isTablet ? onTouchMove : undefined}
-            onTouchEnd={isMobile || isTablet ? onTouchEnd : undefined}
-          >
-            <div className="hidden md:block">
-              <SearchSection
-                onSearchChange={handleSearchChange}
-                onKeywordSearch={onKeywordSearch}
-                defaultValue={searchQuery}
-              />
-            </div>
-
-            <div className="mb-3 max-md:mx-0 max-md:mb-2">
-              <NavigationTabsSection
-                tabs={mainTabs}
-                activeTab={activeTab}
-                onTabChange={onActiveTabChange}
-              />
-            </div>
-
-            <InfoBannerSection
-              message={getBannerConfig().message}
-              highlightText={getBannerConfig().highlightText}
-              variant="primary"
+    <div className="flex h-full w-full flex-col overflow-hidden bg-white max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
+      <div className="mx-4 mb-4 mt-4 flex min-h-0 flex-1 flex-col max-md:mx-0 max-md:mb-0 max-md:mt-0 max-md:w-full">
+        {/* 검색 영역 - 데스크톱에서만 표시 */}
+        <div
+          className="flex-shrink-0 pb-3 max-md:touch-manipulation max-md:pb-2"
+          // 모바일과 태블릿에서만 터치 이벤트 적용 (탭 및 헤더 영역)
+          onTouchStart={isMobile || isTablet ? onTouchStart : undefined}
+          onTouchMove={isMobile || isTablet ? onTouchMove : undefined}
+          onTouchEnd={isMobile || isTablet ? onTouchEnd : undefined}
+        >
+          <div className="hidden md:block">
+            <SearchSection
+              onSearchChange={handleSearchChange}
+              onKeywordSearch={onKeywordSearch}
+              defaultValue={searchQuery}
             />
           </div>
 
-          {/* 컨텐츠 영역 - 탭에 따라 다른 컴포넌트 렌더링 */}
-          {activeTab === 'nearby' && (
-            <StoreCardsSection
-              platforms={platforms}
-              selectedPlatform={selectedPlatform}
-              onPlatformSelect={handleCardClick}
-              currentLocation={currentLocation}
-              isLoading={isLoading || isRecommendationStoreLoading}
-              error={error || recommendationStoreError}
-              displayMode="list"
+          <div className="mt-2 mb-3 max-md:mx-0 max-md:mt-2 max-md:mb-2">
+            <NavigationTabsSection
+              tabs={mainTabs}
+              activeTab={activeTab}
+              onTabChange={onActiveTabChange}
+            />
+          </div>
+
+          {activeTab !== 'nearby' && (
+            <InfoBannerSection
+              message={getBannerConfig().message}
+              highlightText={getBannerConfig().highlightText}
+              variant="secondary"
             />
           )}
+        </div>
 
-          {activeTab === 'favorites' && (
-            <>
-              {showFavoriteStoreList ? (
-                <StoreCardsSection
-                  platforms={favoriteStoreResults}
-                  selectedPlatform={selectedPlatform}
-                  onPlatformSelect={handleCardClick}
-                  currentLocation={selectedFavorite?.partnerName || '즐겨찾기 매장'}
-                  isLoading={isFavoriteStoreLoading}
-                  error={favoriteStoreError}
-                  backButton={{
-                    onBack: handleFavoriteStoreListBack,
-                    label: '돌아가기',
-                  }}
-                />
-              ) : (
-                <>
-                  {/* 카테고리 탭 (관심 혜택용 - 사이드바 모드) */}
-                  <div className="mb-3 max-md:mx-0">
-                    <CategoryTabsSection
-                      categories={CATEGORIES}
-                      selectedCategory={selectedCategory}
-                      onCategorySelect={handleCategorySelect}
-                      mode="sidebar"
-                      showNavigationButtons={true}
-                    />
-                  </div>
+        <div className="relative min-h-0 flex-1 overflow-hidden">
+          <div
+            ref={resultsRegionRef}
+            role="region"
+            tabIndex={-1}
+            aria-label="검색 결과 목록"
+            className={`flex h-full min-h-0 flex-col ${viewMode === 'detail' ? 'invisible' : ''}`}
+            aria-hidden={viewMode === 'detail'}
+            inert={viewMode === 'detail'}
+          >
+            {/* 컨텐츠 영역 - 탭에 따라 다른 컴포넌트 렌더링 */}
+            {activeTab === 'nearby' && (
+              <StoreCardsSection
+                platforms={platforms}
+                isClusterView={isClusterView}
+                selectedPlatform={selectedPlatform}
+                onPlatformSelect={handleCardClick}
+                currentLocation={currentLocation}
+                isLoading={isLoading || isRecommendationStoreLoading}
+                error={error || recommendationStoreError}
+                mapUnavailable={mapUnavailable}
+                searchQuery={recoverySearchQuery || searchQuery}
+                displayMode="list"
+              />
+            )}
 
-                  {/* 즐겨찾기 스토어 리스트 */}
-                  <div
-                    className="-mx-5 overflow-y-auto overflow-x-hidden flex flex-col max-md:mx-0"
-                    style={{ height: 'calc(100vh - 360px)' }}
-                  >
-                    <FavoriteStoreList
-                      favorites={favorites}
-                      totalFavoritesCount={allFavorites.length}
-                      onItemClick={handleFavoriteClick}
-                      isLoading={isFavoritesLoading || isFavoriteStoreLoading}
-                    />
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          {activeTab === 'ai' && (
-            <>
-              {showRecommendationStoreList ? (
-                <StoreCardsSection
-                  platforms={recommendationStoreResults}
-                  selectedPlatform={selectedPlatform}
-                  onPlatformSelect={handleCardClick}
-                  currentLocation={selectedPersonalizedRecommendation?.partnerName || '추천 매장'}
-                  isLoading={isRecommendationStoreLoading}
-                  error={recommendationStoreError}
-                  backButton={{
-                    onBack: handlePersonalizedRecommendationStoreListBack,
-                    label: '돌아가기',
-                  }}
-                />
-              ) : (
-                <div
-                  className="-mx-5 overflow-y-auto overflow-x-hidden flex flex-col max-md:mx-0 max-md:mb-2"
-                  style={{ height: 'calc(100vh - 48px)' }}
-                >
-                  <PersonalizedRecommendationList
-                    stores={personalizedRecommendations}
-                    onItemClick={handlePersonalizedRecommendationClick}
-                    isLoading={isPersonalizedRecommendationsLoading || isRecommendationStoreLoading}
-                    error={personalizedRecommendationsError || recommendationStoreError}
-                    onSearchPartner={(partnerName: string) => {
-                      // 채팅에서 파트너 검색 시 PersonalizedRecommendationItem 형태로 변환하여 기존 로직 재사용
-                      const fakeRecommendation: PersonalizedRecommendationItem = {
-                        partnerName,
-                        rank: 1,
-                        reason: `${partnerName} 매장 정보를 보여드릴게요!`,
-                        benefitIds: [],
-                      };
-                      handlePersonalizedRecommendationClick(fakeRecommendation, false); // speechBubble 비활성화
+            {activeTab === 'favorites' && (
+              <>
+                {showFavoriteStoreList ? (
+                  <StoreCardsSection
+                    platforms={favoriteStoreResults}
+                    selectedPlatform={selectedPlatform}
+                    onPlatformSelect={handleCardClick}
+                    currentLocation={selectedFavorite?.partnerName || '즐겨찾기 매장'}
+                    isLoading={isFavoriteStoreLoading}
+                    error={favoriteStoreError}
+                    backButton={{
+                      onBack: handleFavoriteStoreListBack,
+                      label: '돌아가기',
                     }}
-                    onChangeTab={onActiveTabChange}
-                    onBottomSheetReset={onBottomSheetReset}
-                    onChatStateChange={handleChatStateChange}
                   />
-                </div>
-              )}
-            </>
-          )}
+                ) : (
+                  <>
+                    {/* 카테고리 탭 (관심 혜택용 - 사이드바 모드) */}
+                    <div className="mb-3 max-md:mx-0">
+                      <CategoryTabsSection
+                        categories={CATEGORIES}
+                        selectedCategory={selectedCategory}
+                        onCategorySelect={handleCategorySelect}
+                        mode="sidebar"
+                        showNavigationButtons={true}
+                      />
+                    </div>
+
+                    {/* 즐겨찾기 스토어 리스트 */}
+                    <div className="-mx-4 min-h-0 flex-1 overflow-x-hidden overflow-y-auto max-md:mx-0">
+                      <FavoriteStoreList
+                        favorites={favorites}
+                        totalFavoritesCount={allFavorites.length}
+                        onItemClick={handleFavoriteClick}
+                        isLoading={isFavoritesLoading || isFavoriteStoreLoading}
+                        error={favoritesError}
+                        onRetry={refreshFavorites}
+                      />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
+            {activeTab === 'ai' && (
+              <>
+                {showRecommendationStoreList ? (
+                  <StoreCardsSection
+                    platforms={recommendationStoreResults}
+                    selectedPlatform={selectedPlatform}
+                    onPlatformSelect={handleCardClick}
+                    currentLocation={selectedPersonalizedRecommendation?.partnerName || '추천 매장'}
+                    isLoading={isRecommendationStoreLoading}
+                    error={recommendationStoreError}
+                    backButton={{
+                      onBack: handlePersonalizedRecommendationStoreListBack,
+                      label: '돌아가기',
+                    }}
+                  />
+                ) : (
+                  <div className="-mx-4 min-h-0 flex-1 overflow-x-hidden overflow-y-auto max-md:mx-0 max-md:mb-2">
+                    <PersonalizedRecommendationList
+                      stores={personalizedRecommendations}
+                      onItemClick={handlePersonalizedRecommendationClick}
+                      isLoading={
+                        isPersonalizedRecommendationsLoading || isRecommendationStoreLoading
+                      }
+                      error={personalizedRecommendationsError || recommendationStoreError}
+                      onSearchPartner={(partnerName: string) => {
+                        // 채팅에서 파트너 검색 시 PersonalizedRecommendationItem 형태로 변환하여 기존 로직 재사용
+                        const fakeRecommendation: PersonalizedRecommendationItem = {
+                          partnerName,
+                          rank: 1,
+                          reason: `${partnerName} 매장 정보를 보여드릴게요!`,
+                          benefitIds: [],
+                        };
+                        handlePersonalizedRecommendationClick(fakeRecommendation, false); // speechBubble 비활성화
+                      }}
+                      onChangeTab={onActiveTabChange}
+                      onBottomSheetReset={onBottomSheetReset}
+                      onChatStateChange={handleChatStateChange}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          {viewMode === 'detail' ? (
+            <div
+              ref={detailRegionRef}
+              role="region"
+              tabIndex={-1}
+              aria-label={
+                hasInlineBenefitDetail
+                  ? '추천 혜택 상세'
+                  : `${selectedPlatform?.name ?? '매장'} 상세`
+              }
+              className="absolute inset-0 z-10 h-full overflow-hidden bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0066cc]"
+            >
+              {hasInlineBenefitDetail && benefitDetailIds ? (
+                <BenefitDetailCard
+                  benefitIds={benefitDetailIds}
+                  onClose={onBenefitDetailClose ?? (() => undefined)}
+                  className="h-full w-full max-w-none"
+                />
+              ) : selectedPlatform ? (
+                <StoreDetailCard platform={selectedPlatform} onClose={handleDetailClose} />
+              ) : null}
+            </div>
+          ) : null}
         </div>
-      ) : (
-        // 상세 모드: StoreDetailCard만 전체 화면으로
-        <div className="h-full overflow-y-auto">
-          {selectedPlatform && (
-            <StoreDetailCard platform={selectedPlatform} onClose={handleDetailClose} />
-          )}
-        </div>
-      )}
+      </div>
     </div>
   );
 };
 
-export default SidebarSection;
+SidebarSection.displayName = 'SidebarSection';
+
+export default React.memo(SidebarSection);

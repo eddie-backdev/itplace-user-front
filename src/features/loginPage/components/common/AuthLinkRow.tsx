@@ -1,26 +1,19 @@
 type Props = {
   onGoToSignUp: () => void;
-  onGoToFindPassword: () => void;
 };
 
-const AuthLinkRow = ({ onGoToSignUp, onGoToFindPassword }: Props) => {
+const AuthLinkRow = ({ onGoToSignUp }: Props) => {
   return (
-    <div className="w-[310px] max-xl:w-[265px] max-lg:w-[199px] max-md:w-full max-sm:w-full flex justify-between text-body-3 max-xl:text-body-4 max-lg:text-body-5 max-md:text-body-4 max-sm:text-body-4 text-grey03 mt-[12px] max-xl:mt-[10px] max-lg:mt-[8px] max-md:mt-[10px] max-sm:mt-[10px] duration-150">
+    <p className="mt-5 flex min-h-11 w-full items-center justify-center gap-1.5 text-body-3 text-grey05">
+      <span>아직 계정이 없나요?</span>
       <button
         type="button"
         onClick={onGoToSignUp}
-        className="bg-transparent text-purple04 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 rounded-sm"
+        className="min-h-11 rounded-sm px-1 font-semibold text-brand hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       >
-        계정이 없으신가요?
+        회원가입
       </button>
-      <button
-        type="button"
-        onClick={onGoToFindPassword}
-        className="bg-transparent hover:text-grey04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 rounded-sm"
-      >
-        비밀번호 찾기
-      </button>
-    </div>
+    </p>
   );
 };
 

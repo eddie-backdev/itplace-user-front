@@ -7,12 +7,130 @@ import {
   SearchStoresParams,
   ReverseGeocodeApiResponse,
   MapStorePreviewApiResponse,
+  MapStorePreviewData,
   MapStorePreviewBatchApiResponse,
   MapStoreClusterApiResponse,
+  MapStorePreviewPageApiResponse,
   StoreClusterInViewParams,
   StoreInViewParams,
   CompactStoreInViewParams,
+  StorePreviewInViewPageParams,
+  NearbyStorePreviewPageParams,
 } from '../types/api';
+
+const MAP_PREVIEW_PAGE_SIZE = 300;
+
+const throwIfAborted = (signal?: AbortSignal) => {
+  if (signal?.aborted) throw new DOMException('요청이 취소되었습니다.', 'AbortError');
+};
+
+const getAllCompactStorePreviewPages = async (
+  path: string,
+  params: Record<string, string | number | undefined>,
+  userLat: number,
+  userLng: number,
+  signal?: AbortSignal
+): Promise<MapStorePreviewApiResponse> => {
+  const storesById = new Map<number, MapStorePreviewData>();
+  let afterStoreId = 0;
+  let envelope: Omit<MapStorePreviewApiResponse, 'data'> | null = null;
+
+  while (true) {
+    throwIfAborted(signal);
+    const response = await api.get<MapStorePreviewPageApiResponse>(path, {
+      params: { ...params, pageSize: MAP_PREVIEW_PAGE_SIZE, afterStoreId },
+      signal,
+    });
+    throwIfAborted(signal);
+    const page = response.data?.data;
+    if (
+      !page ||
+      !Array.isArray(page.stores) ||
+      !Array.isArray(page.partners) ||
+      typeof page.hasMore !== 'boolean' ||
+      !(page.nextCursor === null || Number.isSafeInteger(page.nextCursor))
+    ) {
+      throw new Error('지도 지점 페이지 응답 형식이 올바르지 않습니다.');
+    }
+    if (page.hasMore && (page.nextCursor === null || page.nextCursor <= afterStoreId)) {
+      throw new Error('지도 지점 페이지 커서가 다음 페이지로 진행하지 않습니다.');
+    }
+    if (!page.hasMore && page.nextCursor !== null) {
+      throw new Error('마지막 지도 지점 페이지에 잘못된 커서가 포함되어 있습니다.');
+    }
+    for (let index = 1; index < page.stores.length; index += 1) {
+      if (page.stores[index - 1].storeId >= page.stores[index].storeId) {
+        throw new Error('지도 지점 페이지가 ID 오름차순으로 정렬되어 있지 않습니다.');
+      }
+    }
+    if (page.stores.some((store) => !Number.isSafeInteger(store.storeId) || store.storeId <= 0)) {
+      throw new Error('지도 지점 페이지에 올바르지 않은 지점 ID가 포함되어 있습니다.');
+    }
+    if (page.hasMore && page.stores.length === 0) {
+      throw new Error('지점이 없는 페이지에 다음 페이지가 있다고 응답했습니다.');
+    }
+    if (page.hasMore && page.nextCursor !== page.stores[page.stores.length - 1]?.storeId) {
+      throw new Error('지도 지점 페이지 커서가 마지막 지점 ID와 일치하지 않습니다.');
+    }
+
+    envelope ??= {
+      code: response.data.code,
+      status: response.data.status,
+      message: response.data.message,
+    };
+    // 제휴처 사전은 페이지마다 tier 정보가 달라질 수 있어 병합 전에 확장한다.
+    for (const store of expandMapStorePreviewBatch(page, userLat, userLng)) {
+      if (!storesById.has(store.storeId)) storesById.set(store.storeId, store);
+    }
+
+    if (!page.hasMore) break;
+    afterStoreId = page.nextCursor!;
+  }
+
+  const stores = [...storesById.values()].sort((first, second) => first.distance - second.distance);
+  return { ...envelope!, data: stores };
+};
+
+export const getAllStorePreviewsInView = (
+  params: StorePreviewInViewPageParams,
+  signal?: AbortSignal
+): Promise<MapStorePreviewApiResponse> => {
+  const { userLat, userLng, ...bounds } = params;
+  const centerLat = (bounds.minLat + bounds.maxLat) / 2;
+  const centerLng = (bounds.minLng + bounds.maxLng) / 2;
+  return getAllCompactStorePreviewPages(
+    '/api/v1/maps/stores/in-view/previews/compact/page',
+    bounds,
+    userLat ?? centerLat,
+    userLng ?? centerLng,
+    signal
+  );
+};
+
+export const getAllNearbyStorePreviews = (
+  params: NearbyStorePreviewPageParams,
+  signal?: AbortSignal
+): Promise<MapStorePreviewApiResponse> => {
+  const queryParams = {
+    lat: params.lat,
+    lng: params.lng,
+    radiusMeters: params.radiusMeters,
+    category: params.category,
+    userLat: params.userLat ?? params.lat,
+    userLng: params.userLng ?? params.lng,
+  };
+  const categoryPath = params.category && params.category !== '전체';
+  const path = categoryPath
+    ? '/api/v1/maps/nearby/category/previews/compact/page'
+    : '/api/v1/maps/nearby/previews/compact/page';
+  return getAllCompactStorePreviewPages(
+    path,
+    queryParams,
+    params.userLat ?? params.lat,
+    params.userLng ?? params.lng,
+    signal
+  );
+};
 
 const getCompactStorePreviews = async (
   legacyPath: string,

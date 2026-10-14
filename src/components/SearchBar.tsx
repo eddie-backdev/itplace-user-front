@@ -40,16 +40,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
         aria-label={placeholder}
-        className={`h-full w-full rounded-xl border border-warmBorder pl-12 pr-10 text-base text-ink shadow-[0_1px_2px_rgba(36,35,33,0.03)] placeholder:text-body-3 placeholder:text-grey04 focus:border-brand/40 focus:outline-none max-xl:text-body-3 max-xl:placeholder:text-body-3 max-md:text-body-3 max-md:placeholder:text-body-3 ${backgroundColor || ''}`}
+        className={`h-full w-full rounded-xl border border-warmBorder pl-12 pr-12 text-base text-ink shadow-[0_1px_2px_rgba(36,35,33,0.03)] placeholder:text-body-3 placeholder:text-grey04 focus:border-brand/40 focus:outline-none md:max-xl:text-body-3 ${backgroundColor || ''}`}
       />
       {value && (
         <button
           type="button"
           onClick={onClear}
           aria-label="검색어 지우기"
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-grey04 transition-colors hover:text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-grey04 transition-colors hover:text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
-          <TbX size={24} className="text-grey04" />
+          <TbX size={20} className="text-grey04" />
         </button>
       )}
     </div>

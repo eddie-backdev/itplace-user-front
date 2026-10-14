@@ -26,57 +26,73 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, isSelected, onSelect })
 
   return (
     <article
-      className={`group relative mx-5 my-1.5 overflow-hidden rounded-xl border bg-warmSurface transition-[border-color,background-color,box-shadow,transform] hover:-translate-y-px hover:border-brand/30 hover:shadow-[0_7px_18px_rgba(36,35,33,0.07)] max-md:mx-4 max-md:my-1 ${
-        isSelected
-          ? 'border-brand/40 bg-brandSoft shadow-[0_5px_16px_rgba(17,92,58,0.08)]'
-          : 'border-warmBorder'
+      className={`group relative mx-4 my-1 [content-visibility:auto] [contain-intrinsic-size:auto_128px] overflow-hidden rounded-xl border max-md:mx-3 max-md:[contain-intrinsic-size:auto_136px] ${
+        isSelected ? 'border-[#0066cc] bg-[#f1f1ee]' : 'border-[#e6e6e3] bg-white'
       }`}
     >
       <button
         type="button"
         aria-label={`${platform.name} 혜택 상세 보기`}
         aria-expanded={isSelected}
-        className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
+        className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0066cc]"
         onClick={() => onSelect(platform)}
       />
 
-      <div className="pointer-events-none relative z-10 flex min-h-[98px] items-center gap-3 px-3 py-3 max-md:min-h-[88px] max-md:px-3 max-md:py-2.5">
+      <div className="pointer-events-none relative z-10 flex min-h-[120px] items-center gap-2.5 px-3 py-2.5 max-md:items-start">
         <SafeImage
           src={platform.imageUrl}
           alt={`${platform.name} 로고`}
           fallbackLabel={platform.name}
-          className="h-12 w-12 shrink-0 rounded-full border border-warmBorder bg-white object-contain p-0.5 max-md:h-11 max-md:w-11"
-          fallbackClassName="bg-brandSoft text-brandStrong text-xs font-bold"
+          className="h-11 w-11 shrink-0 rounded-lg object-contain max-md:mt-0.5"
+          fallbackClassName="bg-[#f1f1ee] text-[#69717e] text-xs font-semibold"
           loading="lazy"
         />
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <h3 className="truncate text-[14px] font-bold leading-5 text-ink">{platform.name}</h3>
+          <div className="flex min-w-0 items-start gap-2">
+            <h3 className="truncate text-[14px] font-semibold leading-5 text-ink max-md:line-clamp-2 max-md:whitespace-normal">
+              {platform.name}
+            </h3>
             {platform.category && (
-              <span className="shrink-0 text-[10px] font-medium text-grey04">
+              <span className="shrink-0 text-[10px] font-medium text-grey04 max-md:hidden">
                 {platform.category}
               </span>
             )}
           </div>
 
-          <p className="mt-1 line-clamp-1 text-[12px] font-bold leading-5 text-brandStrong">
-            {benefitText}
-          </p>
+          <div className="mt-1 hidden min-w-0 items-center gap-2 text-[10px] font-medium text-grey04 max-md:flex">
+            {platform.category && <span className="min-w-0 truncate">{platform.category}</span>}
+            <span className="ml-auto shrink-0 text-right text-[12px] font-medium text-[#252525]">
+              {formatDistance(platform.distance)}
+            </span>
+          </div>
+
+          <div className="mt-1 flex min-w-0 items-baseline gap-1.5 max-md:block">
+            <span className="shrink-0 text-[10px] font-medium text-grey04">주요 혜택</span>
+            <p className="line-clamp-2 min-w-0 text-[13px] font-medium leading-[18px] text-[#252525]">
+              {benefitText}
+            </p>
+          </div>
+
+          {(platform.roadAddress || platform.address) && (
+            <p className="mt-0.5 truncate text-[12px] leading-4 text-[#69717e]">
+              {platform.roadAddress || platform.address}
+            </p>
+          )}
 
           <div className="pointer-events-auto mt-1.5 flex flex-wrap items-center gap-1">
             {benefitGroups.slice(0, 3).map((group) => {
               const carrierSelectable = isCarrierCode(group.key);
               const carrierClass =
                 platform.carrier === group.key
-                  ? 'border-brand/30 bg-brandSoft text-brandStrong'
-                  : 'border-warmBorder bg-warmCanvas text-grey05';
+                  ? 'border-[#0066cc]/30 bg-[#0066cc]/5 text-[#0066cc]'
+                  : 'border-[#e6e6e3] bg-white text-[#69717e]';
 
               if (!carrierSelectable) {
                 return (
                   <span
                     key={group.key}
-                    className={`inline-flex h-5 items-center rounded-full border px-2 text-[10px] font-bold ${carrierClass}`}
+                    className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border px-2 text-[11px] font-medium ${carrierClass}`}
                   >
                     {group.label}
                   </span>
@@ -88,7 +104,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, isSelected, onSelect })
                   key={group.key}
                   type="button"
                   onClick={() => onSelect({ ...platform, carrier: group.key })}
-                  className={`inline-flex h-5 items-center rounded-full border px-2 text-[10px] font-bold transition-colors hover:border-brand/30 hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${carrierClass}`}
+                  className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border px-2 text-[11px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc] ${carrierClass}`}
                   aria-label={`${group.label} 혜택으로 ${platform.name} 보기`}
                 >
                   {group.label}
@@ -98,18 +114,20 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, isSelected, onSelect })
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 text-right">
+        <div className="flex shrink-0 items-center gap-1 text-right max-md:hidden">
           <div>
-            <p className="text-[12px] font-bold text-grey05">{formatDistance(platform.distance)}</p>
-            <p className="mt-0.5 text-[10px] text-grey04">
-              도보 {Math.max(1, Math.round(platform.distance * 12))}분
+            <p className="text-[10px] text-[#69717e]">거리</p>
+            <p className="mt-0.5 text-[12px] font-medium text-[#252525]">
+              {formatDistance(platform.distance)}
             </p>
           </div>
-          <TbChevronRight className="h-5 w-5 text-grey04 transition-transform group-hover:translate-x-0.5" />
+          <TbChevronRight className="h-5 w-5 text-[#69717e]" aria-hidden="true" />
         </div>
       </div>
     </article>
   );
 };
 
-export default StoreCard;
+StoreCard.displayName = 'StoreCard';
+
+export default React.memo(StoreCard);

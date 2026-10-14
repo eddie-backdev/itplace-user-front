@@ -11,7 +11,7 @@ const InfoBannerSection: React.FC<InfoBannerSectionProps> = ({
   variant = 'primary',
   highlightText,
 }) => {
-  const textColor = variant === 'primary' ? 'text-brandStrong' : 'text-grey05';
+  const textColor = variant === 'primary' ? 'text-grey05' : 'text-grey05';
 
   // 강조 텍스트가 있으면 해당 부분을 분리하여 렌더링
   const renderMessage = () => {
@@ -28,7 +28,7 @@ const InfoBannerSection: React.FC<InfoBannerSectionProps> = ({
           <React.Fragment key={index}>
             {part}
             {index < parts.length - 1 && (
-              <span className="font-bold text-brandStrong">{highlightText}</span>
+              <span className="font-semibold text-ink">{highlightText}</span>
             )}
           </React.Fragment>
         ))}

@@ -1,10 +1,29 @@
 import React from 'react';
 import clsx from 'clsx';
 
+const fieldLabels: Record<string, string> = {
+  email: '이메일',
+  password: '비밀번호',
+  passwordConfirm: '비밀번호 확인',
+  phoneNumber: '휴대폰 번호',
+  verifiedPhoneNumber: '인증된 휴대폰 번호',
+  nickname: '닉네임',
+  verificationCode: '인증번호',
+  oauthLinkEmail: '가입 이메일',
+  oauthLinkPassword: '기존 계정 비밀번호',
+};
+
 type AuthInputProps = {
   name: string;
+  label?: string;
   type?: string;
   placeholder?: string;
+  autoComplete?: string;
+  autoCapitalize?: string;
+  spellCheck?: boolean;
+  required?: boolean;
+  ariaInvalid?: boolean;
+  ariaDescribedBy?: string;
   value: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -18,8 +37,15 @@ type AuthInputProps = {
 
 const AuthInput = ({
   name,
+  label,
   type = 'text',
   placeholder = '',
+  autoComplete,
+  autoCapitalize,
+  spellCheck,
+  required = false,
+  ariaInvalid,
+  ariaDescribedBy,
   value,
   onChange,
   onKeyDown,
@@ -32,27 +58,55 @@ const AuthInput = ({
 }: AuthInputProps) => {
   const focusClass = disableFocusEffect
     ? 'focus:outline-none'
-    : 'focus:outline focus:outline-[1px] focus:outline-purple04';
+    : 'focus:outline focus:outline-[1px] focus:outline-brand';
+
+  const visibleLabel = label ?? fieldLabels[name] ?? placeholder;
+  const inferredAutoComplete =
+    type === 'password'
+      ? 'current-password'
+      : type === 'email' || name.toLowerCase().includes('email')
+        ? 'email'
+        : name === 'verificationCode'
+          ? 'one-time-code'
+          : name.toLowerCase().includes('phone')
+            ? 'tel'
+            : undefined;
 
   return (
-    <input
-      name={name}
-      type={type}
-      placeholder={placeholder}
-      value={value}
-      onChange={disabled ? undefined : onChange}
-      onKeyDown={disabled ? undefined : onKeyDown}
-      disabled={disabled}
-      className={clsx(
-        'w-[320px] max-xl:w-[274px] max-lg:w-[205px] max-md:w-full max-sm:w-full h-[50px] max-xl:h-[43px] max-lg:h-[34px] max-md:h-[48px] max-sm:h-[48px] rounded-[18px] max-xl:rounded-[15px] max-lg:rounded-[12px] max-md:rounded-[16px] max-sm:rounded-[16px] px-[16px] max-xl:px-[14px] max-lg:px-[11px] max-md:px-[16px] max-sm:px-[16px] text-body-2 max-xl:text-body-3 max-lg:text-body-4 max-md:text-body-3 max-sm:text-body-3 placeholder:text-body-2 placeholder:max-xl:text-body-3 placeholder:max-lg:text-body-4 placeholder:max-md:text-body-3 placeholder:max-sm:text-body-3',
-        bgColor,
-        textColor,
-        placeholderColor,
-        focusClass,
-        disabled && 'bg-grey02 text-grey04 placeholder:text-grey04',
-        className
+    <div className="w-full min-w-0">
+      {visibleLabel && (
+        <label
+          htmlFor={`auth-${name}`}
+          className="mb-1.5 block text-body-3 font-semibold text-grey06"
+        >
+          {visibleLabel}
+        </label>
       )}
-    />
+      <input
+        id={`auth-${name}`}
+        name={name}
+        type={type}
+        autoComplete={autoComplete ?? inferredAutoComplete}
+        autoCapitalize={autoCapitalize}
+        spellCheck={spellCheck}
+        required={required}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedBy}
+        placeholder={placeholder && placeholder !== visibleLabel ? placeholder : undefined}
+        value={value}
+        onChange={disabled ? undefined : onChange}
+        onKeyDown={disabled ? undefined : onKeyDown}
+        disabled={disabled}
+        className={clsx(
+          'h-12 w-full rounded-xl border border-warmBorder px-4 text-body-2 placeholder:text-grey04 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-grey01 disabled:text-grey04',
+          bgColor !== 'bg-grey01' && bgColor,
+          textColor,
+          placeholderColor,
+          focusClass,
+          className
+        )}
+      />
+    </div>
   );
 };
 

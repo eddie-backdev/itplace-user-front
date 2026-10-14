@@ -1,22 +1,33 @@
-// src/features/myPage/components/Favorites/BenefitDetailTabs.tsx
+import { useEffect, useMemo, useState } from 'react';
 import SafeImage from '../../../../components/SafeImage';
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { fetchFavoriteDetail } from '../../apis/favorites';
-import { FavoriteDetail } from './../../../../types/favorites';
+import type { FavoriteDetail } from '../../../../types/favorites';
 import LoadingSpinner from '../../../../components/LoadingSpinner';
 import NoResult from '../../../../components/NoResult';
 import {
   getCarrierGradeOrder,
+  getCarrierLabel,
   getMembershipGradeLabel,
+  isCarrierCode,
   isGradeApplicableToProfile,
 } from '../../../../utils/membership';
+import {
+  groupFavoriteTiersByCarrier,
+  isFavoriteTierApplicableToProfile,
+} from '../../utils/favoriteMembership.mjs';
+import { getPartnerBenefitPath } from '../../../../utils/partnerSeo';
+
 interface Props {
   benefitId: number;
   image: string;
   name: string;
-  userCarrier?: string | null; // 현재 로그인한 유저 통신사
-  userGrade?: string | null; // 현재 로그인한 유저 등급
+  userCarrier?: string | null;
+  userGrade?: string | null;
 }
+
+const carrierLabel = (carrier: string | null) =>
+  isCarrierCode(carrier) ? getCarrierLabel(carrier) : '정보 없음';
 
 export default function BenefitDetailTabs({
   benefitId,
@@ -26,61 +37,85 @@ export default function BenefitDetailTabs({
   userGrade,
 }: Props) {
   const [detail, setDetail] = useState<FavoriteDetail | null>(null);
+  const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [error, setError] = useState(false);
-
-  // 로딩 상태
-  const [loading, setLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true; // 이번 effect에서 발생하는 요청만 반영하겠다는 플래그
+    let isMounted = true;
     setLoading(true);
     setError(false);
     setDetail(null);
 
-    (async () => {
-      try {
-        const res = await fetchFavoriteDetail(benefitId);
-        // 아래 조건을 추가: 이 effect가 아직 유효할 때만 setState
-        if (!isMounted) return;
+    fetchFavoriteDetail(benefitId)
+      .then(
+        (response) => {
+          if (!isMounted) return;
+          const nextDetail = response.data;
+          const groups = groupFavoriteTiersByCarrier(nextDetail.tiers);
+          const initialGroup =
+            groups.find((group) => group.carrier === userCarrier) ??
+            groups.find((group) => isCarrierCode(group.carrier)) ??
+            groups[0];
 
-        setDetail(res.data);
-        setError(false);
-
-        const tiers = res.data.tiers;
-        const allBenefit = tiers.find((t) => t.isAll);
-        const availableGrades = tiers.map((tier) => tier.grade);
-        const orderedGrades = getCarrierGradeOrder(userCarrier, availableGrades);
-
-        if (allBenefit) {
+          setDetail(nextDetail);
+          setSelectedCarrier(initialGroup?.carrier ?? null);
           setSelectedGrade(null);
-        } else if (userGrade && availableGrades.includes(userGrade)) {
-          setSelectedGrade(userGrade);
-        } else {
-          setSelectedGrade(orderedGrades[0] ?? availableGrades[0] ?? null);
-        }
-      } catch (e) {
-        if (isMounted) {
-          console.error('상세 조회 실패', e);
+        },
+        () => {
+          if (!isMounted) return;
           setError(true);
-          setDetail(null);
         }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    })();
+      )
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
 
-    // ✅ cleanup 함수: benefitId가 바뀌거나 컴포넌트가 언마운트될 때 실행
     return () => {
       isMounted = false;
     };
-  }, [benefitId, userCarrier, userGrade]);
+  }, [benefitId, retryCount, userCarrier, userGrade]);
+
+  const carrierGroups = useMemo(() => groupFavoriteTiersByCarrier(detail?.tiers ?? []), [detail]);
+  const selectedGroup =
+    carrierGroups.find((group) => group.carrier === selectedCarrier) ?? carrierGroups[0] ?? null;
+  const allGradeCondition = selectedGroup?.tiers.find((tier) => tier.isAll);
+  const gradeConditions = selectedGroup?.tiers.filter((tier) => !tier.isAll) ?? [];
+  const availableGrades = Array.from(new Set(gradeConditions.map((tier) => tier.grade)));
+  const gradeTabs = selectedGroup
+    ? getCarrierGradeOrder(selectedGroup.carrier, availableGrades).filter((grade) =>
+        availableGrades.includes(grade)
+      )
+    : [];
+  const activeGrade =
+    (selectedGrade && gradeTabs.includes(selectedGrade) ? selectedGrade : null) ??
+    (selectedGroup?.carrier === userCarrier && userGrade && gradeTabs.includes(userGrade)
+      ? userGrade
+      : null) ??
+    gradeTabs[0] ??
+    null;
+  const selectedCondition = gradeConditions.find((tier) => tier.grade === activeGrade) ?? null;
+  const hasMembershipProfile = Boolean(userCarrier && userGrade);
+  const selectedConditionApplies = Boolean(
+    selectedGroup &&
+      selectedCondition &&
+      isFavoriteTierApplicableToProfile(
+        selectedCondition,
+        userCarrier,
+        userGrade,
+        isGradeApplicableToProfile
+      )
+  );
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-full">
+      <div
+        role="status"
+        aria-label="혜택 상세 정보를 불러오는 중"
+        className="flex min-h-32 items-center justify-center"
+      >
         <LoadingSpinner />
       </div>
     );
@@ -88,22 +123,25 @@ export default function BenefitDetailTabs({
 
   if (error) {
     return (
-      <div className="flex h-full items-center justify-center py-10">
-        <NoResult
-          variant="error"
-          message1="혜택 상세 정보를 불러오지 못했어요"
-          message2="잠시 후 다시 열어 확인해 주세요."
-          message1FontSize="text-title-6 max-xl:text-title-7"
-          message2FontSize="text-body-3 max-xl:text-body-4"
-          isLoginRequired={false}
-        />
+      <div
+        role="alert"
+        className="flex min-h-32 flex-col items-center justify-center gap-3 py-6 text-center"
+      >
+        <p className="text-sm leading-6 text-grey05">혜택 상세 정보를 불러오지 못했어요.</p>
+        <button
+          type="button"
+          onClick={() => setRetryCount((count) => count + 1)}
+          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-brand px-4 text-sm font-semibold text-brandStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          다시 시도
+        </button>
       </div>
     );
   }
 
   if (!detail) {
     return (
-      <div className="flex h-full items-center justify-center py-10">
+      <div className="flex min-h-32 items-center justify-center">
         <NoResult
           message1="혜택 상세 정보가 없어요"
           message2="선택한 혜택의 상세 내용을 확인할 수 없어요."
@@ -115,81 +153,170 @@ export default function BenefitDetailTabs({
     );
   }
 
-  const allBenefit = detail.tiers.find((t) => t.isAll);
   const displayImage = detail.partnerImage || image;
-  const displayName = detail.partnerName || name;
-
-  const LogoBox = ({ image, alt }: { image: string; alt: string }) => (
-    <div className="w-full h-[142px] flex items-center justify-center border border-grey02 rounded-[10px] mb-5 max-xl:h-[112px] max-xl:mb-3">
-      <SafeImage
-        src={image}
-        alt={alt}
-        fallbackLabel={alt}
-        className="h-[108px] w-[108px] object-contain max-xl:h-[98px] max-xl:w-[98px]"
-      />
-    </div>
-  );
-
-  // 🔹 모든등급
-  if (allBenefit) {
-    return (
-      <div className="w-full flex flex-col max-lg:flex-row max-md:flex-col">
-        <div className="max-lg:min-w-[210px] max-md:w-full">
-          <LogoBox image={displayImage} alt={displayName} />
-          <div className="flex items-center justify-center h-[50px] rounded-[12px] bg-orange04 text-white text-center text-body-0 font-medium w-full mb-4 max-xl:h-[44px] max-xl:text-body-2">
-            모든 등급
-          </div>
-        </div>
-        <p className="mt-4 whitespace-pre-line text-body-0 text-grey05 max-xl:text-body-2 max-lg:ml-3 max-lg:mt-0 max-md:ml-0 max-md:mt-4">
-          {allBenefit.context}
-        </p>
-      </div>
-    );
-  }
-
-  const availableGrades = detail.tiers.map((tier) => tier.grade);
-  const gradeTabs = getCarrierGradeOrder(userCarrier, availableGrades);
-  const content = detail.tiers.find((b) => b.grade === selectedGrade);
-  const isSelectedApplicable = isGradeApplicableToProfile({
-    benefitCarrier: content?.carrier,
-    benefitGrade: content?.grade,
-    userCarrier,
-    userGrade,
-  });
+  const displayName = detail.partnerName || name || '제휴처';
+  const isKnownCarrier = selectedGroup ? isCarrierCode(selectedGroup.carrier) : false;
+  const carrierPolicy =
+    isKnownCarrier && selectedGroup
+      ? detail.carrierPolicies?.find((policy) => policy.carrier === selectedGroup.carrier)
+      : undefined;
+  const mayUseLegacyMetadata = carrierGroups.length === 1 && isKnownCarrier;
+  const selectedDescription = detail.carrierPolicies
+    ? carrierPolicy?.description
+    : mayUseLegacyMetadata
+      ? detail.benefitDescription
+      : null;
+  const selectedLimit = detail.carrierPolicies
+    ? carrierPolicy?.benefitLimit
+    : mayUseLegacyMetadata
+      ? detail.benefitLimit
+      : null;
+  const normalizedLimit = selectedLimit?.trim();
+  const limitText =
+    normalizedLimit && normalizedLimit !== '제한없음'
+      ? normalizedLimit
+      : '이용 방법에서 횟수·한도를 확인해 주세요.';
+  const allGradeContext = allGradeCondition?.context?.trim();
+  const selectedConditionContext = selectedCondition?.context?.trim();
+  const fullDetailHref =
+    typeof detail.partnerId === 'number' && detail.partnerId > 0
+      ? `${getPartnerBenefitPath(detail.partnerId, displayName)}${
+          selectedGroup?.carrier ? `?carrier=${encodeURIComponent(selectedGroup.carrier)}` : ''
+        }#benefit-${benefitId}`
+      : `/benefits?q=${encodeURIComponent(displayName)}`;
+  const eligibilityMessage = !selectedGroup
+    ? ''
+    : !isKnownCarrier
+      ? '통신사 정보를 확인할 수 없어 개인 멤버십 적용 여부를 판단할 수 없어요.'
+      : !hasMembershipProfile
+        ? '회원 정보에서 통신사와 등급을 선택하면 내 조건을 확인할 수 있어요.'
+        : selectedGroup.carrier !== userCarrier
+          ? `현재 선택한 멤버십(${getCarrierLabel(userCarrier)})과 다른 통신사의 조건입니다.`
+          : allGradeCondition || selectedConditionApplies
+            ? '선택한 멤버십 프로필에 적용되는 조건입니다.'
+            : '선택한 멤버십 프로필과 다른 등급의 조건입니다.';
 
   return (
-    <div className="w-full flex flex-col max-lg:flex-row max-md:flex-col">
-      <div className="max-lg:min-w-[210px] max-md:w-full">
-        <LogoBox image={displayImage} alt={displayName} />
-        <div className="flex w-full mb-4 bg-grey01 rounded-[12px] p-[4px] max-lg:mb-0 max-md:mb-4">
-          {gradeTabs.map((g) => (
+    <section aria-label={`${displayName} 혜택 상세`} className="w-full min-w-0">
+      <div className="flex min-w-0 items-center gap-3 border-b border-warmBorder pb-4">
+        <SafeImage
+          src={displayImage}
+          alt={`${displayName} 로고`}
+          fallbackLabel={displayName}
+          className="h-11 w-11 shrink-0 rounded-lg border border-warmBorder bg-white object-contain p-1"
+        />
+        <p className="min-w-0 break-words text-base font-semibold text-ink">{displayName}</p>
+      </div>
+
+      {carrierGroups.length > 1 ? (
+        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="통신사별 혜택 조건">
+          {carrierGroups.map((group, index) => (
             <button
-              key={g}
-              onClick={() => setSelectedGrade(g)}
-              className={`h-[42px] flex-1 text-body-0 font-medium transition-colors rounded-[8px] max-xl:h-[38px] max-xl:text-body-2 ${
-                selectedGrade === g
-                  ? 'bg-white text-orange04 shadow-sm'
-                  : 'bg-transparent text-grey03'
+              key={`${group.carrier ?? 'unknown'}-${index}`}
+              type="button"
+              aria-pressed={selectedGroup?.carrier === group.carrier}
+              aria-label={
+                isCarrierCode(group.carrier)
+                  ? `${getCarrierLabel(group.carrier)} 혜택 조건`
+                  : `통신사 정보 없음 ${index + 1} 혜택 조건`
+              }
+              onClick={() => {
+                setSelectedCarrier(group.carrier);
+                setSelectedGrade(null);
+              }}
+              className={`inline-flex min-h-11 items-center justify-center rounded-lg border px-3 text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                selectedGroup?.carrier === group.carrier
+                  ? 'border-brand bg-brandSoft text-brandStrong'
+                  : 'border-warmBorder bg-white text-grey05 hover:bg-warmCanvas'
               }`}
             >
-              {getMembershipGradeLabel(g)}
+              {carrierLabel(group.carrier)}
             </button>
           ))}
         </div>
-      </div>
-      <p className="mt-4 whitespace-pre-line text-body-0 text-grey05 max-xl:text-body-2 max-lg:ml-3 max-lg:mt-0 max-md:ml-0 max-md:mt-4">
-        {content?.context}
-        {!userGrade && (
-          <span className="mt-3 block text-body-4 text-grey04">
-            회원 정보에서 통신사와 등급을 선택하면 내 등급 혜택을 바로 강조해드려요.
-          </span>
-        )}
-        {userGrade && content && !isSelectedApplicable && (
-          <span className="mt-3 block text-body-4 text-grey04">
-            선택한 멤버십 프로필과 다른 등급의 혜택입니다.
-          </span>
-        )}
-      </p>
-    </div>
+      ) : selectedGroup ? (
+        <p className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-warmCanvas px-3 text-base font-semibold text-ink">
+          {carrierLabel(selectedGroup.carrier)} 혜택 조건
+        </p>
+      ) : null}
+
+      {selectedDescription?.trim() ? (
+        <p className="mt-4 whitespace-pre-line break-words text-sm leading-6 text-grey06">
+          {selectedDescription}
+        </p>
+      ) : null}
+      {selectedGroup ? (
+        <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-grey05">
+          <span className="font-semibold text-ink">횟수·한도</span> · {limitText}
+        </p>
+      ) : null}
+
+      {selectedGroup ? (
+        <div className="mt-4 rounded-xl border border-warmBorder bg-white p-4">
+          {allGradeCondition ? (
+            <div>
+              <p className="inline-flex min-h-8 items-center rounded-md bg-brandSoft px-2.5 text-sm font-semibold text-brandStrong">
+                모든 등급
+              </p>
+              <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-grey06">
+                {allGradeCondition.context?.trim() || '혜택 조건이 등록되지 않았어요.'}
+              </p>
+            </div>
+          ) : null}
+          {gradeTabs.length > 0 ? (
+            <div className={allGradeCondition ? 'mt-4 border-t border-warmBorder pt-4' : ''}>
+              <h3 className="text-sm font-semibold text-ink">등급별 조건</h3>
+              {allGradeCondition ? (
+                <p className="mt-1 text-sm leading-6 text-grey05">
+                  모든 등급 조건과 중복 적용된다는 의미는 아니에요.
+                </p>
+              ) : null}
+              <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="멤버십 등급 선택">
+                {gradeTabs.map((grade) => (
+                  <button
+                    key={grade}
+                    type="button"
+                    aria-pressed={activeGrade === grade}
+                    onClick={() => setSelectedGrade(grade)}
+                    className={`inline-flex min-h-11 items-center justify-center rounded-lg border px-3 text-base font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                      activeGrade === grade
+                        ? 'border-brand bg-brandSoft text-brandStrong'
+                        : 'border-warmBorder bg-white text-grey05 hover:bg-warmCanvas'
+                    }`}
+                  >
+                    {getMembershipGradeLabel(grade)}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-grey06">
+                {!selectedConditionContext
+                  ? '해당 등급의 조건이 등록되지 않았어요.'
+                  : selectedConditionContext === allGradeContext
+                    ? '위 모든 등급 조건과 동일하게 적용돼요.'
+                    : selectedConditionContext}
+              </p>
+            </div>
+          ) : null}
+          {!allGradeCondition && gradeTabs.length === 0 ? (
+            <p className="text-sm leading-6 text-grey05">등록된 등급별 혜택 조건이 없어요.</p>
+          ) : null}
+          {eligibilityMessage ? (
+            <p className="mt-3 border-t border-warmBorder pt-3 text-sm leading-6 text-grey05">
+              {eligibilityMessage}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <p className="mt-4 rounded-xl bg-warmCanvas p-4 text-sm leading-6 text-grey05">
+          통신사별 혜택 조건이 등록되어 있지 않아요.
+        </p>
+      )}
+      <Link
+        href={fullDetailHref}
+        className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-brand px-4 text-sm font-semibold text-brandStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+      >
+        전체 혜택 상세 보기
+      </Link>
+    </section>
   );
 }

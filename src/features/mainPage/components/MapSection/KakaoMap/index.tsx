@@ -22,15 +22,18 @@ interface KakaoMapProps {
   selectedPlatform?: Platform | null;
   onPlatformSelect: (platform: Platform | null) => void;
   onLocationChange?: (location: MapLocation) => void;
-  onMapCenterChange?: (location: MapLocation) => void;
+  onMapCenterChange?: (location: MapLocation, options?: { showSearchButton?: boolean }) => void;
+  mobileSheetBottomInset?: number;
   centerLocation?: { latitude: number; longitude: number } | null;
   initialCenterLocation?: { latitude: number; longitude: number } | null;
+  autoLocate?: boolean;
   initialMapLevel?: number;
   onZoomStart?: () => void;
   onMapLevelChange?: (mapLevel: number) => void;
   onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
   isRoadviewMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
+  searchQuery?: string;
 }
 
 interface MarkerDisplayPosition {
@@ -71,12 +74,15 @@ const DUPLICATE_MARKER_RING_SIZE = 8;
 const DEFAULT_MAP_LEVEL = 4;
 const DEFAULT_MAP_LOCATION = { latitude: 37.5665, longitude: 126.978 };
 const CLUSTER_TAIL_HEIGHT = 9;
-const SERVER_CLUSTER_STYLE_VERSION = 'warm-green-pin-v16';
+const MOBILE_MAP_TOP_OCCLUSION = 120;
+const MOBILE_MAP_CONTROLS_RIGHT_INSET = 120;
+const MOBILE_MAP_EDGE_CLEARANCE = 8;
+const SERVER_CLUSTER_STYLE_VERSION = 'neutral-cluster-v17';
 const CLUSTER_DENSITY_COLORS = {
-  low: '#4EA77A',
-  medium: '#23865A',
-  high: '#167A4C',
-  extreme: '#0B452B',
+  low: '#7b8491',
+  medium: '#596171',
+  high: '#3c4452',
+  extreme: '#202120',
 } as const;
 const administrativeClusterBackgroundCache = new Map<string, string>();
 
@@ -118,7 +124,7 @@ const createAdministrativeClusterBackground = (width: number, color: string) => 
         center + 8
       } L${center} ${height - 1} L${center - 8} ${bodyHeight - 1} H14 Q1 ${
         bodyHeight - 1
-      } 1 ${bodyHeight - 13} V14 Q1 1 14 1 Z" fill="#FEFDFF" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
+      } 1 ${bodyHeight - 13} V14 Q1 1 14 1 Z" fill="#FFFFFF" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
       <path d="M14 5 H${width - 14}" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
     </svg>
   `;
@@ -134,13 +140,8 @@ const coordinateKey = (platform: Platform): string =>
 const markerRegistryKey = (platform: Platform): string =>
   `${platform.id}:${platform.partnerId}:${platform.carrier ?? 'ALL'}`;
 
-const getCategoryPinColor = (category?: string) => {
-  const normalizedCategory = (category ?? '').toLowerCase();
-  if (normalizedCategory.includes('카페') || normalizedCategory.includes('커피')) return '#167A4C';
-  if (normalizedCategory.includes('편의')) return '#33856A';
-  if (normalizedCategory.includes('푸드') || normalizedCategory.includes('음식')) return '#115C3A';
-  if (normalizedCategory.includes('영화') || normalizedCategory.includes('문화')) return '#4A946E';
-  return '#167A4C';
+const getCategoryPinColor = () => {
+  return '#69717e';
 };
 
 const getClusterDensityColor = (count: number) => {
@@ -152,22 +153,22 @@ const getClusterDensityColor = (count: number) => {
 
 const getClusterDensityShadows = (count: number) => {
   if (count < 10) {
-    return { resting: 'rgba(17,92,58,0.20)', active: 'rgba(17,92,58,0.30)' };
+    return { resting: 'rgba(60,68,82,0.18)', active: 'rgba(60,68,82,0.28)' };
   }
   if (count < 100) {
-    return { resting: 'rgba(17,92,58,0.23)', active: 'rgba(17,92,58,0.33)' };
+    return { resting: 'rgba(60,68,82,0.21)', active: 'rgba(60,68,82,0.31)' };
   }
   if (count < 1000) {
-    return { resting: 'rgba(11,69,43,0.26)', active: 'rgba(11,69,43,0.36)' };
+    return { resting: 'rgba(32,33,32,0.24)', active: 'rgba(32,33,32,0.34)' };
   }
-  return { resting: 'rgba(11,69,43,0.29)', active: 'rgba(11,69,43,0.39)' };
+  return { resting: 'rgba(32,33,32,0.27)', active: 'rgba(32,33,32,0.37)' };
 };
 
 const getAdministrativeClusterColor = (unitType?: MapCluster['administrativeUnitType']) => {
-  if (unitType === 'CITY') return '#0B452B';
-  if (unitType === 'TOWN') return '#115C3A';
-  if (unitType === 'LEGAL_DONG') return '#23865A';
-  return '#167A4C';
+  if (unitType === 'CITY') return '#3c4452';
+  if (unitType === 'TOWN') return '#596171';
+  if (unitType === 'LEGAL_DONG') return '#7b8491';
+  return '#69717e';
 };
 
 const updateAdministrativeClusterElement = (
@@ -180,8 +181,8 @@ const updateAdministrativeClusterElement = (
   const labelLength = Array.from(administrativeUnitName).length;
   const visualWidth = Math.min(156, Math.max(86, labelLength * 13 + countLabel.length * 7 + 42));
   const shadows = {
-    resting: 'rgba(17, 92, 58, 0.20)',
-    active: 'rgba(17, 92, 58, 0.30)',
+    resting: 'rgba(60, 68, 82, 0.18)',
+    active: 'rgba(60, 68, 82, 0.28)',
   };
   const ariaLabel = `${administrativeUnitName} 혜택 ${countLabel}곳`;
 
@@ -247,7 +248,7 @@ const updateAdministrativeClusterElement = (
     'overflow:hidden',
     'text-overflow:ellipsis',
     'white-space:nowrap',
-    'color:#24352C',
+    'color:#202120',
     'font-size:13px',
     'font-weight:800',
     'line-height:1',
@@ -288,7 +289,7 @@ const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapClus
   const isSingleLocation = cluster.count <= 1;
   const categoryLabel = cluster.category && cluster.category !== '전체' ? cluster.category : '혜택';
   const accentColor = isSingleLocation
-    ? getCategoryPinColor(cluster.category)
+    ? getCategoryPinColor()
     : getClusterDensityColor(cluster.count);
   const badgeSize =
     cluster.count < 10 ? 38 : cluster.count < 100 ? 44 : cluster.count < 1000 ? 50 : 56;
@@ -473,14 +474,17 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   onPlatformSelect,
   onLocationChange,
   onMapCenterChange,
+  mobileSheetBottomInset,
   centerLocation,
   initialCenterLocation,
+  autoLocate = true,
   initialMapLevel,
   onZoomStart,
   onMapLevelChange,
   onViewportChange,
   isRoadviewMode = false,
   onMapClick,
+  searchQuery = '',
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMapType | null>(null);
@@ -494,19 +498,28 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const zoomSettledTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suppressDragEndUntilRef = useRef<number>(0);
   const platformsRef = useRef(platforms);
+  const selectedPlatformRef = useRef(selectedPlatform);
   const onPlatformSelectRef = useRef(onPlatformSelect);
+  const isRoadviewModeRef = useRef(isRoadviewMode);
+  const onMapClickRef = useRef(onMapClick);
   const onLocationChangeRef = useRef(onLocationChange);
   const onMapCenterChangeRef = useRef(onMapCenterChange);
+  const mobileSheetBottomInsetRef = useRef(mobileSheetBottomInset);
   const onZoomStartRef = useRef(onZoomStart);
   const onMapLevelChangeRef = useRef(onMapLevelChange);
   const onViewportChangeRef = useRef(onViewportChange);
   const initialCenterLocationRef = useRef(initialCenterLocation);
   const initialMapLevelRef = useRef(initialMapLevel);
   const useServerClustersRef = useRef(useServerClusters);
+  const stableMapCenterRef = useRef(initialCenterLocation ?? DEFAULT_MAP_LOCATION);
   platformsRef.current = platforms;
+  selectedPlatformRef.current = selectedPlatform;
   onPlatformSelectRef.current = onPlatformSelect;
+  isRoadviewModeRef.current = isRoadviewMode;
+  onMapClickRef.current = onMapClick;
   onLocationChangeRef.current = onLocationChange;
   onMapCenterChangeRef.current = onMapCenterChange;
+  mobileSheetBottomInsetRef.current = mobileSheetBottomInset;
   onZoomStartRef.current = onZoomStart;
   onMapLevelChangeRef.current = onMapLevelChange;
   onViewportChangeRef.current = onViewportChange;
@@ -654,7 +667,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
     // platforms가 빈 배열이면 visiblePlatforms도 빈 배열로 설정
     if (!latestPlatforms.length) {
-      setVisiblePlatforms([]);
+      setVisiblePlatforms((current) => (current?.length === 0 ? current : []));
       return;
     }
 
@@ -685,11 +698,18 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       );
     });
 
-    setVisiblePlatforms(filtered);
+    setVisiblePlatforms((current) =>
+      current?.length === filtered.length &&
+      filtered.every((platform, index) => platform === current[index])
+        ? current
+        : filtered
+    );
   }, []);
 
   // 사용자 현재 위치 가져오기
   useEffect(() => {
+    if (!autoLocate) return;
+
     let isCanceled = false;
 
     if (navigator.geolocation) {
@@ -717,15 +737,21 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     return () => {
       isCanceled = true;
     };
-  }, []);
+  }, [autoLocate]);
 
   // 카카오맵 초기화
   useEffect(() => {
-    if (!mapContainer.current || mapRef.current) return;
+    const mapContainerElement = mapContainer.current;
+    if (!mapContainerElement || mapRef.current) return;
 
     let isDisposed = false;
     let initializeRetryTimer: ReturnType<typeof setTimeout> | null = null;
     let initialViewportTimer: ReturnType<typeof setTimeout> | null = null;
+    let containerResizeObserver: ResizeObserver | null = null;
+    let containerResizeFallback: (() => void) | null = null;
+    let containerResizeFrame: number | null = null;
+    let containerResizeTimer: ReturnType<typeof setTimeout> | null = null;
+    let isContainerResizePending = false;
     let initializedMap: KakaoMapType | null = null;
     const mapEventListeners: Array<{
       type: string;
@@ -754,8 +780,8 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       setSdkLoadError(false);
 
       // 컨테이너 크기가 확정될 때까지 대기
-      const containerWidth = mapContainer.current?.offsetWidth;
-      const containerHeight = mapContainer.current?.offsetHeight;
+      const containerWidth = mapContainerElement.offsetWidth;
+      const containerHeight = mapContainerElement.offsetHeight;
 
       if (!containerWidth || !containerHeight) {
         if (initializeRetryTimer) {
@@ -771,11 +797,97 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         level: initialMapLevelRef.current ?? DEFAULT_MAP_LEVEL,
       };
 
-      const map = new window.kakao.maps.Map(mapContainer.current!, options);
+      mapContainerElement.replaceChildren();
+      const map = new window.kakao.maps.Map(mapContainerElement, options);
       initializedMap = map;
       mapRef.current = map;
+      stableMapCenterRef.current = {
+        latitude: initialCenter.latitude,
+        longitude: initialCenter.longitude,
+      };
       setCurrentMapLevel(map.getLevel());
       setMapInitializationVersion((version) => version + 1);
+
+      const rememberMapCenter = () => {
+        const center = map.getCenter();
+        stableMapCenterRef.current = {
+          latitude: center.getLat(),
+          longitude: center.getLng(),
+        };
+      };
+
+      let previousWidth = containerWidth;
+      let previousHeight = containerHeight;
+      const relayoutForCurrentSize = () => {
+        if (isDisposed || mapRef.current !== map) return;
+
+        const center = stableMapCenterRef.current;
+        map.relayout();
+        if (!isAnimatingRef.current && !isZoomingRef.current) {
+          map.setCenter(new window.kakao.maps.LatLng(center.latitude, center.longitude));
+        }
+      };
+      const relayoutForContainerSize = (width: number, height: number) => {
+        const nextWidth = Math.round(width);
+        const nextHeight = Math.round(height);
+        if (
+          isDisposed ||
+          mapRef.current !== map ||
+          nextWidth <= 0 ||
+          nextHeight <= 0 ||
+          (nextWidth === previousWidth && nextHeight === previousHeight)
+        ) {
+          return;
+        }
+
+        previousWidth = nextWidth;
+        previousHeight = nextHeight;
+        isContainerResizePending = true;
+        if (containerResizeFrame === null) {
+          containerResizeFrame = requestAnimationFrame(() => {
+            containerResizeFrame = null;
+            relayoutForCurrentSize();
+          });
+        }
+        if (containerResizeTimer !== null) {
+          clearTimeout(containerResizeTimer);
+        }
+        containerResizeTimer = setTimeout(() => {
+          containerResizeTimer = null;
+          if (isDisposed || mapRef.current !== map) {
+            isContainerResizePending = false;
+            return;
+          }
+          if (containerResizeFrame !== null) {
+            cancelAnimationFrame(containerResizeFrame);
+            containerResizeFrame = null;
+            relayoutForCurrentSize();
+          }
+          isContainerResizePending = false;
+          updateVisiblePlatforms();
+          notifyViewportChange();
+        }, 150);
+      };
+
+      if (typeof ResizeObserver !== 'undefined') {
+        containerResizeObserver = new ResizeObserver(([entry]) => {
+          if (entry) {
+            relayoutForContainerSize(entry.contentRect.width, entry.contentRect.height);
+          }
+        });
+        containerResizeObserver.observe(mapContainerElement);
+      } else {
+        containerResizeFallback = () =>
+          relayoutForContainerSize(
+            mapContainerElement.offsetWidth,
+            mapContainerElement.offsetHeight
+          );
+        window.addEventListener('resize', containerResizeFallback);
+      }
+
+      addMapEventListener(map, 'center_changed', () => {
+        if (!isContainerResizePending) rememberMapCenter();
+      });
 
       // 줌 시작 - 애니메이션 상태 시작
       addMapEventListener(map, 'zoom_start', () => {
@@ -817,6 +929,8 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
           return;
         }
 
+        rememberMapCenter();
+
         hasPendingZoomViewportChangeRef.current = false;
         if (zoomSettledTimerRef.current) {
           clearTimeout(zoomSettledTimerRef.current);
@@ -853,7 +967,10 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
             latitude: center.getLat(),
             longitude: center.getLng(),
           };
+          stableMapCenterRef.current = centerLocation;
           onMapCenterChangeRef.current(centerLocation);
+        } else if (!isDragEndFromZoom) {
+          rememberMapCenter();
         }
         if (!isDragEndFromZoom) {
           updateVisiblePlatforms();
@@ -896,6 +1013,17 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       if (initialViewportTimer) {
         clearTimeout(initialViewportTimer);
       }
+      containerResizeObserver?.disconnect();
+      isContainerResizePending = false;
+      if (containerResizeFrame !== null) {
+        cancelAnimationFrame(containerResizeFrame);
+      }
+      if (containerResizeFallback) {
+        window.removeEventListener('resize', containerResizeFallback);
+      }
+      if (containerResizeTimer !== null) {
+        clearTimeout(containerResizeTimer);
+      }
       window.removeEventListener(KAKAO_MAP_READY_EVENT, handleSdkReady);
       window.removeEventListener(KAKAO_MAP_ERROR_EVENT, handleSdkError);
 
@@ -905,7 +1033,8 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         });
       }
 
-      if (mapRef.current === initializedMap) {
+      if (initializedMap && mapRef.current === initializedMap) {
+        mapContainerElement.replaceChildren();
         mapRef.current = null;
       }
     };
@@ -1064,6 +1193,11 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         const latestCluster = serverClusterRegistryRef.current.get(clusterId)?.cluster;
         const currentMap = mapRef.current;
         if (!latestCluster || !currentMap) return;
+
+        if (isRoadviewModeRef.current) {
+          onMapClickRef.current?.(latestCluster.latitude, latestCluster.longitude);
+          return;
+        }
 
         const currentLevel = currentMap.getLevel();
         const requestedTargetLevel = latestCluster.targetMapLevel;
@@ -1251,7 +1385,14 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
         const clickHandler = () => {
           const latestPlatform = customMarkerRegistryRef.current.get(platformId)?.platform;
-          if (latestPlatform) onPlatformSelectRef.current(latestPlatform);
+          if (!latestPlatform) return;
+
+          if (isRoadviewModeRef.current) {
+            onMapClickRef.current?.(latestPlatform.latitude, latestPlatform.longitude);
+            return;
+          }
+
+          onPlatformSelectRef.current(latestPlatform);
         };
         markerElement.addEventListener('click', clickHandler);
 
@@ -1297,6 +1438,89 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     useServerClusters,
   ]);
 
+  useEffect(() => {
+    const selected = selectedPlatformRef.current;
+    if (!selected || !mobileSheetBottomInset || typeof window === 'undefined') return;
+
+    let didPan = false;
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    const panTimer = setTimeout(() => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      const selectedKey = markerRegistryKey(selected);
+      const selectedEntry =
+        customMarkerRegistryRef.current.get(selectedKey) ??
+        [...customMarkerRegistryRef.current.values()].find(
+          ({ platform }) => platform.id === selected.id && platform.partnerId === selected.partnerId
+        );
+      const markerElement = selectedEntry?.element.querySelector<HTMLElement>(
+        '[data-itplace-map-marker="true"]'
+      );
+      if (!markerElement) return;
+
+      const sheetBottomInset = mobileSheetBottomInsetRef.current;
+      if (sheetBottomInset == null) return;
+      const mapRect = mapContainer.current?.getBoundingClientRect();
+      if (!mapRect) return;
+
+      const markerRect = markerElement.getBoundingClientRect();
+      const exposedMapHeight = window.innerHeight - sheetBottomInset;
+      const safeTop = mapRect.top + (exposedMapHeight < 122 ? 64 : MOBILE_MAP_TOP_OCCLUSION);
+      const safeLeft = mapRect.left + MOBILE_MAP_EDGE_CLEARANCE;
+      const controlsRightInset =
+        exposedMapHeight < 176 ? MOBILE_MAP_EDGE_CLEARANCE : MOBILE_MAP_CONTROLS_RIGHT_INSET;
+      const safeRight = Math.min(
+        mapRect.right - MOBILE_MAP_EDGE_CLEARANCE,
+        window.innerWidth - controlsRightInset
+      );
+      const safeBottom = Math.min(
+        mapRect.bottom,
+        window.innerHeight - sheetBottomInset - MOBILE_MAP_EDGE_CLEARANCE
+      );
+      const getShift = (start: number, end: number, min: number, max: number) => {
+        if (end - start > max - min) return max - end;
+        if (start < min) return min - start;
+        if (end > max) return max - end;
+        return 0;
+      };
+      const shiftX = getShift(markerRect.left, markerRect.right, safeLeft, safeRight);
+      const shiftY =
+        safeBottom - safeTop >= markerRect.height
+          ? getShift(markerRect.top, markerRect.bottom, safeTop, safeBottom)
+          : 0;
+      if (shiftX === 0 && shiftY === 0) return;
+
+      isAnimatingRef.current = true;
+      suppressDragEndUntilRef.current = Date.now() + 700;
+      didPan = true;
+      map.panBy(-shiftX, -shiftY);
+
+      settleTimer = setTimeout(() => {
+        isAnimatingRef.current = false;
+        if (mapRef.current !== map || !mapContainer.current?.isConnected) return;
+
+        const center = map.getCenter();
+        const location = { latitude: center.getLat(), longitude: center.getLng() };
+        stableMapCenterRef.current = location;
+        onMapCenterChangeRef.current?.(location, { showSearchButton: false });
+        updateVisiblePlatforms();
+      }, 350);
+    }, 350);
+
+    return () => {
+      clearTimeout(panTimer);
+      if (settleTimer && !didPan) clearTimeout(settleTimer);
+    };
+  }, [
+    selectedPlatform?.id,
+    selectedPlatform?.partnerId,
+    selectedPlatform?.latitude,
+    selectedPlatform?.longitude,
+    mobileSheetBottomInset,
+    updateVisiblePlatforms,
+  ]);
+
   // centerLocation prop이 변경되면 지도 중심 이동
   useEffect(() => {
     if (!mapRef.current || !centerLocation) {
@@ -1320,6 +1544,10 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       centerLocation.latitude,
       centerLocation.longitude
     );
+    stableMapCenterRef.current = {
+      latitude: centerLocation.latitude,
+      longitude: centerLocation.longitude,
+    };
     mapRef.current.setCenter(moveLatLon);
 
     // 이동 완료 후 애니메이션 상태 해제 및 viewport 업데이트
@@ -1342,17 +1570,29 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
           className="absolute inset-0 flex items-center justify-center bg-warmCanvas/95 px-6 text-center"
         >
           <div className="max-w-sm rounded-2xl border border-warmBorder bg-white p-6 shadow-soft">
-            <p className="font-bold text-ink">지도를 불러오지 못했어요</p>
+            <p className="font-bold text-ink">지도를 열지 못했어요</p>
             <p className="mt-2 text-sm leading-6 text-inkMuted">
-              네트워크 상태와 Kakao Maps 설정을 확인한 뒤 다시 시도해 주세요.
+              지도를 표시할 수 없습니다. 전체 혜택 목록에서 계속 둘러볼 수 있어요.
             </p>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="mt-4 min-h-10 rounded-xl bg-brand px-4 font-bold text-white"
-            >
-              다시 시도
-            </button>
+            <div className="mt-4 flex flex-col gap-2">
+              <a
+                href={
+                  searchQuery.trim()
+                    ? `/benefits?q=${encodeURIComponent(searchQuery.trim())}`
+                    : '/benefits'
+                }
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-4 font-bold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              >
+                전체 혜택에서 찾기
+              </a>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-warmBorder bg-white px-4 font-bold text-grey05 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              >
+                다시 시도
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

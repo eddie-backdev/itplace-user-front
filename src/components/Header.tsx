@@ -1,21 +1,26 @@
 import { useEffect, useState } from 'react';
 import {
-  TbMap,
-  TbUser,
-  TbLogout,
-  TbLogin,
-  TbTicket,
-  TbSparkles,
-  TbInfoCircle,
+  TbBook2,
   TbBookmark,
+  TbCalendarEvent,
+  TbGift,
+  TbHelpCircle,
+  TbHome,
+  TbInfoCircle,
+  TbChevronLeft,
+  TbLogin,
+  TbLogout,
+  TbMap,
+  TbSparkles,
+  TbUser,
 } from 'react-icons/tb';
 import clsx from 'clsx';
-import { useLocation, Link } from '@/lib/navigation';
-import { useNavigate } from '@/lib/navigation';
+import { useLocation, Link, useNavigate } from '@/lib/navigation';
 import api from '../apis/axiosInstance';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { useClientReady } from '../hooks/useClientReady';
+import { getLoginHref } from '../features/loginPage/utils/returnTo.mjs';
 import { logout } from '../store/authSlice';
 import { persistor } from '../store';
 import { showToast } from '../utils/toast';
@@ -24,36 +29,87 @@ import {
   addQuestionRecommendationChatStateListener,
   openQuestionRecommendationChat,
 } from '../features/questionRecommendationChat/utils/questionRecommendationChatEvents';
+import styles from './Header.module.css';
 
-const menus = [
-  { id: 'map', label: '지도', icon: TbMap, path: '/map' },
-  { id: 'benefits', label: '혜택', icon: TbTicket, path: '/benefits' },
-  { id: 'favorites', label: '즐겨찾기', icon: TbBookmark, path: '/mypage/favorites' },
-  { id: 'mypage', label: '마이', icon: TbUser, path: '/mypage/info' },
+const exploreMenus = [
+  { id: 'home', label: '홈', icon: TbHome, path: '/' },
+  { id: 'map', label: '주변 매장', icon: TbMap, path: '/map' },
+  { id: 'benefits', label: '전체 혜택', icon: TbGift, path: '/benefits' },
 ];
 
-const supportPaths = ['/about', '/guide', '/faq', '/contact', '/terms', '/privacy', '/membership'];
+const accountMenus = [
+  { id: 'favorites', label: '관심 혜택', icon: TbBookmark, path: '/mypage/favorites' },
+  { id: 'activity', label: '사용 기록', icon: TbCalendarEvent, path: '/mypage/activity' },
+  { id: 'profile', label: '회원 정보', icon: TbUser, path: '/mypage/info' },
+];
 
-const primaryNavItemClass =
-  'group relative flex h-16 w-full flex-col items-center justify-center rounded-2xl text-xs font-bold leading-tight text-grey05 transition-[color,transform] hover:text-grey06 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav';
+const helpMenus = [
+  { id: 'guide', label: '이용 가이드', icon: TbBook2, path: '/guide' },
+  { id: 'faq', label: '자주 묻는 질문', icon: TbHelpCircle, path: '/faq' },
+  { id: 'about', label: '서비스 안내', icon: TbInfoCircle, path: '/about' },
+];
 
-const utilityNavItemClass =
-  'group relative flex h-[48px] w-full flex-col items-center justify-center rounded-2xl text-[10px] font-bold leading-tight text-grey05 transition-[color,transform] hover:text-grey06 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav';
+const itemClass = styles.menuItem;
+const activeClass = styles.active;
 
-const activeNavClass = '!text-grey07';
+function MenuGroup({
+  title,
+  items,
+  pathname,
+}: {
+  title: string;
+  items: Array<{ id: string; label: string; icon: typeof TbHome; path: string }>;
+  pathname: string;
+}) {
+  return (
+    <div className={styles.menuGroup}>
+      <h2 className={styles.groupTitle}>{title}</h2>
+      <ul className={styles.menuList}>
+        {items.map(({ id, label, icon: Icon, path }) => {
+          const active =
+            id === 'home'
+              ? pathname === '/'
+              : id === 'map'
+                ? pathname === '/map'
+                : id === 'benefits'
+                  ? pathname.startsWith('/benefits')
+                  : pathname.startsWith(path);
+          return (
+            <li key={id}>
+              <Link
+                to={path}
+                aria-label={label}
+                title={label}
+                aria-current={active ? 'page' : undefined}
+                className={clsx(itemClass, active && activeClass)}
+              >
+                <Icon className={styles.icon} strokeWidth={active ? 2 : 1.8} aria-hidden="true" />
+                <span className={styles.menuLabel}>{label}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
-export default function Header({ variant = 'default' }: { variant?: 'default' | 'glass' }) {
+export default function Header({
+  isCollapsed,
+  onToggle,
+}: {
+  isCollapsed: boolean;
+  onToggle: () => void;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const isAuthRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
   const isClientReady = useClientReady();
   const isAuthReady = isClientReady && isAuthRehydrated;
+  const currentPath = `${location.pathname}${location.search}${location.hash}`;
   const [isQuestionRecommendationOpen, setIsQuestionRecommendationOpen] = useState(false);
-  const isSupportActive =
-    supportPaths.includes(location.pathname) || location.pathname.startsWith('/membership/');
 
   useEffect(() => {
     if (!AI_RECOMMENDATION_ENABLED) return;
@@ -66,150 +122,106 @@ export default function Header({ variant = 'default' }: { variant?: 'default' | 
       showToast('질문형 AI 추천은 로그인 후 사용할 수 있습니다.', 'info');
       return;
     }
-
     openQuestionRecommendationChat();
   };
 
   const handleLogout = async () => {
     try {
-      // 로그아웃 API 호출
       await api.post('api/v1/auth/logout');
-      // 상태 초기화
       dispatch(logout());
-      // redux-persist 초기화
       persistor.purge();
-      // 성공 토스트 표시
       showToast('로그아웃 되었습니다.', 'success');
       sessionStorage.removeItem('questionRecommendationChatMessages');
       sessionStorage.removeItem('chatMessages');
-      // 페이지 이동
       navigate('/');
     } catch (err) {
       console.error('로그아웃 실패:', err);
-      // 실패 토스트 표시
       showToast('로그아웃에 실패했습니다.', 'error');
     }
   };
 
-  return (
-    <>
-      <aside
-        className={clsx(
-          'fixed left-0 top-0 z-30 flex h-full w-[88px] flex-col items-center overflow-y-auto border-r border-warmBorder bg-warmNav px-2.5 py-4 scrollbar-hide',
-          variant === 'glass' && 'header-glass bg-warmNav/90'
-        )}
+  const renderAuthAction = () => {
+    if (!isAuthReady) {
+      return <span className={styles.authLoading} aria-label="로그인 상태 확인 중" />;
+    }
+    if (isLoggedIn) {
+      return (
+        <button type="button" onClick={handleLogout} className={itemClass} aria-label="로그아웃" title="로그아웃">
+          <TbLogout className={styles.icon} aria-hidden="true" />
+          <span className={styles.menuLabel}>로그아웃</span>
+        </button>
+      );
+    }
+    return (
+      <Link
+        to={getLoginHref(currentPath)}
+        replace
+        className={itemClass}
+        aria-label="로그인"
+        title="로그인"
       >
-        {/* 로고 영역 */}
-        <Link
-          to="/map"
-          className="mb-4 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] transition-transform hover:scale-[1.04] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-warmNav"
-          aria-label="ITPLACE 지도 홈"
-        >
-          <img src="/brand/itplace-mark-b-rail.svg" alt="" className="h-9 w-9" />
-        </Link>
+        <TbLogin className={styles.icon} aria-hidden="true" />
+        <span className={styles.menuLabel}>로그인</span>
+      </Link>
+    );
+  };
 
-        {/* 주요 메뉴 */}
-        <nav
-          className="flex w-full flex-1 flex-col items-center gap-y-2 border-t border-warmBorder pt-3"
-          aria-label="주요 메뉴"
-        >
-          {menus.map((m) => {
-            const Icon = m.icon;
-            const isActive =
-              m.id === 'map'
-                ? location.pathname === '/' || location.pathname === '/map'
-                : m.id === 'favorites'
-                  ? location.pathname.startsWith('/mypage/favorites')
-                  : m.id === 'mypage'
-                    ? location.pathname.startsWith('/mypage') &&
-                      !location.pathname.startsWith('/mypage/favorites')
-                    : m.id === 'benefits'
-                      ? location.pathname.startsWith('/benefits')
-                      : location.pathname === m.path;
-            return (
-              <Link
-                to={m.path}
-                key={m.id}
-                aria-current={isActive ? 'page' : undefined}
-                className={clsx(primaryNavItemClass, isActive && activeNavClass)}
-              >
-                <Icon
-                  className={clsx(
-                    'text-2xl transition-[color,transform]',
-                    isActive ? 'scale-110 text-brandStrong' : 'text-grey05 group-hover:text-grey06'
-                  )}
-                  strokeWidth={isActive ? 2.8 : 1.7}
-                />
-                <span className="mt-1.5 whitespace-nowrap leading-none">{m.label}</span>
-              </Link>
-            );
-          })}
+  return (
+    <aside className={styles.panel} aria-label="사이트 내비게이션" data-collapsed={isCollapsed}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className={styles.collapseButton}
+        aria-label={isCollapsed ? '사이드바 펼치기' : '사이드바 접기'}
+        aria-expanded={!isCollapsed}
+        aria-controls="site-primary-navigation"
+        title={isCollapsed ? '사이드바 펼치기' : '사이드바 접기'}
+      >
+        <TbChevronLeft className={styles.collapseIcon} aria-hidden="true" />
+      </button>
+      <div className={styles.panelContent}>
+        <div className={styles.brandHeader}>
+          <Link
+            to="/"
+            aria-label="잇플레이스 홈"
+            aria-current={location.pathname === '/' ? 'page' : undefined}
+            className={styles.brandLink}
+          >
+            <img
+              src="/brand/itplace-mark-b-rail.svg"
+              alt=""
+              width="28"
+              height="28"
+              className={styles.brandMark}
+            />
+            <span className={styles.brandName}>잇플레이스</span>
+          </Link>
+        </div>
+
+        <nav id="site-primary-navigation" aria-label="주요 메뉴" className={styles.navigation}>
+          <MenuGroup title="둘러보기" items={exploreMenus} pathname={location.pathname} />
+          <MenuGroup title="내 정보" items={accountMenus} pathname={location.pathname} />
+          <MenuGroup title="도움말" items={helpMenus} pathname={location.pathname} />
         </nav>
 
-        {/* 보조 액션 */}
-        <div className="mb-1 mt-4 flex w-full flex-col items-center gap-y-1 border-t border-warmBorder pt-3">
+        <div className={styles.footer}>
           {AI_RECOMMENDATION_ENABLED && (
             <button
               type="button"
               onClick={handleQuestionRecommendationClick}
-              className={clsx(utilityNavItemClass, isQuestionRecommendationOpen && activeNavClass)}
+              className={clsx(itemClass, isQuestionRecommendationOpen && activeClass)}
               aria-pressed={isQuestionRecommendationOpen}
               aria-label="질문형 AI 추천 열기"
+              title="AI 추천"
             >
-              <TbSparkles
-                className={clsx(
-                  'text-[18px]',
-                  isQuestionRecommendationOpen
-                    ? 'scale-110 text-brandStrong'
-                    : 'text-grey05 group-hover:text-grey06'
-                )}
-                strokeWidth={isQuestionRecommendationOpen ? 2.8 : 1.7}
-              />
-              <span className="mt-1 whitespace-nowrap leading-none">AI 추천</span>
+              <TbSparkles className={styles.icon} aria-hidden="true" />
+              <span className={styles.menuLabel}>AI 추천</span>
             </button>
           )}
-
-          <Link
-            to="/about"
-            className={clsx(utilityNavItemClass, isSupportActive && activeNavClass)}
-            aria-label="서비스 안내 보기"
-            aria-current={isSupportActive ? 'page' : undefined}
-          >
-            <TbInfoCircle
-              className={clsx(
-                'text-[18px]',
-                isSupportActive
-                  ? 'scale-110 text-brandStrong'
-                  : 'text-grey05 group-hover:text-grey06'
-              )}
-              strokeWidth={isSupportActive ? 2.8 : 1.7}
-            />
-            <span className="mt-1 whitespace-nowrap leading-none">안내</span>
-          </Link>
-
-          {!isAuthReady ? (
-            <div className={utilityNavItemClass} aria-label="로그인 상태 확인 중">
-              <span className="h-[18px] w-[18px] animate-pulse rounded-full bg-grey02" />
-              <span className="mt-1 h-2 w-8 animate-pulse rounded bg-grey02" />
-            </div>
-          ) : isLoggedIn ? (
-            <button className={utilityNavItemClass} onClick={handleLogout} aria-label="로그아웃">
-              <TbLogout className="text-[18px]" strokeWidth={1.8} />
-              <span className="mt-1 whitespace-nowrap leading-none">로그아웃</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                navigate('/login?reset=1', { replace: true });
-              }}
-              className={utilityNavItemClass}
-            >
-              <TbLogin className="text-[18px]" strokeWidth={1.8} />
-              <span className="mt-1 whitespace-nowrap leading-none">로그인</span>
-            </button>
-          )}
+          <div className={styles.footerDivider} />
+          {renderAuthAction()}
         </div>
-      </aside>
-    </>
+      </div>
+    </aside>
   );
 }

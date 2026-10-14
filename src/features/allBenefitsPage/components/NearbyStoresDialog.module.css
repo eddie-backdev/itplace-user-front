@@ -1,0 +1,346 @@
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: min(1180px, calc(100vw - 48px));
+  height: min(780px, 88dvh);
+  max-width: none;
+  max-height: 88dvh;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 16px;
+  background: #fff;
+  color: #1d1d1f;
+  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.2);
+}
+
+.dialog::backdrop {
+  background: rgba(20, 22, 27, 0.48);
+}
+.shell {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  background: #f5f5f7;
+}
+.header {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 18px 10px 22px;
+  border-bottom: 1px solid #e5e5e8;
+  background: #fff;
+}
+.partner {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+.partner h2 {
+  overflow: hidden;
+  margin: 0;
+  color: #1d1d1f;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.logo {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  object-fit: contain;
+}
+.logoFallback {
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #1d1d1f !important;
+  font-size: 10px;
+}
+.closeButton,
+.mapActions button,
+.retryButton {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #e5e5e8;
+  border-radius: 10px;
+  background: #fff;
+  color: #1d1d1f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+}
+.closeButton {
+  width: 44px;
+  padding: 0;
+}
+.closeButton:hover,
+.mapActions button:hover,
+.retryButton:hover {
+  border-color: #b8c9dc;
+  background: #f7faff;
+}
+.closeButton:focus-visible,
+.mapActions button:focus-visible,
+.retryButton:focus-visible,
+.storeItem:focus-visible,
+.directionsLink:focus-visible {
+  outline: 2px solid #0066cc;
+  outline-offset: 2px;
+}
+.content {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+.mapPane {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #e9edf1;
+}
+.mapError {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: #6e6e73;
+  font-size: 14px;
+}
+.mapError button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #0066cc;
+  border-radius: 10px;
+  background: #0066cc;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+}
+.mapError button:focus-visible {
+  outline: 2px solid #0066cc;
+  outline-offset: 3px;
+}
+.mapActions {
+  position: absolute;
+  z-index: 20;
+  right: 14px;
+  bottom: 14px;
+  left: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+.mapActions button {
+  padding: 0 12px;
+  box-shadow: 0 2px 8px rgba(29, 31, 36, 0.14);
+  pointer-events: auto;
+}
+.mapActions button:last-child {
+  border-color: #0066cc;
+  background: #0066cc;
+  color: #fff;
+}
+.mapActions button:last-child:hover {
+  border-color: #0054aa;
+  background: #0054aa;
+}
+.mapActions button:disabled,
+.mapActions button:disabled:hover {
+  border-color: #e5e5e8;
+  background: #f5f5f7;
+  color: #8a8a90;
+  box-shadow: none;
+  cursor: default;
+}
+.listPane {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  border-left: 1px solid #e5e5e8;
+  background: #fff;
+}
+.listHeading {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 16px;
+  border-bottom: 1px solid #e5e5e8;
+}
+.listHeading h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+.listHeading span {
+  overflow: hidden;
+  color: #6e6e73;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.locationMessage {
+  margin: 0;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e5e5e8;
+  color: #6e6e73;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.storeList {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.statusMessage {
+  padding: 24px 16px;
+  color: #6e6e73;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.retryButton {
+  min-height: 44px;
+  margin-top: 12px;
+  padding: 0 12px;
+  color: #0066cc;
+}
+.storeItem {
+  min-height: 88px;
+  padding: 0 16px 10px;
+  border-bottom: 1px solid #ededf0;
+  background: #fff;
+}
+.storeItem:hover {
+  background: #f8faff;
+}
+.storeItemSelected {
+  background: #f1f7ff;
+  box-shadow: inset 3px 0 #0066cc;
+}
+.storeSelect {
+  display: flex;
+  width: 100%;
+  min-height: 80px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 0 4px;
+  border: 0;
+  background: transparent;
+  color: #1d1d1f;
+  cursor: pointer;
+  text-align: left;
+}
+.storeSelect:focus-visible {
+  outline: 2px solid #0066cc;
+  outline-offset: 2px;
+}
+.storeName {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.storeAddress,
+.storeDistance {
+  max-width: 100%;
+  overflow: hidden;
+  color: #6e6e73;
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.directionsLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  color: #0066cc;
+  font-size: 12px;
+  font-weight: 550;
+  text-decoration: none;
+}
+.note {
+  flex: 0 0 auto;
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid #e5e5e8;
+  color: #6e6e73;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+@media (max-width: 700px) {
+  .dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+  .header {
+    min-height: 58px;
+    padding: 7px 12px 7px 16px;
+  }
+  .partner h2 {
+    font-size: 16px;
+  }
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(240px, 40dvh) minmax(0, 1fr);
+  }
+  .mapActions {
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+  }
+  .mapActions button {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  .listPane {
+    border-top: 1px solid #e5e5e8;
+    border-left: 0;
+  }
+  .listHeading {
+    min-height: 50px;
+    padding-inline: 14px;
+  }
+  .storeItem {
+    min-height: 82px;
+    padding-inline: 14px;
+  }
+  .note {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}

@@ -12,6 +12,9 @@ import {
   PartnerBenefitDetailResponse,
   PartnerBenefitItem,
   addFavorite,
+  getCarrierBenefitDisplayName,
+  getMembershipOptionLabel,
+  getSourceOptionLabel,
   getPartnerBenefitDetail,
   removeFavorite,
 } from '../apis/allBenefitsApi';
@@ -239,7 +242,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                             role="tab"
                             aria-selected={isSelected}
                             onClick={() => setSelectedCarrier(group.carrier)}
-                            className={`inline-flex min-h-8 items-center gap-2 rounded-full border px-3 text-body-4 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
+                            className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-body-4 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
                               isSelected
                                 ? 'border-purple02 bg-purple01/70 text-purple05'
                                 : 'border-grey02 bg-white text-grey05 hover:border-purple02 hover:text-purple05'
@@ -281,8 +284,18 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                       <header className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <h5 className="break-keep text-title-7 font-bold leading-snug text-grey07 max-md:text-title-8">
-                            {benefit.benefitName}
+                            {getCarrierBenefitDisplayName(benefit)}
                           </h5>
+                          {getMembershipOptionLabel(benefit) && (
+                            <span className="mt-1.5 inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold leading-none text-blue-700">
+                              {getMembershipOptionLabel(benefit)}
+                            </span>
+                          )}
+                          {getSourceOptionLabel(benefit) && (
+                            <p className="mt-1 text-xs leading-5 text-grey05">
+                              원본 선택명: {getSourceOptionLabel(benefit)}
+                            </p>
+                          )}
                           <p className="mt-1.5 inline-flex rounded-full bg-grey01 px-2.5 py-1 text-[11px] font-bold leading-none text-grey05">
                             {getUsageTypeLabel(benefit.usageType)}
                           </p>
@@ -294,7 +307,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                           }
                           disabled={pendingFavoriteId === benefit.benefitId}
                           onClick={() => void toggleFavorite(benefit)}
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-accentRose transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:opacity-50"
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-accentRose transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:opacity-50"
                         >
                           {benefit.isFavorite ? (
                             <TbStarFilled className="h-5 w-5" />
@@ -371,7 +384,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                                   'noopener,noreferrer'
                                 )
                               }
-                              className="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-[12px] border border-grey02 text-body-4 font-bold text-grey06 transition-colors hover:border-purple02 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                              className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[12px] border border-grey02 text-body-4 font-bold text-grey06 transition-colors hover:border-purple02 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
                             >
                               통신사 혜택 페이지
                               <TbExternalLink className="h-4 w-4" aria-hidden="true" />
@@ -395,7 +408,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
               showToast(`${partner.partnerName} 매장을 검색합니다`, 'info');
               onClose();
             }}
-            className="mx-auto flex h-11 w-full max-w-[240px] items-center justify-center gap-1.5 rounded-[12px] bg-purple04 text-body-3 font-bold text-white max-md:h-10 max-md:text-body-4"
+            className="mx-auto flex h-11 w-full max-w-[240px] items-center justify-center gap-1.5 rounded-[12px] bg-purple04 text-body-3 font-bold text-white max-md:text-body-4"
           >
             <TbMapPin className="h-4 w-4" aria-hidden="true" />
             지도에서 매장 찾기
