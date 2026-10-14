@@ -67,12 +67,7 @@ const SignUpAccountForm = ({
 
   return (
     <div ref={wrapperRef} className="flex w-full flex-col items-center">
-      <div className="mb-4 w-full max-w-[320px] text-left">
-        <p className="text-body-3 font-semibold text-grey06 max-md:text-body-2">계정 정보</p>
-        <p className="mt-1.5 text-body-5 text-grey04">이메일과 비밀번호를 설정해 주세요.</p>
-      </div>
-
-      <div className="w-full flex justify-center">
+      <div className="w-full">
         <EmailVerificationBox
           email={email}
           onChangeEmail={(value) => {
@@ -120,7 +115,7 @@ const SignUpAccountForm = ({
         label="다음"
         onClick={handleNext}
         variant={isValid ? 'default' : 'disabled'}
-        className="mt-[32px] max-md:mt-[28px] max-sm:mt-[28px]"
+        className="mt-[32px] !max-w-none max-md:mt-[28px] max-sm:mt-[28px]"
       />
     </div>
   );

@@ -25,7 +25,7 @@ const AccountDeletionPage = () => {
         <div className="max-w-[820px] space-y-8 wide:max-w-none">
           <p className="text-sm font-medium text-warmMuted">시행일: {lastUpdated}</p>
 
-          <section id="deletion-in-app" className="surface-card scroll-mt-6 bg-softMint p-5 sm:p-7">
+          <section id="deletion-in-app" className="scroll-mt-6 border-b border-warmBorder pb-7">
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink sm:text-xl">
               앱에서 직접 삭제하는 방법
             </h2>
@@ -37,7 +37,7 @@ const AccountDeletionPage = () => {
             </ol>
           </section>
 
-          <section id="deletion-email" className="surface-card scroll-mt-6 p-5 sm:p-7">
+          <section id="deletion-email" className="scroll-mt-6 border-b border-warmBorder pb-7">
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink sm:text-xl">
               이메일로 삭제를 요청하는 방법
             </h2>
@@ -45,7 +45,7 @@ const AccountDeletionPage = () => {
               앱에 로그인할 수 없거나 직접 탈퇴가 어려운 경우 아래 이메일로 계정 삭제를 요청해
               주세요. 요청 시 가입 이메일 주소를 함께 보내주시면 본인 확인 후 처리합니다.
             </p>
-            <div className="mt-4 rounded-xl border border-warmBorder bg-grey01 p-4">
+            <div className="mt-4 border-t border-warmBorder pt-3">
               <p className="text-sm font-bold text-grey05">계정 삭제 요청 이메일</p>
               <a
                 className="mt-1 inline-flex min-h-11 items-center rounded-md font-medium text-brandStrong underline underline-offset-4 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
@@ -56,7 +56,7 @@ const AccountDeletionPage = () => {
             </div>
           </section>
 
-          <section id="deletion-data" className="surface-card scroll-mt-6 p-5 sm:p-7">
+          <section id="deletion-data" className="scroll-mt-6 border-b border-warmBorder pb-7">
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink sm:text-xl">
               삭제되는 데이터
             </h2>
@@ -68,7 +68,7 @@ const AccountDeletionPage = () => {
             </ul>
           </section>
 
-          <section id="deletion-retention" className="surface-card scroll-mt-6 p-5 sm:p-7">
+          <section id="deletion-retention" className="scroll-mt-6 border-b border-warmBorder pb-7">
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink sm:text-xl">
               보관될 수 있는 데이터와 보관 기간
             </h2>
@@ -87,10 +87,7 @@ const AccountDeletionPage = () => {
             </ul>
           </section>
 
-          <section
-            id="deletion-processing"
-            className="surface-card scroll-mt-6 bg-brandSoft p-5 sm:p-7"
-          >
+          <section id="deletion-processing" className="scroll-mt-6 border-b border-warmBorder pb-7">
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink sm:text-xl">
               처리 안내
             </h2>

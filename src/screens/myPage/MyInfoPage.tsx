@@ -1,10 +1,9 @@
 // src/pages/myPage/MyInfoPage.tsx
 import { useCallback, useEffect, useState } from 'react';
 import UserInfoForm from '../../features/myPage/components/MyInfo/UserInfoForm';
-import MembershipInfo from '../../features/myPage/components/MyInfo/MembershipInfo';
 import PasswordChangeModal from '../../features/myPage/components/MyInfo/PasswordChangeModal';
 import UserDeleteModal from '../../features/myPage/components/MyInfo/UserDeleteModal';
-import MembershipProfileModal from '../../features/myPage/components/MyInfo/MembershipProfileModal';
+import MembershipProfileSelector from '../../components/membership/MembershipProfileSelector';
 import PhoneVerificationModal from '../../features/myPage/components/MyInfo/PhoneVerificationModal';
 import api from '../../apis/axiosInstance';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -14,7 +13,12 @@ import { AxiosError } from 'axios';
 import { useDispatch } from 'react-redux';
 import { logout, setLoginSuccess } from '../../store/authSlice';
 import { useNavigate } from '@/lib/navigation';
-import { isValidCarrierGradePair } from '../../utils/membership';
+import {
+  getCarrierLabel,
+  getMembershipGradeLabel,
+  isValidCarrierGradePair,
+} from '../../utils/membership';
+import { useLocation } from '@/lib/navigation';
 
 interface UserInfo {
   id: number;
@@ -47,12 +51,19 @@ export default function MyInfoPage() {
   const [password, setPassword] = useState('');
   const [accountDeleting, setAccountDeleting] = useState(false);
 
-  const [membershipModalOpen, setMembershipModalOpen] = useState(false);
+  const [draftCarrier, setDraftCarrier] = useState('');
+  const [draftGrade, setDraftGrade] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [phoneVerificationModalOpen, setPhoneVerificationModalOpen] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const section = pathname.endsWith('/membership')
+    ? 'membership'
+    : pathname.endsWith('/settings')
+      ? 'settings'
+      : 'profile';
 
   // ✅ 사용자 정보 조회
   const fetchUser = useCallback(async () => {
@@ -74,6 +85,12 @@ export default function MyInfoPage() {
     fetchUser();
   }, [fetchUser]);
 
+  useEffect(() => {
+    if (!user) return;
+    setDraftCarrier(user.carrier ?? '');
+    setDraftGrade(user.membershipGradeCode ?? user.membershipGrade ?? '');
+  }, [user]);
+
   const handlePhoneVerificationComplete = useCallback(async () => {
     await fetchUser();
     setPhoneVerificationModalOpen(false);
@@ -81,11 +98,15 @@ export default function MyInfoPage() {
 
   const pageHeader = (
     <header>
-      <h1 className="text-title-4 font-semibold text-ink max-md:text-title-5">
-        회원 정보와 멤버십
+      <h1 className="text-[32px] font-bold leading-tight tracking-[-0.035em] text-[#202124] max-md:text-2xl">
+        {section === 'membership' ? '멤버십' : section === 'settings' ? '설정' : '프로필'}
       </h1>
-      <p className="mt-1.5 text-sm leading-6 text-grey05">
-        계정 정보를 확인하고, 혜택을 볼 멤버십 프로필을 설정할 수 있어요.
+      <p className="mt-2 text-sm leading-6 text-[#686b73]">
+        {section === 'membership'
+          ? '혜택을 볼 통신사와 멤버십 등급을 설정할 수 있어요.'
+          : section === 'settings'
+            ? '계정 보안과 탈퇴 절차를 관리할 수 있어요.'
+            : '가입할 때 등록한 회원 정보를 확인할 수 있어요.'}
       </p>
     </header>
   );
@@ -144,7 +165,6 @@ export default function MyInfoPage() {
         membershipGradeCode,
       });
       showToast('멤버십 프로필이 저장되었습니다.', 'success');
-      setMembershipModalOpen(false);
       setUser((prev) =>
         prev
           ? {
@@ -250,16 +270,58 @@ export default function MyInfoPage() {
   };
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-5 pb-8 max-md:px-4">
+    <div className="flex min-w-0 flex-1 flex-col gap-5 pb-8">
       {pageHeader}
-      <div className="flex flex-col gap-5 wide:grid wide:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] wide:items-start">
-        <MembershipInfo
-          carrier={user.carrier}
-          grade={user.membershipGradeCode ?? user.membershipGrade}
-          verified={user.membershipVerified}
-          saving={profileSaving}
-          onChangeProfileClick={() => setMembershipModalOpen(true)}
-        />
+      {section === 'membership' ? (
+        <section
+          aria-labelledby="membership-profile-heading"
+          className="rounded-2xl border border-[#e8e9ee] bg-white p-6 max-md:p-5"
+        >
+          <h2 id="membership-profile-heading" className="text-xl font-bold text-[#202124]">
+            혜택을 찾을 멤버십 선택
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-[#686b73]">
+            선택한 통신사와 등급을 혜택 목록에 적용합니다. 이 정보는 통신사 실인증이 아닙니다.
+          </p>
+          <div className="mt-6">
+            <MembershipProfileSelector
+              carrier={draftCarrier}
+              membershipGradeCode={draftGrade}
+              variant="cards"
+              onCarrierChange={setDraftCarrier}
+              onGradeChange={setDraftGrade}
+              className="gap-5"
+              selectClassName="!min-h-12 rounded-xl focus:border-[#6154d9] focus:ring-[#6154d9]/20"
+            />
+          </div>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              disabled={!draftCarrier || !draftGrade || profileSaving}
+              onClick={() => void handleMembershipProfileSave(draftCarrier, draftGrade)}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#6154d9] px-5 text-sm font-bold text-white transition-colors hover:bg-[#5144c7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {profileSaving ? '저장 중…' : '선택 적용'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDraftCarrier(user.carrier ?? '');
+                setDraftGrade(user.membershipGradeCode ?? user.membershipGrade ?? '');
+              }}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e8e9ee] px-5 text-sm font-semibold text-[#34343b] hover:bg-[#f7f8fa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+            >
+              취소
+            </button>
+            <p className="ml-auto text-sm text-[#686b73] max-md:w-full">
+              현재:{' '}
+              {user.carrier && (user.membershipGradeCode || user.membershipGrade)
+                ? `${getCarrierLabel(user.carrier)} ${getMembershipGradeLabel(user.membershipGradeCode ?? user.membershipGrade)}`
+                : '선택 안 됨'}
+            </p>
+          </div>
+        </section>
+      ) : (
         <UserInfoForm
           nickname={user.nickname}
           gender={user.gender}
@@ -272,50 +334,46 @@ export default function MyInfoPage() {
           onChangePasswordClick={() => setIsPwModalOpen(true)}
           onPhoneVerificationClick={() => setPhoneVerificationModalOpen(true)}
           onDeleteClick={() => setDeleteModalOpen(true)}
+          showProfile={section === 'profile'}
+          showSecurity={section === 'settings'}
         />
-      </div>
-      <MembershipProfileModal
-        isOpen={membershipModalOpen}
-        carrier={user.carrier}
-        membershipGradeCode={user.membershipGradeCode ?? user.membershipGrade}
-        saving={profileSaving}
-        onClose={() => {
-          if (!profileSaving) {
-            setMembershipModalOpen(false);
-          }
-        }}
-        onSave={handleMembershipProfileSave}
-      />
+      )}
       {/* 비밀번호 변경 */}
-      <PasswordChangeModal
-        isOpen={isPwModalOpen}
-        submitting={passwordChanging}
-        currentPassword={currentPw}
-        newPassword={newPw}
-        confirmPassword={confirmPw}
-        onCurrentChange={setCurrentPw}
-        onNewChange={setNewPw}
-        onConfirmChange={setConfirmPw}
-        onCancel={closePasswordChangeModal}
-        onSubmit={handlePasswordChange}
-      />
+      {section === 'settings' && (
+        <PasswordChangeModal
+          isOpen={isPwModalOpen}
+          submitting={passwordChanging}
+          currentPassword={currentPw}
+          newPassword={newPw}
+          confirmPassword={confirmPw}
+          onCurrentChange={setCurrentPw}
+          onNewChange={setNewPw}
+          onConfirmChange={setConfirmPw}
+          onCancel={closePasswordChangeModal}
+          onSubmit={handlePasswordChange}
+        />
+      )}
       {/* 회원탈퇴 */}
-      <UserDeleteModal
-        isOpen={deleteModalOpen}
-        submitting={accountDeleting}
-        password={password}
-        requiresPassword={user.hasLocalPassword !== false}
-        onPasswordChange={setPassword}
-        onCancel={closeUserDeleteModal}
-        onDelete={handleUserDelete}
-      />
-      <PhoneVerificationModal
-        isOpen={phoneVerificationModalOpen}
-        userId={user.id}
-        phoneNumber={user.phoneNumber}
-        onClose={() => setPhoneVerificationModalOpen(false)}
-        onVerified={handlePhoneVerificationComplete}
-      />
+      {section === 'settings' && (
+        <UserDeleteModal
+          isOpen={deleteModalOpen}
+          submitting={accountDeleting}
+          password={password}
+          requiresPassword={user.hasLocalPassword !== false}
+          onPasswordChange={setPassword}
+          onCancel={closeUserDeleteModal}
+          onDelete={handleUserDelete}
+        />
+      )}
+      {section === 'settings' && (
+        <PhoneVerificationModal
+          isOpen={phoneVerificationModalOpen}
+          userId={user.id}
+          phoneNumber={user.phoneNumber}
+          onClose={() => setPhoneVerificationModalOpen(false)}
+          onVerified={handlePhoneVerificationComplete}
+        />
+      )}
     </div>
   );
 }

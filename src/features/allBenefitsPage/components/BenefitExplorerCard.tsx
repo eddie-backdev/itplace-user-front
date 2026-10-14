@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { TbChevronRight } from 'react-icons/tb';
+import { TbBookmark, TbBookmarkFilled, TbChevronRight } from 'react-icons/tb';
 import SafeImage from '@/components/SafeImage';
 import type { PartnerBenefitItem } from '@/features/allBenefitsPage/apis/allBenefitsApi';
 import { type CarrierCode, getCarrierLabel } from '@/utils/membership';
-import { getPartnerBenefitPreview, getPartnerBenefitPreviews } from '@/utils/benefitPreview';
+import { getPartnerBenefitPreview } from '@/utils/benefitPreview';
 import styles from './BenefitExplorerCard.module.css';
 
 type BenefitExplorerCardProps = {
@@ -11,8 +11,10 @@ type BenefitExplorerCardProps = {
   href: string;
   carrier?: CarrierCode;
   grade?: string;
-  selected?: boolean;
-  onSelect?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
+  onPreview?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
+  isFavorite?: boolean;
+  favoriteBusy?: boolean;
+  onToggleFavorite?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
 export default function BenefitExplorerCard({
@@ -20,69 +22,69 @@ export default function BenefitExplorerCard({
   href,
   carrier,
   grade,
-  selected = false,
-  onSelect,
+  onPreview,
+  isFavorite = false,
+  favoriteBusy = false,
+  onToggleFavorite,
 }: BenefitExplorerCardProps) {
-  const carrierPreviews =
-    !carrier && !grade && partner.carriers.length > 1 ? getPartnerBenefitPreviews(partner) : null;
-  const preview = carrierPreviews ? null : getPartnerBenefitPreview(partner, carrier, grade);
+  const preview =
+    getPartnerBenefitPreview(partner, carrier, grade) ?? getPartnerBenefitPreview(partner);
+  const otherCarrierCount = preview
+    ? new Set(
+        partner.carriers.filter(
+          (code) => code !== preview.carrier && getPartnerBenefitPreview(partner, code)
+        )
+      ).size
+    : 0;
 
   return (
-    <Link
-      href={href}
-      prefetch={false}
-      onClick={onSelect}
-      aria-current={selected ? 'true' : undefined}
-      className={`${styles.card}${selected ? ` ${styles.selected}` : ''}`}
-    >
-      <div className={styles.header}>
-        <span className={styles.logo} aria-hidden="true">
-          <SafeImage
-            src={partner.image}
-            alt=""
-            width={64}
-            height={64}
-            fallbackLabel={partner.partnerName}
-            loading="lazy"
-            className={styles.logoImage}
-          />
+    <article className={styles.card}>
+      <Link href={href} prefetch={false} onClick={onPreview} className={styles.detailLink}>
+        <span className={styles.brandGroup}>
+          <span className={styles.logo} aria-hidden="true">
+            <SafeImage
+              src={partner.image}
+              alt=""
+              width={64}
+              height={64}
+              fallbackLabel={partner.partnerName}
+              loading="lazy"
+              className={styles.logoImage}
+            />
+          </span>
+          <span className={styles.partnerCopy}>
+            <span className={styles.partnerName}>{partner.partnerName}</span>
+            <span className={styles.metadata}>
+              {getCarrierLabel(preview?.carrier ?? carrier ?? partner.carriers[0])} ·{' '}
+              {partner.category ?? '분야 미분류'}
+              {otherCarrierCount > 0 ? ` · 다른 통신사 혜택 ${otherCarrierCount}개` : ''}
+            </span>
+          </span>
         </span>
-        <h3 className={styles.partnerName}>{partner.partnerName}</h3>
-        <TbChevronRight className={styles.arrow} size={18} aria-hidden="true" />
-      </div>
-
-      <div className={styles.details}>
-        {carrierPreviews ? (
-          <div className={styles.previewRows}>
-            {carrierPreviews.map((item) => {
-              const summary = [item.grades, item.title, item.condition].filter(Boolean).join(' · ');
-              return (
-                <div key={item.carrier} className={styles.previewRow} title={summary}>
-                  <span className={styles.previewCarrier}>{getCarrierLabel(item.carrier)}</span>
-                  <span className={styles.previewSummary}>{summary}</span>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <>
-            <p className={styles.headline} title={preview?.title ?? '혜택 조건 확인'}>
-              {preview?.title ?? '혜택 조건 확인'}
-            </p>
-            <p className={styles.metadata}>
-              {preview
-                ? `${getCarrierLabel(preview.carrier)} · ${preview.grades}`
-                : carrier
-                  ? `${getCarrierLabel(carrier)} · 상세에서 확인`
-                  : `${partner.carriers.map(getCarrierLabel).join(' · ')} · 상세에서 확인`}
-            </p>
-          </>
-        )}
-      </div>
-
-      {!carrierPreviews ? (
-        <p className={styles.limit}>{preview?.limit || '이용 조건은 상세에서 확인'}</p>
-      ) : null}
-    </Link>
+        <span className={styles.benefitCopy}>
+          <span className={styles.headline} title={preview?.title ?? '혜택 정보 확인'}>
+            {preview?.title ?? '혜택 정보 확인'}
+          </span>
+          <span className={styles.condition}>
+            {preview?.condition ||
+              (preview ? `${preview.grades} · ${preview.usage}` : '혜택 조건은 상세에서 확인')}
+          </span>
+        </span>
+      </Link>
+      <span className={styles.limit}>{preview?.limit || '이용 제한 상세 확인'}</span>
+      <button
+        type="button"
+        className={styles.favoriteButton}
+        onClick={onToggleFavorite}
+        disabled={favoriteBusy || !onToggleFavorite}
+        aria-label={`${partner.partnerName} 혜택 ${isFavorite ? '저장 취소' : '저장'}`}
+        aria-pressed={isFavorite}
+      >
+        {isFavorite ? <TbBookmarkFilled aria-hidden="true" /> : <TbBookmark aria-hidden="true" />}
+      </button>
+      <Link href={href} prefetch={false} onClick={onPreview} className={styles.openDetail}>
+        자세히 <TbChevronRight size={16} aria-hidden="true" />
+      </Link>
+    </article>
   );
 }

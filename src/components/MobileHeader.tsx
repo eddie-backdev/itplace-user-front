@@ -25,7 +25,7 @@ const menus = [
   { label: '주변 매장', path: '/map' },
   { label: '전체 혜택', path: '/benefits' },
   { label: '즐겨찾기', path: '/mypage/favorites' },
-  { label: '마이', path: '/mypage/activity', match: '/mypage' },
+  { label: '마이', path: '/mypage', match: '/mypage' },
   { label: '회원 정보', path: '/mypage/info', match: '/mypage/info' },
 ];
 
@@ -182,7 +182,7 @@ const MobileHeader = ({
           >
             <TbMenu2 className={`h-5 w-5 ${iconColor ?? 'text-ink'}`} />
           </button>
-          {title && (
+          {title && title !== '잇플레이스' && (
             <span className="flex h-full items-center text-sm font-medium leading-none text-ink">
               {title}
             </span>

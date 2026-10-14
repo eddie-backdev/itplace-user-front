@@ -7,6 +7,7 @@ export type AuthFormStep =
   | 'signUpAccount'
   | 'signUpFinal'
   | 'findPassword'
+  | 'findId'
   | 'oauthIntegration'
   | 'oauthLink';
 
@@ -28,5 +29,6 @@ export const AuthTransition = () => {
     goToSignUp: () => setFormStep('signUpAccount'),
     goToSignUpFinal: () => setFormStep('signUpFinal'),
     goToFindPassword: () => setFormStep('findPassword'),
+    goToFindId: () => setFormStep('findId'),
   };
 };

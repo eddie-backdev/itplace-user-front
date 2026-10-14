@@ -1,35 +1,25 @@
 'use client';
 
-import {
-  TbBook,
-  TbBuildingCarousel,
-  TbHeart,
-  TbHome,
-  TbLayoutGrid,
-  TbMovie,
-  TbPlane,
-  TbSearch,
-  TbShoppingBag,
-  TbToolsKitchen2,
-} from 'react-icons/tb';
-import type { IconType } from 'react-icons';
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type FormEvent,
-  type MouseEvent,
-} from 'react';
+import { TbBookmark, TbSearch } from 'react-icons/tb';
+import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
-import { Link } from '@/lib/navigation';
+import { Link, useNavigate } from '@/lib/navigation';
 import type { RootState } from '@/store';
 import { useClientReady } from '@/hooks/useClientReady';
 import MobileHeader from '@/components/MobileHeader';
+import MembershipSelectionDialog from '@/components/membership/MembershipSelectionDialog';
 import BenefitExplorerCard from './components/BenefitExplorerCard';
 import BenefitExplorerDetail from './components/BenefitExplorerDetail';
-import { getPartnerBenefits, type PartnerBenefitResponse } from './apis/allBenefitsApi';
+import {
+  getPartnerBenefits,
+  type PartnerBenefitItem,
+  type PartnerBenefitResponse,
+} from './apis/allBenefitsApi';
+import { addFavorite, removeFavorite } from './apis/allBenefitsApi';
+import { getFavoritesList } from '@/features/mainPage/api/favoritesListApi';
+import { getLoginHref } from '@/features/loginPage/utils/returnTo.mjs';
+import { showToast } from '@/utils/toast';
 import {
   CARRIER_OPTIONS,
   getCarrierLabel,
@@ -43,26 +33,6 @@ import { getPartnerBenefitPath } from '@/utils/partnerSeo';
 import styles from './BenefitsExplorer.module.css';
 
 const ITEMS_PER_PAGE = 15;
-const CATEGORY_ICONS: Record<string, IconType> = {
-  전체: TbLayoutGrid,
-  엑티비티: TbBuildingCarousel,
-  '뷰티/건강': TbHeart,
-  쇼핑: TbShoppingBag,
-  '생활/편의': TbHome,
-  푸드: TbToolsKitchen2,
-  '문화/여가': TbMovie,
-  교육: TbBook,
-  '여행/교통': TbPlane,
-};
-const DETAIL_BREAKPOINT = '(min-width: 1280px)';
-const subscribeToDetailBreakpoint = (callback: () => void) => {
-  const query = window.matchMedia(DETAIL_BREAKPOINT);
-  query.addEventListener('change', callback);
-  return () => query.removeEventListener('change', callback);
-};
-const getDetailBreakpointSnapshot = () => window.matchMedia(DETAIL_BREAKPOINT).matches;
-const getDetailBreakpointServerSnapshot = () => false;
-
 type AllBenefitsLayoutProps = {
   initialData?: PartnerBenefitResponse | null;
   initialRequestKey?: string;
@@ -74,6 +44,7 @@ export default function AllBenefitsLayout({
   initialRequestKey,
 }: AllBenefitsLayoutProps) {
   const searchParams = useSearchParams();
+  const navigate = useNavigate();
   const keyword = searchParams.get('q')?.trim().slice(0, 100) ?? '';
   const carrierValue = searchParams.get('carrier')?.trim();
   const selectedCarrier = isCarrierCode(carrierValue) ? carrierValue : undefined;
@@ -105,6 +76,12 @@ export default function AllBenefitsLayout({
   const waitingForMembership = membershipRequested && !isAuthReady;
   const effectiveCarrier = membershipOnly ? profileCarrier : selectedCarrier;
   const effectiveGrade = membershipOnly ? profileGrade : selectedGrade;
+  const dialogCarrier = effectiveCarrier ?? (isCarrierCode(user?.carrier) ? user.carrier : 'SKT');
+  const dialogGrade =
+    effectiveGrade ??
+    (profileCarrier === dialogCarrier && isValidCarrierGradePair(dialogCarrier, profileGrade)
+      ? profileGrade
+      : (getMembershipGradeOptions(dialogCarrier)[0]?.code ?? ''));
   const requestKey = [
     keyword,
     effectiveCarrier,
@@ -113,11 +90,6 @@ export default function AllBenefitsLayout({
     effectiveGrade,
   ].join('|');
   const hasMatchingInitialData = Boolean(initialData && initialRequestKey === requestKey);
-  const hasDesktopDetail = useSyncExternalStore(
-    subscribeToDetailBreakpoint,
-    getDetailBreakpointSnapshot,
-    getDetailBreakpointServerSnapshot
-  );
 
   const [result, setResult] = useState<{
     data: PartnerBenefitResponse | null;
@@ -128,6 +100,90 @@ export default function AllBenefitsLayout({
   });
   const [retry, setRetry] = useState(0);
   const lastLoadedKeyRef = useRef(hasMatchingInitialData ? requestKey : null);
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(() => new Set());
+  const [favoriteStatus, setFavoriteStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(null);
+  const [isMembershipDialogOpen, setIsMembershipDialogOpen] = useState(false);
+  const [previewPartner, setPreviewPartner] = useState<PartnerBenefitItem | null>(null);
+  const previewDialogRef = useRef<HTMLDialogElement>(null);
+  const openedQueryPartnerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const dialog = previewDialogRef.current;
+    if (!dialog) return;
+    if (previewPartner && !dialog.open) dialog.showModal();
+    else if (!previewPartner && dialog.open) dialog.close();
+  }, [previewPartner]);
+
+  useEffect(() => {
+    if (!requestedPartnerId) {
+      openedQueryPartnerRef.current = null;
+      if (previewPartner) setPreviewPartner(null);
+      return;
+    }
+    if (openedQueryPartnerRef.current === requestedPartnerId) return;
+    const partner = result.data?.content.find(({ partnerId }) => partnerId === requestedPartnerId);
+    if (partner) {
+      openedQueryPartnerRef.current = requestedPartnerId;
+      setPreviewPartner(partner);
+    }
+  }, [previewPartner, requestedPartnerId, result.data]);
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+    if (!isLoggedIn) {
+      setFavoriteIds(new Set());
+      setFavoriteStatus('ready');
+      return;
+    }
+    let cancelled = false;
+    setFavoriteStatus('loading');
+    void getFavoritesList({}).then(
+      (favorites) => {
+        if (cancelled) return;
+        setFavoriteIds(new Set(favorites.map(({ benefitId }) => benefitId)));
+        setFavoriteStatus('ready');
+      },
+      () => {
+        if (!cancelled) setFavoriteStatus('error');
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthReady, isLoggedIn]);
+
+  const setFavoriteState = (benefitId: number, isFavorite: boolean) => {
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      if (isFavorite) next.add(benefitId);
+      else next.delete(benefitId);
+      return next;
+    });
+  };
+
+  const toggleFavorite = async (benefitId: number) => {
+    if (pendingFavoriteId !== null) return;
+    if (!isAuthReady || !isLoggedIn) {
+      navigate(getLoginHref(`${window.location.pathname}${window.location.search}`));
+      return;
+    }
+    if (favoriteStatus !== 'ready') {
+      showToast('저장 상태를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.', 'info');
+      return;
+    }
+    const wasFavorite = favoriteIds.has(benefitId);
+    setPendingFavoriteId(benefitId);
+    try {
+      if (wasFavorite) await removeFavorite(benefitId);
+      else await addFavorite(benefitId);
+      setFavoriteState(benefitId, !wasFavorite);
+    } catch {
+      showToast('관심 혜택을 변경하지 못했어요. 잠시 후 다시 시도해 주세요.', 'error');
+    } finally {
+      setPendingFavoriteId(null);
+    }
+  };
 
   useEffect(() => {
     if (waitingForMembership) return;
@@ -187,6 +243,26 @@ export default function AllBenefitsLayout({
     window.history.pushState(null, '', href);
   };
 
+  const openPreview = (partner: PartnerBenefitItem) => {
+    openedQueryPartnerRef.current = partner.partnerId;
+    window.history.pushState(null, '', hrefFor({ partner: String(partner.partnerId) }));
+    setPreviewPartner(partner);
+  };
+
+  const closePreview = () => {
+    setPreviewPartner(null);
+    const next = new URLSearchParams(window.location.search);
+    if (next.has('partner')) {
+      next.delete('partner');
+      const query = next.toString();
+      window.history.replaceState(
+        null,
+        '',
+        query ? `${window.location.pathname}?${query}` : window.location.pathname
+      );
+    }
+  };
+
   const followFilter = (
     event: MouseEvent<HTMLAnchorElement>,
     changes: QueryChanges,
@@ -197,7 +273,10 @@ export default function AllBenefitsLayout({
     event.preventDefault();
     updateQuery(changes);
     if (scrollToResults && window.matchMedia('(max-width: 767px)').matches) {
-      document.getElementById('benefit-results-title')?.closest('section')?.scrollIntoView({ block: 'start' });
+      document
+        .getElementById('benefit-results-title')
+        ?.closest('section')
+        ?.scrollIntoView({ block: 'start' });
     }
   };
 
@@ -243,8 +322,6 @@ export default function AllBenefitsLayout({
       : isLoggedIn
         ? '통신사와 등급을 설정하면 내 조건으로 볼 수 있어요.'
         : '통신사와 등급을 선택해 혜택을 살펴보세요.';
-  const selectedPartner =
-    partners.find((partner) => partner.partnerId === requestedPartnerId) ?? partners[0] ?? null;
 
   const pageLink = (page: number, label: string, disabled = false) =>
     disabled ? (
@@ -278,23 +355,26 @@ export default function AllBenefitsLayout({
   return (
     <div className={styles.page}>
       <div className={styles.mobileHeader}>
-        <MobileHeader title="전체 혜택" />
+        <MobileHeader title="혜택찾기" />
       </div>
       <div className={styles.content}>
         <header className={styles.header}>
           <div className={styles.titleGroup}>
-            <h1 className={styles.title}>전체 혜택</h1>
-            <p role="status" aria-live="polite" className={styles.resultCount}>
-              {waitingForMembership
-                ? '내 멤버십 확인 중…'
-                : isLoading
-                  ? '혜택 불러오는 중…'
-                  : result.status === 'error'
-                    ? '목록을 불러오지 못했어요.'
-                    : `총 ${numberFormatter.format(totalElements)}개${totalPages > 1 ? ` · ${currentPage} / ${totalPages}페이지` : ''}`}
+            <h1 className={styles.title}>혜택찾기</h1>
+            <p className={styles.pageDescription}>
+              통신사와 등급, 필요한 조건으로 혜택을 찾아보세요.
             </p>
           </div>
           <div className={styles.headerActions}>
+            <button
+              type="button"
+              className={styles.membershipButton}
+              onClick={() => setIsMembershipDialogOpen(true)}
+            >
+              {effectiveCarrier && effectiveGrade
+                ? `${getCarrierLabel(effectiveCarrier)} · ${getMembershipGradeLabel(effectiveGrade)}`
+                : '멤버십 선택'}
+            </button>
             <details
               className={styles.additionalFilters}
               onKeyDown={(event) => {
@@ -305,53 +385,11 @@ export default function AllBenefitsLayout({
               }}
             >
               <summary>
-                추가 필터
-                {effectiveGrade ? ` · ${getMembershipGradeLabel(effectiveGrade)}` : ''}
-                {membershipOnly ? ' · 내 멤버십 적용 중' : ''}
+                <TbBookmark aria-hidden="true" size={15} />
+                {membershipOnly ? '내 멤버십 적용 중' : '내 멤버십'}
               </summary>
               <div className={styles.advancedPanel}>
-                <h2>등급과 내 멤버십</h2>
-                {effectiveCarrier ? (
-                  <form
-                    action="/benefits"
-                    method="get"
-                    className={styles.gradeControl}
-                    aria-label={`${getCarrierLabel(effectiveCarrier)} 멤버십 등급 필터`}
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      const submittedGrade = new FormData(event.currentTarget).get('grade');
-                      updateQuery({
-                        carrier: effectiveCarrier,
-                        grade: typeof submittedGrade === 'string' ? submittedGrade || null : null,
-                        membership: null,
-                        page: null,
-                      });
-                    }}
-                  >
-                    <input type="hidden" name="carrier" value={effectiveCarrier} />
-                    {keyword ? <input type="hidden" name="q" value={keyword} /> : null}
-                    {selectedCategory !== '전체' ? (
-                      <input type="hidden" name="category" value={selectedCategory} />
-                    ) : null}
-                    <label htmlFor="benefits-grade">등급</label>
-                    <select
-                      key={`${effectiveCarrier}:${effectiveGrade ?? ''}`}
-                      id="benefits-grade"
-                      name="grade"
-                      defaultValue={effectiveGrade ?? ''}
-                      onChange={(event) => event.currentTarget.form?.requestSubmit()}
-                    >
-                      <option value="">모든 등급</option>
-                      {getMembershipGradeOptions(effectiveCarrier).map((grade) => (
-                        <option key={grade.code} value={grade.code}>
-                          {grade.label}
-                        </option>
-                      ))}
-                    </select>
-                  </form>
-                ) : (
-                  <p className={styles.filterHint}>통신사를 선택하면 등급별 혜택을 볼 수 있어요.</p>
-                )}
+                <h2>내 멤버십으로 보기</h2>
                 <div className={styles.membershipBody}>
                   {isLoggedIn ? (
                     <>
@@ -380,11 +418,9 @@ export default function AllBenefitsLayout({
                   ) : (
                     <p>{profileDescription}</p>
                   )}
-                  {effectiveGrade ? (
-                    <p className={styles.membershipNote}>
-                      선택 등급의 혜택입니다. 횟수·기간·매장 조건은 상세에서 확인하세요.
-                    </p>
-                  ) : null}
+                  <p className={styles.membershipNote}>
+                    횟수·기간·매장 조건은 상세에서 확인하세요.
+                  </p>
                 </div>
               </div>
             </details>
@@ -403,61 +439,67 @@ export default function AllBenefitsLayout({
 
         <section aria-label="혜택 필터" className={styles.filters}>
           <div className={styles.filterToolbar}>
-            <nav aria-label="통신사 필터" className={styles.carrierTabs}>
-              {[{ code: undefined, label: '전체' }, ...CARRIER_OPTIONS].map((carrier) => {
-                const selected = effectiveCarrier === carrier.code;
-                const changes = {
-                  carrier: carrier.code ?? null,
-                  grade: null,
-                  membership: null,
-                  page: null,
-                };
-                return (
-                  <Link
-                    key={carrier.code ?? 'all'}
-                    to={hrefFor(changes)}
-                    prefetch={false}
-                    onClick={(event) => followFilter(event, changes)}
-                    aria-current={selected ? 'true' : undefined}
-                    aria-label={carrier.code ? `${carrier.label} 통신사` : '모든 통신사'}
-                    className={`${styles.carrierTab} ${!carrier.code ? styles.allFilterTab : ''} ${selected ? styles.carrierTabSelected : ''}`}
-                  >
-                    {carrier.code ? carrier.label : '모든 통신사'}
-                  </Link>
-                );
-              })}
-            </nav>
-            <nav aria-label="카테고리 필터" className={styles.categoryTabs}>
-              {CATEGORIES.map((category) => {
-                const selected = selectedCategory === category.id;
-                const CategoryIcon = CATEGORY_ICONS[category.id] ?? TbLayoutGrid;
-                const isAll = category.id === '전체';
-                const changes = {
-                  category: category.id === '전체' ? null : category.id,
-                  page: null,
-                };
-                return (
-                  <Link
-                    key={category.id}
-                    to={hrefFor(changes)}
-                    prefetch={false}
-                    onClick={(event) => followFilter(event, changes)}
-                    aria-current={selected ? 'true' : undefined}
-                    aria-label={isAll ? '모든 카테고리' : undefined}
-                    className={`${styles.categoryTab} ${isAll ? styles.allFilterTab : ''} ${selected ? styles.categoryTabSelected : ''}`}
-                  >
-                    {isAll ? (
-                      <span>모든 카테고리</span>
-                    ) : (
-                      <>
-                        <CategoryIcon size={16} aria-hidden="true" />
-                        <span>{category.name}</span>
-                      </>
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
+            <div className={styles.selectFilters}>
+              <label className={styles.selectFilter}>
+                <span className={styles.selectLabel}>통신사</span>
+                <select
+                  value={effectiveCarrier ?? ''}
+                  aria-label="통신사 필터"
+                  onChange={(event) =>
+                    updateQuery({
+                      carrier: event.target.value || null,
+                      grade: null,
+                      membership: null,
+                      page: null,
+                    })
+                  }
+                >
+                  <option value="">전체 통신사</option>
+                  {CARRIER_OPTIONS.map((carrier) => (
+                    <option key={carrier.code} value={carrier.code}>
+                      {carrier.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className={styles.selectFilter}>
+                <span className={styles.selectLabel}>등급</span>
+                <select
+                  value={effectiveGrade ?? ''}
+                  disabled={!effectiveCarrier}
+                  aria-label="멤버십 등급 필터"
+                  onChange={(event) =>
+                    updateQuery({ grade: event.target.value || null, membership: null, page: null })
+                  }
+                >
+                  <option value="">모든 등급</option>
+                  {effectiveCarrier
+                    ? getMembershipGradeOptions(effectiveCarrier).map((grade) => (
+                        <option key={grade.code} value={grade.code}>
+                          {grade.label}
+                        </option>
+                      ))
+                    : null}
+                </select>
+              </label>
+              <label className={styles.selectFilter}>
+                <span className={styles.selectLabel}>분야</span>
+                <select
+                  value={selectedCategory === '전체' ? '' : selectedCategory}
+                  aria-label="혜택 분야 필터"
+                  onChange={(event) =>
+                    updateQuery({ category: event.target.value || null, page: null })
+                  }
+                >
+                  <option value="">모든 분야</option>
+                  {CATEGORIES.filter((category) => category.id !== '전체').map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <form
               action="/benefits"
               method="get"
@@ -498,11 +540,6 @@ export default function AllBenefitsLayout({
         </section>
 
         <section aria-labelledby="benefit-results-title" className={styles.resultsSection}>
-          {hasDesktopDetail && selectedPartner ? (
-            <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-              {selectedPartner.partnerName} 혜택을 선택했습니다.
-            </p>
-          ) : null}
           <div className={styles.resultsHeading}>
             <h2 id="benefit-results-title" className="sr-only">
               {membershipOnly
@@ -513,7 +550,32 @@ export default function AllBenefitsLayout({
                     ? `“${keyword}” 검색 결과`
                     : '혜택 제휴처'}
             </h2>
+            <div className={styles.resultSummary}>
+              <p role="status" aria-live="polite">
+                {waitingForMembership
+                  ? '내 멤버십 확인 중…'
+                  : isLoading
+                    ? '혜택 불러오는 중…'
+                    : result.status === 'error'
+                      ? '목록을 불러오지 못했어요.'
+                      : `${numberFormatter.format(totalElements)}개 브랜드 · 현재 ${partners.length}개 제휴처`}
+              </p>
+              <div className={styles.activeFilters} aria-label="적용 중인 필터">
+                {effectiveCarrier ? <span>{getCarrierLabel(effectiveCarrier)}</span> : null}
+                {effectiveGrade ? <span>{getMembershipGradeLabel(effectiveGrade)}</span> : null}
+                {selectedCategory !== '전체' ? (
+                  <span>{CATEGORIES.find(({ id }) => id === selectedCategory)?.name}</span>
+                ) : null}
+                {membershipOnly ? <span>내 멤버십</span> : null}
+              </div>
+            </div>
           </div>
+          {favoriteStatus === 'error' ? (
+            <p role="status" className={styles.favoriteStatusMessage}>
+              저장 상태를 불러오지 못해 혜택 저장을 잠시 사용할 수 없어요. 페이지를 새로고침해
+              주세요.
+            </p>
+          ) : null}
           <div className={styles.explorer}>
             <div className={styles.listColumn}>
               {isLoading ? (
@@ -539,6 +601,21 @@ export default function AllBenefitsLayout({
                 <div id="benefit-card-scroll" className={styles.cardGrid}>
                   {partners.map((partner) => {
                     const href = detailHrefFor(partner.partnerId, partner.partnerName);
+                    const previews = partner.previews ?? [];
+                    const candidates = effectiveCarrier
+                      ? previews.filter((preview) => preview.carrier === effectiveCarrier)
+                      : previews;
+                    const gradeCandidates = effectiveGrade
+                      ? candidates.filter((preview) =>
+                          preview.tierBenefits.some(
+                            (tier) => tier.isAll || tier.grade === effectiveGrade
+                          )
+                        )
+                      : candidates;
+                    const favoriteBenefitId =
+                      gradeCandidates[0]?.benefitId ??
+                      candidates[0]?.benefitId ??
+                      previews[0]?.benefitId;
                     return (
                       <BenefitExplorerCard
                         key={partner.partnerId}
@@ -546,23 +623,32 @@ export default function AllBenefitsLayout({
                         href={href}
                         carrier={effectiveCarrier}
                         grade={effectiveGrade}
-                        selected={
-                          hasDesktopDetail && partner.partnerId === selectedPartner?.partnerId
+                        isFavorite={favoriteBenefitId ? favoriteIds.has(favoriteBenefitId) : false}
+                        favoriteBusy={
+                          favoriteStatus !== 'ready' ||
+                          (favoriteBenefitId !== undefined &&
+                            pendingFavoriteId === favoriteBenefitId)
                         }
-                        onSelect={(event) => {
+                        onToggleFavorite={
+                          favoriteBenefitId
+                            ? (event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                void toggleFavorite(favoriteBenefitId);
+                              }
+                            : undefined
+                        }
+                        onPreview={(event) => {
                           if (
-                            !hasDesktopDetail ||
                             event.button !== 0 ||
                             event.metaKey ||
                             event.ctrlKey ||
                             event.shiftKey ||
                             event.altKey
-                          ) {
+                          )
                             return;
-                          }
                           event.preventDefault();
-                          const href = hrefFor({ partner: String(partner.partnerId) });
-                          window.history.replaceState(null, '', href);
+                          openPreview(partner);
                         }}
                       />
                     );
@@ -597,20 +683,42 @@ export default function AllBenefitsLayout({
                 </nav>
               ) : null}
             </div>
-            {hasDesktopDetail && selectedPartner ? (
-              <div className={styles.detailColumn}>
-                <BenefitExplorerDetail
-                  key={`${selectedPartner.partnerId}|${effectiveCarrier ?? ''}|${effectiveGrade ?? ''}`}
-                  partner={selectedPartner}
-                  carrier={effectiveCarrier}
-                  grade={effectiveGrade}
-                  detailHref={detailHrefFor(selectedPartner.partnerId, selectedPartner.partnerName)}
-                />
-              </div>
-            ) : null}
           </div>
         </section>
       </div>
+      <MembershipSelectionDialog
+        isOpen={isMembershipDialogOpen}
+        carrier={dialogCarrier}
+        grade={dialogGrade}
+        onClose={() => setIsMembershipDialogOpen(false)}
+        onApply={(carrier, grade) => updateQuery({ carrier, grade, membership: null, page: null })}
+      />
+      <dialog
+        ref={previewDialogRef}
+        className={styles.previewDialog}
+        aria-label={previewPartner ? `${previewPartner.partnerName} 혜택 미리보기` : undefined}
+        onCancel={(event) => {
+          event.preventDefault();
+          closePreview();
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) closePreview();
+        }}
+      >
+        {previewPartner ? (
+          <>
+            <BenefitExplorerDetail
+              key={`${previewPartner.partnerId}|${effectiveCarrier ?? ''}|${effectiveGrade ?? ''}`}
+              partner={previewPartner}
+              carrier={effectiveCarrier}
+              grade={effectiveGrade}
+              onFavoriteChange={setFavoriteState}
+              onClose={closePreview}
+              detailHref={detailHrefFor(previewPartner.partnerId, previewPartner.partnerName)}
+            />
+          </>
+        ) : null}
+      </dialog>
     </div>
   );
 }

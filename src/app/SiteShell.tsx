@@ -1,13 +1,13 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/Header';
 import MobileAppTabBar from '@/components/MobileAppTabBar';
 import ScrollToTop from '@/components/ScrollToTop';
+import SiteFooter from '@/components/SiteFooter';
 
-const isAppTabPath = (pathname: string) =>
+const hasMobileTabs = (pathname: string) =>
   pathname === '/' ||
   pathname === '/map' ||
   pathname.startsWith('/benefits') ||
@@ -15,35 +15,25 @@ const isAppTabPath = (pathname: string) =>
 
 export default function SiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const showTabBar = isAppTabPath(pathname);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const showTabBar = hasMobileTabs(pathname);
 
   return (
-    <div
-      data-sidebar-collapsed={isCollapsed}
-      className={`itplace-site-shell min-h-screen md:flex ${
-        showTabBar ? 'max-md:bg-warmCanvas' : 'max-md:bg-warmSurface'
-      }`}
-    >
-      <a
-        href="#site-content"
-        className="sr-only z-50 rounded-lg bg-brandStrong px-5 py-3 font-bold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-brand"
-      >
+    <div className="itplace-site-shell min-h-screen">
+      <a href="#site-content" className="skip-link">
         본문으로 건너뛰기
       </a>
       <ScrollToTop />
-      <div className="max-md:hidden">
-        <Header isCollapsed={isCollapsed} onToggle={() => setIsCollapsed((collapsed) => !collapsed)} />
-      </div>
+      <Header />
       <main
         id="site-content"
         tabIndex={-1}
-        className={`min-w-0 flex-1 ml-[var(--itplace-sidebar-width)] ${
-          showTabBar ? 'max-md:pb-[var(--itplace-mobile-tab-bar-offset,64px)]' : ''
-        }`}
+        className={
+          showTabBar ? 'min-w-0 pb-[var(--itplace-mobile-tab-bar-offset)] md:pb-0' : 'min-w-0'
+        }
       >
         {children}
       </main>
+      {pathname === '/' ? <SiteFooter /> : null}
       {showTabBar ? <MobileAppTabBar /> : null}
     </div>
   );

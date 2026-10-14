@@ -359,7 +359,7 @@ export default function BenefitUsagePage() {
         </button>
       </header>
 
-      <div className="grid gap-5 wide:grid-cols-[minmax(280px,340px)_minmax(0,1fr)] wide:items-start">
+      <div className="flex flex-col gap-5">
         <section className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 rounded-2xl border border-warmBorder bg-warmSurface px-5 py-4 max-md:px-4">
           <div className="min-w-0">
             <p className="text-body-4 font-semibold text-grey05">기록한 절약액</p>
@@ -680,7 +680,7 @@ export default function BenefitUsagePage() {
           ) : (
             <section
               aria-label={`${formatMonth(month)} 사용 기록`}
-              className="grid overflow-hidden rounded-2xl border border-warmBorder bg-warmSurface px-5 max-md:px-4 wide:grid-cols-2 wide:gap-4 wide:overflow-visible wide:border-0 wide:bg-transparent wide:px-0"
+              className="divide-y divide-warmBorder overflow-hidden rounded-2xl border border-warmBorder bg-warmSurface px-5 max-md:px-4"
             >
               {sortedRecords.map((record) => {
                 const detailHref = `${getPartnerBenefitPath(record.partnerId, record.partnerName)}#benefit-${record.benefitId}`;
@@ -688,10 +688,7 @@ export default function BenefitUsagePage() {
                 const isDeleteConfirmOpen = deleteCandidateId === record.recordId;
 
                 return (
-                  <article
-                    key={record.recordId}
-                    className="border-b border-warmBorder py-4 last:border-b-0 wide:rounded-xl wide:border wide:border-warmBorder wide:bg-warmSurface wide:p-4 wide:last:border-b"
-                  >
+                  <article key={record.recordId} className="py-5">
                     <div className="flex flex-col gap-3">
                       <div className="flex items-start gap-3">
                         <SafeImage

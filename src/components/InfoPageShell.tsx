@@ -1,7 +1,10 @@
+'use client';
+
 import { ReactNode } from 'react';
-import { Link } from '@/lib/navigation';
-import MobileHeader from './MobileHeader';
+import { Link, useLocation } from '@/lib/navigation';
+import { TbArrowLeft } from 'react-icons/tb';
 import SiteFooter from './SiteFooter';
+import styles from './InfoPageShell.module.css';
 
 type PageContentsLink = { id: string; label: string };
 type RelatedPageLink = { label: string; to: string };
@@ -15,6 +18,25 @@ type InfoPageShellProps = {
   relatedLinks?: RelatedPageLink[];
 };
 
+const sections = [
+  {
+    label: '서비스 안내',
+    links: [
+      { label: '혜택 이용 가이드', to: '/guide' },
+      { label: '자주 묻는 질문', to: '/faq' },
+      { label: '문의', to: '/contact' },
+    ],
+  },
+  {
+    label: '정책',
+    links: [
+      { label: '이용약관', to: '/terms' },
+      { label: '개인정보처리방침', to: '/privacy' },
+      { label: '계정 삭제 안내', to: '/account-deletion' },
+    ],
+  },
+];
+
 const InfoPageShell = ({
   eyebrow,
   title,
@@ -23,74 +45,67 @@ const InfoPageShell = ({
   contents,
   relatedLinks,
 }: InfoPageShellProps) => {
-  const navigation = (
-    <>
-      {contents?.length ? (
-        <nav aria-label="이 페이지의 항목" className="space-y-1">
-          {contents.map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm leading-5 text-grey06 hover:bg-warmCanvas hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      ) : null}
-      {relatedLinks?.length ? (
-        <div className="mt-4 border-t border-warmBorder pt-4">
-          <h3 className="px-3 text-[13px] font-semibold text-warmMuted">관련 안내</h3>
-          <nav aria-label="관련 안내" className="mt-1 space-y-1">
-            {relatedLinks.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-brandStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      ) : null}
-    </>
-  );
+  const { pathname } = useLocation();
 
   return (
-    <div className="min-h-screen bg-warmCanvas text-ink">
-      <div className="h-[54px] md:hidden">
-        <MobileHeader title="잇플레이스" />
-      </div>
-      <article className="workspace-container py-6 sm:py-8">
-        <header className="surface-card p-5 sm:p-7">
-          {eyebrow ? (
-            <p className="mb-2 text-[13px] font-semibold text-brandStrong">{eyebrow}</p>
-          ) : null}
-          <h1 className="text-balance text-[24px] font-semibold leading-snug tracking-[-0.025em] sm:text-[28px]">
-            {title}
-          </h1>
-          <p className="mt-3 max-w-[76ch] text-[15px] leading-7 text-grey06">{description}</p>
-        </header>
-        {contents?.length ? (
-          <details className="surface-card mt-5 p-4 wide:hidden">
-            <summary className="flex min-h-11 cursor-pointer items-center justify-between font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
-              이 페이지에서
-            </summary>
-            <div className="mt-2 border-t border-warmBorder pt-2">{navigation}</div>
-          </details>
-        ) : null}
-        <div
-          className={`mt-5 ${contents?.length ? 'grid gap-5 wide:grid-cols-[minmax(0,1fr)_280px] wide:items-start' : ''}`}
-        >
-          <div className="min-w-0 space-y-7 [&>section>p]:max-w-[80ch]">{children}</div>
+    <div className={styles.page}>
+      <nav className={styles.mobileNav} aria-label="서비스 탐색">
+        <Link to="/">
+          <TbArrowLeft aria-hidden="true" />
+          홈으로
+        </Link>
+        <span aria-hidden="true">도움말</span>
+      </nav>
+      <div className={styles.layout}>
+        <nav className={styles.sidebar} aria-label="도움말 메뉴">
+          {sections.map((section) => (
+            <div className={styles.navSection} key={section.label}>
+              <h2>{section.label}</h2>
+              {section.links.map((item) => {
+                const active = pathname === item.to;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    aria-current={active ? 'page' : undefined}
+                    className={`${styles.navLink}${active ? ` ${styles.active}` : ''}`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        <div className={styles.main}>
+          <header className={styles.header}>
+            {eyebrow ? <p className={styles.eyebrow}>{eyebrow}</p> : null}
+            <h1>{title}</h1>
+            <p className={styles.description}>{description}</p>
+          </header>
           {contents?.length ? (
-            <aside className="hidden wide:block" aria-label="문서 탐색">
-              <div className="surface-card sticky top-6 p-4">{navigation}</div>
-            </aside>
+            <nav className={styles.contents} aria-label="이 페이지의 항목">
+              {contents.map((item) => (
+                <a key={item.id} href={`#${item.id}`}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          ) : null}
+          <div className={styles.article}>{children}</div>
+          {relatedLinks?.length ? (
+            <nav className={styles.related} aria-label="관련 안내">
+              <span>관련 안내</span>
+              {relatedLinks.map((item) => (
+                <Link key={item.to} to={item.to}>
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
           ) : null}
         </div>
-      </article>
+      </div>
       <SiteFooter />
     </div>
   );

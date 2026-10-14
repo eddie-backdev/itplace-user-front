@@ -56,7 +56,7 @@ const EmailVerificationBox = ({
   };
 
   return (
-    <div className="w-full max-w-[320px]">
+    <div className="w-full">
       {emailVerified && (
         <p role="status" className="mb-2 text-sm font-medium text-brandStrong">
           이메일 인증 완료

@@ -27,6 +27,19 @@
   letter-spacing: -0.035em;
   line-height: 1.3;
 }
+.closeButton {
+  min-width: 48px;
+  min-height: 48px;
+  margin: -6px -8px -6px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: #f7f8fa;
+  color: #6154d9;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
 
 .identity {
   display: flex;
@@ -132,7 +145,7 @@
   display: flex;
   min-height: 48px;
   align-items: center;
-  color: #0066cc;
+  color: #6154d9;
   cursor: pointer;
   font-size: 13px;
   font-weight: 550;
@@ -170,8 +183,8 @@
   margin-top: 6px;
   border-radius: 999px;
   padding: 4px 8px;
-  background: #eef5ff;
-  color: #0057b8;
+  background: #f0edfc;
+  color: #5043c7;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
@@ -206,7 +219,7 @@
 }
 
 .favoriteButton[aria-pressed='true'] {
-  color: #0066cc;
+  color: #6154d9;
 }
 
 .favoriteButton:disabled {
@@ -313,7 +326,7 @@
   min-height: 44px;
   align-items: center;
   gap: 4px;
-  color: #0066cc;
+  color: #6154d9;
 }
 
 .errorMessage {
@@ -337,7 +350,7 @@
   justify-content: center;
   gap: 6px;
   border-radius: 10px;
-  color: #0066cc;
+  color: #6154d9;
   font-size: 14px;
   font-weight: 600;
   text-align: center;
@@ -345,7 +358,7 @@
 }
 
 .primaryAction {
-  background: #0066cc;
+  background: #6154d9;
   color: #fff;
 }
 
@@ -355,7 +368,7 @@
 }
 
 .primaryAction:hover {
-  background: #005bb5;
+  background: #5043c7;
 }
 
 .detailAction:hover,
@@ -384,11 +397,11 @@
 
 .textButton {
   margin: 10px 0 0 -12px;
-  color: #0066cc;
+  color: #6154d9;
 }
 
 .panel :focus-visible {
-  outline: 2px solid #0066cc;
+  outline: 2px solid #6154d9;
   outline-offset: 2px;
 }
 

@@ -27,7 +27,7 @@ const mockPartner = {
 const homePartnersByCarrier = Object.fromEntries(
   ['SKT', 'KT', 'LGU'].map((carrier, carrierIndex) => [
     carrier,
-    Array.from({ length: 3 }, (_, index) => ({
+    Array.from({ length: 12 }, (_, index) => ({
       partnerId: 700 + carrierIndex * 10 + index,
       partnerName: `${carrier} 인기 ${index + 1}`,
       category: '카페',
@@ -42,7 +42,7 @@ const homePartnersByCarrier = Object.fromEntries(
           usageType: 'OFFLINE',
           tierBenefits: [
             {
-              grade: `${carrier}_VIP`,
+              grade: carrier === 'LGU' ? 'VIP' : `${carrier}_VIP`,
               context: `${carrier} 혜택 ${index + 1}※1만7천원 이상 주문 시 사용 가능`,
               isAll: false,
             },
@@ -70,7 +70,9 @@ const mockPartnerDetail = {
           manual: '',
           url: '',
           usageType: 'OFFLINE',
-          tierBenefits: [{ carrier: 'SKT', grade: 'VIP', context: '음료 10% 할인', isAll: false }],
+          tierBenefits: [
+            { carrier: 'SKT', grade: 'SKT_VIP', context: '음료 10% 할인', isAll: false },
+          ],
           isFavorite: false,
           favoriteCount: 1,
         },
@@ -82,7 +84,9 @@ const mockPartnerDetail = {
           manual: '매장에서 멤버십 바코드를 제시하세요.',
           url: 'https://example.com/starbucks',
           usageType: 'OFFLINE',
-          tierBenefits: [{ carrier: 'SKT', grade: 'VIP', context: '음료 10% 할인', isAll: false }],
+          tierBenefits: [
+            { carrier: 'SKT', grade: 'SKT_VIP', context: '음료 10% 할인', isAll: false },
+          ],
           isFavorite: false,
           favoriteCount: 2,
         },
@@ -113,7 +117,7 @@ const startMockApi = async () => {
 
     if (url.pathname === '/api/v1/benefits/partners') {
       const carrier = url.searchParams.get('carriers');
-      const isHomeRequest = url.searchParams.get('size') === '3';
+      const isHomeRequest = url.searchParams.get('size') === '12';
       if (!listAvailable || (isHomeRequest && carrier && unavailableCarriers.has(carrier))) {
         json(response, 503, { data: null });
         return;
@@ -130,7 +134,7 @@ const startMockApi = async () => {
                 : [],
             currentPage: page,
             totalPages: 1,
-            totalElements: emptyCarriers.has(carrier) ? 0 : 3,
+            totalElements: emptyCarriers.has(carrier) ? 0 : 12,
             hasNext: false,
           },
         });
@@ -299,28 +303,28 @@ const plainText = (html) =>
     .replace(/\s+/g, ' ')
     .trim();
 const getHomeBenefitsSection = (content) =>
-  content.match(/<section(?=[^>]*id="carrier-benefits")[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
-const assertHomeSelection = (content, selectedCarrier) => {
+  content.match(/<section(?=[^>]*aria-label="추천 혜택")[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
+const homeGrade = { SKT: 'SKT_VIP', KT: 'KT_VIP', LGU: 'VIP' };
+const assertHomeSelection = (
+  content,
+  selectedCarrier,
+  selectedGrade = homeGrade[selectedCarrier]
+) => {
   const section = getHomeBenefitsSection(content);
-  assert.ok(section, '자주 찾는 혜택 영역이 SSR에 있어야 합니다');
-  const navigation =
-    section.match(/<nav(?=[^>]*aria-label="통신사 선택")[^>]*>[\s\S]*?<\/nav>/)?.[0] ?? '';
-  assert.ok(navigation, '통신사 선택 내비게이션이 SSR에 있어야 합니다');
-  for (const carrier of ['SKT', 'KT', 'LGU']) {
-    const link = navigation.match(
-      new RegExp(`<a(?=[^>]*href="/\\?carrier=${carrier}#carrier-benefits")[^>]*>[\\s\\S]*?<\\/a>`)
-    )?.[0];
-    assert.ok(link, `${carrier} 통신사 선택 링크가 네이티브 링크로 있어야 합니다`);
-    assert.equal(
-      /\baria-current="true"/.test(link),
-      carrier === selectedCarrier,
-      `${carrier} 선택 링크의 aria-current가 URL 선택과 일치해야 합니다`
-    );
-  }
-  const selectedLabel = selectedCarrier === 'LGU' ? 'LG U+' : selectedCarrier;
-  assert.ok(plainText(section).includes(`${selectedLabel} · 즐겨찾기 수 기준`));
+  assert.ok(section, '추천 혜택 영역이 SSR에 있어야 합니다');
+  assert.match(content, /<h1[^>]*id="home-title"[^>]*>어디에서 쓰고 싶으세요\?<\/h1>/);
+  assert.match(content, new RegExp(`name="carrier" value="${selectedCarrier}"`));
+  assert.match(content, new RegExp(`name="grade" value="${selectedGrade}"`));
+  assert.ok(
+    plainText(content).includes(`${selectedCarrier === 'LGU' ? 'LG U+' : selectedCarrier} VIP`)
+  );
 };
-const assertHomeListCalls = (requests) => {
+const assertHomeListCalls = (
+  requests,
+  selectedCarrier = 'SKT',
+  selectedGrade = homeGrade[selectedCarrier],
+  category = null
+) => {
   const calls = requests.filter((url) => url.pathname === '/api/v1/benefits/partners');
   assert.equal(calls.length, 3, '홈은 통신사별 목록 API를 3회 호출해야 합니다');
   assert.deepEqual(calls.map((url) => url.searchParams.get('carriers')).sort(), [
@@ -329,9 +333,15 @@ const assertHomeListCalls = (requests) => {
     'SKT',
   ]);
   for (const url of calls) {
-    assert.equal(url.searchParams.get('size'), '3');
+    assert.equal(url.searchParams.get('size'), '12');
     assert.equal(url.searchParams.get('sort'), 'POPULARITY');
-    assert.equal(url.searchParams.get('mainCategory'), 'BASIC_BENEFIT');
+    const carrier = url.searchParams.get('carriers');
+    assert.equal(
+      url.searchParams.get('grade'),
+      carrier === selectedCarrier ? selectedGrade : homeGrade[carrier]
+    );
+    assert.equal(url.searchParams.get('category'), category);
+    assert.equal(url.searchParams.get('mainCategory'), null);
   }
   assert.equal(
     requests.filter((url) => url.pathname.startsWith('/api/v1/benefits/partners/')).length,
@@ -342,28 +352,42 @@ const assertHomeListCalls = (requests) => {
 
 const assertAllHomePreviews = (content, selectedCarrier = 'SKT') => {
   assertHomeSelection(content, selectedCarrier);
-  const section = getHomeBenefitsSection(content);
-  const partnerLinks = section.match(/<a(?=[^>]*href="\/benefits\/partners\/)[^>]*>[\s\S]*?<\/a>/g) ?? [];
-  assert.equal(partnerLinks.length, 3, `${selectedCarrier} 선택 상태에서는 혜택 미리보기 3개만 있어야 합니다`);
+  const partnerLinks =
+    content.match(/<a(?=[^>]*href="\/benefits\/partners\/)[^>]*>[\s\S]*?<\/a>/g) ?? [];
+  assert.equal(
+    partnerLinks.length,
+    8,
+    `${selectedCarrier} 선택 상태에서는 추천 영역에 8개 링크가 있어야 합니다`
+  );
   let previousIndex = -1;
-  for (let rank = 1; rank <= 3; rank += 1) {
+  for (let rank = 1; rank <= 8; rank += 1) {
     const partnerName = `${selectedCarrier} 인기 ${rank}`;
-    assert.ok(section.includes(partnerName), `${partnerName} 미리보기가 SSR에 있어야 합니다`);
-    const currentIndex = section.indexOf(partnerName);
-    assert.ok(currentIndex > previousIndex, `${selectedCarrier} 미리보기는 API 인기순을 유지해야 합니다`);
+    assert.ok(content.includes(partnerName), `${partnerName} 미리보기가 SSR에 있어야 합니다`);
+    const currentIndex = content.indexOf(partnerName);
+    assert.ok(
+      currentIndex > previousIndex,
+      `${selectedCarrier} 미리보기는 API 인기순을 유지해야 합니다`
+    );
     previousIndex = currentIndex;
     const partnerId = 700 + ['SKT', 'KT', 'LGU'].indexOf(selectedCarrier) * 10 + rank - 1;
     assert.match(
       partnerLinks[rank - 1],
-      new RegExp(`href="/benefits/partners/${partnerId}/[^\"]+\\?carrier=${selectedCarrier}"`),
-      `${partnerName} 상세 링크에 선택한 통신사 query가 있어야 합니다`
+      new RegExp(
+        `href="/benefits/partners/${partnerId}/[^\"]+\\?carrier=${selectedCarrier}&amp;grade=${homeGrade[selectedCarrier]}"`
+      ),
+      `${partnerName} 상세 링크에 선택한 통신사와 등급 query가 있어야 합니다`
     );
   }
-  assert.ok(section.includes(`href="/benefits?carrier=${selectedCarrier}"`), '선택 통신사 전체 혜택 링크가 있어야 합니다');
+  assert.ok(
+    content.includes(
+      `href="/benefits?carrier=${selectedCarrier}&amp;grade=${homeGrade[selectedCarrier]}"`
+    ),
+    '선택 멤버십 전체 혜택 링크가 있어야 합니다'
+  );
   for (const carrier of ['SKT', 'KT', 'LGU'].filter((code) => code !== selectedCarrier)) {
     assert.doesNotMatch(
-      section,
-      new RegExp(`(?:^|[^A-Z])${carrier} 인기 [123]`),
+      content,
+      new RegExp(`(?:^|[^A-Z])${carrier} 인기 (?:[1-9]|1[0-2])`),
       `${carrier} 미리보기는 선택 영역에 없어야 합니다`
     );
   }
@@ -375,14 +399,14 @@ const runChecks = async (origin, mockApi) => {
   const rootHtml = await rootResponse.text();
   assert.equal(rootResponse.status, 200);
   assert.equal(rootResponse.headers.has('x-powered-by'), false);
-  assert.match(rootHtml, /<title>결제 전 확인하는 통신사 멤버십 혜택 \| 잇플레이스<\/title>/);
+  assert.match(rootHtml, /<title>통신 3사 멤버십 혜택 비교·검색 \| 잇플레이스<\/title>/);
   assert.equal(
     (withoutScripts(rootHtml).match(/<main\b/gi) ?? []).length,
     1,
     '홈에는 main 랜드마크가 하나만 있어야 합니다'
   );
   const rootContent = mainContent(rootHtml);
-  assert.match(rootContent, /커피 한 잔도,[\s\S]*?영화 한 편도\./);
+  assert.match(rootContent, /어디에서 쓰고 싶으세요\?/);
   assert.match(
     rootContent,
     /<form(?=[^>]*\baction="\/benefits")(?=[^>]*\bmethod="get")(?=[^>]*\brole="search")[^>]*>/
@@ -390,28 +414,11 @@ const runChecks = async (origin, mockApi) => {
   assert.match(rootContent, /<input(?=[^>]*\bname="q")(?=[^>]*\btype="search")[^>]*>/);
   assertHomeListCalls(mockApi.requests.slice(requestsBeforeHome));
   const rootText = plainText(rootContent);
-  assert.match(rootContent, /href="\/benefits"[^>]*>[\s\S]*?혜택 둘러보기/);
-  assert.match(rootContent, /href="\/map"[^>]*>[\s\S]*?내 주변 매장/);
-  assert.match(rootContent, /href="\/mypage\/info"/);
-  assert.match(rootContent, /href="\/mypage\/activity"/);
-  assert.ok(rootText.includes('SKT·KT·LG U+ 멤버십 혜택을 한곳에서.'));
-  assert.match(rootText, /자주 찾는 혜택/);
-  assert.match(rootText, /SKT · 즐겨찾기 수 기준/);
+  assert.match(rootContent, /href="\/benefits\?carrier=SKT&amp;grade=SKT_VIP"[^>]*>혜택 더 보기/);
+  assert.match(rootHtml, /<a(?=[^>]*href="\/mypage")(?=[^>]*aria-label="마이페이지")[^>]*>/);
+  assert.match(rootText, /내 멤버십 기준/);
+  assert.match(rootContent, /aria-label="혜택 카테고리"/);
   assertAllHomePreviews(rootContent);
-  assert.match(rootContent, /<h2[^>]*>혜택을 더 잘 쓰는 방법<\/h2>/);
-  for (const [partnerId, carrier] of [
-    [112, 'SKT'],
-    [287, 'KT'],
-    [108, 'SKT'],
-  ]) {
-    const noteLink = rootContent.match(
-      new RegExp(`href="/benefits/partners/${partnerId}/[^\"]+"`)
-    )?.[0];
-    assert.ok(
-      noteLink?.includes(`?carrier=${carrier}#partner-editorial-note`),
-      `이용 노트 ${partnerId} 링크에 통신사와 노트 앵커가 있어야 합니다`
-    );
-  }
   assert.match(rootHtml, /<footer\b/);
   assert.match(rootHtml, /name="google-adsense-account"/);
   assert.doesNotMatch(rootHtml, /adsbygoogle\.js/);
@@ -429,37 +436,56 @@ const runChecks = async (origin, mockApi) => {
   ]) {
     const html = path === '/' ? rootHtml : await (await fetch(`${origin}${path}`)).text();
     const navigation =
-      withoutScripts(html).match(
-        /<aside(?=[^>]*aria-label="사이트 내비게이션")[^>]*>[\s\S]*?<\/aside>/g
-      ) ?? [];
-    assert.equal(navigation.length, 1, `${path}에 공통 사이트 내비게이션이 하나 있어야 합니다`);
-    for (const destination of ['/', '/map', '/benefits', '/mypage/favorites', '/mypage/activity']) {
+      withoutScripts(html).match(/<nav(?=[^>]*aria-label="주요 메뉴")[^>]*>[\s\S]*?<\/nav>/g) ?? [];
+    assert.equal(navigation.length, 1, `${path}에 공통 주요 메뉴가 하나 있어야 합니다`);
+    for (const destination of ['/', '/map', '/benefits', '/mypage/favorites']) {
       assert.ok(
         navigation[0].includes(`href="${destination}"`),
         `${path}의 ${destination} 메뉴가 필요합니다`
       );
     }
+    assert.match(
+      withoutScripts(html),
+      /<a(?=[^>]*href="\/mypage")(?=[^>]*aria-label="마이페이지")[^>]*>/
+    );
   }
-  assert.doesNotMatch(rootContent, /<nav(?=[^>]*aria-label="주요 메뉴")/);
 
   const carrierHomeRequestsBefore = mockApi.requests.length;
   const carrierHomeResponse = await fetch(`${origin}/?carrier=SKT`);
   assert.equal(carrierHomeResponse.status, 200);
   const carrierHomeContent = mainContent(await carrierHomeResponse.text());
-  assertHomeListCalls(mockApi.requests.slice(carrierHomeRequestsBefore));
+  assertHomeListCalls(mockApi.requests.slice(carrierHomeRequestsBefore), 'SKT');
   assertAllHomePreviews(carrierHomeContent);
   for (const [carrier, expected] of [
     ['KT', 'KT'],
     ['LGU', 'LGU'],
     ['invalid', 'SKT'],
   ]) {
+    const requestsBefore = mockApi.requests.length;
     const response = await fetch(`${origin}/?carrier=${carrier}`);
     assert.equal(response.status, 200);
     assertAllHomePreviews(mainContent(await response.text()), expected);
+    assertHomeListCalls(mockApi.requests.slice(requestsBefore), expected);
   }
+  const filteredHomeRequestsBefore = mockApi.requests.length;
+  const filteredHomeResponse = await fetch(
+    `${origin}/?carrier=KT&grade=KT_VIP&category=${encodeURIComponent('푸드')}`
+  );
+  assert.equal(filteredHomeResponse.status, 200);
+  const filteredHomeContent = mainContent(await filteredHomeResponse.text());
+  assertAllHomePreviews(filteredHomeContent, 'KT');
+  assertHomeListCalls(mockApi.requests.slice(filteredHomeRequestsBefore), 'KT', 'KT_VIP', '푸드');
+  assert.match(filteredHomeContent, /name="category" value="푸드"/);
+  assert.ok(
+    filteredHomeContent.includes(
+      `href="/benefits?carrier=KT&amp;grade=KT_VIP&amp;category=${encodeURIComponent('푸드')}"`
+    )
+  );
+  const repeatedCarrierRequestsBefore = mockApi.requests.length;
   const repeatedCarrierResponse = await fetch(`${origin}/?carrier=KT&carrier=LGU`);
   assert.equal(repeatedCarrierResponse.status, 200);
-  assertAllHomePreviews(mainContent(await repeatedCarrierResponse.text()), 'SKT');
+  assertHomeListCalls(mockApi.requests.slice(repeatedCarrierRequestsBefore), 'KT');
+  assertAllHomePreviews(mainContent(await repeatedCarrierResponse.text()), 'KT');
   const categoryPath = `/benefits?carrier=SKT&category=${encodeURIComponent('푸드')}`;
   const categoryResponse = await fetch(`${origin}${categoryPath}`);
   assert.equal(categoryResponse.status, 200);
@@ -467,16 +493,18 @@ const runChecks = async (origin, mockApi) => {
   assert.match(categoryContent, /푸드 필터 테스트 제휴처/);
   assert.doesNotMatch(categoryContent, /스타벅스/);
   const categoryFilters =
-    categoryContent.match(/<nav(?=[^>]*aria-label="카테고리 필터")[^>]*>[\s\S]*?<\/nav>/)?.[0] ?? '';
-  const foodCategoryLink = (categoryFilters.match(/<a\b[^>]*>[\s\S]*?<\/a>/g) ?? []).find(
-    (link) => link.includes('<span>음식·카페</span>')
+    categoryContent.match(
+      /<section(?=[^>]*aria-label="혜택 필터")[^>]*>[\s\S]*?<\/section>/
+    )?.[0] ?? '';
+  assert.ok(categoryFilters, '혜택 필터 영역이 있어야 합니다');
+  assert.match(
+    categoryFilters,
+    /<select(?=[^>]*aria-label="혜택 분야 필터")[^>]*>[\s\S]*?<option value="푸드" selected="">음식·카페<\/option>/
   );
-  assert.ok(foodCategoryLink, '음식·카페 카테고리 탭이 있어야 합니다');
-  assert.match(foodCategoryLink, /\baria-current="true"/);
-  assert.match(foodCategoryLink, /href="\/benefits\?carrier=SKT&amp;category=%ED%91%B8%EB%93%9C"/);
-  const carrierFilters =
-    categoryContent.match(/<nav(?=[^>]*aria-label="통신사 필터")[^>]*>[\s\S]*?<\/nav>/)?.[0] ?? '';
-  assert.match(carrierFilters, /<a(?=[^>]*aria-current="true")[^>]*>SKT<\/a>/);
+  assert.match(
+    categoryFilters,
+    /<select(?=[^>]*aria-label="통신사 필터")[^>]*>[\s\S]*?<option value="SKT" selected="">SKT<\/option>/
+  );
   assert.match(
     categoryContent,
     /href="\/benefits\/partners\/[^\"]+\?carrier=SKT"/,
@@ -484,8 +512,8 @@ const runChecks = async (origin, mockApi) => {
   );
 
   const guideHtml = mainContent(await (await fetch(`${origin}/guide`)).text());
+  assert.match(rootHtml, /href="\/guide"/);
   for (const anchor of ['before-payment', 'discount-vs-points', 'online-offline']) {
-    assert.ok(rootContent.includes(`/guide#${anchor}`));
     assert.ok(guideHtml.includes(`id="${anchor}"`), `${anchor} 가이드 본문이 필요합니다`);
   }
 
@@ -525,9 +553,10 @@ const runChecks = async (origin, mockApi) => {
   assert.match(gradeContent, /SKT VIP 등급 테스트 제휴처/);
   assert.match(
     gradeContent,
-    /<select(?=[^>]*name="grade")[^>]*>[\s\S]*?<option value="SKT_VIP" selected="">VIP<\/option>/
+    /<select(?=[^>]*aria-label="멤버십 등급 필터")[^>]*>[\s\S]*?<option value="SKT_VIP" selected="">VIP<\/option>/
   );
-  assert.match(gradeContent, /선택 등급의 혜택입니다\. 횟수·기간·매장 조건은 상세에서 확인하세요\./);
+  assert.match(gradeContent, /VIP 조건의 혜택/);
+  assert.match(gradeContent, /aria-label="적용 중인 필터"[^>]*><span>SKT<\/span><span>VIP<\/span>/);
   assert.match(
     gradeContent,
     /href="\/benefits\/partners\/286\/[^\"]+\?carrier=SKT&amp;grade=SKT_VIP"/
@@ -573,7 +602,7 @@ const runChecks = async (origin, mockApi) => {
   assert.match(guestGradeDetailHtml, /VIP 전용 테스트 혜택/);
   assert.match(
     mainContent(guestGradeDetailHtml),
-    /href="\/benefits\?carrier=SKT&amp;grade=SKT_VIP"[^>]*>[\s\S]*?전체 혜택/
+    /href="\/benefits\?carrier=SKT&amp;grade=SKT_VIP"[^>]*>[\s\S]*?혜택찾기/
   );
   assert.doesNotMatch(mainContent(guestGradeDetailHtml), /href="\/benefits\?[^\"]*membership=mine/);
 
@@ -584,7 +613,7 @@ const runChecks = async (origin, mockApi) => {
   assert.equal(filteredResponse.status, 200);
   assert.match(filteredResponse.headers.get('cache-control') ?? '', /private|no-store/);
   assert.match(filteredHtml, /VIP 전용 테스트 혜택/);
-  assert.ok(plainText(mainContent(filteredHtml)).includes('SKT · VIP 조건으로 보고 있어요'));
+  assert.ok(plainText(mainContent(filteredHtml)).includes('내 멤버십 혜택'));
   assert.equal(countOccurrences(filteredHtml, 'id="benefit-503"'), 1);
   assert.equal(countOccurrences(filteredHtml, 'id="benefit-502"'), 0);
   const emptyHtml = await (
@@ -652,7 +681,11 @@ const runChecks = async (origin, mockApi) => {
   assert.match(await missingMembershipResponse.text(), /페이지를 찾을 수 없습니다/);
 
   await assertRedirect(origin, '/main', 308, '/');
-  await assertRedirect(origin, '/mypage', 307, '/mypage/activity');
+  const overviewResponse = await fetch(`${origin}/mypage`, { redirect: 'manual' });
+  const overviewHtml = await overviewResponse.text();
+  assert.equal(overviewResponse.status, 200);
+  assert.match(overviewHtml, /<title>마이페이지 \| 잇플레이스<\/title>/);
+  assert.match(overviewHtml, /content="noindex, follow"/);
   await assertRedirect(origin, '/mypage/history', 307, '/mypage/favorites');
   await assertRedirect(origin, '/index.html', 308, '/');
   await assertRedirect(origin, '/about.html', 308, '/about');
@@ -662,7 +695,7 @@ const runChecks = async (origin, mockApi) => {
   const robotsText = await robotsResponse.text();
   assert.match(robotsText, /Sitemap: https:\/\/itplace\.click\/sitemap\.xml/);
   assert.doesNotMatch(robotsText, /Disallow: \/(?:login|mypage|oauth)/);
-  for (const privatePath of ['/login', '/mypage/info', '/oauth/callback/kakao']) {
+  for (const privatePath of ['/login', '/mypage', '/mypage/info', '/oauth/callback/kakao']) {
     const html = await (await fetch(`${origin}${privatePath}`)).text();
     assert.match(html, /content="noindex, follow"/);
     assert.doesNotMatch(html, /adsbygoogle\.js/);
@@ -678,7 +711,7 @@ const runChecks = async (origin, mockApi) => {
   try {
     const allFailedContent = mainContent(await (await fetch(`${origin}/`)).text());
     assertHomeListCalls(mockApi.requests.slice(allFailedRequestsBefore));
-    assert.match(plainText(allFailedContent), /혜택을 더 잘 쓰는 방법/);
+    assert.match(plainText(allFailedContent), /생활부터 주말까지/);
     assertHomeSelection(allFailedContent, 'SKT');
     assert.doesNotMatch(allFailedContent, /SKT 인기 [123]|KT 인기 [123]|LGU 인기 [123]/);
     assert.match(getHomeBenefitsSection(allFailedContent), /혜택을 불러오지 못했어요\./);
@@ -698,7 +731,7 @@ const runChecks = async (origin, mockApi) => {
       getHomeBenefitsSection(partialFailureContent),
       /(?:^|[^A-Z])(?:KT|LGU) 인기 [123]/
     );
-    assert.match(plainText(partialFailureContent), /혜택을 더 잘 쓰는 방법/);
+    assert.match(plainText(partialFailureContent), /생활부터 주말까지/);
   } finally {
     mockApi.setUnavailableCarriers([]);
   }
@@ -711,7 +744,7 @@ const runChecks = async (origin, mockApi) => {
     assertHomeSelection(emptyContent, 'LGU');
     assert.doesNotMatch(getHomeBenefitsSection(emptyContent), /LGU 인기 [123]/);
     assert.match(getHomeBenefitsSection(emptyContent), /아직 표시할 혜택이 없어요\./);
-    assert.match(plainText(emptyContent), /혜택을 더 잘 쓰는 방법/);
+    assert.match(plainText(emptyContent), /생활부터 주말까지/);
   } finally {
     mockApi.setEmptyCarriers([]);
   }

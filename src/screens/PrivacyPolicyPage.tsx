@@ -30,7 +30,7 @@ const PrivacyPolicyPage = () => {
               <section
                 key={section.title}
                 id={`privacy-section-${index + 1}`}
-                className="surface-card scroll-mt-6 p-5 sm:p-7"
+                className="scroll-mt-6 border-b border-warmBorder pb-7"
               >
                 <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink sm:text-xl">
                   {section.title}
@@ -60,7 +60,7 @@ const PrivacyPolicyPage = () => {
             ))}
           </div>
 
-          <section id="privacy-contact" className="surface-card scroll-mt-6 mt-8 p-5 sm:p-7">
+          <section id="privacy-contact" className="scroll-mt-6 border-b border-warmBorder pb-7">
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink sm:text-xl">
               11. 문의
             </h2>

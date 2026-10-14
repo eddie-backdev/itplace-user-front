@@ -27,6 +27,8 @@ interface BenefitExplorerDetailProps {
   carrier?: CarrierCode;
   grade?: string;
   detailHref: string;
+  onFavoriteChange?: (benefitId: number, isFavorite: boolean) => void;
+  onClose?: () => void;
 }
 
 const usageLabel = (type: CarrierBenefitDetail['usageType']) => {
@@ -50,6 +52,8 @@ export default function BenefitExplorerDetail({
   carrier,
   grade,
   detailHref,
+  onFavoriteChange,
+  onClose,
 }: BenefitExplorerDetailProps) {
   const navigate = useNavigate();
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
@@ -150,6 +154,7 @@ export default function BenefitExplorerDetail({
       if (benefit.isFavorite) await removeFavorite(benefit.benefitId);
       else await addFavorite(benefit.benefitId);
       if (favoriteRequestId.current !== currentFavoriteRequestId) return;
+      onFavoriteChange?.(benefit.benefitId, !benefit.isFavorite);
       setDetail((current) =>
         current
           ? {
@@ -311,7 +316,12 @@ export default function BenefitExplorerDetail({
   return (
     <aside className={styles.panel} aria-labelledby="benefit-explorer-heading">
       <header className={styles.panelHeader}>
-        <h2 id="benefit-explorer-heading">선택한 혜택</h2>
+        <h2 id="benefit-explorer-heading">혜택 미리보기</h2>
+        {onClose ? (
+          <button type="button" className={styles.closeButton} onClick={onClose}>
+            닫기
+          </button>
+        ) : null}
       </header>
       {status === 'loading' ? (
         <p className={styles.message} role="status">

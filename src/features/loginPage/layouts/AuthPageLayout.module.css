@@ -1,31 +1,19 @@
 .page {
   display: flex;
-  min-height: 100dvh;
+  min-height: calc(100dvh - 80px);
   align-items: center;
   justify-content: center;
-  padding: 48px;
-  background: var(--itplace-color-surface-subtle);
+  padding: 48px 24px 72px;
+  background: #f7f8fa;
 }
 
 .surface {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(390px, 0.9fr);
-  width: min(100%, 1440px);
-  min-height: 780px;
+  width: min(100%, 460px);
   margin: 0 auto;
-  overflow: hidden;
-  border: 1px solid var(--itplace-color-border);
-  border-radius: 20px;
-  background: var(--itplace-color-surface);
-  box-shadow: var(--itplace-shadow-card);
 }
 
 .preview {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  padding: 56px clamp(36px, 5vw, 80px);
-  background: var(--itplace-color-surface-subtle);
+  display: none;
 }
 
 .formSide {
@@ -33,8 +21,8 @@
   min-width: 0;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px clamp(32px, 4vw, 64px);
+  justify-content: flex-start;
+  padding: 0;
 }
 
 .brand {
@@ -64,16 +52,20 @@
 }
 
 .desktopBrand {
-  align-self: flex-start;
-  margin: 0 0 28px max(0px, calc((100% - 400px) / 2));
+  display: none;
 }
 
 .formCard {
-  width: min(100%, 400px);
+  width: 100%;
+  padding: 32px;
+  border: 1px solid #e8e9ee;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(32, 33, 36, 0.045);
 }
 
 .signupCard {
-  width: min(100%, 460px);
+  width: min(100%, 600px);
 }
 
 .desktopBenefitsLink,
@@ -86,7 +78,7 @@
 }
 
 .desktopBenefitsLink {
-  margin-top: 28px;
+  display: none;
 }
 
 .mobileBrand {
@@ -95,103 +87,42 @@
 
 .processing {
   display: flex;
-  width: min(100%, 440px);
+  width: min(100%, 460px);
   min-height: 320px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   margin: 0 auto;
   padding: 48px 32px;
-  border: 1px solid var(--itplace-color-border);
+  border: 1px solid #e8e9ee;
   border-radius: 20px;
-  background: var(--itplace-color-surface);
+  background: #fff;
   text-align: center;
-}
-
-@media (max-width: 1279px) {
-  .page {
-    display: block;
-    padding: 32px;
-  }
-
-  .surface {
-    display: block;
-    width: min(100%, 540px);
-    min-height: 0;
-    overflow: visible;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .preview,
-  .desktopBrand,
-  .desktopBenefitsLink {
-    display: none;
-  }
-
-  .formSide {
-    min-height: 0;
-    padding: 0;
-  }
-
-  .mobileBrand {
-    display: flex;
-    width: min(100%, 540px);
-    min-height: 52px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin: 0 auto 24px;
-  }
-
-  .formCard {
-    width: min(100%, 400px);
-    padding: 32px;
-    border: 1px solid var(--itplace-color-border);
-    border-radius: 20px;
-    background: var(--itplace-color-surface);
-    box-shadow: var(--itplace-shadow-card);
-  }
-
-  .signupCard {
-    width: min(100%, 460px);
-  }
-
-  .processing {
-    margin-top: 0;
-  }
 }
 
 @media (max-width: 639px) {
   .page {
-    padding: 20px 24px 32px;
-    background: var(--itplace-color-surface);
+    min-height: calc(100dvh - 64px);
+    padding: 24px 16px 40px;
+    background: #f7f8fa;
   }
 
-  .mobileBrand {
+  .surface {
     width: 100%;
-    margin-bottom: 32px;
   }
 
-  .brand {
-    font-size: 17px;
+  .formSide {
+    padding: 0;
   }
 
-  .formCard,
   .signupCard {
     width: 100%;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
   }
 
   .processing {
-    min-height: 280px;
-    padding: 36px 24px;
+    width: 100%;
+    min-height: 240px;
+    padding: 32px 20px;
     border-radius: 16px;
   }
 }

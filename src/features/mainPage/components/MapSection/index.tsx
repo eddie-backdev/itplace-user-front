@@ -34,6 +34,7 @@ interface MapSectionProps {
   mobileControlsTransitionEnabled?: boolean;
   mobileSheetBottomInset?: number;
   hideMobileCategory?: boolean;
+  hideCategoryTabs?: boolean;
   hideMobileControls?: boolean;
   onRoadviewVisibilityChange?: (isVisible: boolean) => void;
 }
@@ -63,6 +64,7 @@ const MapSection: React.FC<MapSectionProps> = ({
   mobileControlsTransitionEnabled,
   mobileSheetBottomInset,
   hideMobileCategory = false,
+  hideCategoryTabs = false,
   hideMobileControls = false,
   onRoadviewVisibilityChange,
 }) => {
@@ -142,7 +144,7 @@ const MapSection: React.FC<MapSectionProps> = ({
   return (
     <div className="relative w-full h-full">
       {/* 카테고리 태그 - 주변 혜택 탭일 때만 지도 위 오버레이 */}
-      {activeTab === 'nearby' && !roadviewClickedLatLng && (
+      {activeTab === 'nearby' && !roadviewClickedLatLng && !hideCategoryTabs && (
         <div
           aria-hidden={hideMobileCategory}
           inert={hideMobileCategory}

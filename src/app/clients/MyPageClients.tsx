@@ -13,6 +13,11 @@ export const MyInfoPageClient = dynamic(() => import('@/screens/myPage/MyInfoPag
   loading,
 });
 
+export const MyPageOverviewClient = dynamic(() => import('@/screens/myPage/MyPageOverview'), {
+  ssr: false,
+  loading,
+});
+
 export const MyFavoritesPageClient = dynamic(() => import('@/screens/myPage/MyFavoritesPage'), {
   ssr: false,
   loading,

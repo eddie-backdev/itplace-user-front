@@ -55,14 +55,14 @@ const AboutPage = () => {
         title="서비스 소개"
         description="잇플레이스(ITPLACE, 잇플)는 흩어져 있는 통신 3사 멤버십 혜택을 지도, 목록과 검색으로 찾고, 등급별 조건과 실제 이용 방법을 비교하는 서비스입니다."
       >
-        <section className="surface-card bg-softMint p-5 sm:p-7">
+        <section className="border-b border-warmBorder pb-7">
           <p className="text-sm font-semibold text-brandStrong">잇플레이스에서 할 수 있는 일</p>
           <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
             통신사 혜택을 찾고, 조건을 비교하고, 다시 기록하세요
           </h2>
-          <ul className="mt-4 grid gap-3 leading-7 text-grey06 md:grid-cols-2">
+          <ul className="mt-4 space-y-3 leading-7 text-grey06">
             {servicePoints.map((point) => (
-              <li key={point} className="flex gap-3 rounded-xl bg-white/80 p-4">
+              <li key={point} className="flex gap-3">
                 <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-brand" aria-hidden="true" />
                 <span>{point}</span>
               </li>
@@ -84,7 +84,7 @@ const AboutPage = () => {
           </div>
         </section>
 
-        <section className="surface-card p-5 sm:p-7">
+        <section className="border-b border-warmBorder pb-7">
           <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
             누구에게 유용한가요?
           </h2>
@@ -94,7 +94,7 @@ const AboutPage = () => {
             혜택 조건을 구분해 보고 싶은 사용자에게 유용합니다.
           </p>
         </section>
-        <section className="surface-card p-5 sm:p-7">
+        <section className="border-b border-warmBorder pb-7">
           <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
             정보 운영 기준
           </h2>
@@ -141,17 +141,17 @@ const AboutPage = () => {
           <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
             더 알아보기
           </h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 divide-y divide-warmBorder border-y border-warmBorder">
             {guideLinks.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="group surface-card p-4 transition-colors hover:border-brand/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  className="group block py-4 transition-colors hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brandSoft text-brandStrong">
+                    <span className="flex h-11 w-11 items-center justify-center text-brandStrong">
                       <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
                     </span>
                     <span className="font-semibold text-ink group-hover:text-brandStrong">

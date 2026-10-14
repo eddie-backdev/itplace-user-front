@@ -3,23 +3,28 @@
 @tailwind utilities;
 
 :root {
-  --itplace-color-brand: #167a4c;
-  --itplace-color-brand-hover: #115c3a;
-  --itplace-color-brand-light: #39a66f;
-  --itplace-color-brand-subtle: #eaf5f0;
-  --itplace-color-benefit: #ffd75a;
+  --itplace-color-brand: #6154d9;
+  --itplace-color-brand-hover: #5145c5;
+  --itplace-color-brand-light: #8278e7;
+  --itplace-color-brand-subtle: #f0edfc;
+  --itplace-color-benefit: #6154d9;
   --itplace-color-surface: #ffffff;
-  --itplace-color-surface-subtle: #f6f7fa;
-  --itplace-color-text: #252a34;
-  --itplace-color-text-secondary: #69717e;
-  --itplace-color-border: #e7eaf0;
-  --itplace-color-lavender: #f1eefc;
-  --itplace-color-mint: #eaf5f0;
-  --itplace-color-peach: #fff2e9;
-  --itplace-color-lavender-ink: #6654a8;
+  --itplace-color-surface-subtle: #f7f8fa;
+  --itplace-color-text: #202124;
+  --itplace-color-text-secondary: #686b73;
+  --itplace-color-border: #e8e9ee;
+  --itplace-color-lavender: #f0edfc;
+  --itplace-color-mint: #f0edfc;
+  --itplace-color-peach: #f7f8fa;
+  --itplace-color-lavender-ink: #5145c5;
+  --itplace-color-ink: #202124;
+  --itplace-color-muted: #686b73;
+  --itplace-color-canvas: #f7f8fa;
+  --itplace-page-width: 1280px;
+  --itplace-page-gutter: 28px;
   --itplace-sidebar-width: 0px;
   --itplace-sidebar-motion-duration: 240ms;
-  --itplace-shadow-card: 0 2px 10px rgba(31, 38, 52, 0.035);
+  --itplace-shadow-card: 0 2px 10px rgba(32, 33, 36, 0.035);
   --itplace-shadow-soft: var(--itplace-shadow-card);
   --itplace-mobile-tab-bar-height: 64px;
   --itplace-mobile-tab-bar-offset: calc(
@@ -29,33 +34,6 @@
   --itplace-layer-transient-backdrop: 30000;
   --itplace-layer-transient-surface: 30001;
   --itplace-layer-toast: 50000;
-}
-
-@media (min-width: 768px) {
-  :root {
-    --itplace-sidebar-width: 88px;
-  }
-}
-
-@media (min-width: 1024px) {
-  :root {
-    --itplace-sidebar-width: 276px;
-  }
-}
-
-@media (min-width: 1024px) {
-  :root:has(.itplace-site-shell[data-sidebar-collapsed='true']) {
-    --itplace-sidebar-width: 96px;
-  }
-
-  .itplace-site-shell > main {
-    transition: margin-left var(--itplace-sidebar-motion-duration)
-      cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .Toastify__toast-container.custom-toast-container {
-    transition: left var(--itplace-sidebar-motion-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -92,26 +70,26 @@ body:has([data-itplace-transient-layer='open']) .itplace-mobile-app-tab-bar {
 
   .workspace-container {
     width: 100%;
-    max-width: 2160px;
+    max-width: var(--itplace-page-width);
     margin-inline: auto;
-    padding-inline: 20px;
+    padding-inline: var(--itplace-page-gutter);
   }
 
   @media (min-width: 640px) {
     .workspace-container {
-      padding-inline: 32px;
+      padding-inline: var(--itplace-page-gutter);
     }
   }
 
   @media (min-width: 1024px) {
     .workspace-container {
-      padding-inline: 40px;
+      padding-inline: var(--itplace-page-gutter);
     }
   }
 
   @media (min-width: 1600px) {
     .workspace-container {
-      padding-inline: 48px;
+      padding-inline: var(--itplace-page-gutter);
     }
   }
 }
@@ -121,6 +99,31 @@ body:has([data-itplace-transient-layer='open']) .itplace-mobile-app-tab-bar {
   margin: 0;
   box-sizing: border-box;
   font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+}
+
+html {
+  scroll-padding-top: 88px;
+}
+body {
+  min-width: 0;
+  background: var(--itplace-color-surface-subtle);
+  color: var(--itplace-color-text);
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 99999;
+  top: 8px;
+  left: 8px;
+  transform: translateY(-150%);
+  border-radius: 8px;
+  padding: 12px 16px;
+  background: var(--itplace-color-brand);
+  color: #fff;
+  font-weight: 700;
+}
+.skip-link:focus {
+  transform: none;
 }
 
 /*스크롤바 안보이게 */
@@ -374,7 +377,7 @@ body:has([data-itplace-transient-layer='open']) .itplace-mobile-app-tab-bar {
 }
 
 .Toastify__toast-container.custom-toast-container {
-  left: calc(50% + var(--itplace-sidebar-width) / 2) !important;
+  left: 50% !important;
   right: auto !important;
   transform: translateX(-50%) !important;
   display: flex !important;

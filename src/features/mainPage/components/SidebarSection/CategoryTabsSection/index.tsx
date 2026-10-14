@@ -31,7 +31,7 @@ const getCategoryIcon = (
   categoryId: string,
   isSelected: boolean
 ): React.ReactElement | undefined => {
-  const iconColor = isSelected ? 'text-[#202120]' : 'text-[#69717e]';
+  const iconColor = isSelected ? 'text-[#6154d9]' : 'text-[#686b73]';
   const iconSize = 18;
 
   const iconMap: Record<string, React.ReactElement> = {
@@ -112,12 +112,12 @@ const CategoryTabsSection: React.FC<CategoryTabsSectionProps> = ({
                 className={`${styles.button} ${
                   selectedCategory === category.id
                     ? mode === 'map'
-                      ? 'border-[#e6e6e3] bg-[#f1f1ee] text-[#202120]'
+                      ? 'border-[#e4defc] bg-[#f0edfc] text-[#6154d9]'
                       : 'border-brand bg-brand text-white'
                     : mode === 'map'
-                      ? 'border-transparent bg-white text-[#69717e] hover:bg-[#f6f7fa] hover:text-[#202120]'
+                      ? 'border-transparent bg-white text-[#686b73] hover:bg-[#f7f8fa] hover:text-[#202124]'
                       : 'border-warmBorder bg-warmSurface text-grey06 hover:border-brand/30 hover:bg-brandSoft'
-                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]`}
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]`}
               >
                 {styles.showIcon && category.id !== '전체' && (
                   <span className="flex-shrink-0 [&_svg]:h-[18px] [&_svg]:w-[18px]">

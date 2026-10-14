@@ -1,4 +1,5 @@
 import { Link } from '@/lib/navigation';
+import styles from './SiteFooter.module.css';
 
 const footerLinks = [
   { label: '통신사 멤버십', to: '/membership' },
@@ -13,31 +14,19 @@ const footerLinks = [
 
 const currentYear = new Date().getFullYear();
 
-const SiteFooter = () => {
-  return (
-    <footer className="border-t border-warmBorder bg-warmCanvas py-5 text-warmMuted">
-      <div className="workspace-container flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-5">
-        <p className="shrink-0 whitespace-nowrap text-body-4 font-medium text-warmMuted">
-          © {currentYear} IT:PLACE
-        </p>
-
-        <nav
-          aria-label="서비스 정책 및 도움말"
-          className="flex flex-wrap items-center gap-x-4 text-[13px] md:justify-end"
-        >
-          {footerLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-sm font-medium text-warmMuted hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-    </footer>
-  );
-};
+const SiteFooter = () => (
+  <footer className={styles.footer}>
+    <div className={styles.layout}>
+      <p>© {currentYear} IT:PLACE</p>
+      <nav aria-label="서비스 정책 및 도움말">
+        {footerLinks.map((link) => (
+          <Link key={link.to} to={link.to}>
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+    </div>
+  </footer>
+);
 
 export default SiteFooter;

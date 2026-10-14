@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import Image from 'next/image';
 import { Link, useNavigate, useSearchParams } from '@/lib/navigation';
 import { AxiosError } from 'axios';
 import { showToast } from '../../../utils/toast';
@@ -17,7 +16,9 @@ import { setLoginSuccess } from '../../../store/authSlice';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import { consumeOAuthPreAuth } from '../utils/oauthPreAuthStorage';
 import { clearOAuthReturnTo, consumeOAuthReturnTo, getSafeReturnTo } from '../utils/returnTo.mjs';
-import AuthBenefitsPreview, { type AuthPreviewPartner } from '../components/common/AuthBenefitsPreview';
+import AuthBenefitsPreview, {
+  type AuthPreviewPartner,
+} from '../components/common/AuthBenefitsPreview';
 import styles from './AuthPageLayout.module.css';
 
 const emptyLocalSignupData = {
@@ -51,6 +52,7 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
     goToSignUp,
     goToSignUpFinal,
     goToFindPassword,
+    goToFindId,
   } = AuthTransition();
 
   const [searchParams] = useSearchParams();
@@ -328,6 +330,7 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
       {formStep === 'login' && (
         <LoginForm
           returnTo={returnTo}
+          onGoToFindId={goToFindId}
           onGoToSignUp={() => {
             setSignUpData(emptyLocalSignupData);
             goToSignUp();
@@ -401,18 +404,39 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
       )}
 
       {formStep === 'findPassword' && <FindPasswordForm onGoToLogin={goToLogin} />}
+      {formStep === 'findId' && (
+        <section className="text-left" aria-labelledby="find-id-title">
+          <h1
+            id="find-id-title"
+            className="text-[30px] font-bold leading-9 tracking-[-0.04em] text-[#202124]"
+          >
+            아이디 찾기
+          </h1>
+          <p className="mt-4 break-keep text-[15px] leading-7 text-[#686b73]">
+            잇플레이스 로그인 아이디는 가입할 때 사용한 이메일 주소예요. 가입 이메일 조회는 지원하지
+            않으니 받은 메일함을 확인하거나 문의해 주세요.
+          </p>
+          <Link
+            to="/contact"
+            className="mt-4 inline-flex min-h-11 items-center font-semibold text-[#6154d9] underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+          >
+            문의하기
+          </Link>
+          <button
+            type="button"
+            onClick={goToLogin}
+            className="mt-6 flex min-h-12 w-full items-center justify-center rounded-xl border border-[#e8e9ee] font-semibold text-[#34343b] hover:bg-[#f7f8fa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+          >
+            로그인으로 돌아가기
+          </button>
+        </section>
+      )}
     </>
   );
 
   if (isOAuthProcessing) {
     return (
       <div className={styles.page}>
-        <div className={styles.mobileBrand}>
-          <Link to="/" className={styles.brand} aria-label="잇플레이스 홈">
-            <Image src="/brand/itplace-mark-b-rail.svg" width={36} height={36} alt="" />
-            <span>잇플레이스</span>
-          </Link>
-        </div>
         <div className={styles.processing}>
           <LoadingSpinner />
           <h1 className="mt-5 text-title-6 font-bold text-grey07">카카오 로그인 처리 중입니다</h1>
@@ -426,26 +450,17 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
 
   return (
     <div className={styles.page}>
-      <div className={styles.mobileBrand}>
-        <Link to="/" className={styles.brand} aria-label="잇플레이스 홈">
-          <Image src="/brand/itplace-mark-b-rail.svg" width={36} height={36} alt="" />
-          <span>잇플레이스</span>
-        </Link>
-        <Link to="/benefits" className={styles.benefitsLink}>혜택 먼저 둘러보기</Link>
-      </div>
       <div className={styles.surface}>
         <div className={styles.preview}>
           <AuthBenefitsPreview partners={previewPartners} />
         </div>
         <div className={styles.formSide}>
-          <Link to="/" className={`${styles.brand} ${styles.desktopBrand}`} aria-label="잇플레이스 홈">
-            <Image src="/brand/itplace-mark-b-rail.svg" width={36} height={36} alt="" />
-            <span>잇플레이스</span>
-          </Link>
           <section className={`${styles.formCard} ${isSignupFlow ? styles.signupCard : ''}`}>
             {renderFormContent()}
           </section>
-          <Link to="/benefits" className={styles.desktopBenefitsLink}>혜택 먼저 둘러보기</Link>
+          <Link to="/benefits" className={styles.desktopBenefitsLink}>
+            혜택 먼저 둘러보기
+          </Link>
         </div>
       </div>
     </div>

@@ -7,15 +7,16 @@ import BenefitCardList from '../../features/myPage/components/Favorites/BenefitC
 import EditControls from '../../features/myPage/components/Favorites/EditControls';
 import MyPageContentLayout from '../../features/myPage/layout/MyPageContentLayout';
 import FavoritesDeleteModal from '../../features/myPage/components/Favorites/FavoritesDeleteModal';
-import FavoritesAside from '../../features/myPage/components/Favorites/FavoritesAside';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import BenefitDetailTabs from '../../features/myPage/components/Favorites/BenefitDetailTabs';
 import { useResponsive } from '../../hooks/useResponsive';
 import DetailModal from '../../components/DetailModal';
 import { Link } from '@/lib/navigation';
+import { useState } from 'react';
 
 export default function MyFavoritesPage() {
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const user = useSelector((state: RootState) => state.auth.user);
   const userCarrier = user?.carrier;
   const userGrade = user?.membershipGradeCode ?? user?.membershipGrade;
@@ -68,24 +69,27 @@ export default function MyFavoritesPage() {
                 저장한 혜택을 다시 찾고, 사용 기록까지 이어가세요.
               </p>
             </header>
-            <div className="mb-3 flex flex-wrap items-center gap-3 max-md:flex-col max-md:items-stretch">
-              <BenefitFilterToggle
-                value={benefitFilter}
-                onChange={setBenefitFilter}
-                width="w-full sm:w-[240px]"
-                heightClass="min-h-11"
-                className="!mb-0"
-                fontSize="text-sm"
-                disabledMyMembership={!hasMembershipProfile}
-              />
+            <div className="mb-5 rounded-xl border border-warmBorder bg-[#f7f8fa] p-3 sm:p-4">
               <SearchBar
                 placeholder="브랜드 또는 혜택 검색"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 onClear={() => setKeyword('')}
                 backgroundColor="bg-white"
-                className="h-11 w-full sm:max-w-[320px]"
+                className="h-12 w-full"
               />
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <BenefitFilterToggle
+                  value={benefitFilter}
+                  onChange={setBenefitFilter}
+                  width="w-full sm:w-[240px]"
+                  heightClass="min-h-11"
+                  className="!mb-0 bg-white"
+                  fontSize="text-sm"
+                  disabledMyMembership={!hasMembershipProfile}
+                />
+                <p className="text-sm text-warmMuted">{totalElements}개의 저장 혜택</p>
+              </div>
             </div>
             {benefitFilter === 'myMembership' &&
               membershipFilterError &&
@@ -166,8 +170,10 @@ export default function MyFavoritesPage() {
                 <BenefitCardList
                   items={currentItems}
                   userCarrier={userCarrier}
+                  userGrade={userGrade}
                   selectedId={selectedId}
                   setSelectedId={setSelectedId}
+                  onOpenDetails={() => setIsDetailOpen(true)}
                   isEditing={isEditing}
                   selectedItems={selectedItems}
                   setSelectedItems={setSelectedItems}
@@ -202,8 +208,10 @@ export default function MyFavoritesPage() {
               <BenefitCardList
                 items={currentItems}
                 userCarrier={userCarrier}
+                userGrade={userGrade}
                 selectedId={selectedId}
                 setSelectedId={setSelectedId}
+                onOpenDetails={() => setIsDetailOpen(true)}
                 isEditing={isEditing}
                 selectedItems={selectedItems}
                 setSelectedItems={setSelectedItems}
@@ -252,29 +260,7 @@ export default function MyFavoritesPage() {
             )}
           </div>
         }
-        aside={
-          allFavorites.length === 0 && !loading ? null : (
-            <div className="max-md:hidden">
-              <FavoritesAside
-                favorites={allFavorites}
-                isEditing={isEditing}
-                selectedItems={selectedItems}
-                selectedId={selectedId}
-                userCarrier={userCarrier}
-                userGrade={userGrade}
-                loading={loading}
-              />
-              {!loading && !isEditing && selectedFavorite ? (
-                <Link
-                  to={`/mypage/activity?benefitId=${selectedFavorite.benefitId}`}
-                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-brand px-4 text-sm font-semibold text-brandStrong transition-colors hover:bg-brandSoft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                >
-                  사용 기록 남기기
-                </Link>
-              ) : null}
-            </div>
-          )
-        }
+        aside={null}
       />
 
       {/* ✅ 모바일에서만, 편집 모드일 때 하단 고정 버튼 */}
@@ -311,8 +297,8 @@ export default function MyFavoritesPage() {
       )}
 
       <DetailModal
-        isOpen={isMobile && selectedId !== null}
-        onClose={() => setSelectedId(null)}
+        isOpen={isDetailOpen && selectedId !== null}
+        onClose={() => setIsDetailOpen(false)}
         title="상세 혜택"
       >
         {selectedId !== null && (

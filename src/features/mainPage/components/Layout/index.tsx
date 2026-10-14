@@ -691,87 +691,103 @@ const MainPageLayout: React.FC = () => {
     <>
       {!isMobile && (
         <>
-          {/* 데스크톱 레이아웃 */}
-          <div className={styles.desktopFrame}>
-            {/* 지도는 남는 폭을 사용해 오른쪽 패널을 열고 닫아도 중심이 유지된다. */}
-            <div className={styles.mapViewport}>
-              <MapSection
-                platforms={stablePlatforms}
-                clusters={isServerClusterContext ? mapClusters : EMPTY_MAP_CLUSTERS}
-                useServerClusters={shouldUseServerClusterMode}
-                selectedPlatform={selectedPlatform}
-                onPlatformSelect={handlePlatformSelect}
-                onLocationChange={handleLocationChange}
-                onMapCenterChange={handleMapCenterChange}
-                onLocationMove={handleLocationMove}
-                categories={CATEGORIES}
-                selectedCategory={selectedCategory || '전체'}
-                onCategorySelect={handleCategorySelect}
-                onSearchInMap={handleSearchInMap}
-                centerLocation={mapMoveCenterLocation}
-                initialCenterLocation={currentMapCenterLocation}
-                initialMapLevel={hasInitializedMapViewportRef.current ? currentMapLevel : undefined}
-                onZoomStart={handleMapZoomStart}
-                onMapLevelChange={handleMapLevelChange}
-                onViewportChange={handleMapViewportChange}
-                activeTab={activeTab}
-                searchQuery={recoverySearchQuery}
-                onRoadviewVisibilityChange={setIsRoadviewOpen}
-              />
-            </div>
-
-            {/* 검색·매장·혜택 상세 패널은 오른쪽에 고정한다. */}
-            <div
-              id="map-search-panel"
-              aria-hidden={isSidebarCollapsed}
-              inert={isSidebarCollapsed}
-              className={`${styles.searchPanel} ${isSidebarCollapsed ? styles.searchPanelCollapsed : ''}`}
-            >
-              <div className={styles.searchPanelInner}>
-                <SidebarSection
+          <section className={styles.desktopPage} aria-labelledby="map-page-title">
+            <header className={styles.pageHeading}>
+              <div>
+                <h2 id="map-page-title">내 혜택을 쓸 수 있는 곳</h2>
+                <p>
+                  {currentLocation
+                    ? `${currentLocation} 주변 제휴 매장을 확인해 보세요.`
+                    : '지도를 움직여 주변 제휴 매장을 확인해 보세요.'}
+                </p>
+              </div>
+            </header>
+            <div className={styles.desktopFrame}>
+              {/* 지도는 남는 폭을 사용해 오른쪽 패널을 열고 닫아도 중심이 유지된다. */}
+              <div className={styles.mapViewport}>
+                <MapSection
                   platforms={stablePlatforms}
-                  isClusterView={shouldUseServerClusterMode}
+                  clusters={isServerClusterContext ? mapClusters : EMPTY_MAP_CLUSTERS}
+                  useServerClusters={shouldUseServerClusterMode}
                   selectedPlatform={selectedPlatform}
                   onPlatformSelect={handlePlatformSelect}
-                  currentLocation={currentLocation}
-                  isLoading={isLoading}
-                  error={error}
-                  activeTab={activeTab}
-                  mapUnavailable={isMapUnavailable}
-                  recoverySearchQuery={recoverySearchQuery}
-                  onSearchChange={handleSearchChange}
-                  onActiveTabChange={handleActiveTabChange}
-                  onKeywordSearch={handleKeywordSearch}
-                  searchQuery={searchQuery}
-                  onBenefitDetailRequest={handleBenefitDetailRequest}
-                  benefitDetailIds={
-                    benefitDetailCard.isVisible ? benefitDetailCard.benefitIds : null
+                  onLocationChange={handleLocationChange}
+                  onMapCenterChange={handleMapCenterChange}
+                  onLocationMove={handleLocationMove}
+                  categories={CATEGORIES}
+                  selectedCategory={selectedCategory || '전체'}
+                  onCategorySelect={handleCategorySelect}
+                  hideCategoryTabs
+                  onSearchInMap={handleSearchInMap}
+                  centerLocation={mapMoveCenterLocation}
+                  initialCenterLocation={currentMapCenterLocation}
+                  initialMapLevel={
+                    hasInitializedMapViewportRef.current ? currentMapLevel : undefined
                   }
-                  onBenefitDetailClose={handleBenefitDetailCardClose}
-                  userCoords={userCoords}
-                  onRecommendationStoreResults={handleRecommendationStoreResults}
-                  onSearchPartner={handleKeywordSearch}
-                  onBottomSheetReset={resetBottomSheet}
+                  onZoomStart={handleMapZoomStart}
+                  onMapLevelChange={handleMapLevelChange}
+                  onViewportChange={handleMapViewportChange}
+                  activeTab={activeTab}
+                  searchQuery={recoverySearchQuery}
+                  onRoadviewVisibilityChange={setIsRoadviewOpen}
                 />
               </div>
-            </div>
 
-            <button
-              type="button"
-              onClick={handleSidebarToggle}
-              aria-expanded={!isSidebarCollapsed}
-              aria-controls="map-search-panel"
-              aria-label={isSidebarCollapsed ? '검색 패널 열기' : '검색 패널 접기'}
-              className={`${styles.panelToggle} ${isSidebarCollapsed ? styles.panelToggleCollapsed : ''}`}
-            >
-              <TbChevronLeft
-                size={16}
-                strokeWidth={2.2}
-                aria-hidden="true"
-                className={`${styles.panelToggleIcon} ${isSidebarCollapsed ? '' : styles.panelToggleIconOpen}`}
-              />
-            </button>
-          </div>
+              {/* 검색·매장·혜택 상세 패널은 왼쪽에 둔다. */}
+              <div
+                id="map-search-panel"
+                aria-hidden={isSidebarCollapsed}
+                inert={isSidebarCollapsed}
+                className={`${styles.searchPanel} ${isSidebarCollapsed ? styles.searchPanelCollapsed : ''}`}
+              >
+                <div className={styles.searchPanelInner}>
+                  <SidebarSection
+                    platforms={stablePlatforms}
+                    isClusterView={shouldUseServerClusterMode}
+                    selectedPlatform={selectedPlatform}
+                    onPlatformSelect={handlePlatformSelect}
+                    currentLocation={currentLocation}
+                    mapSelectedCategory={selectedCategory || '전체'}
+                    onMapCategorySelect={handleCategorySelect}
+                    isLoading={isLoading}
+                    error={error}
+                    activeTab={activeTab}
+                    mapUnavailable={isMapUnavailable}
+                    recoverySearchQuery={recoverySearchQuery}
+                    onSearchChange={handleSearchChange}
+                    onActiveTabChange={handleActiveTabChange}
+                    onKeywordSearch={handleKeywordSearch}
+                    searchQuery={searchQuery}
+                    onBenefitDetailRequest={handleBenefitDetailRequest}
+                    benefitDetailIds={
+                      benefitDetailCard.isVisible ? benefitDetailCard.benefitIds : null
+                    }
+                    onBenefitDetailClose={handleBenefitDetailCardClose}
+                    userCoords={userCoords}
+                    onRecommendationStoreResults={handleRecommendationStoreResults}
+                    onSearchPartner={handleKeywordSearch}
+                    onBottomSheetReset={resetBottomSheet}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSidebarToggle}
+                aria-expanded={!isSidebarCollapsed}
+                aria-controls="map-search-panel"
+                aria-label={isSidebarCollapsed ? '검색 패널 열기' : '검색 패널 접기'}
+                className={`${styles.panelToggle} ${isSidebarCollapsed ? styles.panelToggleCollapsed : ''}`}
+              >
+                <TbChevronLeft
+                  size={16}
+                  strokeWidth={2.2}
+                  aria-hidden="true"
+                  className={`${styles.panelToggleIcon} ${isSidebarCollapsed ? '' : styles.panelToggleIconOpen}`}
+                />
+              </button>
+            </div>
+          </section>
         </>
       )}
 
@@ -815,6 +831,7 @@ const MainPageLayout: React.FC = () => {
                 categories={CATEGORIES}
                 selectedCategory={selectedCategory || '전체'}
                 onCategorySelect={handleCategorySelect}
+                hideCategoryTabs
                 onSearchInMap={handleSearchInMap}
                 centerLocation={mapMoveCenterLocation}
                 initialCenterLocation={currentMapCenterLocation}
@@ -893,6 +910,8 @@ const MainPageLayout: React.FC = () => {
                     selectedPlatform={selectedPlatform}
                     onPlatformSelect={handlePlatformSelect}
                     currentLocation={currentLocation}
+                    mapSelectedCategory={selectedCategory || '전체'}
+                    onMapCategorySelect={handleCategorySelect}
                     isLoading={isLoading}
                     error={error}
                     activeTab={activeTab}

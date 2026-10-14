@@ -5,7 +5,6 @@ import { setLoginSuccess } from '../../../../store/authSlice';
 import { showToast } from '../../../../utils/toast';
 import { login } from '../../apis/auth';
 import AuthInput from '../common/AuthInput';
-import AuthLinkRow from '../common/AuthLinkRow';
 import AuthDivider from '../common/AuthDivider';
 import KakaoLoginButton from './KakaoLoginButton';
 import { useNavigate } from '@/lib/navigation';
@@ -14,10 +13,11 @@ import { clearOAuthReturnTo, getSafeReturnTo, storeOAuthReturnTo } from '../../u
 type Props = {
   onGoToSignUp: () => void;
   onGoToFindPassword: () => void;
+  onGoToFindId: () => void;
   returnTo: string;
 };
 
-const LoginForm = ({ onGoToSignUp, onGoToFindPassword, returnTo }: Props) => {
+const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }: Props) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -77,7 +77,9 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, returnTo }: Props) => {
   return (
     <div className="mx-auto w-full max-w-[400px]">
       <div className="mb-7 text-left">
-        <h1 className="text-[30px] font-bold leading-9 text-grey07 max-sm:text-[28px]">로그인</h1>
+        <h1 className="text-[30px] font-bold leading-9 tracking-[-0.04em] text-[#202124] max-sm:text-[28px]">
+          로그인
+        </h1>
         <p className="mt-2 max-w-[34ch] text-body-3 leading-6 text-grey05">
           관심 혜택과 사용 기록을 이어서 확인하세요.
         </p>
@@ -106,21 +108,15 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, returnTo }: Props) => {
               setLoginError('');
             }}
             className="h-[52px] max-w-none"
+            bgColor="bg-white"
           />
         </div>
 
-        <div className="mb-5 w-full">
-          <div className="mb-1.5 flex min-h-6 items-center justify-between gap-2">
+        <div className="mb-4 w-full">
+          <div className="mb-1.5 flex min-h-6 items-center gap-2">
             <label htmlFor="auth-password" className="text-body-3 font-semibold text-grey06">
               비밀번호
             </label>
-            <button
-              type="button"
-              onClick={onGoToFindPassword}
-              className="min-h-11 rounded-sm px-1 text-body-3 text-grey05 hover:text-grey07 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              비밀번호 찾기
-            </button>
           </div>
           <div className="relative">
             <AuthInput
@@ -139,6 +135,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, returnTo }: Props) => {
               }}
               disableFocusEffect
               className="h-[52px] max-w-none pr-16"
+              bgColor="bg-white"
             />
             <button
               type="button"
@@ -159,18 +156,43 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, returnTo }: Props) => {
           </p>
         )}
 
+        <nav
+          aria-label="계정 도움말"
+          className="mb-3 flex min-h-11 flex-wrap items-center justify-center gap-x-4 text-[13px] text-[#686b73]"
+        >
+          <button
+            type="button"
+            onClick={onGoToFindId}
+            className="min-h-11 rounded-sm px-1 hover:text-[#202124] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+          >
+            아이디 찾기
+          </button>
+          <button
+            type="button"
+            onClick={onGoToFindPassword}
+            className="min-h-11 rounded-sm px-1 hover:text-[#202124] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+          >
+            비밀번호 찾기
+          </button>
+          <button
+            type="button"
+            onClick={onGoToSignUp}
+            className="min-h-11 rounded-sm px-1 font-semibold text-[#6154d9] hover:text-[#5144c7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+          >
+            회원가입
+          </button>
+        </nav>
+
         <button
           type="submit"
           disabled={isSubmitting}
-          className="h-[52px] w-full rounded-xl bg-brand text-body-2-bold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+          className="h-12 w-full rounded-xl bg-[#6154d9] text-body-2-bold text-white transition-colors hover:bg-[#5144c7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
         >
           {isSubmitting ? '로그인 중…' : '로그인'}
         </button>
 
-        <AuthDivider className="my-6" label="또는" />
+        <AuthDivider className="my-5" label="또는" />
         <KakaoLoginButton onClick={handleKakaoLogin} disabled={isSubmitting} />
-
-        <AuthLinkRow onGoToSignUp={onGoToSignUp} />
       </form>
     </div>
   );

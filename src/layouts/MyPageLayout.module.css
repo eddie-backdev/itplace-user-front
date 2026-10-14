@@ -1,0 +1,40 @@
+.page {
+  width: min(calc(100% - 56px), 1216px);
+  min-height: calc(100dvh - 80px);
+  margin: 0 auto;
+  padding: 16px 0 56px;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+  color: #202124;
+}
+
+.content {
+  min-width: 0;
+}
+
+.loading {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  justify-items: center;
+}
+
+.guestContent {
+  min-width: 0;
+  max-width: 972px;
+  padding-top: 0;
+}
+
+@media (max-width: 767px) {
+  .page {
+    width: 100%;
+    min-height: 0;
+    display: block;
+    padding: 130px 16px 32px;
+  }
+
+  .guestContent {
+    padding-top: 0;
+  }
+}

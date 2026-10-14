@@ -1,149 +1,135 @@
-// src/features/myPage/components/BenefitCardList.tsx
 import SafeImage from '../../../../components/SafeImage';
-import { TbStarFilled } from 'react-icons/tb';
+import { TbBookmark } from 'react-icons/tb';
 import { FavoriteItem } from '../../../../types/favorites';
 import { getPartnerBenefitPreview } from '../../../../utils/benefitPreview';
 import { getCarrierLabel, isCarrierCode } from '../../../../utils/membership';
 
 interface BenefitCardListProps {
-  items: FavoriteItem[]; // 현재 페이지에 보여줄 아이템들
+  items: FavoriteItem[];
   userCarrier?: string | null;
+  userGrade?: string | null;
   selectedId: number | null;
   setSelectedId: (id: number) => void;
-
+  onOpenDetails: (id: number) => void;
   isEditing: boolean;
   selectedItems: number[];
   setSelectedItems: (ids: number[]) => void;
-
-  onRequestDelete: (id: number) => void; // 모달 열기용 (단일)
+  onRequestDelete: (id: number) => void;
 }
 
-/**
- * 카드 리스트를 렌더링하는 컴포넌트
- * 👉 MyFavoritesPage에서 상태/로직을 props로 내려서 사용
- */
 export default function BenefitCardList({
   items,
   userCarrier,
+  userGrade,
   selectedId,
   setSelectedId,
+  onOpenDetails,
   isEditing,
   selectedItems,
   setSelectedItems,
   onRequestDelete,
 }: BenefitCardListProps) {
   return (
-    <div className="grid min-h-[220px] grid-cols-3 items-stretch gap-3 max-xlg:grid-cols-2 wide:grid-cols-4 ultrawide:grid-cols-5 max-md:min-h-0 max-md:grid-cols-1 max-md:gap-3">
+    <div className="divide-y divide-warmBorder border-y border-warmBorder">
       {items.map((item) => {
         const previewSource = { partnerName: item.partnerName, previews: item.previews };
         const preview =
           getPartnerBenefitPreview(
             previewSource,
-            isCarrierCode(userCarrier) ? userCarrier : undefined
+            isCarrierCode(userCarrier) ? userCarrier : undefined,
+            userGrade ?? undefined
           ) ?? getPartnerBenefitPreview(previewSource);
-        const isCardSelected = isEditing
-          ? selectedItems.includes(item.benefitId)
-          : selectedId === item.benefitId;
+        const isSelected = selectedItems.includes(item.benefitId);
+        const isActive = selectedId === item.benefitId;
         const checkboxId = `favorite-benefit-${item.benefitId}`;
 
         return (
           <article
             key={item.benefitId}
-            className={`relative flex min-h-[184px] w-full min-w-0 cursor-pointer flex-col items-center rounded-xl border border-warmBorder bg-white p-4 pt-12 text-left transition-colors hover:border-brand/40 hover:bg-warmCanvas max-md:min-h-0 ${
-              isCardSelected ? 'border-brand ring-2 ring-brand/30 bg-brandSoft/40' : ''
-            }`}
+            className={`grid min-w-0 grid-cols-[minmax(180px,1.1fr)_minmax(0,1.5fr)_100px_auto_auto] items-center gap-5 py-5 transition-colors max-xl:grid-cols-[minmax(160px,1fr)_minmax(0,1.4fr)_80px_auto_auto] max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-x-3 max-md:gap-y-3 ${isActive ? 'bg-[#faf9ff]' : ''}`}
           >
-            {/* 편집 모드일 때 체크박스 표시 */}
-            {isEditing ? (
-              <>
-                <label
-                  htmlFor={checkboxId}
-                  className="absolute inset-0 z-0 cursor-pointer rounded-[16px]"
-                >
-                  <span className="sr-only">{item.benefitName} 선택 상태 변경</span>
-                </label>
+            <div className="flex min-w-0 items-center gap-3">
+              {isEditing ? (
                 <input
                   id={checkboxId}
                   type="checkbox"
                   aria-label={`${item.benefitName} 선택`}
-                  checked={selectedItems.includes(item.benefitId)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedItems([...selectedItems, item.benefitId]);
-                    } else {
-                      setSelectedItems(selectedItems.filter((id) => id !== item.benefitId));
-                    }
-                  }}
-                  className="pointer-events-auto absolute right-4 top-4 z-20 h-5 w-5 cursor-pointer appearance-none rounded-md border border-grey03 bg-white bg-center bg-no-repeat accent-purple04 checked:border-purple04 checked:bg-[url('/images/myPage/icon-check.png')] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-xl:h-4 max-xl:w-4 max-xl:rounded-[4px]"
+                  checked={isSelected}
+                  onChange={(event) =>
+                    setSelectedItems(
+                      event.target.checked
+                        ? [...selectedItems, item.benefitId]
+                        : selectedItems.filter((id) => id !== item.benefitId)
+                    )
+                  }
+                  className="h-5 w-5 shrink-0 accent-[#6154d9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
                 />
-              </>
-            ) : (
+              ) : null}
+              <SafeImage
+                src={item.partnerImage}
+                alt={`${item.partnerName || item.benefitName} 로고`}
+                fallbackLabel={item.partnerName || item.benefitName}
+                className="h-11 w-11 shrink-0 rounded-lg border border-warmBorder bg-white p-1 object-contain"
+              />
               <button
                 type="button"
-                aria-label={`${item.benefitName} 상세 보기`}
-                aria-expanded={isCardSelected}
-                onClick={() => setSelectedId(item.benefitId)}
-                className="absolute inset-0 z-0 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand"
-              />
-            )}
+                onClick={() => {
+                  setSelectedId(item.benefitId);
+                  onOpenDetails(item.benefitId);
+                }}
+                className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+              >
+                <span className="block truncate text-sm font-semibold text-ink">
+                  {item.partnerName || item.benefitName}
+                </span>
+                {item.partnerName && item.partnerName !== item.benefitName ? (
+                  <span className="mt-0.5 block truncate text-xs leading-5 text-warmMuted">
+                    {item.benefitName}
+                  </span>
+                ) : null}
+              </button>
+            </div>
 
-            {/* 즐겨찾기 해제 버튼 (편집 모드 아닐 때만 표시) */}
-            {!isEditing && (
+            <div className="min-w-0 max-md:col-span-2">
+              {preview ? (
+                <>
+                  <p className="truncate text-sm font-semibold text-ink">{preview.title}</p>
+                  <p className="mt-1 truncate text-xs text-warmMuted">
+                    {getCarrierLabel(preview.carrier)} {preview.grades ? `· ${preview.grades}` : ''}
+                    {preview.condition ? ` · ${preview.condition}` : ''}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-grey05">혜택 조건은 상세에서 확인해 주세요.</p>
+              )}
+            </div>
+
+            <p className="text-xs text-warmMuted max-md:col-span-2 max-md:pl-14">
+              {preview?.limit || (preview?.usage ? preview.usage : '조건 확인')}
+            </p>
+
+            {!isEditing ? (
               <button
                 type="button"
                 onClick={() => onRequestDelete(item.benefitId)}
-                aria-label={`${item.partnerName || item.benefitName} 즐겨찾기 해제`}
-                className="pointer-events-auto absolute right-2 top-2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-brandSoft text-brandStrong transition-colors hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                title="즐겨찾기 해제"
+                aria-label={`${item.partnerName || item.benefitName} 관심 혜택 해제`}
+                title="관심 혜택 해제"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#6154d9] hover:bg-[#f0edfc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] max-md:col-start-2 max-md:row-start-1"
               >
-                <TbStarFilled size={20} aria-hidden="true" />
+                <TbBookmark size={19} aria-hidden="true" />
               </button>
-            )}
+            ) : null}
 
-            <div className="pointer-events-none relative z-10 flex min-h-[128px] w-full flex-col gap-3 max-md:min-h-0">
-              <div className="flex min-w-0 items-center gap-3">
-                <SafeImage
-                  src={item.partnerImage}
-                  alt={`${item.partnerName || item.benefitName} 로고`}
-                  fallbackLabel={item.partnerName || item.benefitName}
-                  className="h-11 w-11 shrink-0 rounded-lg border border-warmBorder bg-white p-1 object-contain"
-                />
-                <div className="min-w-0">
-                  <p className="break-words text-sm font-semibold leading-5 text-ink">
-                    {item.partnerName || item.benefitName}
-                  </p>
-                  {item.partnerName && item.partnerName !== item.benefitName ? (
-                    <p className="mt-0.5 break-words text-xs leading-5 text-warmMuted">
-                      {item.benefitName}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-              {preview ? (
-                <div className="border-t border-warmBorder pt-2.5">
-                  <p className="text-xs leading-5 text-warmMuted">
-                    {getCarrierLabel(preview.carrier)} · {preview.grades}
-                  </p>
-                  <p className="mt-1 break-words text-sm font-semibold leading-5 text-ink">
-                    {preview.title}
-                  </p>
-                  {preview.condition ? (
-                    <p className="mt-1 whitespace-pre-line break-words text-xs leading-5 text-grey05">
-                      {preview.condition}
-                    </p>
-                  ) : null}
-                  {preview.limit ? (
-                    <p className="mt-2 break-words text-xs leading-5 text-warmMuted">
-                      한도 · {preview.limit}
-                    </p>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="border-t border-warmBorder pt-2.5 text-xs leading-5 text-warmMuted">
-                  통신사별 적용 조건은 상세에서 확인해 주세요.
-                </p>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedId(item.benefitId);
+                onOpenDetails(item.benefitId);
+              }}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-3 text-sm font-semibold text-brandStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-md:col-span-2 max-md:w-full"
+            >
+              자세히
+            </button>
           </article>
         );
       })}

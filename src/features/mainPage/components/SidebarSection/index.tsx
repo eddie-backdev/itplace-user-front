@@ -33,6 +33,8 @@ interface SidebarSectionProps {
   selectedPlatform?: Platform | null;
   onPlatformSelect: (platform: Platform | null) => void;
   currentLocation: string;
+  mapSelectedCategory: string;
+  onMapCategorySelect: (categoryId: string) => void;
   isLoading: boolean;
   error?: string | null;
   onSearchChange?: (query: string) => void;
@@ -62,6 +64,8 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   selectedPlatform,
   onPlatformSelect,
   currentLocation,
+  mapSelectedCategory,
+  onMapCategorySelect,
   isLoading,
   error,
   onSearchChange,
@@ -513,6 +517,12 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-white max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
       <div className="mx-4 mb-4 mt-4 flex min-h-0 flex-1 flex-col max-md:mx-0 max-md:mb-0 max-md:mt-0 max-md:w-full">
+        <div className="mb-3 flex items-center justify-between gap-2 md:px-1">
+          <h2 className="text-lg font-semibold tracking-[-0.03em] text-[#202124]">매장 찾기</h2>
+          <span className="max-w-[150px] truncate rounded-full bg-[#f0edfc] px-3 py-1.5 text-xs font-semibold text-[#6154d9]">
+            {currentLocation === '위치 정보 로딩 중...' ? '주변 매장' : currentLocation}
+          </span>
+        </div>
         {/* 검색 영역 - 데스크톱에서만 표시 */}
         <div
           className="flex-shrink-0 pb-3 max-md:touch-manipulation max-md:pb-2"
@@ -536,6 +546,18 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
               onTabChange={onActiveTabChange}
             />
           </div>
+
+          {activeTab === 'nearby' ? (
+            <div className="mb-3 min-w-0">
+              <p className="mb-1 px-1 text-xs font-medium text-[#686b73]">분야</p>
+              <CategoryTabsSection
+                categories={CATEGORIES}
+                selectedCategory={mapSelectedCategory}
+                onCategorySelect={onMapCategorySelect}
+                mode="map"
+              />
+            </div>
+          ) : null}
 
           {activeTab !== 'nearby' && (
             <InfoBannerSection

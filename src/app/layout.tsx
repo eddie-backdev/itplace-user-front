@@ -24,11 +24,7 @@ export const metadata: Metadata = {
   ],
   manifest: '/site.webmanifest',
   icons: {
-    icon: [
-      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico' },
-    ],
+    icon: [{ url: '/images/brand/mark.svg', type: 'image/svg+xml' }],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
   },
   alternates: { canonical: '/' },
@@ -56,7 +52,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#167a4c',
+  themeColor: '#6154d9',
 };
 
 const websiteStructuredData = {

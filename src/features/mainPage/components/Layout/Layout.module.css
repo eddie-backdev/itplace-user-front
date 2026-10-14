@@ -1,57 +1,79 @@
+.desktopPage {
+  display: none;
+  min-width: 0;
+}
+.pageHeading {
+  display: flex;
+  min-height: 116px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px 20px;
+}
+.pageHeading h1 {
+  margin: 0;
+  color: #202124;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+.pageHeading p {
+  margin: 8px 0 0;
+  color: #686b73;
+  font-size: 14px;
+}
 .desktopFrame {
-  --map-panel-width: 356px;
+  --map-panel-width: 360px;
   position: relative;
   display: none;
   min-width: 0;
-  height: calc(100dvh - 32px);
-  margin: 16px 16px 16px 0;
+  height: calc(100dvh - 216px);
+  margin: 0 20px 20px;
   gap: 16px;
   overflow: visible;
 }
-
 .mapViewport {
   position: relative;
-  flex: 1 1 0%;
+  order: 2;
+  flex: 1 1 0;
   min-width: 0;
   height: 100%;
   overflow: hidden;
-  border: 1px solid #e6e6e3;
-  border-radius: 18px;
-  background: var(--itplace-color-surface-subtle, #f6f7fa);
+  border: 1px solid #e8e9ee;
+  border-radius: 16px;
+  background: #f7f8fa;
 }
-
 .searchPanel {
-  flex: 0 0 auto;
+  order: 1;
+  flex: 0 0 var(--map-panel-width);
   width: var(--map-panel-width);
   min-width: 0;
   height: 100%;
   overflow: hidden;
-  border: 1px solid #e6e6e3;
-  border-radius: 18px;
+  border: 1px solid #e8e9ee;
+  border-radius: 16px;
   background: #fff;
   transition:
-    width var(--itplace-sidebar-motion-duration, 240ms) cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity var(--itplace-sidebar-motion-duration, 240ms) cubic-bezier(0.2, 0.8, 0.2, 1);
+    width 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    flex-basis 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-
 .searchPanelCollapsed {
   width: 0;
+  flex-basis: 0;
   opacity: 0;
   pointer-events: none;
   border-width: 0;
 }
-
 .searchPanelInner {
   width: var(--map-panel-width);
   height: 100%;
   overflow: hidden;
 }
-
 .panelToggle {
   position: absolute;
   z-index: 40;
   top: 12px;
-  right: calc(var(--map-panel-width) - 22px);
+  left: calc(var(--map-panel-width) - 22px);
   display: flex;
   width: 44px;
   height: 44px;
@@ -60,81 +82,75 @@
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: #69717e;
+  color: #686b73;
   cursor: pointer;
   transition:
-    right var(--itplace-sidebar-motion-duration, 240ms) cubic-bezier(0.2, 0.8, 0.2, 1),
+    left 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
     color 160ms ease,
     background-color 160ms ease;
 }
-
 .panelToggle::before {
   position: absolute;
   width: 28px;
   height: 28px;
-  border: 1px solid #e6e6e3;
+  border: 1px solid #e8e9ee;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(32, 34, 33, 0.08);
+  box-shadow: 0 1px 4px rgb(32 34 33 / 8%);
   content: '';
 }
-
 .panelToggle:hover {
-  color: #202120;
+  color: #202124;
 }
-
 .panelToggle:hover::before {
-  background: #f1f1ee;
+  background: #f7f8fa;
 }
-
 .panelToggle:focus-visible {
-  outline: 2px solid #0066cc;
+  outline: 2px solid #6154d9;
   outline-offset: 2px;
 }
-
 .panelToggleCollapsed {
-  right: -6px;
+  left: -6px;
 }
-
 .panelToggleIcon {
   position: relative;
-  transition: transform var(--itplace-sidebar-motion-duration, 240ms) cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-
 .panelToggleIconOpen {
   transform: rotate(180deg);
 }
-
 @media (min-width: 768px) {
+  .desktopPage {
+    display: block;
+  }
   .desktopFrame {
     display: flex;
   }
 }
-
 @media (min-width: 1280px) {
   .desktopFrame {
-    --map-panel-width: 380px;
+    --map-panel-width: 360px;
   }
 }
-
 @media (min-width: 1600px) {
   .desktopFrame {
-    --map-panel-width: 400px;
+    --map-panel-width: 360px;
   }
 }
-
 @media (min-width: 768px) and (max-width: 1023px) {
+  .pageHeading {
+    min-height: 100px;
+    padding-inline: 20px;
+  }
   .desktopFrame {
-    height: calc(100dvh - 24px);
-    margin: 12px 12px 12px 0;
+    height: calc(100dvh - 192px);
+    margin: 0 12px 12px;
     gap: 12px;
   }
-
   .desktopFrame {
-    --map-panel-width: 356px;
+    --map-panel-width: 340px;
   }
 }
-
 @media (prefers-reduced-motion: reduce) {
   .searchPanel,
   .panelToggle,

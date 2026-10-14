@@ -16,27 +16,27 @@ const FaqPage = () => {
       title="자주 묻는 질문"
       description="통신사 멤버십 혜택을 찾을 때 자주 생기는 질문과 ITPLACE 이용 방법을 정리했습니다."
     >
-      <section aria-labelledby="faq-list-title" className="space-y-4">
-        <h2 id="faq-list-title" className="text-xl font-semibold tracking-[-0.02em] sm:text-2xl">
+      <section aria-labelledby="faq-list-title">
+        <h2 id="faq-list-title" className="sr-only">
           질문 유형별로 찾아보기
         </h2>
-        <div className="grid gap-4 wide:grid-cols-3 wide:items-start">
+        <div>
           {faqGroups.map((group) => (
-            <section key={group.title} className="surface-card px-5 sm:px-7">
-              <h3 className="border-b border-warmBorder py-4 text-base font-semibold text-brandStrong">
+            <section key={group.title} className="border-b border-warmBorder pb-6">
+              <h3 className="pb-3 pt-6 text-[15px] font-semibold text-brandStrong">
                 {group.title}
               </h3>
               <div className="divide-y divide-warmBorder">
                 {group.items.map((faq) => (
                   <details key={faq.question} className="group">
-                    <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 font-semibold leading-6 text-ink hover:text-brandStrong focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+                    <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 font-semibold leading-6 text-ink hover:text-brandStrong focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
                       {faq.question}
                       <TbChevronDown
                         className="h-5 w-5 shrink-0 text-grey05 transition-transform group-open:rotate-180"
                         aria-hidden="true"
                       />
                     </summary>
-                    <p className="max-w-[78ch] pb-5 pr-8 text-[15px] leading-7 text-grey06">
+                    <p className="max-w-[78ch] pb-5 pr-8 text-[14px] leading-7 text-grey06">
                       {faq.answer}
                     </p>
                   </details>
@@ -55,7 +55,7 @@ const FaqPage = () => {
         </p>
         <Link
           to="/guide"
-          className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-brandStrong px-5 py-3 font-semibold text-white transition-colors hover:bg-brandHover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          className="mt-4 inline-flex min-h-11 items-center font-semibold text-brandStrong underline underline-offset-4 transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
         >
           혜택 이용 가이드 보기
         </Link>

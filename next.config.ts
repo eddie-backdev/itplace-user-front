@@ -23,10 +23,10 @@ const legacyHtmlRedirects = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  devIndicators: false,
   redirects() {
     return [
       { source: '/main', destination: '/', permanent: true },
-      { source: '/mypage', destination: '/mypage/activity', permanent: false },
       {
         source: '/mypage/history',
         destination: '/mypage/favorites',

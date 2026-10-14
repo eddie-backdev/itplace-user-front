@@ -87,7 +87,10 @@ const MembershipLandingPage = ({
         title={page.heading}
         description={page.description}
       >
-        <nav aria-label="통신사 멤버십 선택" className="grid gap-3 sm:grid-cols-3">
+        <nav
+          aria-label="통신사 멤버십 선택"
+          className="flex flex-wrap gap-x-8 border-b border-warmBorder"
+        >
           {CARRIER_PAGE_CONFIGS.map((carrier) => {
             const isSelected = selectedCarrier?.code === carrier.code;
             return (
@@ -95,10 +98,10 @@ const MembershipLandingPage = ({
                 key={carrier.code}
                 to={`/membership/${carrier.slug}`}
                 aria-current={isSelected ? 'page' : undefined}
-                className={`rounded-xl border p-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
+                className={`min-h-12 border-b-2 px-1 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
                   isSelected
-                    ? 'border-brand/30 bg-brandSoft text-brandStrong'
-                    : 'border-warmBorder bg-white text-ink hover:border-brand/40'
+                    ? 'border-brand text-brandStrong'
+                    : 'border-transparent text-ink hover:border-brand/40'
                 }`}
               >
                 <span className="block text-[16px] font-semibold">{carrier.name}</span>
@@ -177,7 +180,7 @@ const MembershipLandingPage = ({
               : '통신사마다 먼저 확인할 조건이 다릅니다'}
           </h2>
           <div
-            className={`surface-card mt-4 grid gap-5 p-5 sm:p-6 ${selectedCarrier ? 'md:grid-cols-2' : 'lg:grid-cols-3'}`}
+            className={`mt-4 grid gap-5 divide-y divide-warmBorder border-y border-warmBorder py-5 ${selectedCarrier ? 'md:grid-cols-2' : 'lg:grid-cols-3'}`}
           >
             {(selectedCarrier ? [selectedCarrier] : CARRIER_PAGE_CONFIGS).map((carrier) => (
               <div
@@ -239,7 +242,7 @@ const MembershipLandingPage = ({
         </section>
 
         <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="surface-card bg-softMint p-5 sm:p-6">
+          <div className="border-t border-warmBorder py-6">
             <p className="text-[14px] font-semibold text-brandStrong">
               이 페이지에서 확인할 수 있어요
             </p>
@@ -258,7 +261,7 @@ const MembershipLandingPage = ({
             </ul>
           </div>
 
-          <div className="surface-card p-5 sm:p-6">
+          <div className="border-t border-warmBorder py-6">
             <p className="text-[14px] font-semibold text-warmMuted">빠르게 찾기</p>
             <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-ink">
               원하는 방식으로 혜택을 탐색하세요
@@ -266,7 +269,7 @@ const MembershipLandingPage = ({
             <div className="mt-5 grid gap-3">
               <Link
                 to={`/benefits${benefitQuery}`}
-                className="flex min-h-12 items-center justify-between rounded-xl bg-brand px-5 py-3 font-semibold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="flex min-h-12 items-center justify-between border-y border-warmBorder py-3 font-semibold text-brandStrong transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
               >
                 <span className="flex items-center gap-2">
                   <TbSearch className="h-5 w-5" aria-hidden="true" />
@@ -276,7 +279,7 @@ const MembershipLandingPage = ({
               </Link>
               <Link
                 to="/map"
-                className="flex min-h-12 items-center justify-between rounded-xl border border-warmBorder bg-white px-5 py-3 font-semibold text-ink transition-colors hover:border-brand/40 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="flex min-h-12 items-center justify-between border-b border-warmBorder py-3 font-semibold text-ink transition-colors hover:border-brand/40 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
               >
                 <span className="flex items-center gap-2">
                   <TbMapPin className="h-5 w-5" aria-hidden="true" />
@@ -288,7 +291,7 @@ const MembershipLandingPage = ({
           </div>
         </section>
 
-        <section className="surface-card p-5 sm:p-6">
+        <section className="border-t border-warmBorder py-6">
           <h2 className="text-xl font-semibold text-ink">실제 결제액으로 혜택 비교하기</h2>
           <p className="mt-3 max-w-[70ch] text-[15px] leading-7 text-grey06">
             {guide.steps.find((step) => step.id === 'discount-vs-points')?.body}
@@ -301,7 +304,7 @@ const MembershipLandingPage = ({
           </Link>
         </section>
 
-        <section className="surface-card p-5 sm:p-6">
+        <section className="border-t border-warmBorder py-6">
           <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">
             혜택 정보는 결제 전에 한 번 더 확인해 주세요
           </h2>

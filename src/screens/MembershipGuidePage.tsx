@@ -8,7 +8,7 @@ const MembershipGuidePage = () => {
   return (
     <>
       <InfoPageShell
-        title="통신사 멤버십 혜택 이용 가이드"
+        title="혜택, 이렇게 확인하세요"
         description="할인율이 높아도 행사 상품이 제외되면 실제 절약액은 작아집니다. 주문 경로, 쿠폰 중복, 남은 횟수를 확인하고 최종 결제액으로 비교해 보세요."
       >
         <nav aria-label="이용 가이드 목차" className="flex flex-wrap gap-2">
@@ -21,27 +21,23 @@ const MembershipGuidePage = () => {
             <a
               key={item.id}
               href={`#${item.id}`}
-              className="inline-flex min-h-11 items-center rounded-full border border-warmBorder px-4 text-sm font-bold text-brandStrong transition-colors hover:border-brand hover:bg-brandSoft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              className="inline-flex min-h-11 items-center border-b border-warmBorder px-2 text-sm font-semibold text-grey06 transition-colors hover:border-brand hover:text-brandStrong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               {item.label}
             </a>
           ))}
         </nav>
 
-        <div className="grid min-w-0 grid-cols-1 gap-4 wide:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] wide:items-start">
+        <div className="min-w-0 divide-y divide-warmBorder">
           {guide.steps.map((step) => (
-            <section
-              key={step.id}
-              id={step.id}
-              className="surface-card scroll-mt-28 min-w-0 p-5 sm:p-7"
-            >
+            <section key={step.id} id={step.id} className="scroll-mt-28 min-w-0 py-7">
               <h2 className="text-balance text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
                 {step.title}
               </h2>
               <p className="mt-4 max-w-[70ch] leading-7 text-grey06">{step.body}</p>
 
               {step.id === 'before-payment' ? (
-                <div className="mt-5 rounded-2xl bg-brandSoft p-5">
+                <div className="mt-5 border-l-2 border-brand pl-5">
                   <h3 className="font-bold text-brandStrong">계산대에 가기 전 체크리스트</h3>
                   <ul className="mt-3 list-disc space-y-2 pl-5 leading-7 text-grey06">
                     {guide.beforePaymentChecks.map((check) => (
@@ -63,7 +59,7 @@ const MembershipGuidePage = () => {
               ) : null}
 
               {step.id === 'discount-vs-points' ? (
-                <div className="mt-5 rounded-2xl border border-warmBorder bg-softPeach p-5 sm:p-6">
+                <div className="mt-5 border-t border-warmBorder pt-5">
                   <h3 className="text-lg font-semibold text-ink">
                     총 12,000원 주문에서 무엇이 유리할까요?
                   </h3>
@@ -75,7 +71,7 @@ const MembershipGuidePage = () => {
                     role="region"
                     aria-label="가정에 따른 할인·쿠폰·적립 비교표"
                     tabIndex={0}
-                    className="mt-4 overflow-x-auto rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    className="mt-4 overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                   >
                     <table className="w-full min-w-[600px] border-collapse text-left text-sm leading-6">
                       <caption className="sr-only">
@@ -122,7 +118,7 @@ const MembershipGuidePage = () => {
               ) : null}
 
               {step.id === 'when-it-fails' ? (
-                <div className="mt-5 divide-y divide-warmBorder rounded-2xl border border-warmBorder px-5">
+                <div className="mt-5 divide-y divide-warmBorder border-y border-warmBorder">
                   {guide.troubleshooting.map((item) => (
                     <details key={item.question} className="group py-1">
                       <summary className="min-h-11 cursor-pointer py-3 font-bold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
@@ -139,7 +135,7 @@ const MembershipGuidePage = () => {
           ))}
         </div>
 
-        <section className="surface-card bg-softMint p-5 sm:p-7">
+        <section className="border-t border-warmBorder pt-7">
           <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">통신사별 확인 팁</h2>
           <ul className="mt-4 max-w-[80ch] list-disc space-y-3 pl-5 leading-7 text-grey06">
             {guide.tips.map((tip) => (
@@ -159,7 +155,7 @@ const MembershipGuidePage = () => {
           </div>
         </section>
 
-        <section className="surface-card bg-brandSoft p-5 sm:p-7">
+        <section className="border-t border-warmBorder pt-7">
           <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">
             지금 주변 혜택을 찾아보세요
           </h2>

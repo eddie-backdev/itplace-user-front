@@ -17,7 +17,7 @@ const tabs = [
     match: (path: string) => path.startsWith('/mypage/favorites'),
   },
   {
-    to: '/mypage/activity',
+    to: '/mypage',
     label: '마이',
     icon: TbUser,
     match: (path: string) => path.startsWith('/mypage') && !path.startsWith('/mypage/favorites'),
