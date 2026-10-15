@@ -265,7 +265,7 @@ export default function BenefitExplorerDetail({
         )}
         {favoriteErrorId === benefit.benefitId && (
           <p className={styles.errorMessage} role="alert">
-            저장 상태를 변경하지 못했습니다. 다시 시도해 주세요.
+            관심 혜택을 변경하지 못했습니다. 다시 시도해 주세요.
           </p>
         )}
         {(benefit.manual ||

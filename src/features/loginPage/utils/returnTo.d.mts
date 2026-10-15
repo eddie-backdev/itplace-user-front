@@ -1,6 +1,16 @@
 export const OAUTH_RETURN_TO_KEY: string;
+export const LOGIN_INTENT_KEY: string;
+export const LOGIN_RETURN_TO_KEY: string;
 export function getSafeReturnTo(value: unknown, fallback?: string): string;
 export function getLoginHref(returnTo: unknown): string;
+export function prepareLoginNavigation(href: string): void;
+export function getLoginIntent(): { reset: boolean; notice: boolean } | null;
+export function consumeLoginIntent(): { reset: boolean; notice: boolean } | null;
+export function readLoginReturnTo(fallback?: string): string;
+export function readOAuthReturnTo(fallback?: string): string;
+export function migrateLoginIntent(returnTo: unknown, flags?: { reset?: boolean; notice?: boolean }): void;
+export function clearLoginIntent(): void;
+export function clearLoginNavigation(): void;
 export function storeOAuthReturnTo(returnTo: unknown): boolean;
 export function consumeOAuthReturnTo(fallback?: string): string;
 export function clearOAuthReturnTo(): void;

@@ -1,5 +1,5 @@
 .page {
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh - var(--itplace-header-height));
   color: #202124;
   background: #fff;
 }
@@ -167,7 +167,7 @@
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
   .page {
     min-height: calc(100vh - 54px);
   }

@@ -10,6 +10,7 @@ type Props = {
   onChangeConfirm: (val: string) => void;
   passwordError?: string;
   passwordConfirmError?: string;
+  className?: string;
 };
 
 const PasswordInputForm = ({
@@ -19,6 +20,7 @@ const PasswordInputForm = ({
   onChangeConfirm,
   passwordError,
   passwordConfirmError,
+  className,
 }: Props) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
@@ -28,7 +30,7 @@ const PasswordInputForm = ({
   });
 
   return (
-    <div className="flex w-full flex-col items-start">
+    <div className={`flex w-full flex-col items-start ${className ?? ''}`}>
       {/* 비밀번호 입력 필드 */}
       <div className="w-full min-w-0 max-w-[400px]">
         <div className="relative">
@@ -48,18 +50,12 @@ const PasswordInputForm = ({
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-            className="absolute right-1 top-[29px] flex h-11 w-11 items-center justify-center rounded-lg text-grey04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="signupPasswordToggle absolute right-1 top-[29px] flex h-11 w-11 items-center justify-center rounded-lg text-grey04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             {showPassword ? (
-              <TbEyeOff
-                size={18}
-                className="text-[18px]"
-              />
+              <TbEyeOff size={18} className="text-[18px]" />
             ) : (
-              <TbEye
-                size={18}
-                className="text-[18px]"
-              />
+              <TbEye size={18} className="text-[18px]" />
             )}
           </button>
         </div>
@@ -85,18 +81,12 @@ const PasswordInputForm = ({
             type="button"
             onClick={() => setShowPasswordConfirm((prev) => !prev)}
             aria-label={showPasswordConfirm ? '비밀번호 숨기기' : '비밀번호 보기'}
-            className="absolute right-1 top-[29px] flex h-11 w-11 items-center justify-center rounded-lg text-grey04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="signupPasswordToggle absolute right-1 top-[29px] flex h-11 w-11 items-center justify-center rounded-lg text-grey04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             {showPasswordConfirm ? (
-              <TbEyeOff
-                size={18}
-                className="text-[18px]"
-              />
+              <TbEyeOff size={18} className="text-[18px]" />
             ) : (
-              <TbEye
-                size={18}
-                className="text-[18px]"
-              />
+              <TbEye size={18} className="text-[18px]" />
             )}
           </button>
         </div>

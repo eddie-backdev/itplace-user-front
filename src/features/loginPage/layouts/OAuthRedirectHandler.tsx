@@ -5,7 +5,7 @@ import { setLoginSuccess } from '../../../store/authSlice';
 import { kakaoOAuthLogin } from '../apis/auth';
 import { showToast } from '../../../utils/toast';
 import { storeOAuthPreAuth } from '../utils/oauthPreAuthStorage';
-import { clearOAuthReturnTo, consumeOAuthReturnTo } from '../utils/returnTo.mjs';
+import { consumeOAuthReturnTo } from '../utils/returnTo.mjs';
 
 const OAuthRedirectHandler = () => {
   const dispatch = useDispatch();
@@ -22,14 +22,12 @@ const OAuthRedirectHandler = () => {
       handledCallbackRef.current = callbackKey;
 
       if (error) {
-        clearOAuthReturnTo();
-        navigate('/login', { replace: true });
+        navigate('/login', { replace: true, preserveLoginIntent: true });
         return;
       }
 
       if (!code) {
-        clearOAuthReturnTo();
-        navigate('/login', { replace: true });
+        navigate('/login', { replace: true, preserveLoginIntent: true });
         return;
       }
 
@@ -47,7 +45,6 @@ const OAuthRedirectHandler = () => {
           const params = new URLSearchParams({
             step: 'oauthIntegration',
             verifiedType: 'oauth',
-            returnTo: consumeOAuthReturnTo(),
           });
           navigate(`/login?${params.toString()}`, { replace: true });
         } else if (responseCode === 'LOGIN_SUCCESS') {
@@ -70,12 +67,10 @@ const OAuthRedirectHandler = () => {
           showToast('로그인에 성공하셨습니다!', 'success');
           navigate(consumeOAuthReturnTo(), { replace: true });
         } else {
-          clearOAuthReturnTo();
-          navigate('/login', { replace: true });
+          navigate('/login', { replace: true, preserveLoginIntent: true });
         }
       } catch {
-        clearOAuthReturnTo();
-        navigate('/login', { replace: true });
+        navigate('/login', { replace: true, preserveLoginIntent: true });
       }
     };
 

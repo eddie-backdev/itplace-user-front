@@ -17,7 +17,7 @@ type MembershipProfileSelectorProps = {
 };
 
 const selectClass =
-  'block min-h-12 w-full rounded-xl border border-warmBorder bg-white px-4 text-base font-medium text-ink focus:border-brandStrong focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-warmCanvas disabled:text-grey04';
+  'block min-h-12 w-full rounded-xl border border-warmBorder bg-white px-4 text-base text-ink focus:border-brandStrong focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-warmCanvas disabled:text-grey04';
 
 const MembershipProfileSelector = ({
   carrier,
@@ -162,7 +162,7 @@ const MembershipProfileSelector = ({
   }
 
   return (
-    <div className={clsx('flex w-full min-w-0 flex-col gap-3', className)}>
+    <div className={clsx('flex w-full min-w-0 flex-col', 'gap-3', className)}>
       <div className="min-w-0">
         <label
           htmlFor={carrierId}
@@ -175,7 +175,7 @@ const MembershipProfileSelector = ({
           value={carrier}
           disabled={disabled}
           onChange={(event) => handleCarrierChange(event.currentTarget.value)}
-          className={clsx(selectClass, selectClassName)}
+          className={clsx(selectClass, 'font-medium', selectClassName)}
         >
           <option value="">{carrierPlaceholder}</option>
           {CARRIER_OPTIONS.map((option) => (
@@ -198,7 +198,7 @@ const MembershipProfileSelector = ({
           value={membershipGradeCode}
           disabled={disabled || !isCarrierCode(carrier)}
           onChange={(event) => onGradeChange(event.currentTarget.value)}
-          className={clsx(selectClass, selectClassName)}
+          className={clsx(selectClass, 'font-medium', selectClassName)}
         >
           <option value="">{gradePlaceholder}</option>
           {gradeOptions.map((option) => (

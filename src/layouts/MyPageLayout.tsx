@@ -1,4 +1,4 @@
-import { Link, useLocation } from '@/lib/navigation';
+import { Link, Navigate, useLocation } from '@/lib/navigation';
 import type { ReactNode } from 'react';
 import SideMenu from '../features/myPage/components/SideMenu';
 import { useSelector } from 'react-redux';
@@ -32,7 +32,7 @@ export default function MyPageLayout({ children }: { children: ReactNode }) {
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const isAuthRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
   const currentPath = `${pathname}${search}${hash}`;
-  const isFavorites = pathname.startsWith('/mypage/favorites');
+  const isFavorites = pathname === '/mypage/favorites' || pathname.startsWith('/mypage/favorites/');
   const isActivity = pathname.endsWith('/activity');
   const isMembership = pathname.endsWith('/membership');
   const isSettings = pathname.endsWith('/settings');
@@ -47,31 +47,31 @@ export default function MyPageLayout({ children }: { children: ReactNode }) {
           : pathname === '/mypage'
             ? '마이페이지'
             : '프로필';
-  const guestTitle = isFavorites
-    ? '자주 쓰는 혜택을 모아두세요'
-    : isActivity
-      ? '사용한 혜택과 절약액을 기록하세요'
-      : pathname === '/mypage'
-        ? '내 멤버십과 혜택 기록을 한눈에 확인하세요'
-        : isSettings
-          ? '계정 보안을 관리하세요'
-          : '내 멤버십을 한 번에 관리하세요';
-  const guestDescription = isFavorites
-    ? '관심 혜택을 저장해 두고 다음에 더 빠르게 찾아보세요.'
-    : isActivity
-      ? '직접 기록한 이용 내역과 절약액을 한곳에서 모아볼 수 있어요.'
-      : pathname === '/mypage'
-        ? '멤버십 프로필, 관심 혜택과 이번 달 사용 기록을 관리할 수 있어요.'
-        : isSettings
-          ? '비밀번호 변경과 휴대폰 인증, 회원 탈퇴를 관리할 수 있어요.'
-          : isMembership
-            ? '내 통신사와 등급에 맞는 혜택을 찾아보세요.'
-            : '회원 정보와 통신사 멤버십을 한곳에서 확인하고 관리할 수 있어요.';
+  const guestTitle = isActivity
+    ? '사용한 혜택과 절약액을 기록하세요'
+    : pathname === '/mypage'
+      ? '내 멤버십과 혜택 기록을 한눈에 확인하세요'
+      : isSettings
+        ? '계정 보안을 관리하세요'
+        : '내 멤버십을 한 번에 관리하세요';
+  const guestDescription = isActivity
+    ? '직접 기록한 이용 내역과 절약액을 한곳에서 모아볼 수 있어요.'
+    : pathname === '/mypage'
+      ? '멤버십 프로필, 관심 혜택과 이번 달 사용 기록을 관리할 수 있어요.'
+      : isSettings
+        ? '비밀번호 변경과 휴대폰 인증, 회원 탈퇴를 관리할 수 있어요.'
+        : isMembership
+          ? '내 통신사와 등급에 맞는 혜택을 찾아보세요.'
+          : '회원 정보와 통신사 멤버십을 한곳에서 확인하고 관리할 수 있어요.';
+
+  if (isAuthRehydrated && !isLoggedIn && isFavorites) {
+    return <Navigate to={getLoginHref(currentPath)} replace />;
+  }
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
       <div className="fixed left-0 top-0 z-[9999] hidden w-full max-md:block">
-        <MobileHeader title="마이페이지" />
+        <MobileHeader title={isFavorites ? '관심 혜택' : '마이페이지'} />
       </div>
       {!isAuthRehydrated ? (
         <div className={`${styles.page} ${styles.loading}`}>

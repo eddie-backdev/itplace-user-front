@@ -1,6 +1,6 @@
 .page {
   display: flex;
-  min-height: calc(100dvh - 80px);
+  min-height: calc(100dvh - var(--itplace-header-height));
   align-items: center;
   justify-content: center;
   padding: 48px 24px 72px;
@@ -66,6 +66,194 @@
 
 .signupCard {
   width: min(100%, 600px);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.signupPage {
+  min-height: calc(100dvh - var(--itplace-header-height));
+  align-items: flex-start;
+  padding-top: 48px;
+  background: #fff;
+}
+
+.signupSurface {
+  width: min(100%, 440px);
+}
+
+.signupHeader {
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+.signupHeaderComplete {
+  margin-bottom: 104px;
+}
+
+.signupUtility {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.signupUtilityButton {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #686b73;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.signupUtilitySpacer {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+}
+
+.signupUtilityButton:hover {
+  background: #f7f8fa;
+  color: #34343b;
+}
+
+.signupUtilityButton:focus-visible {
+  outline: 2px solid #6154d9;
+  outline-offset: 2px;
+}
+
+.signupUtilityButton svg {
+  width: 17px;
+  height: 17px;
+}
+
+.signupProgress {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+  transform: translateY(-48px);
+}
+
+.signupProgress::before {
+  position: absolute;
+  top: 12px;
+  right: calc(100% / 6);
+  left: calc(100% / 6);
+  height: 1px;
+  background: #e8e9ee;
+  content: '';
+}
+
+.signupStep {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #686b73;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: center;
+}
+
+.signupStepNumber {
+  display: inline-flex;
+  width: 25px;
+  height: 25px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d9dbe2;
+  border-radius: 50%;
+  background: #fff;
+  color: #686b73;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.signupStepCurrent {
+  color: #34343b;
+  font-weight: 650;
+}
+
+.signupStepCurrent .signupStepNumber {
+  border-color: #6154d9;
+  background: #6154d9;
+  color: #fff;
+}
+
+.signupStepComplete {
+  color: #625a9e;
+}
+
+.signupStepComplete .signupStepNumber {
+  border-color: #dcd8f8;
+  background: #f0edfc;
+  color: #6154d9;
+}
+
+.signupStepUpcoming {
+  color: #686b73;
+}
+
+.signupTitleBlock {
+  position: relative;
+  margin-top: -32px;
+  text-align: left;
+}
+
+.signupBackButton {
+  position: absolute;
+  top: -4px;
+  right: 0;
+  white-space: nowrap;
+}
+
+.signupBackButton svg {
+  transform: translateY(-2px);
+}
+
+.signupHeading {
+  margin: 0;
+  color: #202124;
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 36px;
+}
+
+.signupHeadingWithBack {
+  padding-right: 112px;
+  white-space: nowrap;
+}
+
+.signupDescription {
+  margin: 8px 0 0;
+  color: #686b73;
+  font-size: 14px;
+  line-height: 22px;
 }
 
 .desktopBenefitsLink,
@@ -119,10 +307,67 @@
     width: 100%;
   }
 
+  .signupPage {
+    padding: 24px 24px 40px;
+    background: #fff;
+  }
+
+  .signupSurface {
+    width: 100%;
+  }
+
+  .signupHeader {
+    margin-bottom: 28px;
+  }
+
+  .signupHeaderComplete {
+    margin-bottom: 72px;
+  }
+
+  .signupUtility {
+    margin-bottom: 24px;
+  }
+
+  .signupProgress {
+    margin-bottom: 24px;
+    transform: translateY(-40px);
+  }
+
+  .signupHeading {
+    font-size: 26px;
+    line-height: 34px;
+  }
+
+  .signupBackButton {
+    top: -5px;
+  }
+
   .processing {
     width: 100%;
     min-height: 240px;
     padding: 32px 20px;
     border-radius: 16px;
+  }
+}
+
+@media (max-width: 639px) and (max-height: 900px) {
+  .signupPage:has(.signupHeaderCompact) {
+    padding-bottom: 12px;
+  }
+
+  .signupHeaderCompact {
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 639px) and (max-height: 780px) {
+  .signupPage:has(.signupHeaderCompact) {
+    padding-bottom: 8px;
+  }
+}
+
+@media (max-width: 767px) {
+  .signupPage {
+    min-height: 100dvh;
   }
 }

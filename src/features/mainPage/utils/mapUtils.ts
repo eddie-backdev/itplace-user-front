@@ -1,3 +1,5 @@
+import type { MapViewportChangeReason } from '../types';
+
 /**
  * 지도 관련 유틸리티 함수들
  */
@@ -29,3 +31,12 @@ export const getRadiusByMapLevel = (mapLevel: number): number => {
 
   return radiusMap[mapLevel] || 50; // 기본값 1km
 };
+
+export const getViewportChangeActions = (
+  reason: MapViewportChangeReason,
+  activeTab: string,
+  searchQuery: string
+) => ({
+  clearPendingSearch: reason === 'interaction',
+  searchBounds: reason === 'interaction' && activeTab === 'nearby' && !searchQuery.trim(),
+});

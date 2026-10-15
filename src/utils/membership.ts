@@ -49,10 +49,13 @@ export const MEMBERSHIP_GRADE_OPTIONS_BY_CARRIER: Record<CarrierCode, Membership
   ],
 };
 
-const CARRIER_LABELS = CARRIER_OPTIONS.reduce<Record<string, string>>((acc, option) => {
-  acc[option.code] = option.label;
-  return acc;
-}, {});
+const CARRIER_LABELS = CARRIER_OPTIONS.reduce<Record<string, string>>(
+  (acc, option) => {
+    acc[option.code] = option.label;
+    return acc;
+  },
+  { MVNO: '알뜰폰' }
+);
 
 const GRADE_LABELS: Record<string, string> = benefitDisplay.gradeLabels;
 

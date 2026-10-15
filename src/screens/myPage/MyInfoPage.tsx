@@ -315,9 +315,11 @@ export default function MyInfoPage() {
             </button>
             <p className="ml-auto text-sm text-[#686b73] max-md:w-full">
               현재:{' '}
-              {user.carrier && (user.membershipGradeCode || user.membershipGrade)
-                ? `${getCarrierLabel(user.carrier)} ${getMembershipGradeLabel(user.membershipGradeCode ?? user.membershipGrade)}`
-                : '선택 안 됨'}
+              {user.carrier === 'MVNO'
+                ? getCarrierLabel(user.carrier)
+                : user.carrier && (user.membershipGradeCode || user.membershipGrade)
+                  ? `${getCarrierLabel(user.carrier)} ${getMembershipGradeLabel(user.membershipGradeCode ?? user.membershipGrade)}`
+                  : '선택 안 됨'}
             </p>
           </div>
         </section>

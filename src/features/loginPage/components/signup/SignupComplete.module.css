@@ -1,0 +1,106 @@
+.complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.successEmblem {
+  display: inline-flex;
+  width: 88px;
+  height: 88px;
+  flex: 0 0 88px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--itplace-color-brand-subtle);
+}
+
+.successEmblem svg {
+  width: 68px;
+  height: 68px;
+  overflow: visible;
+  border-radius: 50%;
+  background: var(--itplace-color-brand);
+}
+
+.successEmblem path {
+  fill: none;
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: check-in 220ms cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
+.heading {
+  margin: 24px 0 0;
+  color: var(--itplace-color-text);
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 36px;
+}
+
+.heading:focus {
+  outline: none;
+}
+
+.message {
+  margin: 12px 0 0;
+  color: var(--itplace-color-text-secondary);
+  font-size: 15px;
+  line-height: 24px;
+  word-break: keep-all;
+}
+
+.continueButton {
+  display: flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 88px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--itplace-color-brand);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+@media (max-width: 639px) {
+  .continueButton {
+    margin-top: 64px;
+  }
+}
+
+.continueButton:hover {
+  background: var(--itplace-color-brand-hover);
+}
+
+.continueButton:focus-visible {
+  outline: 2px solid var(--itplace-color-brand);
+  outline-offset: 3px;
+}
+
+@keyframes check-in {
+  from {
+    transform: scale(0.6);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .successEmblem path {
+    animation: none;
+  }
+}

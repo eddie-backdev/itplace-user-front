@@ -1,6 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { renderToString } from 'react-dom/server';
-import { MapBounds, Platform, MapLocation, MapCluster } from '../../../types';
+import {
+  MapBounds,
+  Platform,
+  MapLocation,
+  MapCluster,
+  MapViewportChangeReason,
+} from '../../../types';
 import {
   KakaoMap as KakaoMapType,
   KakaoCustomOverlay,
@@ -30,7 +36,12 @@ interface KakaoMapProps {
   initialMapLevel?: number;
   onZoomStart?: () => void;
   onMapLevelChange?: (mapLevel: number) => void;
-  onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
+  onViewportChange?: (
+    bounds: MapBounds,
+    center: MapLocation,
+    mapLevel: number,
+    reason?: MapViewportChangeReason
+  ) => void;
   isRoadviewMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
   searchQuery?: string;
@@ -489,6 +500,10 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMapType | null>(null);
   const customMarkerRegistryRef = useRef(new Map<string, CustomMarkerRegistryEntry>());
+  const selectedPlatformOverlayRef = useRef<{
+    overlay: KakaoCustomOverlay;
+    element: HTMLDivElement;
+  } | null>(null);
   const serverClusterRegistryRef = useRef(new Map<string, ServerClusterRegistryEntry>());
   const isAnimatingRef = useRef<boolean>(false);
   const isZoomingRef = useRef<boolean>(false);
@@ -550,6 +565,60 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     });
   }, []);
 
+  const setSelectedPlatformOverlayVisibility = useCallback((visibility: 'visible' | 'hidden') => {
+    const marker = selectedPlatformOverlayRef.current?.element.querySelector<HTMLElement>(
+      '[data-itplace-map-marker="true"]'
+    );
+    if (!marker) return;
+    marker.style.visibility = visibility;
+    marker.style.pointerEvents = visibility === 'hidden' ? 'none' : '';
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!useServerClusters || !selectedPlatform || !map) return;
+
+    const element = document.createElement('div');
+    element.innerHTML = renderToString(
+      <CustomMarker
+        imageUrl={selectedPlatform.imageUrl}
+        name={selectedPlatform.name}
+        isSelected
+        mode={markerMode}
+        offsetX={0}
+        offsetY={0}
+      />
+    );
+    installCustomMarkerImageFallback(element);
+    element.setAttribute('aria-hidden', 'true');
+    element.setAttribute('inert', '');
+    const markerElement = element.querySelector<HTMLElement>('[data-itplace-map-marker="true"]');
+    if (markerElement) {
+      const isZooming = isZoomingRef.current || hasPendingZoomViewportChangeRef.current;
+      markerElement.style.visibility = isZooming ? 'hidden' : 'visible';
+      markerElement.style.pointerEvents = isZooming ? 'none' : '';
+    }
+
+    const overlay = new window.kakao.maps.CustomOverlay({
+      position: new window.kakao.maps.LatLng(selectedPlatform.latitude, selectedPlatform.longitude),
+      content: element,
+      clickable: false,
+      xAnchor: 0.5,
+      yAnchor: 1,
+      zIndex: 1000,
+    });
+    const entry = { overlay, element };
+    selectedPlatformOverlayRef.current = entry;
+    overlay.setMap(map);
+
+    return () => {
+      overlay.setMap(null);
+      if (selectedPlatformOverlayRef.current === entry) {
+        selectedPlatformOverlayRef.current = null;
+      }
+    };
+  }, [mapInitializationVersion, markerMode, selectedPlatform, useServerClusters]);
+
   const setServerClustersVisibility = useCallback((visibility: 'visible' | 'hidden') => {
     const isVisible = visibility === 'visible';
 
@@ -581,16 +650,20 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
     markerRevealTimerRef.current = setTimeout(() => {
       markerRevealTimerRef.current = null;
-      if (useServerClustersRef.current) return;
+      if (isZoomingRef.current || hasPendingZoomViewportChangeRef.current) return;
+      if (useServerClustersRef.current) {
+        setSelectedPlatformOverlayVisibility('visible');
+        return;
+      }
       setCustomMarkersVisibility('visible');
     }, 120);
-  }, [setCustomMarkersVisibility]);
+  }, [setCustomMarkersVisibility, setSelectedPlatformOverlayVisibility]);
 
   const notifyMapZoomState = useCallback((isZooming: boolean) => {
     window.dispatchEvent(new CustomEvent('itplace:map-zoom-state', { detail: { isZooming } }));
   }, []);
 
-  const notifyViewportChange = useCallback(() => {
+  const notifyViewportChange = useCallback((reason: MapViewportChangeReason = 'interaction') => {
     if (!mapRef.current || !onViewportChangeRef.current) {
       return;
     }
@@ -612,7 +685,8 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         latitude: center.getLat(),
         longitude: center.getLng(),
       },
-      map.getLevel()
+      map.getLevel(),
+      reason
     );
   }, []);
 
@@ -629,8 +703,9 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       isZoomingRef.current = false;
       notifyViewportChange();
       notifyMapZoomState(false);
+      revealCustomMarkersAfterZoom();
     }, 300);
-  }, [notifyMapZoomState, notifyViewportChange]);
+  }, [notifyMapZoomState, notifyViewportChange, revealCustomMarkersAfterZoom]);
 
   useEffect(() => {
     const customMarkerRegistry = customMarkerRegistryRef.current;
@@ -865,7 +940,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
           }
           isContainerResizePending = false;
           updateVisiblePlatforms();
-          notifyViewportChange();
+          notifyViewportChange('resize');
         }, 150);
       };
 
@@ -907,6 +982,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         suppressDragEndUntilRef.current = Date.now() + 700;
         notifyMapZoomState(true);
         setCustomMarkersVisibility('hidden');
+        setSelectedPlatformOverlayVisibility('hidden');
         clearServerClusterRegistry();
       });
 
@@ -1042,6 +1118,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     clearServerClusterRegistry,
     notifyViewportChange,
     notifyMapZoomState,
+    setSelectedPlatformOverlayVisibility,
     revealCustomMarkersAfterZoom,
     setCustomMarkersVisibility,
     setServerClustersVisibility,
@@ -1266,7 +1343,12 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     let removed = 0;
 
     // viewport 계산 전에는 전체 결과를 사용하고, 계산 후에는 빈 viewport도 그대로 반영한다.
-    const platformsToRender = (visiblePlatforms ?? platforms).filter((platform) =>
+    const renderCandidates = visiblePlatforms ?? platforms;
+    const platformsToRender = (
+      selectedPlatform && !useServerClusters
+        ? [...renderCandidates, selectedPlatform]
+        : renderCandidates
+    ).filter((platform) =>
       Boolean(
         platform.latitude &&
           platform.longitude &&
@@ -1446,7 +1528,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     let settleTimer: ReturnType<typeof setTimeout> | undefined;
     const panTimer = setTimeout(() => {
       const map = mapRef.current;
-      if (!map) return;
+      if (!map || isAnimatingRef.current || isZoomingRef.current) return;
 
       const selectedKey = markerRegistryKey(selected);
       const selectedEntry =
@@ -1454,9 +1536,11 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         [...customMarkerRegistryRef.current.values()].find(
           ({ platform }) => platform.id === selected.id && platform.partnerId === selected.partnerId
         );
-      const markerElement = selectedEntry?.element.querySelector<HTMLElement>(
-        '[data-itplace-map-marker="true"]'
-      );
+      const markerElement =
+        selectedEntry?.element.querySelector<HTMLElement>('[data-itplace-map-marker="true"]') ??
+        selectedPlatformOverlayRef.current?.element.querySelector<HTMLElement>(
+          '[data-itplace-map-marker="true"]'
+        );
       if (!markerElement) return;
 
       const sheetBottomInset = mobileSheetBottomInsetRef.current;
@@ -1497,6 +1581,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       map.panBy(-shiftX, -shiftY);
 
       settleTimer = setTimeout(() => {
+        if (isZoomingRef.current) return;
         isAnimatingRef.current = false;
         if (mapRef.current !== map || !mapContainer.current?.isConnected) return;
 
@@ -1511,6 +1596,49 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     return () => {
       clearTimeout(panTimer);
       if (settleTimer && !didPan) clearTimeout(settleTimer);
+    };
+  }, [
+    selectedPlatform?.id,
+    selectedPlatform?.partnerId,
+    selectedPlatform?.latitude,
+    selectedPlatform?.longitude,
+    mobileSheetBottomInset,
+    updateVisiblePlatforms,
+  ]);
+
+  // Keep a selected desktop marker in view when the map loses width to the detail column.
+  useEffect(() => {
+    const selected = selectedPlatformRef.current;
+    if (
+      !selected ||
+      mobileSheetBottomInset ||
+      typeof window === 'undefined' ||
+      window.innerWidth < 768
+    ) {
+      return;
+    }
+
+    const panTimer = setTimeout(() => {
+      const map = mapRef.current;
+      if (!map || isAnimatingRef.current || isZoomingRef.current) return;
+
+      const currentCenter = map.getCenter();
+      if (
+        Math.abs(currentCenter.getLat() - selected.latitude) < 0.000001 &&
+        Math.abs(currentCenter.getLng() - selected.longitude) < 0.000001
+      ) {
+        return;
+      }
+
+      map.setCenter(new window.kakao.maps.LatLng(selected.latitude, selected.longitude));
+      const location = { latitude: selected.latitude, longitude: selected.longitude };
+      stableMapCenterRef.current = location;
+      onMapCenterChangeRef.current?.(location, { showSearchButton: false });
+      updateVisiblePlatforms();
+    }, 350);
+
+    return () => {
+      clearTimeout(panTimer);
     };
   }, [
     selectedPlatform?.id,

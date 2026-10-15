@@ -1,10 +1,18 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+  useSyncExternalStore,
+} from 'react';
 import SidebarSection from '../SidebarSection';
 import MapSection from '../MapSection';
 import SearchSection from '../SidebarSection/SearchSection';
-import { Platform, MapLocation, MapBounds, MapCluster } from '../../types';
+import { Platform, MapLocation, MapBounds, MapCluster, MapViewportChangeReason } from '../../types';
 import { CATEGORIES } from '../../constants';
 import { useStoreData } from '../../hooks/useStoreData';
+import { getViewportChangeActions } from '../../utils/mapUtils';
 import { TbChevronLeft } from 'react-icons/tb';
 import styles from './Layout.module.css';
 import { useLocation, useSearchParams } from '@/lib/navigation';
@@ -23,6 +31,16 @@ const MOBILE_MAP_MIN_EXPOSED_HEIGHT = 64;
 const MOBILE_MAP_MAX_EXPOSED_HEIGHT = 200;
 const MOBILE_MAP_CONTROLS_GAP = 12;
 const EMPTY_MAP_CLUSTERS: MapCluster[] = [];
+const WIDE_DETAIL_MEDIA_QUERY = '(min-width: 1920px)';
+const subscribeWideDetail = (onChange: () => void) => {
+  if (typeof window === 'undefined' || !window.matchMedia) return () => undefined;
+  const media = window.matchMedia(WIDE_DETAIL_MEDIA_QUERY);
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+};
+const getWideDetailSnapshot = () =>
+  typeof window !== 'undefined' && Boolean(window.matchMedia?.(WIDE_DETAIL_MEDIA_QUERY).matches);
+const getWideDetailServerSnapshot = () => false;
 const getBottomSheetMinHeight = (viewportHeight: number) =>
   Math.min(300, Math.max(128, viewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - 280));
 const getBottomSheetMaxHeight = (viewportHeight: number) => {
@@ -92,6 +110,12 @@ const MainPageLayout: React.FC = () => {
   const mapViewportSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastViewportSearchKeyRef = useRef<string>('');
   const { isMobile } = useResponsive();
+  const isWideDetail = useSyncExternalStore(
+    subscribeWideDetail,
+    getWideDetailSnapshot,
+    getWideDetailServerSnapshot
+  );
+  const [detailContainer, setDetailContainer] = useState<HTMLDivElement | null>(null);
 
   const location = useLocation();
   const [routeSearchParams] = useSearchParams();
@@ -138,6 +162,7 @@ const MainPageLayout: React.FC = () => {
     isVisible: false,
     benefitIds: [],
   });
+  const hasDetail = Boolean(selectedPlatform || benefitDetailCard.isVisible);
 
   // 지도 관련 상태
   const [currentMapLevel, setCurrentMapLevel] = useState<number>(4); // 지도 확대/축소 레벨
@@ -226,7 +251,7 @@ const MainPageLayout: React.FC = () => {
         return;
       }
 
-      // 데스크톱에서는 접힌 우측 패널을 펼친 뒤 매장 상세를 표시한다.
+      // 데스크톱에서는 접힌 검색 결과 패널을 펼친 뒤 매장 상세를 표시한다.
       if (isSidebarCollapsed) {
         setIsSidebarCollapsed(false);
         setTimeout(() => {
@@ -299,19 +324,25 @@ const MainPageLayout: React.FC = () => {
 
   // 지도 이동/줌 완료 후 현재 화면 기준 혜택 자동 재조회
   const handleMapViewportChange = useCallback(
-    (bounds: MapBounds, center: MapLocation, mapLevel: number) => {
+    (
+      bounds: MapBounds,
+      center: MapLocation,
+      mapLevel: number,
+      reason: MapViewportChangeReason = 'interaction'
+    ) => {
       hasInitializedMapViewportRef.current = true;
       setMapMoveTarget(null);
       setCurrentMapCenter({ lat: center.latitude, lng: center.longitude });
       setCurrentMapLevel(mapLevel);
 
+      const viewportActions = getViewportChangeActions(reason, activeTab, searchQuery);
+      if (!viewportActions.clearPendingSearch) return;
+
       if (mapViewportSearchTimerRef.current) {
         clearTimeout(mapViewportSearchTimerRef.current);
       }
 
-      if (activeTab !== 'nearby' || searchQuery.trim()) {
-        return;
-      }
+      if (!viewportActions.searchBounds) return;
 
       const viewportSearchKey = [
         mapLevel,
@@ -691,17 +722,7 @@ const MainPageLayout: React.FC = () => {
     <>
       {!isMobile && (
         <>
-          <section className={styles.desktopPage} aria-labelledby="map-page-title">
-            <header className={styles.pageHeading}>
-              <div>
-                <h2 id="map-page-title">내 혜택을 쓸 수 있는 곳</h2>
-                <p>
-                  {currentLocation
-                    ? `${currentLocation} 주변 제휴 매장을 확인해 보세요.`
-                    : '지도를 움직여 주변 제휴 매장을 확인해 보세요.'}
-                </p>
-              </div>
-            </header>
+          <section className={styles.desktopPage} aria-label="내 주변 혜택">
             <div className={styles.desktopFrame}>
               {/* 지도는 남는 폭을 사용해 오른쪽 패널을 열고 닫아도 중심이 유지된다. */}
               <div className={styles.mapViewport}>
@@ -733,7 +754,7 @@ const MainPageLayout: React.FC = () => {
                 />
               </div>
 
-              {/* 검색·매장·혜택 상세 패널은 왼쪽에 둔다. */}
+              {/* 검색 결과는 왼쪽에 유지하고, 넓은 화면의 상세는 지도 오른쪽에 둔다. */}
               <div
                 id="map-search-panel"
                 aria-hidden={isSidebarCollapsed}
@@ -767,9 +788,17 @@ const MainPageLayout: React.FC = () => {
                     onRecommendationStoreResults={handleRecommendationStoreResults}
                     onSearchPartner={handleKeywordSearch}
                     onBottomSheetReset={resetBottomSheet}
+                    detailContainer={detailContainer}
+                    externalDetail={isWideDetail && hasDetail}
                   />
                 </div>
               </div>
+
+              {isWideDetail && hasDetail && (
+                <aside className={styles.detailPanel} aria-label="선택한 혜택 상세">
+                  <div ref={setDetailContainer} className={styles.detailPanelInner} />
+                </aside>
+              )}
 
               <button
                 type="button"

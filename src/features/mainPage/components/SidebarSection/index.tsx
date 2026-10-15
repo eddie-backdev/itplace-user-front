@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
 import { Platform } from '../../types';
 import { FavoriteBenefit, PersonalizedRecommendationItem } from '../../types/api';
@@ -56,6 +57,8 @@ interface SidebarSectionProps {
   onTouchStart?: (e: React.TouchEvent) => void;
   onTouchMove?: (e: React.TouchEvent) => void;
   onTouchEnd?: () => void;
+  detailContainer?: HTMLElement | null;
+  externalDetail?: boolean;
 }
 
 const SidebarSection: React.FC<SidebarSectionProps> = ({
@@ -86,16 +89,24 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
+  detailContainer,
+  externalDetail = false,
 }) => {
   const activeTab = !AI_RECOMMENDATION_ENABLED && requestedTab === 'ai' ? 'nearby' : requestedTab;
   const user = useSelector((state: RootState) => state.auth.user);
+  const isAuthenticated = useSelector(
+    (state: RootState) => state._persist.rehydrated && state.auth.isLoggedIn
+  );
   const { isMobile, isTablet } = useResponsive();
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
   const detailRegionRef = useRef<HTMLDivElement>(null);
   const resultsRegionRef = useRef<HTMLDivElement>(null);
   const detailTriggerRef = useRef<HTMLElement | null>(null);
   const shouldRestoreDetailFocusRef = useRef(false);
+  const wasExternalDetailOpenRef = useRef(false);
   const hasInlineBenefitDetail = Boolean(benefitDetailIds && benefitDetailIds.length > 0);
+  const hasDetail = Boolean(selectedPlatform || hasInlineBenefitDetail);
+  const isInlineDetail = !externalDetail && viewMode === 'detail';
   const [selectedCategory, setSelectedCategory] = useState('전체');
 
   // 맞춤 AI 추천 상태
@@ -143,19 +154,28 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   }, []);
 
   useEffect(() => {
+    if (activeTab !== 'favorites') return;
+    if (!isAuthenticated) {
+      setAllFavorites([]);
+      return;
+    }
+
+    let isActive = true;
     const fetchAllFavorites = async () => {
-      if (activeTab !== 'favorites') return;
       try {
         const data = await getFavoritesList({}); // 전체 카테고리
-        setAllFavorites(data);
+        if (isActive) setAllFavorites(data);
       } catch (error) {
         console.error('전체 즐겨찾기 조회 실패:', error);
-        setAllFavorites([]);
+        if (isActive) setAllFavorites([]);
       }
     };
 
     fetchAllFavorites();
-  }, [activeTab, favoritesRevision]);
+    return () => {
+      isActive = false;
+    };
+  }, [activeTab, favoritesRevision, isAuthenticated]);
 
   // 맞춤 AI 추천 초기 로드 상태 관리 (nearby 방식과 완전히 동일)
   const [isInitialRecommendationsLoad, setIsInitialRecommendationsLoad] = useState(true);
@@ -265,7 +285,24 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   // 매장 또는 추천 혜택 상세는 같은 결과 패널 안에서 연다.
   useEffect(() => {
     const hasDetail = Boolean(selectedPlatform || hasInlineBenefitDetail);
-    if (hasDetail && viewMode === 'list') {
+    if (externalDetail && hasDetail) {
+      if (!wasExternalDetailOpenRef.current) {
+        if (
+          !detailTriggerRef.current &&
+          document.activeElement instanceof HTMLElement &&
+          document.activeElement !== document.body
+        ) {
+          detailTriggerRef.current = document.activeElement;
+        }
+        wasExternalDetailOpenRef.current = true;
+      }
+      return;
+    }
+    if (wasExternalDetailOpenRef.current && !hasDetail) {
+      wasExternalDetailOpenRef.current = false;
+      shouldRestoreDetailFocusRef.current = true;
+    }
+    if (!externalDetail && hasDetail && viewMode === 'list') {
       if (
         !detailTriggerRef.current &&
         document.activeElement instanceof HTMLElement &&
@@ -274,15 +311,15 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
         detailTriggerRef.current = document.activeElement;
       }
       setViewMode('detail');
-    } else if (!hasDetail && viewMode === 'detail') {
+    } else if ((!hasDetail || externalDetail) && viewMode === 'detail') {
       shouldRestoreDetailFocusRef.current = true;
       setViewMode('list');
     }
-  }, [hasInlineBenefitDetail, selectedPlatform, viewMode]);
+  }, [externalDetail, hasInlineBenefitDetail, selectedPlatform, viewMode]);
 
   // 상세를 열면 제목 영역에 초점을 주고, 닫으면 열었던 목록 항목으로 복귀한다.
   useEffect(() => {
-    if (viewMode === 'detail') {
+    if (viewMode === 'detail' || (externalDetail && (selectedPlatform || hasInlineBenefitDetail))) {
       detailRegionRef.current?.focus({ preventScroll: true });
     } else if (shouldRestoreDetailFocusRef.current) {
       shouldRestoreDetailFocusRef.current = false;
@@ -293,7 +330,18 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
         focusTarget?.focus({ preventScroll: true });
       });
     }
-  }, [selectedPlatform, viewMode]);
+  }, [detailContainer, externalDetail, hasInlineBenefitDetail, selectedPlatform, viewMode]);
+
+  useEffect(() => {
+    if (!externalDetail || !hasDetail) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (hasInlineBenefitDetail) onBenefitDetailClose?.();
+      else onPlatformSelect(null);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [externalDetail, hasDetail, hasInlineBenefitDetail, onBenefitDetailClose, onPlatformSelect]);
 
   const mainTabs: Tab[] = [
     { id: 'nearby', label: '주변 혜택' },
@@ -514,58 +562,90 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
     }
   };
 
+  const detailRegion = hasDetail ? (
+    <div
+      ref={detailRegionRef}
+      role="region"
+      tabIndex={-1}
+      aria-label={
+        hasInlineBenefitDetail ? '추천 혜택 상세' : `${selectedPlatform?.name ?? '매장'} 상세`
+      }
+      className={`${externalDetail ? 'relative' : 'absolute inset-0 z-10'} h-full overflow-hidden bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#6154d9]`}
+    >
+      {hasInlineBenefitDetail && benefitDetailIds ? (
+        <BenefitDetailCard
+          benefitIds={benefitDetailIds}
+          onClose={onBenefitDetailClose ?? (() => undefined)}
+          className="h-full w-full max-w-none"
+        />
+      ) : selectedPlatform ? (
+        <StoreDetailCard
+          platform={selectedPlatform}
+          onClose={handleDetailClose}
+          closeMode={externalDetail ? 'dismiss' : 'back'}
+        />
+      ) : null}
+    </div>
+  ) : null;
+
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-white max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
       <div className="mx-4 mb-4 mt-4 flex min-h-0 flex-1 flex-col max-md:mx-0 max-md:mb-0 max-md:mt-0 max-md:w-full">
-        <div className="mb-3 flex items-center justify-between gap-2 md:px-1">
-          <h2 className="text-lg font-semibold tracking-[-0.03em] text-[#202124]">매장 찾기</h2>
-          <span className="max-w-[150px] truncate rounded-full bg-[#f0edfc] px-3 py-1.5 text-xs font-semibold text-[#6154d9]">
-            {currentLocation === '위치 정보 로딩 중...' ? '주변 매장' : currentLocation}
-          </span>
-        </div>
-        {/* 검색 영역 - 데스크톱에서만 표시 */}
         <div
-          className="flex-shrink-0 pb-3 max-md:touch-manipulation max-md:pb-2"
-          // 모바일과 태블릿에서만 터치 이벤트 적용 (탭 및 헤더 영역)
-          onTouchStart={isMobile || isTablet ? onTouchStart : undefined}
-          onTouchMove={isMobile || isTablet ? onTouchMove : undefined}
-          onTouchEnd={isMobile || isTablet ? onTouchEnd : undefined}
+          className={isInlineDetail ? 'hidden' : 'shrink-0'}
+          aria-hidden={isInlineDetail}
+          inert={isInlineDetail}
         >
-          <div className="hidden md:block">
-            <SearchSection
-              onSearchChange={handleSearchChange}
-              onKeywordSearch={onKeywordSearch}
-              defaultValue={searchQuery}
-            />
+          <div className="mb-3 flex items-center justify-between gap-2 md:px-1">
+            <h2 className="text-lg font-semibold tracking-[-0.03em] text-[#202124]">매장 찾기</h2>
+            <span className="max-w-[150px] truncate rounded-full bg-[#f0edfc] px-3 py-1.5 text-xs font-semibold text-[#6154d9]">
+              {currentLocation === '위치 정보 로딩 중...' ? '주변 매장' : currentLocation}
+            </span>
           </div>
-
-          <div className="mt-2 mb-3 max-md:mx-0 max-md:mt-2 max-md:mb-2">
-            <NavigationTabsSection
-              tabs={mainTabs}
-              activeTab={activeTab}
-              onTabChange={onActiveTabChange}
-            />
-          </div>
-
-          {activeTab === 'nearby' ? (
-            <div className="mb-3 min-w-0">
-              <p className="mb-1 px-1 text-xs font-medium text-[#686b73]">분야</p>
-              <CategoryTabsSection
-                categories={CATEGORIES}
-                selectedCategory={mapSelectedCategory}
-                onCategorySelect={onMapCategorySelect}
-                mode="map"
+          {/* 검색 영역 - 데스크톱에서만 표시 */}
+          <div
+            className="flex-shrink-0 pb-3 max-md:touch-manipulation max-md:pb-2"
+            // 모바일과 태블릿에서만 터치 이벤트 적용 (탭 및 헤더 영역)
+            onTouchStart={isMobile || isTablet ? onTouchStart : undefined}
+            onTouchMove={isMobile || isTablet ? onTouchMove : undefined}
+            onTouchEnd={isMobile || isTablet ? onTouchEnd : undefined}
+          >
+            <div className="hidden md:block">
+              <SearchSection
+                onSearchChange={handleSearchChange}
+                onKeywordSearch={onKeywordSearch}
+                defaultValue={searchQuery}
               />
             </div>
-          ) : null}
 
-          {activeTab !== 'nearby' && (
-            <InfoBannerSection
-              message={getBannerConfig().message}
-              highlightText={getBannerConfig().highlightText}
-              variant="secondary"
-            />
-          )}
+            <div className="mt-2 mb-3 max-md:mx-0 max-md:mt-2 max-md:mb-2">
+              <NavigationTabsSection
+                tabs={mainTabs}
+                activeTab={activeTab}
+                onTabChange={onActiveTabChange}
+              />
+            </div>
+
+            {activeTab === 'nearby' ? (
+              <div className="mb-3 min-w-0">
+                <p className="mb-1 px-1 text-xs font-medium text-[#686b73]">분야</p>
+                <CategoryTabsSection
+                  categories={CATEGORIES}
+                  selectedCategory={mapSelectedCategory}
+                  onCategorySelect={onMapCategorySelect}
+                  mode="map"
+                />
+              </div>
+            ) : null}
+
+            {activeTab !== 'nearby' && !(activeTab === 'favorites' && !isAuthenticated) && (
+              <InfoBannerSection
+                message={getBannerConfig().message}
+                highlightText={getBannerConfig().highlightText}
+                variant="secondary"
+              />
+            )}
+          </div>
         </div>
 
         <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -574,9 +654,9 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
             role="region"
             tabIndex={-1}
             aria-label="검색 결과 목록"
-            className={`flex h-full min-h-0 flex-col ${viewMode === 'detail' ? 'invisible' : ''}`}
-            aria-hidden={viewMode === 'detail'}
-            inert={viewMode === 'detail'}
+            className={`flex h-full min-h-0 flex-col ${isInlineDetail ? 'invisible' : ''}`}
+            aria-hidden={isInlineDetail}
+            inert={isInlineDetail}
           >
             {/* 컨텐츠 영역 - 탭에 따라 다른 컴포넌트 렌더링 */}
             {activeTab === 'nearby' && (
@@ -596,12 +676,12 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
 
             {activeTab === 'favorites' && (
               <>
-                {showFavoriteStoreList ? (
+                {showFavoriteStoreList && isAuthenticated ? (
                   <StoreCardsSection
                     platforms={favoriteStoreResults}
                     selectedPlatform={selectedPlatform}
                     onPlatformSelect={handleCardClick}
-                    currentLocation={selectedFavorite?.partnerName || '즐겨찾기 매장'}
+                    currentLocation={selectedFavorite?.partnerName || '관심 혜택 매장'}
                     isLoading={isFavoriteStoreLoading}
                     error={favoriteStoreError}
                     backButton={{
@@ -612,15 +692,17 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
                 ) : (
                   <>
                     {/* 카테고리 탭 (관심 혜택용 - 사이드바 모드) */}
-                    <div className="mb-3 max-md:mx-0">
-                      <CategoryTabsSection
-                        categories={CATEGORIES}
-                        selectedCategory={selectedCategory}
-                        onCategorySelect={handleCategorySelect}
-                        mode="sidebar"
-                        showNavigationButtons={true}
-                      />
-                    </div>
+                    {isAuthenticated && (
+                      <div className="mb-3 max-md:mx-0">
+                        <CategoryTabsSection
+                          categories={CATEGORIES}
+                          selectedCategory={selectedCategory}
+                          onCategorySelect={handleCategorySelect}
+                          mode="sidebar"
+                          showNavigationButtons={true}
+                        />
+                      </div>
+                    )}
 
                     {/* 즐겨찾기 스토어 리스트 */}
                     <div className="-mx-4 min-h-0 flex-1 overflow-x-hidden overflow-y-auto max-md:mx-0">
@@ -681,29 +763,13 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
               </>
             )}
           </div>
-          {viewMode === 'detail' ? (
-            <div
-              ref={detailRegionRef}
-              role="region"
-              tabIndex={-1}
-              aria-label={
-                hasInlineBenefitDetail
-                  ? '추천 혜택 상세'
-                  : `${selectedPlatform?.name ?? '매장'} 상세`
-              }
-              className="absolute inset-0 z-10 h-full overflow-hidden bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0066cc]"
-            >
-              {hasInlineBenefitDetail && benefitDetailIds ? (
-                <BenefitDetailCard
-                  benefitIds={benefitDetailIds}
-                  onClose={onBenefitDetailClose ?? (() => undefined)}
-                  className="h-full w-full max-w-none"
-                />
-              ) : selectedPlatform ? (
-                <StoreDetailCard platform={selectedPlatform} onClose={handleDetailClose} />
-              ) : null}
-            </div>
-          ) : null}
+          {externalDetail
+            ? detailContainer && detailRegion
+              ? createPortal(detailRegion, detailContainer)
+              : null
+            : isInlineDetail
+              ? detailRegion
+              : null}
         </div>
       </div>
     </div>

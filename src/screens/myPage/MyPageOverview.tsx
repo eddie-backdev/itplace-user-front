@@ -75,6 +75,7 @@ export default function MyPageOverview() {
 
   const grade = user?.membershipGradeCode ?? user?.membershipGrade;
   const hasMembership = Boolean(user?.carrier && grade);
+  const isMvno = user?.carrier === 'MVNO';
 
   return (
     <div className="flex min-w-0 flex-col gap-6 pb-8 max-md:gap-4">
@@ -127,7 +128,9 @@ export default function MyPageOverview() {
               <p className="mt-2 text-sm leading-6 text-[#686b73]">
                 {loading
                   ? '불러오는 중…'
-                  : hasMembership
+                  : isMvno
+                    ? getCarrierLabel(user?.carrier)
+                    : hasMembership
                     ? `${getCarrierLabel(user?.carrier)} ${getMembershipGradeLabel(grade)}`
                     : '등록된 멤버십 프로필이 없어요.'}
               </p>
@@ -139,7 +142,11 @@ export default function MyPageOverview() {
               {hasMembership ? '변경' : '등록'}
             </Link>
           </div>
-          <p className="mt-4 text-sm text-[#686b73]">통신사와 등급에 맞는 혜택을 확인해 보세요.</p>
+          <p className="mt-4 text-sm text-[#686b73]">
+            {hasMembership
+              ? '통신사와 등급에 맞는 혜택을 확인해 보세요.'
+              : '통신 3사 멤버십 혜택을 둘러볼 수 있어요.'}
+          </p>
         </section>
         <section
           aria-labelledby="overview-favorites"
@@ -154,8 +161,8 @@ export default function MyPageOverview() {
                 {favoritesLoading
                   ? '불러오는 중…'
                   : favoritesError
-                    ? '저장한 혜택 수를 확인하지 못했어요.'
-                    : `${number.format(favoriteCount ?? 0)}개 혜택`}
+                    ? '관심 혜택 수를 확인하지 못했어요.'
+                    : `${number.format(favoriteCount ?? 0)}개 관심 혜택`}
               </p>
             </div>
             <Link
@@ -165,7 +172,7 @@ export default function MyPageOverview() {
               목록 보기
             </Link>
           </div>
-          <p className="mt-4 text-sm text-[#686b73]">저장한 혜택을 빠르게 다시 확인하세요.</p>
+          <p className="mt-4 text-sm text-[#686b73]">관심 혜택을 빠르게 다시 확인하세요.</p>
           {favoritesError ? (
             <button
               type="button"

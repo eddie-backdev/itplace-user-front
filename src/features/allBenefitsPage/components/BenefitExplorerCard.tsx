@@ -77,7 +77,7 @@ export default function BenefitExplorerCard({
         className={styles.favoriteButton}
         onClick={onToggleFavorite}
         disabled={favoriteBusy || !onToggleFavorite}
-        aria-label={`${partner.partnerName} 혜택 ${isFavorite ? '저장 취소' : '저장'}`}
+        aria-label={`${partner.partnerName} 관심 혜택 ${isFavorite ? '해제' : '추가'}`}
         aria-pressed={isFavorite}
       >
         {isFavorite ? <TbBookmarkFilled aria-hidden="true" /> : <TbBookmark aria-hidden="true" />}

@@ -8,7 +8,7 @@ import AuthInput from '../common/AuthInput';
 import AuthDivider from '../common/AuthDivider';
 import KakaoLoginButton from './KakaoLoginButton';
 import { useNavigate } from '@/lib/navigation';
-import { clearOAuthReturnTo, getSafeReturnTo, storeOAuthReturnTo } from '../../utils/returnTo.mjs';
+import { clearLoginNavigation, getSafeReturnTo, storeOAuthReturnTo } from '../../utils/returnTo.mjs';
 
 type Props = {
   onGoToSignUp: () => void;
@@ -40,7 +40,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
       if (code === 'LOGIN_SUCCESS') {
         dispatch(setLoginSuccess(data));
         showToast('로그인에 성공하셨습니다!', 'success');
-        clearOAuthReturnTo();
+        clearLoginNavigation();
         navigate(getSafeReturnTo(returnTo), { replace: true });
       } else {
         setLoginError('이메일 또는 비밀번호를 확인해주세요.');

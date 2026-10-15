@@ -1,7 +1,7 @@
 .header {
   position: relative;
   z-index: 30;
-  height: 80px;
+  height: var(--itplace-header-height);
   border-bottom: 1px solid var(--itplace-color-border);
   background: var(--itplace-color-surface);
 }
@@ -15,17 +15,6 @@
   margin: 0 auto;
   padding: 0 var(--itplace-page-gutter, 28px);
 }
-.inner[data-layout='support'] {
-  max-width: 1216px;
-  padding-right: 112px;
-  padding-left: 288px;
-}
-.inner[data-layout='account'] {
-  max-width: 1216px;
-  padding-right: 0;
-  padding-left: 244px;
-}
-
 .brand {
   position: relative;
   display: inline-flex;
@@ -71,6 +60,8 @@
 
 .navLink {
   height: 100%;
+  min-width: 44px;
+  justify-content: center;
 }
 .navLink:hover,
 .accountLink:hover,
@@ -94,16 +85,8 @@
   margin-left: auto;
 }
 .accountLink {
-  gap: 9px;
-}
-.accountIcon {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border-radius: 50%;
-  background: #f1f2f5;
-  color: var(--itplace-color-muted);
+  min-width: 44px;
+  justify-content: flex-end;
 }
 .brand:focus-visible,
 .navLink:focus-visible,
@@ -119,14 +102,6 @@
 }
 
 @media (min-width: 768px) and (max-width: 1279px) {
-  .inner[data-layout='support'] {
-    padding-right: 28px;
-    padding-left: max(28px, calc((100vw - 1216px) / 2));
-  }
-  .inner[data-layout='account'] {
-    padding-right: 28px;
-    padding-left: max(28px, calc((100vw - 1216px) / 2));
-  }
   .nav {
     gap: clamp(16px, 3vw, 36px);
     margin-left: clamp(24px, 5vw, 64px);

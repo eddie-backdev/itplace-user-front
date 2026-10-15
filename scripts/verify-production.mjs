@@ -278,6 +278,17 @@ const closeServer = (server) => new Promise((resolve) => server.close(() => reso
 
 const countOccurrences = (source, value) => source.split(value).length - 1;
 
+const assertSavedLoginLink = (navigation, label, context) => {
+  const savedAnchor = [...navigation.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].find(([, , body]) =>
+    plainText(body).includes(label)
+  );
+  const href = savedAnchor?.[1].match(/\bhref="([^"]+)"/)?.[1];
+  assert.ok(href, `${context}의 관심 혜택 링크가 있어야 합니다`);
+  const url = new URL(href.replaceAll('&amp;', '&'), 'https://itplace.click');
+  assert.equal(url.pathname, '/login', `${context}의 관심 혜택은 로그인으로 이동해야 합니다`);
+  assert.equal(url.search, '', `${context}의 관심 혜택 URL은 깨끗해야 합니다`);
+};
+
 const assertRedirect = async (origin, path, status, destination) => {
   const response = await fetch(`${origin}${path}`, {
     redirect: 'manual',
@@ -303,7 +314,7 @@ const plainText = (html) =>
     .replace(/\s+/g, ' ')
     .trim();
 const getHomeBenefitsSection = (content) =>
-  content.match(/<section(?=[^>]*aria-label="추천 혜택")[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
+  content.match(/<section(?=[^>]*aria-labelledby="feature-heading")[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
 const homeGrade = { SKT: 'SKT_VIP', KT: 'KT_VIP', LGU: 'VIP' };
 const assertHomeSelection = (
   content,
@@ -315,9 +326,9 @@ const assertHomeSelection = (
   assert.match(content, /<h1[^>]*id="home-title"[^>]*>어디에서 쓰고 싶으세요\?<\/h1>/);
   assert.match(content, new RegExp(`name="carrier" value="${selectedCarrier}"`));
   assert.match(content, new RegExp(`name="grade" value="${selectedGrade}"`));
-  assert.ok(
-    plainText(content).includes(`${selectedCarrier === 'LGU' ? 'LG U+' : selectedCarrier} VIP`)
-  );
+  const intro = content.match(/<section(?=[^>]*aria-labelledby="home-title")[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
+  assert.ok(intro, '홈 소개 영역이 SSR에 있어야 합니다');
+  assert.doesNotMatch(plainText(intro), /변경/);
 };
 const assertHomeListCalls = (
   requests,
@@ -352,17 +363,32 @@ const assertHomeListCalls = (
 
 const assertAllHomePreviews = (content, selectedCarrier = 'SKT') => {
   assertHomeSelection(content, selectedCarrier);
-  const partnerLinks =
-    content.match(/<a(?=[^>]*href="\/benefits\/partners\/)[^>]*>[\s\S]*?<\/a>/g) ?? [];
+  const featureSection = getHomeBenefitsSection(content);
+  const shelfSection =
+    content.match(/<section(?=[^>]*aria-labelledby="shelf-heading")[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
+  const featureCards =
+    featureSection.match(/<article\b[^>]*>[\s\S]*?<\/article>/g) ?? [];
+  const featureLinks = featureCards.flatMap(
+    (card) => card.match(/<a(?=[^>]*href="\/benefits\/partners\/)[^>]*>[\s\S]*?<\/a>/g) ?? []
+  );
+  const shelfLinks =
+    shelfSection.match(/<a(?=[^>]*href="\/benefits\/partners\/)[^>]*>[\s\S]*?<\/a>/g) ?? [];
+  const offerBlocks = [...featureCards, ...shelfLinks];
+  assert.equal(featureCards.length, 3, `${selectedCarrier} 추천 혜택은 상단 카드 3개여야 합니다`);
+  assert.equal(featureLinks.length, 3, `${selectedCarrier} 상단 카드마다 상세 링크가 있어야 합니다`);
+  assert.equal(shelfLinks.length, 5, `${selectedCarrier} 다른 혜택은 하단 링크 5개여야 합니다`);
   assert.equal(
-    partnerLinks.length,
+    featureLinks.length + shelfLinks.length,
     8,
-    `${selectedCarrier} 선택 상태에서는 추천 영역에 8개 링크가 있어야 합니다`
+    `${selectedCarrier} 선택 상태에서는 추천과 하단 영역에 8개 링크가 있어야 합니다`
   );
   let previousIndex = -1;
   for (let rank = 1; rank <= 8; rank += 1) {
     const partnerName = `${selectedCarrier} 인기 ${rank}`;
-    assert.ok(content.includes(partnerName), `${partnerName} 미리보기가 SSR에 있어야 합니다`);
+    assert.ok(
+      plainText(offerBlocks[rank - 1]).includes(partnerName),
+      `${partnerName} 미리보기가 SSR에 있어야 합니다`
+    );
     const currentIndex = content.indexOf(partnerName);
     assert.ok(
       currentIndex > previousIndex,
@@ -371,7 +397,7 @@ const assertAllHomePreviews = (content, selectedCarrier = 'SKT') => {
     previousIndex = currentIndex;
     const partnerId = 700 + ['SKT', 'KT', 'LGU'].indexOf(selectedCarrier) * 10 + rank - 1;
     assert.match(
-      partnerLinks[rank - 1],
+      offerBlocks[rank - 1],
       new RegExp(
         `href="/benefits/partners/${partnerId}/[^\"]+\\?carrier=${selectedCarrier}&amp;grade=${homeGrade[selectedCarrier]}"`
       ),
@@ -384,6 +410,27 @@ const assertAllHomePreviews = (content, selectedCarrier = 'SKT') => {
     ),
     '선택 멤버십 전체 혜택 링크가 있어야 합니다'
   );
+  const categoryNavigation =
+    content.match(/<nav(?=[^>]*aria-label="혜택 카테고리")[^>]*>[\s\S]*?<\/nav>/)?.[0] ?? '';
+  assert.ok(categoryNavigation, '혜택 카테고리 탐색이 SSR에 있어야 합니다');
+  const categoryLinks = categoryNavigation.match(/<a(?=[^>]*href="\/benefits\?)[^>]*>/g) ?? [];
+  assert.equal(categoryLinks.length, 8, '혜택 카테고리 링크는 전체 8개여야 합니다');
+  assert.equal(
+    new Set(categoryLinks.map((link) => link.match(/href="([^"]+)/)?.[1])).size,
+    8,
+    '혜택 카테고리 링크는 서로 다른 8개여야 합니다'
+  );
+  assert.equal(categoryNavigation.match(/<svg\b/g)?.length ?? 0, 8, '카테고리마다 아이콘이 있어야 합니다');
+  assert.ok(
+    content.indexOf(categoryNavigation) < content.indexOf(featureSection),
+    '카테고리 탐색은 추천 혜택보다 앞에 있어야 합니다'
+  );
+  for (const id of ['생활/편의', '푸드', '쇼핑', '뷰티/건강', '엑티비티', '문화/여가', '여행/교통', '교육']) {
+    assert.ok(
+      categoryNavigation.includes(`category=${encodeURIComponent(id)}`),
+      `${id} 카테고리 탐색 링크가 있어야 합니다`
+    );
+  }
   for (const carrier of ['SKT', 'KT', 'LGU'].filter((code) => code !== selectedCarrier)) {
     assert.doesNotMatch(
       content,
@@ -414,14 +461,31 @@ const runChecks = async (origin, mockApi) => {
   assert.match(rootContent, /<input(?=[^>]*\bname="q")(?=[^>]*\btype="search")[^>]*>/);
   assertHomeListCalls(mockApi.requests.slice(requestsBeforeHome));
   const rootText = plainText(rootContent);
-  assert.match(rootContent, /href="\/benefits\?carrier=SKT&amp;grade=SKT_VIP"[^>]*>혜택 더 보기/);
-  assert.match(rootHtml, /<a(?=[^>]*href="\/mypage")(?=[^>]*aria-label="마이페이지")[^>]*>/);
-  assert.match(rootText, /내 멤버십 기준/);
+  assert.match(rootContent, /href="\/benefits\?carrier=SKT&amp;grade=SKT_VIP"[^>]*>전체 혜택/);
+  assert.match(rootHtml, /<a(?=[^>]*href="\/login")(?=[^>]*aria-label="로그인")[^>]*>/);
+  assert.doesNotMatch(rootText, /내 멤버십 기준/);
   assert.match(rootContent, /aria-label="혜택 카테고리"/);
   assertAllHomePreviews(rootContent);
+  assert.doesNotMatch(rootHtml, /cafe-scene\.png/, '홈 SSR에서 대표 카페 사진을 사용하지 않아야 합니다');
   assert.match(rootHtml, /<footer\b/);
   assert.match(rootHtml, /name="google-adsense-account"/);
   assert.doesNotMatch(rootHtml, /adsbygoogle\.js/);
+
+  for (const path of [
+    '/login',
+    '/login?reset=1&returnTo=%2Fmypage%2Ffavorites',
+    '/login?notice=login-required&reset=1&returnTo=%2Fmypage%2Ffavorites',
+    '/login?returnTo=%2Fmypage%2Ffavorites',
+  ]) {
+    const response = await fetch(`${origin}${path}`, { redirect: 'manual' });
+    assert.equal(response.status, 200, `${path}가 리다이렉트 없이 로그인 응답을 반환해야 합니다`);
+    const loginMain = mainContent(await response.text());
+    assert.match(loginMain, /<form\b/, `${path}의 초기 HTML에 로그인 폼이 있어야 합니다`);
+    assert.match(loginMain, /<input(?=[^>]*type="email")[^>]*>/, `${path}에 이메일 입력이 있어야 합니다`);
+    assert.match(loginMain, /<input(?=[^>]*type="password")[^>]*>/, `${path}에 비밀번호 입력이 있어야 합니다`);
+    assert.doesNotMatch(loginMain, /페이지를 불러오는 중/, `${path}가 로딩 화면으로 SSR되면 안 됩니다`);
+    assert.match(plainText(loginMain), /관심 혜택과 사용 기록을 이어서 확인하세요\./);
+  }
 
   // Every content route shares the same primary navigation, including the home page.
   for (const path of [
@@ -433,20 +497,59 @@ const runChecks = async (origin, mockApi) => {
     '/account-deletion',
     '/mypage/info',
     '/mypage/activity',
+    '/mypage/favorites',
   ]) {
     const html = path === '/' ? rootHtml : await (await fetch(`${origin}${path}`)).text();
     const navigation =
       withoutScripts(html).match(/<nav(?=[^>]*aria-label="주요 메뉴")[^>]*>[\s\S]*?<\/nav>/g) ?? [];
     assert.equal(navigation.length, 1, `${path}에 공통 주요 메뉴가 하나 있어야 합니다`);
-    for (const destination of ['/', '/map', '/benefits', '/mypage/favorites']) {
+    for (const destination of ['/', '/map', '/benefits']) {
       assert.ok(
         navigation[0].includes(`href="${destination}"`),
         `${path}의 ${destination} 메뉴가 필요합니다`
       );
     }
+    assert.match(navigation[0], />홈<\/a>/, `${path}의 홈 메뉴가 있어야 합니다`);
+    assert.match(
+      navigation[0],
+      />전체 혜택<\/a>/,
+      `${path}의 전체 혜택 메뉴가 있어야 합니다`
+    );
+    assert.match(navigation[0], />내 주변 혜택<\/a>/, `${path}의 내 주변 혜택 메뉴가 있어야 합니다`);
+    assert.match(
+      navigation[0],
+      />관심 혜택<\/a>/,
+      `${path}의 관심 혜택 메뉴가 있어야 합니다`
+    );
+    assertSavedLoginLink(navigation[0], '관심 혜택', path);
+    assert.doesNotMatch(
+      navigation[0],
+      /href="\/mypage\/favorites"/,
+      `${path}의 로그아웃 관심 혜택 메뉴가 바로 열지 않아야 합니다`
+    );
+    const mobileNavigation =
+      withoutScripts(html).match(/<nav(?=[^>]*aria-label="모바일 주요 탭")[^>]*>[\s\S]*?<\/nav>/)?.[0] ?? '';
+    const hasMobileTabs = ['/map', '/benefits'].includes(path) || path === '/' || path.startsWith('/mypage/');
+    if (hasMobileTabs) {
+      assert.ok(mobileNavigation, `${path}에 모바일 주요 탭이 있어야 합니다`);
+      for (const label of ['홈', '지도', '혜택', '관심 혜택', '마이']) {
+        assert.ok(
+          mobileNavigation.includes(`${label}</span>`),
+          `${path}의 모바일 ${label} 탭이 있어야 합니다`
+        );
+      }
+      assert.equal(
+        mobileNavigation.match(/<svg\b/g)?.length ?? 0,
+        5,
+        `${path}의 모바일 탭마다 아이콘이 있어야 합니다`
+      );
+      assertSavedLoginLink(mobileNavigation, '관심 혜택', `${path} 모바일`);
+    } else {
+      assert.equal(mobileNavigation, '', `${path}에 모바일 주요 탭이 없어야 합니다`);
+    }
     assert.match(
       withoutScripts(html),
-      /<a(?=[^>]*href="\/mypage")(?=[^>]*aria-label="마이페이지")[^>]*>/
+      /<a(?=[^>]*href="\/login")(?=[^>]*aria-label="로그인")[^>]*>/
     );
   }
 
@@ -711,7 +814,7 @@ const runChecks = async (origin, mockApi) => {
   try {
     const allFailedContent = mainContent(await (await fetch(`${origin}/`)).text());
     assertHomeListCalls(mockApi.requests.slice(allFailedRequestsBefore));
-    assert.match(plainText(allFailedContent), /생활부터 주말까지/);
+    assert.match(plainText(allFailedContent), /브랜드별로 둘러보기/);
     assertHomeSelection(allFailedContent, 'SKT');
     assert.doesNotMatch(allFailedContent, /SKT 인기 [123]|KT 인기 [123]|LGU 인기 [123]/);
     assert.match(getHomeBenefitsSection(allFailedContent), /혜택을 불러오지 못했어요\./);
@@ -731,7 +834,7 @@ const runChecks = async (origin, mockApi) => {
       getHomeBenefitsSection(partialFailureContent),
       /(?:^|[^A-Z])(?:KT|LGU) 인기 [123]/
     );
-    assert.match(plainText(partialFailureContent), /생활부터 주말까지/);
+    assert.match(plainText(partialFailureContent), /브랜드별로 둘러보기/);
   } finally {
     mockApi.setUnavailableCarriers([]);
   }
@@ -744,7 +847,7 @@ const runChecks = async (origin, mockApi) => {
     assertHomeSelection(emptyContent, 'LGU');
     assert.doesNotMatch(getHomeBenefitsSection(emptyContent), /LGU 인기 [123]/);
     assert.match(getHomeBenefitsSection(emptyContent), /아직 표시할 혜택이 없어요\./);
-    assert.match(plainText(emptyContent), /생활부터 주말까지/);
+    assert.match(plainText(emptyContent), /브랜드별로 둘러보기/);
   } finally {
     mockApi.setEmptyCarriers([]);
   }

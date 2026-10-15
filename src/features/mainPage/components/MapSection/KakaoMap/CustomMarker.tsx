@@ -31,7 +31,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
   const outerRadius = center - 2;
   const tailShoulderY = bubbleSize - Math.max(9, Math.round(bubbleSize * 0.18));
   const tailHalfWidth = Math.max(5, Math.round(bubbleSize * 0.12));
-  const accentColor = isSelected ? '#0066CC' : '#A3ABB5';
+  const accentColor = isSelected ? '#6154D9' : '#A3ABB5';
 
   return (
     <button
@@ -40,18 +40,15 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
       title={displayName}
       data-itplace-map-marker="true"
       data-marker-mode={mode}
-      className="relative block cursor-pointer border-0 bg-transparent p-0"
+      className="relative block cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] focus-visible:ring-offset-2 motion-safe:transition-[filter,transform] motion-safe:duration-200"
       style={{
         width,
         height,
         lineHeight: 0,
         zIndex: isSelected ? 1000 : 1,
-        filter: isSelected
-          ? 'drop-shadow(0 5px 9px rgba(0, 102, 204, 0.20))'
-          : 'none',
+        filter: isSelected ? 'drop-shadow(0 5px 9px rgba(97, 84, 217, 0.20))' : 'none',
         transform: `translate(${offsetX}px, ${offsetY}px)${isSelected ? ' scale(1.06)' : ''}`,
         transformOrigin: 'center bottom',
-        transition: 'filter 0.2s ease, transform 0.2s ease',
       }}
     >
       <svg

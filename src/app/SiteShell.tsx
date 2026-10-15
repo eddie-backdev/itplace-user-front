@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/Header';
 import MobileAppTabBar from '@/components/MobileAppTabBar';
+import PageScrollbarLayout from '@/components/PageScrollbarLayout';
 import ScrollToTop from '@/components/ScrollToTop';
 import SiteFooter from '@/components/SiteFooter';
 
@@ -22,6 +23,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
       <a href="#site-content" className="skip-link">
         본문으로 건너뛰기
       </a>
+      <PageScrollbarLayout />
       <ScrollToTop />
       <Header />
       <main

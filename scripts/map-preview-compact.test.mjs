@@ -32,10 +32,25 @@ const storeUtils = loadModule('src/features/mainPage/utils/storeUtils.ts', {
 const transforms = loadModule('src/features/mainPage/utils/dataTransform.ts', {
   './storeUtils': storeUtils,
 });
+const mapUtils = loadModule('src/features/mainPage/utils/mapUtils.ts');
 let request;
 const api = loadModule('src/features/mainPage/api/storeApi.ts', {
   '../../../apis/axiosInstance': { get: (...args) => request(...args) },
   '../utils/dataTransform': transforms,
+});
+const favoritesState = {
+  current: { _persist: { rehydrated: false }, auth: { isLoggedIn: false } },
+};
+let favoritesRequest;
+let favoritesHttpCalls = 0;
+const favoritesApi = loadModule('src/features/mainPage/api/favoritesListApi.ts', {
+  '../../../apis/axiosInstance': {
+    get: (...args) => {
+      favoritesHttpCalls++;
+      return favoritesRequest(...args);
+    },
+  },
+  '../../../store': { store: { getState: () => favoritesState.current } },
 });
 
 const benefits = [{ grade: 'VIP', context: '10% 할인', carrier: 'KT' }];
@@ -61,11 +76,111 @@ const batch = {
 };
 const envelope = { code: 'SUCCESS', status: 'SUCCESS', message: '성공', data: batch };
 
+test('favorites list skips transport until auth is rehydrated and logged in', async () => {
+  const privateFavorites = [{ benefitId: 11, partnerName: '회원 전용 혜택' }];
+  favoritesHttpCalls = 0;
+  favoritesState.current = { _persist: { rehydrated: false }, auth: { isLoggedIn: false } };
+  favoritesRequest = async () => ({ data: { data: privateFavorites } });
+
+  assert.deepEqual(await favoritesApi.getFavoritesList({ category: '카페' }), []);
+  assert.equal(favoritesHttpCalls, 0);
+
+  favoritesState.current = { _persist: { rehydrated: true }, auth: { isLoggedIn: false } };
+  assert.deepEqual(await favoritesApi.getFavoritesList({ category: '카페' }), []);
+  assert.equal(favoritesHttpCalls, 0);
+});
+
+test('authenticated favorites preserve category params and deduplicate concurrent requests', async () => {
+  const privateFavorites = [{ benefitId: 11, partnerName: '회원 전용 혜택' }];
+  favoritesState.current = { _persist: { rehydrated: true }, auth: { isLoggedIn: true } };
+  favoritesHttpCalls = 0;
+  let resolveRequest;
+  favoritesRequest = (url, config) => {
+    assert.equal(url, '/api/v1/favorites/search');
+    assert.deepEqual(config.params, { category: '카페' });
+    return new Promise((resolve) => {
+      resolveRequest = () => resolve({ data: { data: privateFavorites } });
+    });
+  };
+
+  const first = favoritesApi.getFavoritesList({ category: '카페' });
+  const duplicate = favoritesApi.getFavoritesList({ category: '카페' });
+  assert.equal(favoritesHttpCalls, 1);
+  resolveRequest();
+  assert.deepEqual(await first, privateFavorites);
+  assert.deepEqual(await duplicate, privateFavorites);
+});
+
+test('guest requests do not reuse an authenticated in-flight favorites promise', async () => {
+  const privateFavorites = [{ benefitId: 11, partnerName: '회원 전용 혜택' }];
+  favoritesState.current = { _persist: { rehydrated: true }, auth: { isLoggedIn: true } };
+  favoritesHttpCalls = 0;
+  let resolveRequest;
+  favoritesRequest = () =>
+    new Promise((resolve) => {
+      resolveRequest = () => resolve({ data: { data: privateFavorites } });
+    });
+
+  const authenticatedRequest = favoritesApi.getFavoritesList({ category: '카페' });
+  favoritesState.current = { _persist: { rehydrated: true }, auth: { isLoggedIn: false } };
+  assert.deepEqual(await favoritesApi.getFavoritesList({ category: '카페' }), []);
+  assert.equal(favoritesHttpCalls, 1);
+
+  resolveRequest();
+  assert.deepEqual(await authenticatedRequest, privateFavorites);
+  favoritesState.current = { _persist: { rehydrated: false }, auth: { isLoggedIn: false } };
+});
+
+test('authenticated favorites transport failures still propagate', async () => {
+  const failure = new Error('favorites unavailable');
+  favoritesState.current = { _persist: { rehydrated: true }, auth: { isLoggedIn: true } };
+  favoritesHttpCalls = 0;
+  favoritesRequest = async () => {
+    throw failure;
+  };
+
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    await assert.rejects(
+      favoritesApi.getFavoritesList({ category: '카페' }),
+      (error) => error === failure
+    );
+  } finally {
+    console.error = originalError;
+  }
+});
+
+test('map resize updates viewport state without clearing or searching results', () => {
+  assert.deepEqual(mapUtils.getViewportChangeActions('resize', 'nearby', ''), {
+    clearPendingSearch: false,
+    searchBounds: false,
+  });
+  assert.deepEqual(mapUtils.getViewportChangeActions('interaction', 'nearby', ''), {
+    clearPendingSearch: true,
+    searchBounds: true,
+  });
+  assert.deepEqual(mapUtils.getViewportChangeActions('interaction', 'nearby', 'coffee'), {
+    clearPendingSearch: true,
+    searchBounds: false,
+  });
+  assert.deepEqual(mapUtils.getViewportChangeActions('interaction', 'favorites', ''), {
+    clearPendingSearch: true,
+    searchBounds: false,
+  });
+});
+
 test('compact expansion preserves server order, zero distance and store benefit overrides', () => {
   const original = JSON.stringify(batch);
   const expanded = transforms.expandMapStorePreviewBatch(batch, 0, 0);
-  assert.deepEqual(expanded.map((item) => item.storeId), [30, 10, 20]);
-  assert.deepEqual(expanded.map((item) => item.distance), [8, 0, 1]);
+  assert.deepEqual(
+    expanded.map((item) => item.storeId),
+    [30, 10, 20]
+  );
+  assert.deepEqual(
+    expanded.map((item) => item.distance),
+    [8, 0, 1]
+  );
   assert.equal(expanded[0].roadName, '테헤란로');
   assert.equal(expanded[1].postCode, '12345');
   assert.equal(expanded[1].partnerName, '브랜드');
@@ -73,18 +188,28 @@ test('compact expansion preserves server order, zero distance and store benefit 
   assert.equal(expanded[1].tierBenefit, benefits);
   assert.equal(expanded[2].tierBenefit[0].context, '매장 혜택');
   const platforms = transforms.transformMapStorePreviewsToPlatforms(expanded);
-  assert.deepEqual(platforms.map((item) => item.id), ['30', '10', '20']);
+  assert.deepEqual(
+    platforms.map((item) => item.id),
+    ['30', '10', '20']
+  );
   assert.equal(platforms[0].roadName, '테헤란로');
   assert.equal(platforms[1].distance, 0);
   assert.deepEqual(platforms[0].benefitDetails, []);
   assert.equal(JSON.stringify(batch), original);
   assert.deepEqual(transforms.expandMapStorePreviewBatch({ stores: [], partners: [] }, 0, 0), []);
 
-  const viewport = transforms.transformMapStorePreviewBatchToPlatforms({
-    stores: [store(1), store(2, { latitude: 37.6 }), store(3, { partnerId: 99 })],
-    partners: batch.partners,
-  }, 37.6, 127.1);
-  assert.deepEqual(viewport.map((item) => item.storeId), [2, 1, 3]);
+  const viewport = transforms.transformMapStorePreviewBatchToPlatforms(
+    {
+      stores: [store(1), store(2, { latitude: 37.6 }), store(3, { partnerId: 99 })],
+      partners: batch.partners,
+    },
+    37.6,
+    127.1
+  );
+  assert.deepEqual(
+    viewport.map((item) => item.storeId),
+    [2, 1, 3]
+  );
   assert.equal(viewport[0].distance, 0);
   assert.ok(viewport[1].distance > 0);
   assert.equal(viewport[2].partnerName, '매장 3');
@@ -93,8 +218,16 @@ test('compact expansion preserves server order, zero distance and store benefit 
 
 const paths = [
   ['getStorePreviewList', '/api/v1/maps/nearby/previews', { radiusMeters: 1000 }],
-  ['getStorePreviewListByCategory', '/api/v1/maps/nearby/category/previews', { radiusMeters: 1000, category: '카페' }],
-  ['searchStorePreviews', '/api/v1/maps/nearby/search/previews', { keyword: '브랜드', category: '카페' }],
+  [
+    'getStorePreviewListByCategory',
+    '/api/v1/maps/nearby/category/previews',
+    { radiusMeters: 1000, category: '카페' },
+  ],
+  [
+    'searchStorePreviews',
+    '/api/v1/maps/nearby/search/previews',
+    { keyword: '브랜드', category: '카페' },
+  ],
 ];
 
 test('all web preview paths expand compact responses and propagate query parameters and AbortSignal', async () => {
@@ -112,7 +245,10 @@ test('all web preview paths expand compact responses and propagate query paramet
     const response = await api[method](params, signal);
     assert.equal(calls, 1);
     assert.equal(response.code, envelope.code);
-    assert.deepEqual(response.data.map((item) => item.storeId), [30, 10, 20]);
+    assert.deepEqual(
+      response.data.map((item) => item.storeId),
+      [30, 10, 20]
+    );
     assert.equal(response.data[1].distance, 0);
   }
 });
@@ -147,7 +283,9 @@ test('only unavailable compact routes fall back; failures and cancellation do no
 });
 
 const pageEnvelope = (stores, partners, hasMore, nextCursor) => ({
-  code: 'SUCCESS', status: 'SUCCESS', message: '성공',
+  code: 'SUCCESS',
+  status: 'SUCCESS',
+  message: '성공',
   data: { stores, partners, hasMore, nextCursor },
 });
 
@@ -158,54 +296,112 @@ test('paged viewport and nearby preview APIs accumulate every page, expanding ea
     calls.push({ url, params: config.params, signal: config.signal });
     const { afterStoreId } = config.params;
     if (url.includes('/in-view/')) {
-      if (afterStoreId === 0) return { data: pageEnvelope(
-        Array.from({ length: 300 }, (_, i) => store(i + 1, { distance: 601 - i })),
-        [{ partnerId: 9, partnerName: '페이지 1', category: '카페', tierBenefit: benefits }], true, 300
-      ) };
-      if (afterStoreId === 300) return { data: pageEnvelope(
-        Array.from({ length: 300 }, (_, i) => store(i + 301, { distance: 301 - i })),
-        [{ partnerId: 9, partnerName: '페이지 2', category: '카페', tierBenefit: [] }], true, 600
-      ) };
+      if (afterStoreId === 0)
+        return {
+          data: pageEnvelope(
+            Array.from({ length: 300 }, (_, i) => store(i + 1, { distance: 601 - i })),
+            [{ partnerId: 9, partnerName: '페이지 1', category: '카페', tierBenefit: benefits }],
+            true,
+            300
+          ),
+        };
+      if (afterStoreId === 300)
+        return {
+          data: pageEnvelope(
+            Array.from({ length: 300 }, (_, i) => store(i + 301, { distance: 301 - i })),
+            [{ partnerId: 9, partnerName: '페이지 2', category: '카페', tierBenefit: [] }],
+            true,
+            600
+          ),
+        };
       return { data: pageEnvelope([store(601, { distance: 0 })], [], false, null) };
     }
-    if (afterStoreId === 0) return { data: pageEnvelope([store(1, { distance: 3 })], batch.partners, true, 1) };
+    if (afterStoreId === 0)
+      return { data: pageEnvelope([store(1, { distance: 3 })], batch.partners, true, 1) };
     return { data: pageEnvelope([], [], false, null) };
   };
 
-  const viewport = await api.getAllStorePreviewsInView({
-    minLat: 1, minLng: 2, maxLat: 3, maxLng: 4, category: '카페', pageSize: 25,
-  }, signal);
+  const viewport = await api.getAllStorePreviewsInView(
+    {
+      minLat: 1,
+      minLng: 2,
+      maxLat: 3,
+      maxLng: 4,
+      category: '카페',
+      pageSize: 25,
+    },
+    signal
+  );
   assert.equal(calls.length, 3, JSON.stringify(calls.map(({ url, params }) => ({ url, params }))));
   assert.equal(viewport.data.length, 601);
-  assert.deepEqual(viewport.data.map(({ distance }) => distance), [...viewport.data.map(({ distance }) => distance)].sort((a, b) => a - b));
+  assert.deepEqual(
+    viewport.data.map(({ distance }) => distance),
+    [...viewport.data.map(({ distance }) => distance)].sort((a, b) => a - b)
+  );
   assert.equal(viewport.data.find(({ storeId }) => storeId === 1).partnerName, '페이지 1');
   assert.deepEqual(viewport.data.find(({ storeId }) => storeId === 1).tierBenefit, benefits);
   assert.deepEqual(viewport.data.find(({ storeId }) => storeId === 301).tierBenefit, []);
-  assert.deepEqual(calls.slice(0, 3).map(({ params }) => params.afterStoreId), [0, 300, 600]);
-  assert.ok(calls.slice(0, 3).every(({ url, params, signal: actualSignal }) =>
-    url === '/api/v1/maps/stores/in-view/previews/compact/page' &&
-    params.pageSize === 300 && params.category === '카페' && actualSignal === signal
-  ));
+  assert.deepEqual(
+    calls.slice(0, 3).map(({ params }) => params.afterStoreId),
+    [0, 300, 600]
+  );
+  assert.ok(
+    calls
+      .slice(0, 3)
+      .every(
+        ({ url, params, signal: actualSignal }) =>
+          url === '/api/v1/maps/stores/in-view/previews/compact/page' &&
+          params.pageSize === 300 &&
+          params.category === '카페' &&
+          actualSignal === signal
+      )
+  );
 
   calls.length = 0;
-  const nearby = await api.getAllNearbyStorePreviews({
-    lat: 37.5, lng: 127.1, userLat: 0, userLng: 0, radiusMeters: 1000, category: '카페', pageSize: 1,
-  }, signal);
+  const nearby = await api.getAllNearbyStorePreviews(
+    {
+      lat: 37.5,
+      lng: 127.1,
+      userLat: 0,
+      userLng: 0,
+      radiusMeters: 1000,
+      category: '카페',
+      pageSize: 1,
+    },
+    signal
+  );
   assert.equal(nearby.data.length, 1);
   assert.equal(nearby.data[0].distance, 3);
-  assert.deepEqual(calls.map(({ params }) => params.afterStoreId), [0, 1]);
-  assert.ok(calls.every(({ url, params, signal: actualSignal }) =>
-    url === '/api/v1/maps/nearby/category/previews/compact/page' &&
-    params.pageSize === 300 && params.category === '카페' &&
-    params.userLat === 0 && params.userLng === 0 && actualSignal === signal
-  ));
+  assert.deepEqual(
+    calls.map(({ params }) => params.afterStoreId),
+    [0, 1]
+  );
+  assert.ok(
+    calls.every(
+      ({ url, params, signal: actualSignal }) =>
+        url === '/api/v1/maps/nearby/category/previews/compact/page' &&
+        params.pageSize === 300 &&
+        params.category === '카페' &&
+        params.userLat === 0 &&
+        params.userLng === 0 &&
+        actualSignal === signal
+    )
+  );
 });
 
 test('paged previews handle exact page boundaries, empty final pages and overlapping IDs', async () => {
   let page = 0;
   request = async () => {
     page++;
-    if (page === 1) return { data: pageEnvelope(Array.from({ length: 300 }, (_, i) => store(i + 1, { distance: 2 })), batch.partners, true, 300) };
+    if (page === 1)
+      return {
+        data: pageEnvelope(
+          Array.from({ length: 300 }, (_, i) => store(i + 1, { distance: 2 })),
+          batch.partners,
+          true,
+          300
+        ),
+      };
     return { data: pageEnvelope([], [], false, null) };
   };
   const exact = await api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 });
@@ -215,12 +411,25 @@ test('paged previews handle exact page boundaries, empty final pages and overlap
   page = 0;
   request = async (_url, config) => {
     page++;
-    if (page === 1) return { data: pageEnvelope([store(1, { distance: 5 }), store(2, { distance: 6 })], batch.partners, true, 2) };
+    if (page === 1)
+      return {
+        data: pageEnvelope(
+          [store(1, { distance: 5 }), store(2, { distance: 6 })],
+          batch.partners,
+          true,
+          2
+        ),
+      };
     assert.equal(config.params.afterStoreId, 2);
-    return { data: pageEnvelope([store(2, { distance: 0 }), store(3, { distance: 1 })], [], false, null) };
+    return {
+      data: pageEnvelope([store(2, { distance: 0 }), store(3, { distance: 1 })], [], false, null),
+    };
   };
   const overlap = await api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 });
-  assert.deepEqual(overlap.data.map(({ storeId }) => storeId), [3, 1, 2]);
+  assert.deepEqual(
+    overlap.data.map(({ storeId }) => storeId),
+    [3, 1, 2]
+  );
   assert.equal(overlap.data.find(({ storeId }) => storeId === 2).distance, 6);
 });
 
@@ -233,14 +442,21 @@ test('paged previews reject aborts, failures, malformed metadata and nonadvancin
     controller.abort();
     return { data: pageEnvelope([store(1)], batch.partners, true, 1) };
   };
-  await assert.rejects(api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 }, controller.signal));
+  await assert.rejects(
+    api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 }, controller.signal)
+  );
   assert.equal(calls, 1);
 
   const preaborted = new AbortController();
   preaborted.abort();
   calls = 0;
-  request = async () => { calls++; return { data: pageEnvelope([], [], false, null) }; };
-  await assert.rejects(api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 }, preaborted.signal));
+  request = async () => {
+    calls++;
+    return { data: pageEnvelope([], [], false, null) };
+  };
+  await assert.rejects(
+    api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 }, preaborted.signal)
+  );
   assert.equal(calls, 0);
 
   const pageOne = pageEnvelope([store(1)], batch.partners, true, 1);
@@ -248,7 +464,10 @@ test('paged previews reject aborts, failures, malformed metadata and nonadvancin
     if (config.params.afterStoreId === 0) return { data: pageOne };
     throw new Error('second page failed');
   };
-  await assert.rejects(api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 }), /second page failed/);
+  await assert.rejects(
+    api.getAllNearbyStorePreviews({ lat: 1, lng: 2, radiusMeters: 1000 }),
+    /second page failed/
+  );
 
   for (const malformed of [
     { ...pageOne, data: { ...pageOne.data, hasMore: undefined } },
@@ -277,7 +496,11 @@ test('viewport coverage reuses completed paged results, including 300+ stores', 
           requests.push(params);
           return {
             data: Array.from({ length: count }, (_, id) => ({
-              ...store(id), distance: id, partnerName: '브랜드', category: '카페', tierBenefit: [],
+              ...store(id),
+              distance: id,
+              partnerName: '브랜드',
+              category: '카페',
+              tierBenefit: [],
             })),
           };
         },
@@ -340,7 +563,10 @@ test('cluster zoom uses bounds clusters for cleared search and defers current-lo
         clusterRequests.push(params);
         return { data: [] };
       },
-      getAllNearbyStorePreviews: async () => { nearbyCalls++; return { data: [] }; },
+      getAllNearbyStorePreviews: async () => {
+        nearbyCalls++;
+        return { data: [] };
+      },
     },
     '../utils/dataTransform': transforms,
     '../utils/mapUtils': loadModule('src/features/mainPage/utils/mapUtils.ts'),
@@ -349,7 +575,12 @@ test('cluster zoom uses bounds clusters for cleared search and defers current-lo
       useApiCall: () => ({
         data: [],
         execute: async (task) => {
-          try { await task(); return true; } catch { return false; }
+          try {
+            await task();
+            return true;
+          } catch {
+            return false;
+          }
         },
       }),
     },
@@ -378,7 +609,12 @@ test('viewport coverage is invalidated when the selected category changes', asyn
       useState: (initial) => {
         const index = stateIndex++;
         states[index] ??= initial;
-        return [states[index], (next) => { states[index] = typeof next === 'function' ? next(states[index]) : next; }];
+        return [
+          states[index],
+          (next) => {
+            states[index] = typeof next === 'function' ? next(states[index]) : next;
+          },
+        ];
       },
       useEffect: () => {},
       useCallback: (callback) => callback,
@@ -402,7 +638,13 @@ test('viewport coverage is invalidated when the selected category changes', asyn
       useApiCall: () => ({
         data: [],
         execute: async (task, onSuccess) => {
-          try { const result = await task(); onSuccess?.(result); return true; } catch { return false; }
+          try {
+            const result = await task();
+            onSuccess?.(result);
+            return true;
+          } catch {
+            return false;
+          }
         },
       }),
     },
@@ -435,7 +677,9 @@ test('late initial geolocation updates user coordinates without committing stale
   let refIndex = 0;
   let effects = [];
   let resolveLocation;
-  const location = new Promise((resolve) => { resolveLocation = resolve; });
+  const location = new Promise((resolve) => {
+    resolveLocation = resolve;
+  });
   const detailedRequests = [];
   const addressRequests = [];
   const { useStoreData } = loadModule('src/features/mainPage/hooks/useStoreData.ts', {
@@ -443,9 +687,16 @@ test('late initial geolocation updates user coordinates without committing stale
       useState: (initial) => {
         const index = stateIndex++;
         states[index] ??= initial;
-        return [states[index], (next) => { states[index] = typeof next === 'function' ? next(states[index]) : next; }];
+        return [
+          states[index],
+          (next) => {
+            states[index] = typeof next === 'function' ? next(states[index]) : next;
+          },
+        ];
       },
-      useEffect: (effect) => { effects.push(effect); },
+      useEffect: (effect) => {
+        effects.push(effect);
+      },
       useCallback: (callback) => callback,
       useRef: (current) => {
         const index = refIndex++;
@@ -471,7 +722,13 @@ test('late initial geolocation updates user coordinates without committing stale
       useApiCall: () => ({
         data: [],
         execute: async (task, onSuccess) => {
-          try { const result = await task(); onSuccess?.(result); return true; } catch { return false; }
+          try {
+            const result = await task();
+            onSuccess?.(result);
+            return true;
+          } catch {
+            return false;
+          }
         },
       }),
     },
@@ -495,8 +752,16 @@ test('late initial geolocation updates user coordinates without committing stale
   await new Promise((resolve) => setImmediate(resolve));
   hook = render();
   assert.deepEqual(hook.userCoords, { lat: 37.5, lng: 127.1 });
-  assert.deepEqual(detailedRequests, [undefined], 'stale initial request does not fetch nearby stores');
-  assert.deepEqual(addressRequests, [[5, 5]], 'stale initial address does not replace viewport address');
+  assert.deepEqual(
+    detailedRequests,
+    [undefined],
+    'stale initial request does not fetch nearby stores'
+  );
+  assert.deepEqual(
+    addressRequests,
+    [[5, 5]],
+    'stale initial address does not replace viewport address'
+  );
 
   hook.setCategoryOnly('카페', 4);
   hook = render();

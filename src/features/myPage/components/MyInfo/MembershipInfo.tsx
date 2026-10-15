@@ -18,6 +18,7 @@ const MembershipInfo: React.FC<Props> = ({
   onChangeProfileClick,
 }) => {
   const hasProfile = Boolean(carrier && grade && isValidCarrierGradePair(carrier, grade));
+  const isMvno = carrier === 'MVNO';
   const verificationStatus =
     verified === true
       ? '통신사 인증 완료'
@@ -35,7 +36,16 @@ const MembershipInfo: React.FC<Props> = ({
           <h2 id="membership-profile-heading" className="text-lg font-semibold text-ink">
             나의 멤버십
           </h2>
-          {hasProfile ? (
+          {isMvno ? (
+            <>
+              <p className="mt-2 break-words text-xl font-bold text-brandStrong">
+                {getCarrierLabel(carrier)}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-grey05">
+                통신 3사 멤버십 혜택을 둘러볼 수 있어요.
+              </p>
+            </>
+          ) : hasProfile ? (
             <>
               <p className="mt-2 break-words text-xl font-bold text-brandStrong">
                 {getCarrierLabel(carrier)} · {getMembershipGradeLabel(grade)}

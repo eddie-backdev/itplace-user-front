@@ -1,11 +1,13 @@
 import SafeImage from '../../../../../components/SafeImage';
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { TbChevronRight } from 'react-icons/tb';
+import { TbBookmark, TbChevronRight } from 'react-icons/tb';
 import { FavoriteBenefit } from '../../../types/api';
 import { RootState } from '../../../../../store';
 import NoResult from '../../../../../components/NoResult';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
+import { Link } from '@/lib/navigation';
+import { getLoginHref } from '../../../../loginPage/utils/returnTo.mjs';
 
 interface FavoriteStoreListProps {
   favorites: FavoriteBenefit[];
@@ -24,29 +26,35 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
   error,
   onRetry,
 }) => {
-  const isLoggedIn = useSelector((state: RootState) => !!state.auth.user);
+  const isAuthenticated = useSelector(
+    (state: RootState) => state._persist.rehydrated && state.auth.isLoggedIn
+  );
+  if (!isAuthenticated) {
+    return (
+      <div className="flex min-h-56 flex-1 flex-col items-center justify-center px-4 py-3 text-center md:min-h-full md:pb-[76px] max-md:min-h-0 max-md:mt-0 max-md:py-2">
+        <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#f0edfc] text-[#6154d9] max-md:hidden">
+          <TbBookmark aria-hidden="true" className="h-5 w-5" />
+        </span>
+        <h3 className="text-base font-semibold leading-6 text-[#202124]">로그인이 필요해요</h3>
+        <p className="mt-1 break-keep text-sm leading-5 text-[#686b73]">
+          관심 혜택은 로그인 후 확인할 수 있어요.
+        </p>
+        <Link
+          to={getLoginHref('/map')}
+          prefetch={true}
+          className="mt-2 inline-flex min-h-11 min-w-32 items-center justify-center rounded-lg bg-[#6154d9] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#5144c7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] focus-visible:ring-offset-2"
+        >
+          로그인하기
+        </Link>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-0 max-md:min-h-56">
         <LoadingSpinner className="h-10 w-10 border-4 border-grey03 border-t-grey05" />
         <p className="mt-4 text-body-4 text-grey04">관심 혜택을 불러오는 중...</p>
-      </div>
-    );
-  }
-
-  // 로그인하지 않은 경우
-  if (!isLoggedIn) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4 [&_button]:min-h-11 [&_button]:rounded-lg [&_button]:px-4 [&_button]:focus-visible:ring-[#0066cc] [&_button.bg-purple04]:bg-[#0066cc] [&_button.bg-purple04]:hover:bg-[#0057b8]">
-        <NoResult
-          message1="로그인이 필요해요!"
-          message2="로그인 후 관심 혜택을 이용해 보세요"
-          message1FontSize="text-title-6"
-          message2FontSize="text-body-3"
-          buttonText="로그인하러 가기"
-          buttonRoute="/login"
-          isLoginRequired={true}
-        />
       </div>
     );
   }

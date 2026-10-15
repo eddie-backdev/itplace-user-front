@@ -38,7 +38,8 @@ Run from this directory:
 
 - User-approved latest Figma desktop section `160:513424` in file `QqivWPbFJvHActUdOKBCxM` supersedes the older green/sidebar design. Implement the source screenshots and native layer geometry recorded in `../.design/figma-implementation-20261014/implementation-plan.md` and linked reference directories.
 - Current brand: iris `#6154D9`, white `#FFFFFF`, canvas `#F7F8FA`, ink `#202124`, muted `#686B73`, border `#E8E9EE`, soft `#F0EDFC`. Use the approved connected i/p symbol and system Korean font stack.
-- Desktop header is80px high, content aligns with page containers; home/search max1280px with28px horizontal insets. Support/account header controls align to their main reading column, as in the reviewed Figma header alignment.
+- Desktop header is72px high, with one shared 1280px maximum width and28px horizontal insets on all routes.
+- Desktop top navigation, including `/map`, is 72px high. On `/map` at widths of 1920px and above, use a wide three-column layout with the nearby store list on the left, map in the middle, and selected store details on the right; below 1920px, use the shared 360px left panel for list or detail beside the map, without a separate map heading.
 - Mobile should not repeat an ITPLACE wordmark or membership label in the upper-left. Preserve safe areas, accessible controls, and responsive navigation.
 - Implement visual layers in reusable React/CSS components. Keep existing API, auth, map and persistence contracts. Static prototype demo accounts, verification codes and store snapshots must not become production behavior.
 - No trial/experience entry. Login recovery links and signup precede the login submit button.

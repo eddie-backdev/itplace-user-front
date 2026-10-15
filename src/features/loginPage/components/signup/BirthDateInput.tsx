@@ -1,13 +1,15 @@
-import { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { ko } from 'date-fns/locale/ko';
 import 'react-datepicker/dist/react-datepicker.css';
 import { formatDateToBirthInput, parseBirthDateInput } from '../../utils/birthDate';
+import styles from './SignupForm.module.css';
 
 type BirthDateInputProps = {
   value: string;
   onChange: (value: string) => void;
   name?: string;
+  error?: string;
 };
 
 type DateInputButtonProps = {
@@ -15,6 +17,7 @@ type DateInputButtonProps = {
   onClick?: () => void;
   placeholder?: string;
   id?: string;
+  ariaDescribedBy?: string;
 };
 
 const START_YEAR = 1900;
@@ -23,18 +26,30 @@ const KOREAN_MONTHS = Array.from({ length: 12 }, (_, index) => `${index + 1}월`
 registerLocale('ko', ko);
 
 const DateInputButton = forwardRef<HTMLButtonElement, DateInputButtonProps>(
-  ({ value, onClick, placeholder, id }, ref) => (
+  ({ value, onClick, placeholder, id, ariaDescribedBy }, ref) => (
     <button
       id={id}
       ref={ref}
       type="button"
       onClick={onClick}
       aria-label={value ? `생년월일 ${value}` : '생년월일 선택'}
-      className={`h-12 w-full rounded-xl border bg-white px-4 text-left text-body-2 font-semibold transition hover:border-brand focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 ${
-        value ? 'border-grey02 text-grey06' : 'border-grey02 text-grey05'
-      }`}
+      aria-describedby={ariaDescribedBy}
+      className={`${styles.dateButton} ${value ? styles.dateButtonValue : styles.dateButtonPlaceholder}`}
     >
-      {value || placeholder}
+      <span>{value || placeholder}</span>
+      <svg
+        className={styles.dateIcon}
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3.5" y="5" width="17" height="16" rx="2" />
+        <path d="M7.5 3v4M16.5 3v4M3.5 10h17" />
+      </svg>
     </button>
   )
 );
@@ -53,14 +68,21 @@ const getYears = () => {
   return Array.from({ length: currentYear - START_YEAR + 1 }, (_, index) => START_YEAR + index);
 };
 
-export default function BirthDateInput({ value, onChange, name = 'birth' }: BirthDateInputProps) {
+export default function BirthDateInput({
+  value,
+  onChange,
+  name = 'birth',
+  error,
+}: BirthDateInputProps) {
+  const generatedId = useId();
+  const inputId = `${name}-${generatedId}`;
   return (
-    <div className="w-full max-w-[320px]">
-      <label htmlFor={name} className="mb-1.5 block text-body-3 font-semibold text-grey06">
+    <div className="w-full min-w-0">
+      <label htmlFor={inputId} className={styles.fieldLabel}>
         생년월일
       </label>
       <DatePicker
-        id={name}
+        id={inputId}
         name={name}
         wrapperClassName="w-full"
         selected={parseBirthDateInput(value)}
@@ -69,14 +91,15 @@ export default function BirthDateInput({ value, onChange, name = 'birth' }: Birt
             onChange(formatDateToBirthInput(date));
           }
         }}
-        customInput={<DateInputButton />}
+        customInput={<DateInputButton ariaDescribedBy={error ? `${inputId}-error` : undefined} />}
         dateFormat="yyyy.MM.dd"
-        placeholderText="생년월일"
+        placeholderText="YYYY.MM.DD"
         locale="ko"
         calendarStartDay={0}
         minDate={new Date('1900-01-01T00:00:00')}
         maxDate={getYesterday()}
         popperPlacement="bottom-start"
+        showPopperArrow={false}
         calendarClassName="itplace-birth-datepicker"
         shouldCloseOnSelect
         renderCustomHeader={({
@@ -137,6 +160,11 @@ export default function BirthDateInput({ value, onChange, name = 'birth' }: Birt
           </div>
         )}
       />
+      {error ? (
+        <p id={`${inputId}-error`} aria-live="polite" className="mt-1.5 text-sm text-[#B42318]">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import gsap from 'gsap';
+import { useState } from 'react';
 import AuthButton from '../common/AuthButton';
 import EmailVerificationBox from '../verification/EmailVerificationBox';
 import PasswordInputForm from '../common/PasswordInputForm';
 import useValidation from '../../hooks/useValidation';
 import { showToast } from '../../../../utils/toast';
+import styles from './SignupForm.module.css';
 
 type SignUpAccountFormProps = {
   initialEmail?: string;
@@ -27,20 +27,11 @@ const SignUpAccountForm = ({
   onValuesChange,
   onNext,
 }: SignUpAccountFormProps) => {
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState(initialPassword);
   const [passwordConfirm, setPasswordConfirm] = useState(initialPasswordConfirm);
   const [emailVerified, setEmailVerified] = useState(initialEmailVerified);
   const { errors, validateAll, validateField } = useValidation();
-
-  useEffect(() => {
-    gsap.fromTo(
-      wrapperRef.current,
-      { opacity: 0 },
-      { opacity: 1, duration: 0.5, ease: 'power2.out' }
-    );
-  }, []);
 
   const formData = { email, password, passwordConfirm };
 
@@ -66,7 +57,7 @@ const SignUpAccountForm = ({
     !errors.passwordConfirm;
 
   return (
-    <div ref={wrapperRef} className="flex w-full flex-col items-center">
+    <div className={`${styles.signupForm} flex w-full flex-col items-center`}>
       <div className="w-full">
         <EmailVerificationBox
           email={email}
@@ -86,7 +77,7 @@ const SignUpAccountForm = ({
         />
       </div>
 
-      <div className="mt-[18px] w-full">
+      <div className="mt-[22px] w-full">
         <PasswordInputForm
           password={password}
           passwordConfirm={passwordConfirm}
@@ -108,6 +99,7 @@ const SignUpAccountForm = ({
           }}
           passwordError={errors.password}
           passwordConfirmError={errors.passwordConfirm}
+          className="signupPassword"
         />
       </div>
 
@@ -115,7 +107,7 @@ const SignUpAccountForm = ({
         label="다음"
         onClick={handleNext}
         variant={isValid ? 'default' : 'disabled'}
-        className="mt-[32px] !max-w-none max-md:mt-[28px] max-sm:mt-[28px]"
+        className="signupCta mt-7 !max-w-none"
       />
     </div>
   );

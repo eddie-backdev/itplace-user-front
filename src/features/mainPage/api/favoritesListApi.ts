@@ -1,4 +1,5 @@
 import axiosInstance from '../../../apis/axiosInstance';
+import { store } from '../../../store';
 import { FavoritesListRequest, FavoriteBenefit } from '../types/api';
 
 // 진행 중인 요청들을 저장 (파라미터별로 관리)
@@ -7,6 +8,9 @@ const ongoingRequests = new Map<string, Promise<FavoriteBenefit[]>>();
 export const getFavoritesList = async (
   params: FavoritesListRequest
 ): Promise<FavoriteBenefit[]> => {
+  const state = store.getState();
+  if (!state._persist?.rehydrated || !state.auth.isLoggedIn) return [];
+
   const paramsKey = JSON.stringify(params);
 
   // 같은 파라미터로 이미 진행 중인 요청이 있으면 그 결과를 반환

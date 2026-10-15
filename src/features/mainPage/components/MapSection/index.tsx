@@ -1,5 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Platform, Category, MapLocation, MapBounds, MapCluster } from '../../types';
+import {
+  Platform,
+  Category,
+  MapLocation,
+  MapBounds,
+  MapCluster,
+  MapViewportChangeReason,
+} from '../../types';
 import CategoryTabsSection from '../SidebarSection/CategoryTabsSection';
 import KakaoMap from './KakaoMap';
 import MapControls from './MapControls';
@@ -28,7 +35,12 @@ interface MapSectionProps {
   initialMapLevel?: number;
   onZoomStart?: () => void;
   onMapLevelChange?: (mapLevel: number) => void;
-  onViewportChange?: (bounds: MapBounds, center: MapLocation, mapLevel: number) => void;
+  onViewportChange?: (
+    bounds: MapBounds,
+    center: MapLocation,
+    mapLevel: number,
+    reason?: MapViewportChangeReason
+  ) => void;
   activeTab: string;
   mobileControlsBottomOffset?: number | string;
   mobileControlsTransitionEnabled?: boolean;
@@ -92,9 +104,16 @@ const MapSection: React.FC<MapSectionProps> = ({
   );
 
   const handleViewportChange = useCallback(
-    (bounds: MapBounds, center: MapLocation, mapLevel: number) => {
-      setShowSearchButton(activeTab !== 'nearby' || Boolean(searchQuery?.trim()));
-      onViewportChange?.(bounds, center, mapLevel);
+    (
+      bounds: MapBounds,
+      center: MapLocation,
+      mapLevel: number,
+      reason?: MapViewportChangeReason
+    ) => {
+      if (reason !== 'resize') {
+        setShowSearchButton(activeTab !== 'nearby' || Boolean(searchQuery?.trim()));
+      }
+      onViewportChange?.(bounds, center, mapLevel, reason);
     },
     [activeTab, onViewportChange, searchQuery]
   );

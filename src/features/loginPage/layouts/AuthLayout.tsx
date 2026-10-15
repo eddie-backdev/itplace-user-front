@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { MdClose } from 'react-icons/md';
 import { Link, useNavigate, useSearchParams } from '@/lib/navigation';
 import { AxiosError } from 'axios';
 import { showToast } from '../../../utils/toast';
@@ -8,6 +9,7 @@ import OAuthIntegrationForm from '../components/signup/OAuthIntegrationForm';
 import OAuthAccountLinkForm from '../components/signup/OAuthAccountLinkForm';
 import SignUpAccountForm from '../components/signup/SignUpAccountForm';
 import SignUpFinalForm from '../components/signup/SignUpFinalForm';
+import SignupComplete from '../components/signup/SignupComplete';
 import { oauthLink, oauthSignUp } from '../apis/user';
 import { getOAuthResult } from '../apis/auth';
 import { AuthTransition } from '../hooks/AuthTransition';
@@ -15,10 +17,20 @@ import { useDispatch } from 'react-redux';
 import { setLoginSuccess } from '../../../store/authSlice';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import { consumeOAuthPreAuth } from '../utils/oauthPreAuthStorage';
-import { clearOAuthReturnTo, consumeOAuthReturnTo, getSafeReturnTo } from '../utils/returnTo.mjs';
+import {
+  clearLoginNavigation,
+  consumeLoginIntent,
+  consumeOAuthReturnTo,
+  getLoginIntent,
+  getSafeReturnTo,
+  migrateLoginIntent,
+  readLoginReturnTo,
+  readOAuthReturnTo,
+} from '../utils/returnTo.mjs';
 import AuthBenefitsPreview, {
   type AuthPreviewPartner,
 } from '../components/common/AuthBenefitsPreview';
+import SignupFlowHeader from './SignupFlowHeader';
 import styles from './AuthPageLayout.module.css';
 
 const emptyLocalSignupData = {
@@ -42,6 +54,29 @@ const emptyOAuthUserData = {
   membershipGradeCode: '',
 };
 
+const showLoginRequiredToast = () =>
+  showToast('로그인이 필요합니다.', 'info', {
+    autoClose: 3000,
+    pauseOnHover: false,
+    pauseOnFocusLoss: false,
+    closeButton: ({ closeToast }) => (
+      <button
+        type="button"
+        className="Toastify__close-button"
+        aria-label="알림 닫기"
+        onClick={(event) => {
+          event.stopPropagation();
+          closeToast(true);
+        }}
+      >
+        <MdClose aria-hidden="true" />
+      </button>
+    ),
+    role: 'status',
+    toastId: 'saved-benefits-login-required',
+    position: 'top-right',
+  });
+
 const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[] }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -59,13 +94,19 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
   const [signUpData, setSignUpData] = useState(emptyLocalSignupData);
   const [oauthUserData, setOAuthUserData] = useState(emptyOAuthUserData);
   const [oauthLinkEmail, setOAuthLinkEmail] = useState('');
+  const [signupCompletionMethod, setSignupCompletionMethod] = useState<'local' | 'oauth' | null>(
+    null
+  );
   const [isOAuthLinking, setIsOAuthLinking] = useState(false);
   const [isOAuthProcessing, setIsOAuthProcessing] = useState(false);
   const hasInitialized = useRef(false);
-  const returnTo = getSafeReturnTo(searchParams.get('returnTo'));
+  const [returnTo, setReturnTo] = useState(() =>
+    getSafeReturnTo(searchParams.get('returnTo') ?? readOAuthReturnTo(readLoginReturnTo()))
+  );
   const isSignupFlow =
     formStep === 'signUpAccount' ||
     formStep === 'signUpFinal' ||
+    formStep === 'signUpComplete' ||
     formStep === 'oauthIntegration' ||
     formStep === 'oauthLink';
 
@@ -84,7 +125,7 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
             setLoginSuccess({
               nickname: data.nickname,
               carrier: data.carrier ?? null,
-              membershipGrade: data.membershipGradeCode || data.membershipGrade || 'NORMAL',
+              membershipGrade: data.membershipGradeCode || data.membershipGrade || null,
               membershipGradeCode: data.membershipGradeCode || data.membershipGrade || null,
               membershipVerified: data.membershipVerified ?? false,
             })
@@ -97,19 +138,16 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
         const params = new URLSearchParams({
           step: 'oauthIntegration',
           verifiedType: 'oauth',
-          returnTo: consumeOAuthReturnTo(returnTo),
         });
         navigate(`/login?${params.toString()}`, { replace: true });
         setFormStep('oauthIntegration');
       } else {
-        clearOAuthReturnTo();
         showToast('로그인에 실패했습니다.', 'error');
-        navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
+        navigate('/login', { replace: true, preserveLoginIntent: true });
       }
     } catch {
-      clearOAuthReturnTo();
       showToast('로그인에 실패했습니다.', 'error');
-      navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
+      navigate('/login', { replace: true, preserveLoginIntent: true });
     } finally {
       setIsOAuthProcessing(false);
     }
@@ -144,11 +182,46 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
   }, [searchParams, setFormStep, checkOAuthResult, isOAuthProcessing]);
 
   useEffect(() => {
-    if (searchParams.get('reset') === '1') {
-      setFormStep('login');
-      navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
+    const params = new URLSearchParams(window.location.search);
+    const legacyReturnTo = params.get('returnTo');
+    const legacyReset = params.get('reset') === '1';
+    const legacyNotice = params.get('notice') === 'login-required';
+    const storedIntent = getLoginIntent();
+    if (legacyReturnTo !== null || legacyReset || legacyNotice) {
+      migrateLoginIntent(legacyReturnTo ?? returnTo, {
+        reset: legacyReset || storedIntent?.reset,
+        notice: legacyNotice || storedIntent?.notice,
+      });
+      setReturnTo(getSafeReturnTo(legacyReturnTo ?? returnTo));
     }
-  }, [navigate, returnTo, searchParams, setFormStep]);
+    const intent = consumeLoginIntent();
+    const shouldReset = legacyReset || intent?.reset === true;
+    const requiresLogin = legacyNotice || intent?.notice === true;
+
+    if (shouldReset || requiresLogin) {
+      if (shouldReset) setFormStep('login');
+      if (requiresLogin) showLoginRequiredToast();
+    }
+
+    if (legacyReturnTo !== null || legacyReset || legacyNotice) {
+      params.delete('returnTo');
+      params.delete('reset');
+      params.delete('notice');
+      const query = params.toString();
+      window.history.replaceState(null, '', `/login${query ? `?${query}` : ''}`);
+    }
+  }, [returnTo, searchParams, setFormStep]);
+
+  useEffect(() => {
+    const handleIntent = () => {
+      const intent = consumeLoginIntent();
+      setReturnTo(readOAuthReturnTo(readLoginReturnTo()));
+      if (intent?.reset) setFormStep('login');
+      if (intent?.notice) showLoginRequiredToast();
+    };
+    window.addEventListener('itplace:login-intent', handleIntent);
+    return () => window.removeEventListener('itplace:login-intent', handleIntent);
+  }, [setFormStep]);
 
   const handleOAuthSignup = async ({
     nickname,
@@ -162,8 +235,8 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
     email: string;
     birthday: string;
     gender: string;
-    carrier: string;
-    membershipGradeCode: string;
+    carrier: string | null;
+    membershipGradeCode: string | null;
   }) => {
     try {
       const response = await oauthSignUp({
@@ -180,17 +253,17 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
           setLoginSuccess({
             nickname: data.nickname,
             carrier: data.carrier ?? null,
-            membershipGrade: data.membershipGradeCode || data.membershipGrade || 'NORMAL',
+            membershipGrade: data.membershipGradeCode || data.membershipGrade || null,
             membershipGradeCode: data.membershipGradeCode || data.membershipGrade || null,
             membershipVerified: data.membershipVerified ?? false,
           })
         );
       }
 
-      showToast('회원가입이 완료되었습니다.', 'success');
       setOAuthUserData(emptyOAuthUserData);
-      clearOAuthReturnTo();
-      navigate(returnTo, { replace: true });
+      clearLoginNavigation();
+      setSignupCompletionMethod('oauth');
+      setFormStep('signUpComplete');
     } catch (error) {
       const axiosError = error as AxiosError<{ code?: string; message?: string }>;
 
@@ -224,7 +297,7 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
           setLoginSuccess({
             nickname: data.nickname,
             carrier: data.carrier ?? null,
-            membershipGrade: data.membershipGradeCode || data.membershipGrade || 'NORMAL',
+            membershipGrade: data.membershipGradeCode || data.membershipGrade || null,
             membershipGradeCode: data.membershipGradeCode || data.membershipGrade || null,
             membershipVerified: data.membershipVerified ?? false,
           })
@@ -232,7 +305,7 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
       }
 
       showToast('카카오 계정이 기존 계정에 연동되었습니다.', 'success');
-      clearOAuthReturnTo();
+      clearLoginNavigation();
       navigate(returnTo, { replace: true });
     } catch (error) {
       const axiosError = error as AxiosError<{ code?: string; message?: string }>;
@@ -256,26 +329,37 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
     if (isSignupFlow || isOAuthProcessing) {
       window.scrollTo(0, 0);
     }
+    if (isSignupFlow) {
+      document.getElementById('signup-flow-heading')?.focus({ preventScroll: true });
+    }
   }, [formStep, isOAuthProcessing, isSignupFlow]);
 
   const signupHeadings: Record<string, string> = {
-    signUpAccount: '이메일로 시작하세요',
-    signUpFinal: '멤버십 정보를 입력하세요',
-    oauthIntegration: '맞춤 혜택을 준비할게요',
+    signUpAccount: '계정 정보',
+    signUpFinal: '회원 정보',
+    signUpComplete: '가입 완료',
+    oauthIntegration: '회원 정보',
     oauthLink: '기존 계정을 연결하세요',
   };
 
   const signupDescriptions: Record<string, string> = {
-    signUpAccount: '이메일을 인증하고 로그인에 사용할 비밀번호를 설정합니다.',
-    signUpFinal: '선택한 통신사와 등급에 맞는 혜택을 찾아드려요.',
+    signUpAccount: '로그인에 사용할 이메일을 인증해 주세요.',
     oauthIntegration: '카카오 계정으로 확인된 정보를 바탕으로 가입합니다.',
     oauthLink: '기존 계정을 확인하면 카카오 로그인과 함께 사용할 수 있어요.',
   };
-  const signupSteps = [
-    { key: 'signUpAccount', label: '계정 정보' },
-    { key: 'signUpFinal', label: '멤버십 정보' },
-  ];
-  const signupStepIndex = signupSteps.findIndex((step) => step.key === formStep);
+  const signupStep =
+    formStep === 'signUpAccount'
+      ? 1
+      : formStep === 'signUpFinal' || formStep === 'oauthIntegration'
+        ? 2
+        : formStep === 'signUpComplete'
+          ? 3
+          : null;
+  const handleLocalSignupComplete = () => {
+    setSignUpData(emptyLocalSignupData);
+    setSignupCompletionMethod('local');
+    setFormStep('signUpComplete');
+  };
   const goToPreviousSignupStep = () => {
     if (formStep === 'signUpFinal') setFormStep('signUpAccount');
   };
@@ -283,49 +367,12 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
   const renderFormContent = () => (
     <>
       {isSignupFlow && (
-        <header className="mb-6 w-full">
-          <div className="mb-5 flex min-h-11 items-center justify-between gap-3">
-            {signupStepIndex > 0 ? (
-              <button
-                type="button"
-                onClick={goToPreviousSignupStep}
-                className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-grey05 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-              >
-                이전 단계
-              </button>
-            ) : (
-              <span />
-            )}
-            <button
-              type="button"
-              onClick={goToLogin}
-              className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-brandStrong transition-colors hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              로그인으로 돌아가기
-            </button>
-          </div>
-          {signupStepIndex >= 0 && (
-            <ol aria-label="회원가입 진행 단계" className="mb-5 grid grid-cols-2 gap-2">
-              {signupSteps.map((step, index) => (
-                <li
-                  key={step.key}
-                  aria-current={index === signupStepIndex ? 'step' : undefined}
-                  className={`border-t-2 pt-2 text-xs font-medium ${
-                    index <= signupStepIndex
-                      ? 'border-brand text-brandStrong'
-                      : 'border-warmBorder text-grey04'
-                  }`}
-                >
-                  {index + 1}. {step.label}
-                </li>
-              ))}
-            </ol>
-          )}
-          <div className="text-left">
-            <h1 className="text-title-4 text-grey07">{signupHeadings[formStep]}</h1>
-            <p className="mt-2 text-body-3 leading-6 text-grey05">{signupDescriptions[formStep]}</p>
-          </div>
-        </header>
+        <SignupFlowHeader
+          step={signupStep}
+          heading={signupHeadings[formStep]}
+          description={signupDescriptions[formStep]}
+          onBack={formStep === 'signUpFinal' ? goToPreviousSignupStep : undefined}
+        />
       )}
       {formStep === 'login' && (
         <LoginForm
@@ -360,7 +407,7 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
 
       {formStep === 'signUpFinal' && (
         <SignUpFinalForm
-          onGoToLogin={goToLogin}
+          onComplete={handleLocalSignupComplete}
           onEmailVerificationExpired={() => {
             setSignUpData((previous) => ({ ...previous, emailVerified: false }));
             setFormStep('signUpAccount');
@@ -376,6 +423,21 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
           initialGender={signUpData.gender}
           initialCarrier={signUpData.carrier}
           initialMembershipGradeCode={signUpData.membershipGradeCode}
+        />
+      )}
+
+      {formStep === 'signUpComplete' && (
+        <SignupComplete
+          isLoggedIn={signupCompletionMethod === 'oauth'}
+          continuationLabel="계속하기"
+          onContinue={() => {
+            if (signupCompletionMethod === 'oauth') {
+              navigate(returnTo, { replace: true });
+              return;
+            }
+
+            goToLogin();
+          }}
         />
       )}
 
@@ -449,8 +511,8 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.surface}>
+    <div className={`${styles.page} ${isSignupFlow ? styles.signupPage : ''}`}>
+      <div className={`${styles.surface} ${isSignupFlow ? styles.signupSurface : ''}`}>
         <div className={styles.preview}>
           <AuthBenefitsPreview partners={previewPartners} />
         </div>

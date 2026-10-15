@@ -51,15 +51,10 @@ const AuthInput = ({
   onKeyDown,
   className,
   bgColor = 'bg-grey01',
-  textColor = 'text-black',
+  textColor = 'text-[#202124]',
   placeholderColor = 'placeholder-grey03',
   disabled = false,
-  disableFocusEffect = false, // 기본값 false
 }: AuthInputProps) => {
-  const focusClass = disableFocusEffect
-    ? 'focus:outline-none'
-    : 'focus:outline focus:outline-[1px] focus:outline-brand';
-
   const visibleLabel = label ?? fieldLabels[name] ?? placeholder;
   const inferredAutoComplete =
     type === 'password'
@@ -77,7 +72,7 @@ const AuthInput = ({
       {visibleLabel && (
         <label
           htmlFor={`auth-${name}`}
-          className="mb-1.5 block text-body-3 font-semibold text-grey06"
+          className="mb-1.5 block text-sm font-semibold leading-5 text-[#202124]"
         >
           {visibleLabel}
         </label>
@@ -98,11 +93,10 @@ const AuthInput = ({
         onKeyDown={disabled ? undefined : onKeyDown}
         disabled={disabled}
         className={clsx(
-          'h-12 w-full rounded-xl border border-warmBorder px-4 text-body-2 placeholder:text-grey04 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-grey01 disabled:text-grey04',
+          'h-12 w-full rounded-xl border border-[#E8E9EE] bg-white px-4 text-base font-normal text-[#202124] placeholder:text-[#686B73] focus:border-[#6154D9] focus:outline-none focus:ring-2 focus:ring-[#6154D9]/20 disabled:cursor-not-allowed disabled:bg-grey01 disabled:text-grey04',
           bgColor !== 'bg-grey01' && bgColor,
           textColor,
           placeholderColor,
-          focusClass,
           className
         )}
       />

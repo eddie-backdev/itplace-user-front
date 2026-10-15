@@ -9,10 +9,12 @@ import {
 } from 'next/navigation';
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo } from 'react';
+import { prepareLoginNavigation } from '@/features/loginPage/utils/returnTo.mjs';
 
 type NavigateOptions = {
   replace?: boolean;
   state?: unknown;
+  preserveLoginIntent?: boolean;
 };
 
 type LinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href' | 'children' | 'className'> & {
@@ -20,6 +22,7 @@ type LinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href' | 'childre
   replace?: boolean;
   scroll?: boolean;
   prefetch?: boolean;
+  onNavigate?: (event: { preventDefault: () => void }) => void;
   className?: string;
   children?: ReactNode;
 };
@@ -39,9 +42,36 @@ const normalizePathname = (pathname: string) => {
   return pathname;
 };
 
-export function Link({ to, children, ...props }: LinkProps) {
+const cleanLoginHref = (to: string) => {
+  try {
+    const url = new URL(to, 'https://itplace.invalid');
+    if (url.origin !== 'https://itplace.invalid' || url.pathname !== '/login') return to;
+    for (const key of ['reset', 'returnTo', 'notice']) url.searchParams.delete(key);
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return to;
+  }
+};
+
+const isLoginHref = (to: string) => {
+  try {
+    const url = new URL(to, 'https://itplace.invalid');
+    return url.origin === 'https://itplace.invalid' && url.pathname === '/login';
+  } catch {
+    return false;
+  }
+};
+
+export function Link({ to, children, onNavigate, ...props }: LinkProps) {
   return (
-    <NextLink href={to} {...props}>
+    <NextLink
+      href={cleanLoginHref(to)}
+      onNavigate={(event) => {
+        if (isLoginHref(to)) prepareLoginNavigation(to);
+        onNavigate?.(event);
+      }}
+      {...props}
+    >
       {children}
     </NextLink>
   );
@@ -65,13 +95,13 @@ export function NavLink({
   const state: NavLinkState = { isActive, isPending: false };
 
   return (
-    <NextLink
-      href={to}
+    <Link
+      to={to}
       className={typeof className === 'function' ? className(state) : className}
       {...props}
     >
       {typeof children === 'function' ? children(state) : children}
-    </NextLink>
+    </Link>
   );
 }
 
@@ -86,8 +116,10 @@ export function useNavigate() {
         return;
       }
 
-      if (options.replace) router.replace(to);
-      else router.push(to);
+      const destination = isLoginHref(to) ? cleanLoginHref(to) : to;
+      if (isLoginHref(to) && !options.preserveLoginIntent) prepareLoginNavigation(to);
+      if (options.replace) router.replace(destination);
+      else router.push(destination);
     },
     [router]
   );
@@ -135,8 +167,10 @@ export function Navigate({ to, replace = false }: { to: string; replace?: boolea
   const router = useRouter();
 
   useEffect(() => {
-    if (replace) router.replace(to);
-    else router.push(to);
+    const destination = isLoginHref(to) ? cleanLoginHref(to) : to;
+    if (isLoginHref(to)) prepareLoginNavigation(to);
+    if (replace) router.replace(destination);
+    else router.push(destination);
   }, [replace, router, to]);
 
   return null;

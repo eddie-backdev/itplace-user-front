@@ -1,4 +1,5 @@
 import LoginPageClient from '../../clients/LoginPageClient';
+import { connection } from 'next/server';
 import { createPageMetadata } from '@/lib/metadata';
 import partnerCatalog from '@/data/partner-catalog.json';
 import { getPartnerBenefitPath } from '@/utils/partnerSeo';
@@ -13,7 +14,9 @@ export const metadata = createPageMetadata({
 
 const featuredPartnerNames = ['GS25', '파리바게뜨', 'CGV'];
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  await connection();
+
   const partners = partnerCatalog.partners;
   const previewPartners = featuredPartnerNames
     .map((name) => partners.find((partner) => partner.partnerName === name))

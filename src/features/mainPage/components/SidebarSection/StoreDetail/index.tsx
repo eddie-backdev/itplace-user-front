@@ -17,6 +17,7 @@ import { addFavoritesChangedListener } from '../../../utils/favoriteEvents';
 interface StoreDetailCardProps {
   platform: Platform;
   onClose: () => void;
+  closeMode?: 'back' | 'dismiss';
 }
 
 type DetailCacheValue = BenefitDetailResponse | null;
@@ -32,7 +33,11 @@ const toValidBenefitId = (benefitId?: number | string | null) => {
 // 상세 패널을 닫았다 다시 열어도 같은 매장/통신사 정보는 세션 안에서 재사용한다.
 const benefitDetailCache = new Map<string, DetailCacheValue>();
 
-const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) => {
+const StoreDetailCard: React.FC<StoreDetailCardProps> = ({
+  platform,
+  onClose,
+  closeMode = 'back',
+}) => {
   const user = useSelector((state: RootState) => state.auth.user);
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const [activeCarrier, setActiveCarrier] = useState<CarrierCode | null>(() => {
@@ -381,13 +386,30 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) 
   };
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-white max-md:rounded-t-[15px]">
-      {/* 상세 내용 전체를 하나의 흰색 스크롤 영역으로 묶어 긴 혜택 문구가 푸터/하단 배경을 침범하지 않게 한다. */}
-      <div className="min-h-0 flex-1 overflow-y-auto bg-white px-5 pt-3 pb-6 max-md:px-4 max-md:pt-3 max-md:pb-28">
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-t-2xl bg-white md:rounded-l-2xl">
+      {closeMode === 'dismiss' && (
         <StoreDetailHeader
           platform={platform}
           imageUrl={detailData?.data?.image}
           onClose={onClose}
+          closeMode={closeMode}
+        />
+      )}
+      <div className="min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4 pb-6">
+        {closeMode === 'back' && (
+          <StoreDetailHeader
+            platform={platform}
+            imageUrl={detailData?.data?.image}
+            onClose={onClose}
+            closeMode={closeMode}
+          />
+        )}
+        <StoreDetailBenefits
+          platform={platform}
+          activeCarrier={activeCarrier}
+          onCarrierChange={handleCarrierChange}
+          detailData={detailData}
+          isLoading={isLoading}
         />
         <StoreDetailInfo
           url={detailData?.data?.url}
@@ -396,17 +418,10 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) 
           postCode={platform.postCode}
           distance={platform.distance}
         />
-        <StoreDetailBenefits
-          platform={platform}
-          activeCarrier={activeCarrier}
-          onCarrierChange={handleCarrierChange}
-          detailData={detailData}
-          isLoading={isLoading}
-        />
 
         {isLoading && !hasLocalBenefitDetails ? (
           <div className="flex h-40 items-center justify-center">
-            <LoadingSpinner className="h-12 w-12 border-4 border-[#0066cc] border-t-transparent" />
+            <LoadingSpinner className="h-12 w-12 border-4 border-[#6154D9] border-t-transparent" />
           </div>
         ) : detailData ? (
           <StoreDetailUsageGuide detailData={detailData} />
@@ -414,7 +429,7 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({ platform, onClose }) 
       </div>
 
       {/* 고정 버튼 */}
-      <div className="relative z-10 flex-shrink-0 border-t border-[#e6e6e3] bg-white px-5 pt-3 pb-2 max-md:px-4 max-md:pb-2">
+      <div className="relative z-10 flex-shrink-0 border-t border-[#E8E9EE] bg-white px-4 pt-3 pb-2">
         <StoreDetailActionButton
           benefitId={selectedCarrierBenefitId}
           isFavorite={activeIsFavorite}

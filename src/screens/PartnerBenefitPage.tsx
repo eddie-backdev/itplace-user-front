@@ -590,7 +590,7 @@ const PartnerBenefitPage = ({
                   type="button"
                   aria-pressed={selectedBenefit.isFavorite}
                   aria-label={
-                    selectedBenefit.isFavorite ? '관심 혜택에서 제거' : '관심 혜택에 저장'
+                    selectedBenefit.isFavorite ? '관심 혜택 해제' : '관심 혜택 추가'
                   }
                   disabled={
                     !isAuthRehydrated ||
@@ -605,7 +605,7 @@ const PartnerBenefitPage = ({
                   ) : (
                     <TbStar aria-hidden="true" />
                   )}
-                  {selectedBenefit.isFavorite ? '저장됨' : '혜택 저장'}
+                  {selectedBenefit.isFavorite ? '관심 혜택 해제' : '관심 혜택 추가'}
                 </button>
                 <button
                   type="button"

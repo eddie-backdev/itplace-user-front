@@ -1,13 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { AxiosError } from 'axios';
-import gsap from 'gsap';
 import { showToast } from '../../../../utils/toast';
 import AuthButton from '../common/AuthButton';
 import useValidation from '../../hooks/useValidation';
 import { signUpFinal } from '../../apis/user';
 import AuthInput from '../common/AuthInput';
-import MembershipProfileSelector from '../../../../components/membership/MembershipProfileSelector';
 import BirthDateInput from './BirthDateInput';
+import GenderSelector from './GenderSelector';
+import SignupMembershipFields from './SignupMembershipFields';
+import styles from './SignupForm.module.css';
+import { isValidCarrierGradePair } from '../../../../utils/membership';
+import {
+  getSignupMembershipPayload,
+  isSignupMembershipValid,
+} from '../../utils/signupMembership.mjs';
 import {
   birthDateInputToApiDate,
   formatBirthDateInput,
@@ -15,7 +21,7 @@ import {
 } from '../../utils/birthDate';
 
 type SignUpFinalFormProps = {
-  onGoToLogin: () => void;
+  onComplete: () => void;
   onEmailVerificationExpired: () => void;
   onValuesChange: (
     data: Partial<{
@@ -37,7 +43,7 @@ type SignUpFinalFormProps = {
 };
 
 const SignUpFinalForm = ({
-  onGoToLogin,
+  onComplete,
   onEmailVerificationExpired,
   onValuesChange,
   email,
@@ -49,16 +55,7 @@ const SignUpFinalForm = ({
   initialCarrier = '',
   initialMembershipGradeCode = '',
 }: SignUpFinalFormProps) => {
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    gsap.fromTo(
-      wrapperRef.current,
-      { opacity: 0 },
-      { opacity: 1, duration: 0.5, ease: 'power2.out' }
-    );
-  }, []);
 
   const [formData, setFormData] = useState({
     nickname: initialNickname,
@@ -108,15 +105,10 @@ const SignUpFinalForm = ({
         passwordConfirm,
         gender: formData.gender,
         birthday: birthDateInputToApiDate(formData.birthday),
-        carrier: formData.carrier,
-        membershipGradeCode: formData.membershipGradeCode,
+        ...getSignupMembershipPayload(formData.carrier, formData.membershipGradeCode),
       });
 
-      showToast(
-        '회원가입이 완료되었습니다. 휴대폰 인증은 로그인 후 마이페이지에서 진행할 수 있어요.',
-        'success'
-      );
-      setTimeout(() => onGoToLogin(), 0);
+      onComplete();
     } catch (error) {
       const axiosError = error as AxiosError<{ code: string; message: string }>;
       const res = axiosError.response?.data;
@@ -152,21 +144,20 @@ const SignUpFinalForm = ({
     formData.nickname.trim() &&
     isCompleteBirthDateInput(formData.birthday) &&
     (formData.gender === 'MALE' || formData.gender === 'FEMALE') &&
-    formData.carrier &&
-    formData.membershipGradeCode &&
+    isSignupMembershipValid(
+      formData.carrier,
+      formData.membershipGradeCode,
+      isValidCarrierGradePair
+    ) &&
     !errors.birth;
 
   return (
-    <div ref={wrapperRef} className="flex w-full flex-col px-2 py-2">
-      <div className="mx-auto mb-5 w-full max-w-[320px] text-left">
-        <p className="text-body-3 font-semibold text-grey06 max-md:text-body-2">가입 정보</p>
-        <p className="mt-2 text-body-5 text-grey04">혜택 추천에 필요한 정보를 입력해주세요.</p>
-      </div>
-
-      <div className="flex w-full flex-col items-center gap-[14px]">
+    <div className={`${styles.signupForm} ${styles.profileForm} flex w-full flex-col`}>
+      <div className={styles.fieldStack}>
         <AuthInput
           name="nickname"
-          placeholder="닉네임"
+          placeholder="닉네임을 입력해 주세요"
+          autoComplete="nickname"
           value={formData.nickname}
           onChange={(event) => handleChange('nickname', event.target.value)}
         />
@@ -174,46 +165,20 @@ const SignUpFinalForm = ({
         <BirthDateInput
           value={formData.birthday}
           onChange={(value) => handleChange('birthday', value)}
+          error={errors.birth}
         />
 
-        <div className="flex w-full max-w-[320px] gap-3">
-          <button
-            type="button"
-            aria-pressed={formData.gender === 'MALE'}
-            className={`h-12 flex-1 rounded-xl border text-body-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-              formData.gender === 'MALE'
-                ? 'bg-purple04 text-white border-purple04'
-                : 'bg-white text-grey04 border-grey02'
-            }`}
-            onClick={() => handleChange('gender', 'MALE')}
-          >
-            남자
-          </button>
-          <button
-            type="button"
-            aria-pressed={formData.gender === 'FEMALE'}
-            className={`h-12 flex-1 rounded-xl border text-body-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-              formData.gender === 'FEMALE'
-                ? 'bg-purple04 text-white border-purple04'
-                : 'bg-white text-grey04 border-grey02'
-            }`}
-            onClick={() => handleChange('gender', 'FEMALE')}
-          >
-            여자
-          </button>
-        </div>
+        <GenderSelector
+          value={formData.gender}
+          onChange={(value) => handleChange('gender', value)}
+        />
 
-        <div className="w-full flex flex-col items-center gap-2">
-          <MembershipProfileSelector
-            carrier={formData.carrier}
-            membershipGradeCode={formData.membershipGradeCode}
-            onCarrierChange={(carrier) => handleChange('carrier', carrier)}
-            onGradeChange={(grade) => handleChange('membershipGradeCode', grade)}
-          />
-          <p className="w-full max-w-[320px] text-body-3 text-grey05">
-            선택한 등급 기준으로 맞춤 혜택을 추천합니다.
-          </p>
-        </div>
+        <SignupMembershipFields
+          carrier={formData.carrier}
+          membershipGradeCode={formData.membershipGradeCode}
+          onCarrierChange={(carrier) => handleChange('carrier', carrier)}
+          onGradeChange={(grade) => handleChange('membershipGradeCode', grade)}
+        />
       </div>
 
       <div className="flex justify-center">
@@ -221,7 +186,7 @@ const SignUpFinalForm = ({
           label={isSubmitting ? '가입 중...' : '회원가입'}
           onClick={() => void handleNext()}
           variant={isProfileValid && !isSubmitting ? 'default' : 'disabled'}
-          className="mt-[32px] max-md:mt-[28px] max-sm:mt-[28px]"
+          className="signupCta mt-7 max-w-none"
         />
       </div>
     </div>

@@ -1,5 +1,10 @@
+'use client';
+
+import { useSelector } from 'react-redux';
 import { NavLink, useLocation } from '@/lib/navigation';
-import { TbGift, TbHeart, TbHome, TbMap, TbUser } from 'react-icons/tb';
+import { TbBookmark, TbGift, TbHome, TbMap, TbUser } from 'react-icons/tb';
+import type { RootState } from '@/store';
+import { getLoginHref } from '@/features/loginPage/utils/returnTo.mjs';
 
 const tabs = [
   { to: '/', label: '홈', icon: TbHome, match: (path: string) => path === '/' },
@@ -12,8 +17,8 @@ const tabs = [
   },
   {
     to: '/mypage/favorites',
-    label: '즐겨찾기',
-    icon: TbHeart,
+    label: '관심 혜택',
+    icon: TbBookmark,
     match: (path: string) => path.startsWith('/mypage/favorites'),
   },
   {
@@ -26,6 +31,9 @@ const tabs = [
 
 const MobileAppTabBar = () => {
   const location = useLocation();
+  const isAuthenticated = useSelector(
+    (state: RootState) => state._persist.rehydrated && state.auth.isLoggedIn
+  );
 
   return (
     <nav
@@ -44,7 +52,12 @@ const MobileAppTabBar = () => {
           return (
             <NavLink
               key={tab.to}
-              to={tab.to}
+              to={
+                tab.to === '/mypage/favorites' && !isAuthenticated
+                  ? `${getLoginHref(tab.to)}&notice=login-required`
+                  : tab.to
+              }
+              prefetch={tab.to === '/mypage/favorites' && !isAuthenticated ? true : undefined}
               aria-label={`${tab.label} 탭으로 이동`}
               aria-current={selected ? 'page' : undefined}
               className={`relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${

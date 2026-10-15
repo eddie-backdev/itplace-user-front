@@ -78,11 +78,11 @@ const EmailVerificationBox = ({
             type="button"
             onClick={handleSendCode}
             disabled={!email || manualLoading}
-            className={`absolute right-1 top-[31px] h-10 min-w-[68px] rounded-lg px-2 text-body-3-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
+            className={`signupEmailAction absolute right-1 top-[31px] h-10 min-w-[68px] rounded-lg px-2 text-body-3-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
               ${!email ? 'bg-grey02 text-grey04' : 'bg-purple04 text-white'}`}
           >
             {manualLoading ? (
-              <LoadingSpinner className="h-5 w-5 border-2 border-white border-t-transparent" />
+              <LoadingSpinner className="h-5 w-5 border-2 border-[#6154D9] border-t-transparent" />
             ) : (
               '인증'
             )}
@@ -107,7 +107,7 @@ const EmailVerificationBox = ({
           <button
             type="button"
             onClick={() => verifyCode(code)}
-            className="absolute right-1 top-[31px] h-10 min-w-[68px] rounded-lg bg-brand px-2 text-body-3-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="signupEmailAction absolute right-1 top-[31px] h-10 min-w-[68px] rounded-lg bg-brand px-2 text-body-3-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             확인
           </button>

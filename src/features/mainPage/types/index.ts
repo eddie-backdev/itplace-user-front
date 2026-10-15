@@ -53,6 +53,8 @@ export interface MapBounds {
   maxLng: number;
 }
 
+export type MapViewportChangeReason = 'interaction' | 'resize';
+
 export interface MapCluster {
   clusterId: string;
   category: string;

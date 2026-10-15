@@ -24,7 +24,7 @@ const menus = [
   { label: '홈', path: '/' },
   { label: '주변 매장', path: '/map' },
   { label: '전체 혜택', path: '/benefits' },
-  { label: '즐겨찾기', path: '/mypage/favorites' },
+  { label: '관심 혜택', path: '/mypage/favorites' },
   { label: '마이', path: '/mypage', match: '/mypage' },
   { label: '회원 정보', path: '/mypage/info', match: '/mypage/info' },
 ];

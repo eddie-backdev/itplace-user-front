@@ -5,7 +5,7 @@ import { store } from '../store';
 import { logout } from '../store/authSlice';
 import { persistor } from '../store';
 import { clearCsrfToken, isUnsafeMethod } from './csrf';
-import { getLoginHref } from '../features/loginPage/utils/returnTo.mjs';
+import { getLoginHref, prepareLoginNavigation } from '../features/loginPage/utils/returnTo.mjs';
 
 // 토큰 갱신 중인지 추적하는 플래그
 let isRefreshing = false;
@@ -36,7 +36,8 @@ const handleLogout = async () => {
   // redux-persist 초기화
   const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   await persistor.purge().catch(() => undefined);
-  window.location.replace(getLoginHref(returnTo));
+  prepareLoginNavigation(getLoginHref(returnTo));
+  window.location.replace('/login');
 };
 
 // Interceptor 설정 함수

@@ -63,7 +63,7 @@ const AccountDeletionPage = () => {
             <ul className="mt-3 max-w-[80ch] list-disc space-y-3 pl-5 text-[15px] leading-7 text-grey06">
               <li>계정 기본 정보: 이름, 이메일, 비밀번호, 휴대폰 번호, 생년월일, 성별</li>
               <li>멤버십 정보: 통신사, 멤버십 등급, 멤버십 인증 상태</li>
-              <li>앱 사용 데이터: 즐겨찾기, 저장한 혜택, 개인화 추천 관련 정보</li>
+              <li>앱 사용 데이터: 관심 혜택, 개인화 추천 관련 정보</li>
               <li>인증 정보: 로그인 세션, refresh token 등 계정 인증에 필요한 정보</li>
             </ul>
           </section>

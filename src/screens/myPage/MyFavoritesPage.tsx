@@ -66,7 +66,7 @@ export default function MyFavoritesPage() {
                 관심 혜택
               </h1>
               <p className="mt-1.5 text-sm leading-6 text-warmMuted">
-                저장한 혜택을 다시 찾고, 사용 기록까지 이어가세요.
+                관심 혜택을 다시 찾고, 사용 기록까지 이어가세요.
               </p>
             </header>
             <div className="mb-5 rounded-xl border border-warmBorder bg-[#f7f8fa] p-3 sm:p-4">
@@ -88,7 +88,7 @@ export default function MyFavoritesPage() {
                   fontSize="text-sm"
                   disabledMyMembership={!hasMembershipProfile}
                 />
-                <p className="text-sm text-warmMuted">{totalElements}개의 저장 혜택</p>
+                <p className="text-sm text-warmMuted">{totalElements}개의 관심 혜택</p>
               </div>
             </div>
             {benefitFilter === 'myMembership' &&
@@ -99,7 +99,7 @@ export default function MyFavoritesPage() {
                   role="status"
                   className="mb-3 rounded-lg border border-brandSoft bg-brandSoft/50 px-3 py-2 text-sm leading-6 text-grey06"
                 >
-                  일부 혜택의 멤버십 조건을 확인하지 못해 저장한 혜택도 함께 표시하고 있어요.
+                  일부 혜택의 멤버십 조건을 확인하지 못해 관심 혜택도 함께 표시하고 있어요.
                   <button
                     type="button"
                     onClick={() => void reloadFavorites()}
@@ -138,7 +138,7 @@ export default function MyFavoritesPage() {
             />
             {/* 카드 리스트 */}
             {/* 검색 결과가 없을 때는 "검색 결과 없음" 표시
-            검색어가 없고 목록도 없을 때는 "찜한 혜택이 없음" 표시 */}
+            검색어가 없고 목록도 없을 때는 "관심 혜택이 없음" 표시 */}
             {loading ? (
               // 로딩 중
               <div className="flex justify-center items-center min-h-[220px]">
@@ -189,14 +189,14 @@ export default function MyFavoritesPage() {
                   message1={
                     benefitFilter === 'myMembership'
                       ? '내 멤버십에 맞는 관심 혜택이 없어요'
-                      : '찜 보관함이 텅 비었어요!'
+                      : '관심 혜택이 아직 없어요.'
                   }
                   message2={
                     benefitFilter === 'myMembership'
                       ? hasMembershipProfile
-                        ? '전체 혜택으로 전환하거나 다른 혜택을 찜해보세요.'
+                        ? '전체 혜택으로 전환하거나 다른 혜택을 추가해 보세요.'
                         : '회원 정보에서 통신사와 등급을 먼저 선택해 주세요.'
-                      : '마음에 드는 혜택을 찜해보세요.'
+                      : '마음에 드는 혜택을 추가해 보세요.'
                   }
                   buttonText="전체 혜택 보러가기"
                   buttonRoute="/benefits"

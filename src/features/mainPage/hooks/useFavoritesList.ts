@@ -1,4 +1,6 @@
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store';
 import { FavoriteBenefit, FavoritesListRequest } from '../types/api';
 import { getFavoritesList } from '../api/favoritesListApi';
 import { useApiCall } from './useApiCall';
@@ -9,105 +11,50 @@ import { addFavoritesChangedListener } from '../utils/favoriteEvents';
  * 카테고리별 즐겨찾기 조회 및 새로고침 기능 제공
  */
 export const useFavoritesList = (category?: string) => {
+  const isAuthReady = useSelector((state: RootState) => state._persist.rehydrated);
+  const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
+  const isAuthenticated = isAuthReady && isLoggedIn;
   const { data: favorites, isLoading, error, execute } = useApiCall<FavoriteBenefit[]>([]);
 
-  // 함수 참조를 ref로 저장 (의존성 배열 최적화)
-  const executeRef = useRef(execute);
-  executeRef.current = execute;
-
-  /**
-   * 즐겨찾기 목록 조회
-   * 카테고리가 '전체'이거나 비어있으면 전체 조회, 그 외에는 카테고리별 조회
-   */
-  const fetchFavorites = useCallback(async (selectedCategory?: string) => {
+  const fetchFavorites = useCallback(async (selectedCategory: string) => {
     const params: FavoritesListRequest = {};
-
-    // 카테고리 필터링 설정
     if (selectedCategory && selectedCategory !== '전체') {
       params.category = selectedCategory;
     }
-
-    const data = await getFavoritesList(params);
-    return data;
+    return getFavoritesList(params);
   }, []);
 
-  // fetchFavorites 참조를 ref로 저장 (의존성 배열 최적화)
-  const fetchFavoritesRef = useRef(fetchFavorites);
-  fetchFavoritesRef.current = fetchFavorites;
-
-  // category 참조를 ref로 저장 (의존성 배열 최적화)
-  const categoryRef = useRef(category);
-  categoryRef.current = category;
-
-  // 초기 로드 상태 관리 (nearby 방식과 완전히 동일)
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const isInitialLoadRef = useRef(isInitialLoad);
-  isInitialLoadRef.current = isInitialLoad;
-
-  // 초기 로드만 (nearby 패턴과 동일)
   useEffect(() => {
-    const initializeFavorites = async () => {
-      if (categoryRef.current !== undefined) {
-        const data = await fetchFavoritesRef.current(categoryRef.current);
-        return data;
-      }
-      return [];
-    };
-
-    executeRef.current(initializeFavorites);
-  }, []); // 빈 의존성 배열로 초기 로드만
-
-  // 초기 로드 완료 감지 (nearby 패턴과 동일 - favorites 데이터가 로드된 후에 완료 처리)
-  useEffect(() => {
-    if (favorites && favorites.length >= 0 && isInitialLoad) {
-      setIsInitialLoad(false);
-    }
-  }, [favorites, isInitialLoad]);
-
-  // 카테고리 변경 시에만 실행 (초기 로드 제외)
-  const previousCategoryRef = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    // 이전 값과 동일하면 스킵 (중복 호출 방지)
-    if (previousCategoryRef.current === category) {
+    if (!isAuthReady) return;
+    if (!isLoggedIn) {
+      void execute(async () => []);
       return;
     }
+    if (category === undefined) return;
 
-    if (isInitialLoadRef.current || categoryRef.current === undefined) {
-      previousCategoryRef.current = category;
-      return;
-    }
+    void execute(() => fetchFavorites(category));
+  }, [category, execute, fetchFavorites, isAuthReady, isLoggedIn]);
 
-    previousCategoryRef.current = category;
-
-    const reloadByCategory = async () => {
-      const data = await fetchFavoritesRef.current(categoryRef.current!);
-      return data;
-    };
-
-    executeRef.current(reloadByCategory);
-  }, [category]);
-
-  /**
-   * 즐겨찾기 목록 새로고침
-   */
   const refreshFavorites = useCallback(() => {
-    if (category !== undefined) {
-      executeRef.current(() => fetchFavoritesRef.current(category));
+    if (isAuthenticated && category !== undefined) {
+      void execute(() => fetchFavorites(category));
     }
-  }, [category]);
+  }, [category, execute, fetchFavorites, isAuthenticated]);
 
-  useEffect(() => {
-    return addFavoritesChangedListener(() => {
-      if (categoryRef.current !== undefined) {
-        executeRef.current(() => fetchFavoritesRef.current(categoryRef.current));
-      }
-    });
-  }, []);
+  useEffect(
+    () =>
+      addFavoritesChangedListener(() => {
+        if (isAuthenticated && category !== undefined) {
+          void execute(() => fetchFavorites(category));
+        }
+      }),
+    [category, execute, fetchFavorites, isAuthenticated]
+  );
 
   return {
-    favorites: favorites || [], // null 방어
-    isLoading,
-    error,
+    favorites: isAuthenticated ? favorites || [] : [],
+    isLoading: isAuthenticated ? isLoading : false,
+    error: isAuthenticated ? error : null,
     refreshFavorites,
   };
 };

@@ -169,7 +169,7 @@ export default function AllBenefitsLayout({
       return;
     }
     if (favoriteStatus !== 'ready') {
-      showToast('저장 상태를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.', 'info');
+      showToast('관심 혜택 정보를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.', 'info');
       return;
     }
     const wasFavorite = favoriteIds.has(benefitId);
@@ -572,7 +572,7 @@ export default function AllBenefitsLayout({
           </div>
           {favoriteStatus === 'error' ? (
             <p role="status" className={styles.favoriteStatusMessage}>
-              저장 상태를 불러오지 못해 혜택 저장을 잠시 사용할 수 없어요. 페이지를 새로고침해
+              관심 혜택 정보를 불러오지 못해 추가 기능을 잠시 사용할 수 없어요. 페이지를 새로고침해
               주세요.
             </p>
           ) : null}
