@@ -82,11 +82,22 @@
 .account {
   display: flex;
   align-items: center;
+  gap: 20px;
   margin-left: auto;
 }
 .accountLink {
   min-width: 44px;
   justify-content: flex-end;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.accountLink:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 .brand:focus-visible,
 .navLink:focus-visible,

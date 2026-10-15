@@ -2,16 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { TbMenu2, TbX } from 'react-icons/tb';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useNavigate, Link } from '@/lib/navigation';
-import { showToast } from '../utils/toast';
-import { persistor } from '../store';
 import { RootState } from '../store';
 import { useClientReady } from '../hooks/useClientReady';
 import { useLocation } from '@/lib/navigation';
-import { logout } from '../store/authSlice';
-import api from '../apis/axiosInstance';
 import { getLoginHref } from '../features/loginPage/utils/returnTo.mjs';
+import { useLogout } from '../hooks/useLogout';
 interface MobileHeaderProps {
   title?: string;
   backgroundColor?: string; // Tailwind 클래스명 등
@@ -63,34 +60,13 @@ const MobileHeader = ({
 
   const { pathname, search, hash } = useLocation();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const isAuthRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
   const isClientReady = useClientReady();
   const isAuthReady = isClientReady && isAuthRehydrated;
   const isMain = pathname === '/';
   const currentPath = `${pathname}${search}${hash}`;
-
-  const handleLogout = async () => {
-    try {
-      // 로그아웃 API 호출
-      await api.post('api/v1/auth/logout');
-      // 상태 초기화
-      dispatch(logout());
-      // redux-persist 초기화
-      persistor.purge();
-      // 성공 토스트 표시
-      showToast('로그아웃 되었습니다.', 'success');
-      setIsSidebarOpen(false);
-      sessionStorage.removeItem('chatMessages');
-      // 페이지 이동
-      navigate('/');
-    } catch (err) {
-      console.error('로그아웃 실패:', err);
-      // 실패 토스트 표시
-      showToast('로그아웃에 실패했습니다.', 'error');
-    }
-  };
+  const { handleLogout, isLoggingOut } = useLogout(() => setIsSidebarOpen(false));
 
   const handleMenuClick = () => {
     setIsSidebarOpen(true);
@@ -291,9 +267,11 @@ const MobileHeader = ({
               ) : isLoggedIn ? (
                 <button
                   onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  aria-busy={isLoggingOut}
                   className="min-h-11 w-full rounded-xl px-3 text-left text-sm font-medium text-ink hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
-                  로그아웃
+                  {isLoggingOut ? '로그아웃 중…' : '로그아웃'}
                 </button>
               ) : (
                 <button

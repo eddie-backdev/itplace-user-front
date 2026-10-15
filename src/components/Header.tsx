@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { Link, NavLink, useLocation } from '@/lib/navigation';
 import type { RootState } from '@/store';
 import { getLoginHref } from '@/features/loginPage/utils/returnTo.mjs';
+import { useLogout } from '@/hooks/useLogout';
 import styles from './Header.module.css';
 
 const links = [
@@ -19,7 +20,7 @@ export default function Header() {
   const isAuthenticated = useSelector(
     (state: RootState) => state._persist.rehydrated && state.auth.isLoggedIn
   );
-  const accountLabel = isAuthenticated ? '마이페이지' : '로그인';
+  const { handleLogout, isLoggingOut } = useLogout();
 
   return (
     <header className={styles.header}>
@@ -56,14 +57,26 @@ export default function Header() {
           })}
         </nav>
         <div className={styles.account}>
-          <Link
-            to={isAuthenticated ? '/mypage' : '/login'}
-            prefetch={!isAuthenticated ? true : undefined}
-            className={styles.accountLink}
-            aria-label={accountLabel}
-          >
-            <span>{accountLabel}</span>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/mypage" className={styles.accountLink} aria-label="마이페이지">
+                마이페이지
+              </Link>
+              <button
+                type="button"
+                className={styles.accountLink}
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                aria-busy={isLoggingOut}
+              >
+                {isLoggingOut ? '로그아웃 중…' : '로그아웃'}
+              </button>
+            </>
+          ) : (
+            <Link to="/login" prefetch className={styles.accountLink} aria-label="로그인">
+              로그인
+            </Link>
+          )}
         </div>
       </div>
     </header>
