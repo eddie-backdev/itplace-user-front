@@ -19,6 +19,7 @@ import {
   isValidCarrierGradePair,
 } from '../../utils/membership';
 import { useLocation } from '@/lib/navigation';
+import { useReferenceData } from '../../components/ReferenceDataProvider';
 
 interface UserInfo {
   id: number;
@@ -37,6 +38,7 @@ interface UserInfo {
 }
 
 export default function MyInfoPage() {
+  const { data: referenceData } = useReferenceData();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -153,7 +155,7 @@ export default function MyInfoPage() {
 
   const handleMembershipProfileSave = async (carrier: string, membershipGradeCode: string) => {
     if (profileSaving) return;
-    if (!isValidCarrierGradePair(carrier, membershipGradeCode)) {
+    if (!isValidCarrierGradePair(carrier, membershipGradeCode, referenceData)) {
       showToast('통신사에 맞는 멤버십 등급을 선택해 주세요.', 'error');
       return;
     }
@@ -318,7 +320,7 @@ export default function MyInfoPage() {
               {user.carrier === 'MVNO'
                 ? getCarrierLabel(user.carrier)
                 : user.carrier && (user.membershipGradeCode || user.membershipGrade)
-                  ? `${getCarrierLabel(user.carrier)} ${getMembershipGradeLabel(user.membershipGradeCode ?? user.membershipGrade)}`
+                  ? `${getCarrierLabel(user.carrier)} ${getMembershipGradeLabel(user.membershipGradeCode ?? user.membershipGrade, referenceData)}`
                   : '선택 안 됨'}
             </p>
           </div>

@@ -1,8 +1,9 @@
 import 'server-only';
 
 import { cache } from 'react';
-import { getMembershipFilter } from '@/utils/membership';
+import { getBenefitMembershipFilter } from '@/utils/membership';
 import type { PartnerBenefitResponse } from '@/features/allBenefitsPage/apis/allBenefitsApi';
+import type { ReferenceData } from '@/utils/referenceData';
 import {
   normalizePartnerBenefitDetail,
   type PartnerBenefitDetailResponse,
@@ -44,6 +45,11 @@ const fetchPublicData = async <T>(url: URL): Promise<T | null> => {
   return result.data;
 };
 
+export const getPublicReferenceData = cache(async () => {
+  const url = new URL('/api/v1/reference-data', USER_API_BASE_URL);
+  return fetchPublicData<ReferenceData>(url);
+});
+
 export type PartnerListQuery = {
   keyword?: string;
   carrier?: string;
@@ -55,8 +61,10 @@ export type PartnerListQuery = {
 
 const getPublicPartnerBenefitsCached = cache(
   async (keyword = '', carrier = '', page = 0, size = 15, category = '', grade = '') => {
+    const referenceData = await getPublicReferenceData();
     const url = new URL('/api/v1/benefits/partners', USER_API_BASE_URL);
-    const hasValidGrade = Boolean(grade && getMembershipFilter(carrier, grade));
+    const hasValidGrade = Boolean(grade && getBenefitMembershipFilter(carrier, grade, referenceData));
+    if (grade && !hasValidGrade) return null;
     if (!hasValidGrade) url.searchParams.set('mainCategory', 'BASIC_BENEFIT');
     url.searchParams.set('page', String(page));
     url.searchParams.set('size', String(size));
@@ -91,13 +99,13 @@ export const getPublicPartnerBenefitDetailResult = cache(
     if (!Number.isInteger(partnerId) || partnerId <= 0) {
       return { status: 'not-found', data: null } as const;
     }
+    const referenceData = await getPublicReferenceData();
     const url = new URL(`/api/v1/benefits/partners/${partnerId}`, USER_API_BASE_URL);
-    const membership = getMembershipFilter(carrier, grade);
+    const membership = getBenefitMembershipFilter(carrier, grade, referenceData);
+    if (grade && !membership) return { status: 'unavailable', data: null } as const;
     if (membership) {
       url.searchParams.set('carrier', membership.carrier);
       if (membership.grade) url.searchParams.set('grade', membership.grade);
-    } else {
-      url.searchParams.set('mainCategory', 'BASIC_BENEFIT');
     }
     const result = await fetchPublicDataResult<PartnerBenefitDetailResponse>(url);
     return result.status === 'success'

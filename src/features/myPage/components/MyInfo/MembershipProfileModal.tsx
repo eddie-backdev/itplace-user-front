@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Modal from '../../../../components/Modal';
 import MembershipProfileSelector from '../../../../components/membership/MembershipProfileSelector';
 import { getCarrierLabel, getMembershipGradeLabel } from '../../../../utils/membership';
+import { useReferenceData } from '../../../../components/ReferenceDataProvider';
 
 type MembershipProfileModalProps = {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export default function MembershipProfileModal({
   onClose,
   onSave,
 }: MembershipProfileModalProps) {
+  const { data } = useReferenceData();
   const [draftCarrier, setDraftCarrier] = useState(carrier ?? '');
   const [draftGrade, setDraftGrade] = useState(membershipGradeCode ?? '');
 
@@ -47,7 +49,7 @@ export default function MembershipProfileModal({
           <p className="text-sm font-semibold text-grey05">현재 프로필</p>
           <p className="mt-1 text-base font-semibold text-ink">
             {carrier && membershipGradeCode
-              ? `${getCarrierLabel(carrier)} · ${getMembershipGradeLabel(membershipGradeCode)}`
+              ? `${getCarrierLabel(carrier)} · ${getMembershipGradeLabel(membershipGradeCode, data)}`
               : '아직 선택하지 않았어요'}
           </p>
         </div>

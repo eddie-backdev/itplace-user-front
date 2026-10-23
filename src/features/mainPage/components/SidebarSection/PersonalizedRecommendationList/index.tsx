@@ -31,17 +31,19 @@ const PersonalizedRecommendationList: React.FC<PersonalizedRecommendationListPro
   onBottomSheetReset,
   onChatStateChange,
 }) => {
-  const isLoggedIn = useSelector((state: RootState) => !!state.auth.user);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const isLoggedIn = !!user;
+  const accountKey = JSON.stringify(user ?? {});
   const { isMobile, isTablet } = useResponsive();
   // 질문형 AI 추천 채팅방 UI 상태
   const [isChatOpen, setIsChatOpen] = React.useState(false);
 
   const animatedText = useAnimatedLoadingText({
     messages: [
-      '잇콩이가 당신의 취향을 분석 중이에요!\n잠깐만 기다려주세요..',
-      '이 순간에도 잇콩이는\n열심히 추천 제휴처를 수집 중이에요..',
+      '이용 정보에 맞는 제휴처를 찾고 있어요.\n잠시만 기다려 주세요.',
+      '조건에 맞는 혜택을 살펴보고 있어요.\n잠시만 기다려 주세요.',
       '조금만 기다려 주세요!\n나에게 꼭 맞는 혜택을 찾고 있어요 ..',
-      '잇콩이의 안테나가 열일 중...\n고객님의 잇플 픽을 찾는 중이에요!',
+      '주변 제휴처와 혜택을 확인하고 있어요.',
       '혜택 가득한 제휴처를 열심히 골라오는 중이에요',
     ],
   });
@@ -218,6 +220,7 @@ const PersonalizedRecommendationList: React.FC<PersonalizedRecommendationListPro
       ) : error ? (
         <div className="flex-1 flex items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4">
           <NoResult
+            variant="error"
             message1={error}
             message2={getErrorSummary(error)}
             isLoginRequired={false}
@@ -247,8 +250,10 @@ const PersonalizedRecommendationList: React.FC<PersonalizedRecommendationListPro
                 질문형 AI 추천 열기
               </button>
             )}
-            {isChatOpen && (
+            {isChatOpen && isLoggedIn && (
               <QuestionRecommendationChatRoom
+                key={accountKey}
+                accountKey={accountKey}
                 onClose={handleChatClose}
                 onSearchPartner={onSearchPartner}
                 onChangeTab={onChangeTab}

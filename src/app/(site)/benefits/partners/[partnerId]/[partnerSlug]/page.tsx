@@ -4,8 +4,12 @@ import JsonLd from '@/components/JsonLd';
 import PartnerBenefitPage from '@/screens/PartnerBenefitPage';
 import { createPageMetadata, SITE_ORIGIN } from '@/lib/metadata';
 import { getPublicPartnerBenefitDetailResult } from '@/server/userApi';
-import { getCarrierLabel, getMembershipFilter } from '@/utils/membership';
-import { getCarrierBenefitDisplayName, getMembershipOptionLabel } from '@/features/allBenefitsPage/apis/allBenefitsApi';
+import { getBenefitMembershipFilter, getCarrierLabel } from '@/utils/membership';
+import { getPublicReferenceData } from '@/server/userApi';
+import {
+  getCarrierBenefitDisplayName,
+  getMembershipOptionLabel,
+} from '@/features/allBenefitsPage/apis/allBenefitsApi';
 import { createPartnerSlug } from '@/utils/partnerSeo';
 
 type PartnerPageProps = {
@@ -16,15 +20,16 @@ type PartnerPageProps = {
 const readPartnerQuery = async (searchParams: PartnerPageProps['searchParams']) => {
   const query = await searchParams;
   const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
+  const referenceData = await getPublicReferenceData();
   return {
-    membership: getMembershipFilter(first(query.carrier), first(query.grade)),
+    membership: getBenefitMembershipFilter(first(query.carrier), first(query.grade), referenceData),
     membershipOnly: first(query.membership) === 'mine',
   };
 };
 
 const withMembershipQuery = (
   path: string,
-  membership: ReturnType<typeof getMembershipFilter>,
+  membership: ReturnType<typeof getBenefitMembershipFilter>,
   membershipOnly: boolean
 ) => {
   if (!membership) return encodeURI(path);
@@ -61,18 +66,21 @@ export async function generateMetadata({
   const { partnerId, partnerSlug } = await params;
   const numericPartnerId = Number(partnerId);
   const { membership, membershipOnly } = await readPartnerQuery(searchParams);
-  const result = await getPublicPartnerBenefitDetailResult(
-    numericPartnerId,
-    membership?.carrier,
-    membership?.grade
-  );
-  if (result.status === 'not-found') notFound();
+  const [result, comparisonResult] = await Promise.all([
+    getPublicPartnerBenefitDetailResult(numericPartnerId, membership?.carrier, membership?.grade),
+    getPublicPartnerBenefitDetailResult(numericPartnerId),
+  ]);
+  if (result.status === 'not-found' && comparisonResult.status === 'not-found') notFound();
   const detail = result.data;
-  const partnerName = detail?.partnerName ?? labelFromSlug(partnerSlug) ?? '제휴처';
-  const canonicalSlug = detail ? createPartnerSlug(detail.partnerName) : partnerSlug;
+  const comparisonDetail = comparisonResult.data;
+  const canonicalDetail = detail ?? comparisonDetail;
+  const partnerName = canonicalDetail?.partnerName ?? labelFromSlug(partnerSlug) ?? '제휴처';
+  const canonicalSlug = canonicalDetail
+    ? createPartnerSlug(canonicalDetail.partnerName)
+    : partnerSlug;
   const canonicalId = Number.isInteger(numericPartnerId) ? String(numericPartnerId) : partnerId;
 
-  if (detail && (partnerId !== canonicalId || decodeSlug(partnerSlug) !== canonicalSlug)) {
+  if (canonicalDetail && (partnerId !== canonicalId || decodeSlug(partnerSlug) !== canonicalSlug)) {
     permanentRedirect(
       withMembershipQuery(
         `/benefits/partners/${canonicalId}/${canonicalSlug}`,
@@ -84,9 +92,9 @@ export async function generateMetadata({
 
   return createPageMetadata({
     title: `${partnerName} 통신사 멤버십 혜택 | 잇플레이스`,
-    description: getPartnerDescription(partnerName, detail?.carrierGroups),
+    description: getPartnerDescription(partnerName, comparisonResult.data?.carrierGroups),
     path: `/benefits/partners/${canonicalId}/${canonicalSlug}`,
-    image: detail?.image ?? undefined,
+    image: canonicalDetail?.image ?? undefined,
     noIndex: result.status !== 'success',
   });
 }
@@ -97,27 +105,33 @@ export default async function PartnerBenefitRoute({ params, searchParams }: Part
   const { membership, membershipOnly } = await readPartnerQuery(searchParams);
   if (!Number.isInteger(numericPartnerId) || numericPartnerId <= 0) notFound();
 
-  const result = await getPublicPartnerBenefitDetailResult(
-    numericPartnerId,
-    membership?.carrier,
-    membership?.grade
-  );
-  if (result.status === 'not-found') notFound();
+  const [result, comparisonResult] = await Promise.all([
+    getPublicPartnerBenefitDetailResult(numericPartnerId, membership?.carrier, membership?.grade),
+    getPublicPartnerBenefitDetailResult(numericPartnerId),
+  ]);
+  if (result.status === 'not-found' && comparisonResult.status === 'not-found') notFound();
 
   const detail = result.data;
-  const partnerName = detail?.partnerName ?? labelFromSlug(partnerSlug) ?? '제휴처';
-  const canonicalSlug = detail ? createPartnerSlug(detail.partnerName) : partnerSlug;
+  const comparisonDetail = comparisonResult.data;
+  const canonicalDetail = detail ?? comparisonDetail;
+  const partnerName = canonicalDetail?.partnerName ?? labelFromSlug(partnerSlug) ?? '제휴처';
+  const canonicalSlug = canonicalDetail
+    ? createPartnerSlug(canonicalDetail.partnerName)
+    : partnerSlug;
   const canonicalPath = `/benefits/partners/${numericPartnerId}/${canonicalSlug}`;
 
   if (
-    detail &&
+    canonicalDetail &&
     (partnerId !== String(numericPartnerId) || decodeSlug(partnerSlug) !== canonicalSlug)
   ) {
     permanentRedirect(withMembershipQuery(canonicalPath, membership, membershipOnly));
   }
-  const description = getPartnerDescription(partnerName, detail?.carrierGroups);
+  const description = getPartnerDescription(
+    partnerName,
+    comparisonDetail?.carrierGroups ?? detail?.carrierGroups
+  );
   const structuredBenefits =
-    detail?.carrierGroups.flatMap((group) =>
+    comparisonDetail?.carrierGroups.flatMap((group) =>
       group.benefits.map((benefit) => ({ benefit, carrier: group.carrier }))
     ) ?? [];
   const structuredData = {
@@ -167,6 +181,7 @@ export default async function PartnerBenefitRoute({ params, searchParams }: Part
       <PartnerBenefitPage
         key={`${numericPartnerId}:${membership?.carrier ?? ''}:${membership?.grade ?? ''}`}
         initialDetail={detail}
+        comparisonDetail={comparisonDetail}
         membership={membership}
         membershipOnly={membershipOnly}
       />

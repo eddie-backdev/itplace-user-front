@@ -1,4 +1,5 @@
 // 지점 목록 API 타입 정의
+import type { BenefitConditions } from '../../allBenefitsPage/apis/benefitConditions.mjs';
 
 export interface StoreApiResponse {
   code: string;
@@ -139,7 +140,7 @@ export interface TierBenefit {
 export interface BenefitDetailRequest {
   storeId: number;
   partnerId: number;
-  mainCategory?: 'VIP_COCK' | 'BASIC_BENEFIT' | null;
+  mainCategory?: string | null;
   carrier?: string | null;
 }
 
@@ -158,6 +159,10 @@ export interface BenefitDetailData {
   mainCategory: string;
   manual: string;
   url: string;
+  sourceUrl?: string | null;
+  sourceCapturedAt?: string | null;
+  conditions?: BenefitConditions | null;
+  usageType?: 'ONLINE' | 'OFFLINE' | 'BOTH' | 'UNKNOWN';
   carrier?: string | null;
   tierBenefits: DetailTierBenefit[];
   isFavorite: boolean;

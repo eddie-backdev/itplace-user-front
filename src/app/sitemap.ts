@@ -3,10 +3,12 @@ import partnerCatalog from '@/data/partner-catalog.json';
 import { SITE_ORIGIN } from '@/lib/metadata';
 import { getPublicPartnerBenefits } from '@/server/userApi';
 import { getPartnerBenefitPath } from '@/utils/partnerSeo';
+import { storeRegions } from '@/data/storeRegions';
 
 const staticPaths = [
   '/',
   '/map',
+  '/places',
   '/benefits',
   '/membership',
   '/membership/skt',
@@ -53,7 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
   }
 
-  const staticEntries: MetadataRoute.Sitemap = staticPaths.map((path) => ({
+  const staticEntries: MetadataRoute.Sitemap = [...staticPaths, ...storeRegions.map((region) => `/places/${region.slug}`)].map((path) => ({
     url: `${SITE_ORIGIN}${path}`,
     changeFrequency: path === '/' || path === '/benefits' ? 'daily' : 'monthly',
     priority: path === '/' ? 1 : path === '/benefits' || path === '/map' ? 0.9 : 0.7,

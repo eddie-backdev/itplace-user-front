@@ -35,7 +35,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
-      {pathname === '/' ? <SiteFooter /> : null}
+      {pathname === '/' || pathname.startsWith('/places') ? <SiteFooter /> : null}
       {showTabBar ? <MobileAppTabBar /> : null}
     </div>
   );

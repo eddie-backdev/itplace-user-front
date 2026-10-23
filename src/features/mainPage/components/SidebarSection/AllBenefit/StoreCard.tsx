@@ -3,6 +3,7 @@ import SafeImage from '../../../../../components/SafeImage';
 import { Platform } from '../../../types';
 import { isCarrierCode } from '../../../../../utils/membership';
 import { groupPlatformBenefitsByCarrier } from '../../../utils/benefitGrouping';
+import { useReferenceData } from '../../../../../components/ReferenceDataProvider';
 
 interface StoreCardProps {
   platform: Platform;
@@ -17,7 +18,8 @@ const formatDistance = (distance: number) => {
 };
 
 const StoreCard: React.FC<StoreCardProps> = ({ platform, isSelected, onSelect }) => {
-  const benefitGroups = groupPlatformBenefitsByCarrier(platform);
+  const { data } = useReferenceData();
+  const benefitGroups = groupPlatformBenefitsByCarrier(platform, data);
   const featuredBenefit = benefitGroups
     .flatMap((group) => group.benefits)
     .find((benefit) => benefit.context && benefit.context !== '-');

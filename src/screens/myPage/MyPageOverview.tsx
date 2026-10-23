@@ -7,6 +7,7 @@ import { fetchFavorites } from '@/features/myPage/apis/favorites';
 import { fetchBenefitUsageMonth } from '@/features/benefitUsage/api';
 import { getCarrierLabel, getMembershipGradeLabel } from '@/utils/membership';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useReferenceData } from '@/components/ReferenceDataProvider';
 
 interface UserSummary {
   nickname: string;
@@ -20,6 +21,7 @@ const currentMonth = () => new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString
 const number = new Intl.NumberFormat('ko-KR');
 
 export default function MyPageOverview() {
+  const { data } = useReferenceData();
   const [user, setUser] = useState<UserSummary | null>(null);
   const [favoriteCount, setFavoriteCount] = useState<number | null>(null);
   const [activity, setActivity] = useState<{
@@ -131,7 +133,7 @@ export default function MyPageOverview() {
                   : isMvno
                     ? getCarrierLabel(user?.carrier)
                     : hasMembership
-                    ? `${getCarrierLabel(user?.carrier)} ${getMembershipGradeLabel(grade)}`
+                    ? `${getCarrierLabel(user?.carrier)} ${getMembershipGradeLabel(grade, data)}`
                     : '등록된 멤버십 프로필이 없어요.'}
               </p>
             </div>

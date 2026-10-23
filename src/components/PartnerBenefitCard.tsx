@@ -5,6 +5,7 @@ import type { PartnerBenefitItem } from '@/features/allBenefitsPage/apis/allBene
 import { type CarrierCode, getCarrierLabel } from '@/utils/membership';
 import { getPartnerBenefitPath } from '@/utils/partnerSeo';
 import { getPartnerBenefitPreview } from '@/utils/benefitPreview';
+import { useReferenceData } from '@/components/ReferenceDataProvider';
 
 export default function PartnerBenefitCard({
   partner,
@@ -15,7 +16,8 @@ export default function PartnerBenefitCard({
   href?: string;
   carrier?: CarrierCode;
 }) {
-  const preview = getPartnerBenefitPreview(partner, carrier);
+  const { data } = useReferenceData();
+  const preview = getPartnerBenefitPreview(partner, carrier, undefined, data);
   const detailPath = getPartnerBenefitPath(partner.partnerId, partner.partnerName);
   return (
     <Link

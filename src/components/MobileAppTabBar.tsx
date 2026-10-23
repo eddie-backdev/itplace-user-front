@@ -5,6 +5,7 @@ import { NavLink, useLocation } from '@/lib/navigation';
 import { TbBookmark, TbGift, TbHome, TbMap, TbUser } from 'react-icons/tb';
 import type { RootState } from '@/store';
 import { getLoginHref } from '@/features/loginPage/utils/returnTo.mjs';
+import { useClientReady } from '@/hooks/useClientReady';
 
 const tabs = [
   { to: '/', label: '홈', icon: TbHome, match: (path: string) => path === '/' },
@@ -31,8 +32,10 @@ const tabs = [
 
 const MobileAppTabBar = () => {
   const location = useLocation();
+  const isClientReady = useClientReady();
   const isAuthenticated = useSelector(
-    (state: RootState) => state._persist.rehydrated && state.auth.isLoggedIn
+    (state: RootState) =>
+      isClientReady && state._persist.rehydrated && state.auth.isLoggedIn
   );
 
   return (

@@ -6,19 +6,21 @@ import { Link, NavLink, useLocation } from '@/lib/navigation';
 import type { RootState } from '@/store';
 import { getLoginHref } from '@/features/loginPage/utils/returnTo.mjs';
 import { useLogout } from '@/hooks/useLogout';
+import { useClientReady } from '@/hooks/useClientReady';
 import styles from './Header.module.css';
 
 const links = [
   { href: '/', label: '홈', exact: true },
-  { href: '/benefits', label: '전체 혜택' },
   { href: '/map', label: '내 주변 혜택', exact: true },
+  { href: '/benefits', label: '전체 혜택' },
   { href: '/mypage/favorites', label: '관심 혜택' },
 ];
 
 export default function Header() {
   const { pathname } = useLocation();
+  const isClientReady = useClientReady();
   const isAuthenticated = useSelector(
-    (state: RootState) => state._persist.rehydrated && state.auth.isLoggedIn
+    (state: RootState) => isClientReady && state._persist.rehydrated && state.auth.isLoggedIn
   );
   const { handleLogout, isLoggingOut } = useLogout();
 

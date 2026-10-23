@@ -6,14 +6,19 @@ import { useResponsive } from '../../../hooks/useResponsive';
 import { isGradeApplicableToProfile } from '../../../utils/membership';
 import { FavoriteBenefitFilter } from '../../../components/BenefitFilterToggle';
 import { isFavoriteTierApplicableToProfile } from '../utils/favoriteMembership.mjs';
+import { useReferenceData } from '../../../components/ReferenceDataProvider';
 
 const isFavoriteApplicableToProfile = (
   detail: FavoriteDetail,
   userCarrier?: string | null,
   userGrade?: string | null
+,
+  referenceData?: import('../../../utils/referenceData').ReferenceData | null
 ) =>
   detail.tiers.some((tier) =>
-    isFavoriteTierApplicableToProfile(tier, userCarrier, userGrade, isGradeApplicableToProfile)
+    isFavoriteTierApplicableToProfile(tier, userCarrier, userGrade, (args) =>
+      isGradeApplicableToProfile({ ...args, referenceData })
+    )
   );
 
 export function useFavorites(
@@ -21,6 +26,7 @@ export function useFavorites(
   userCarrier?: string | null,
   userGrade?: string | null
 ) {
+  const { data: referenceData } = useReferenceData();
   const [allFavorites, setAllFavorites] = useState<FavoriteItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [benefitFilter, setBenefitFilter] = useState<FavoriteBenefitFilter>('all');
@@ -95,7 +101,7 @@ export function useFavorites(
             .filter(
               ({ detail, failed }) =>
                 failed ||
-                (detail && isFavoriteApplicableToProfile(detail, userCarrier, userGrade))
+                (detail && isFavoriteApplicableToProfile(detail, userCarrier, userGrade, referenceData))
             )
               .map(({ favorite }) => favorite)
           );
@@ -112,7 +118,7 @@ export function useFavorites(
     } finally {
       if (isCurrentRequest()) setLoading(false);
     }
-  }, [benefitFilter, hasMembershipProfile, userCarrier, userGrade]);
+  }, [benefitFilter, hasMembershipProfile, referenceData, userCarrier, userGrade]);
 
   useEffect(() => {
     void loadFavorites();

@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { useSelector } from 'react-redux';
 import { Platform } from '../../types';
 import { FavoriteBenefit, PersonalizedRecommendationItem } from '../../types/api';
-import { CATEGORIES } from '../../constants';
+import { toCategoryOptions } from '@/utils/referenceData';
+import { useReferenceData } from '@/components/ReferenceDataProvider';
 import SearchSection from './SearchSection';
 import InfoBannerSection from './InfoBannerSection';
 import NavigationTabsSection from './NavigationTabsSection';
@@ -92,6 +93,8 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   detailContainer,
   externalDetail = false,
 }) => {
+  const { data: referenceData } = useReferenceData();
+  const categories = toCategoryOptions(referenceData);
   const activeTab = !AI_RECOMMENDATION_ENABLED && requestedTab === 'ai' ? 'nearby' : requestedTab;
   const user = useSelector((state: RootState) => state.auth.user);
   const isAuthenticated = useSelector(
@@ -630,7 +633,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
               <div className="mb-3 min-w-0">
                 <p className="mb-1 px-1 text-xs font-medium text-[#686b73]">분야</p>
                 <CategoryTabsSection
-                  categories={CATEGORIES}
+                  categories={categories}
                   selectedCategory={mapSelectedCategory}
                   onCategorySelect={onMapCategorySelect}
                   mode="map"
@@ -695,7 +698,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
                     {isAuthenticated && (
                       <div className="mb-3 max-md:mx-0">
                         <CategoryTabsSection
-                          categories={CATEGORIES}
+                          categories={categories}
                           selectedCategory={selectedCategory}
                           onCategorySelect={handleCategorySelect}
                           mode="sidebar"

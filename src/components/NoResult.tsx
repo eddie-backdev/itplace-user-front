@@ -1,4 +1,5 @@
 import React from 'react';
+import { TbAlertTriangle, TbLock, TbSearch } from 'react-icons/tb';
 import { useNavigate } from '@/lib/navigation';
 
 // props 타입 정의
@@ -6,7 +7,7 @@ import { useNavigate } from '@/lib/navigation';
 // message2: 하단 설명
 // buttonText: 버튼 문구 (없으면 버튼 안보임)
 // buttonRoute: 버튼 클릭 시 이동할 경로 (없으면 버튼 안보임)
-// isLoginRequired: 로그인 안내 마스코트 분기를 위한 로그인 여부
+// isLoginRequired: 로그인 안내 상태 표시 여부
 
 // Props 타입 지정
 type NoResultProps = {
@@ -63,28 +64,19 @@ const NoResult: React.FC<NoResultProps> = ({
   };
 
   const isBlocked = variant === 'blocked' || isLoginRequired;
-  const imageWebp = isBlocked
-    ? '/images/itplace-mascot-login-required.webp'
-    : '/images/itplace-mascot-no-result.webp';
-  const imagePng = isBlocked
-    ? '/images/itplace-mascot-login-required.png'
-    : '/images/itplace-mascot-no-result.png';
+  const StateIcon = isBlocked ? TbLock : variant === 'error' ? TbAlertTriangle : TbSearch;
 
   return (
     <div
       className="flex flex-col items-center justify-center p-6 text-center"
       role={variant === 'error' ? 'alert' : 'status'}
     >
-      <picture>
-        <source srcSet={imageWebp} type="image/webp" />
-        <img
-          src={imagePng}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          className="mb-4 h-auto w-32 max-md:w-28"
-        />
-      </picture>
+      <div
+        aria-hidden="true"
+        className={`mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isBlocked || variant === 'error' ? 'bg-warmCanvas text-brand' : 'bg-brandSoft text-brand'}`}
+      >
+        <StateIcon size={30} strokeWidth={1.7} />
+      </div>
 
       <h2 className={`${message1FontSize} text-grey06 mb-2`}>{message1}</h2>
       <p className={`${message2FontSize} text-grey05 mb-4 whitespace-pre-line`}>{message2}</p>
@@ -95,7 +87,7 @@ const NoResult: React.FC<NoResultProps> = ({
             <button
               type="button"
               onClick={handleSecondaryClick}
-              className="px-7 py-2.5 rounded-full border border-grey02 bg-white text-grey05 text-body-3 transition-colors hover:bg-grey01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-xl:text-body-4 max-md:text-body-5"
+              className="min-h-11 rounded-full border border-warmBorder bg-white px-7 py-2.5 text-body-3 text-warmMuted transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-xl:text-body-4 max-md:text-body-5"
             >
               {secondaryButtonText}
             </button>
@@ -104,7 +96,7 @@ const NoResult: React.FC<NoResultProps> = ({
             <button
               type="button"
               onClick={handlePrimaryClick}
-              className="px-9 py-2.5 rounded-full bg-purple04 text-white text-body-3 transition-colors hover:bg-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 max-xl:text-body-4 max-md:text-body-5"
+              className="min-h-11 rounded-full bg-brand px-9 py-2.5 text-body-3 text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-xl:text-body-4 max-md:text-body-5"
             >
               {buttonText}
             </button>

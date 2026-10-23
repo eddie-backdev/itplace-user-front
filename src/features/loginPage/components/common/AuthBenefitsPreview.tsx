@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { TbChevronRight, TbHeart, TbHistory } from 'react-icons/tb';
 import SafeImage from '@/components/SafeImage';
 import { getCarrierLabel } from '@/utils/membership';
+import { useReferenceData } from '@/components/ReferenceDataProvider';
+import { getCategoryLabel } from '@/utils/referenceData';
 
 export type AuthPreviewPartner = {
   partnerId: number;
@@ -15,6 +17,7 @@ export type AuthPreviewPartner = {
 type Props = { partners: AuthPreviewPartner[] };
 
 export default function AuthBenefitsPreview({ partners }: Props) {
+  const { data: referenceData } = useReferenceData();
   return (
     <section aria-labelledby="auth-benefits-title" className="w-full max-w-[680px]">
       <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-brand">
@@ -51,7 +54,7 @@ export default function AuthBenefitsPreview({ partners }: Props) {
             <li key={partner.partnerId}>
               <Link
                 href={partner.href}
-                aria-label={`${partner.partnerName} ${partner.category} 혜택 보기`}
+                aria-label={`${partner.partnerName} ${getCategoryLabel(partner.category, referenceData)} 혜택 보기`}
                 className="group flex min-h-[78px] items-center gap-3 py-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:gap-4"
               >
                 <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F6F7FA] p-1.5">
@@ -68,7 +71,7 @@ export default function AuthBenefitsPreview({ partners }: Props) {
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     <span className="text-[15px] font-semibold leading-5 tracking-[-0.02em] text-ink">{partner.partnerName}</span>
-                    <span className="text-[12px] leading-5 text-warmMuted">{partner.category}</span>
+                    <span className="text-[12px] leading-5 text-warmMuted">{getCategoryLabel(partner.category, referenceData)}</span>
                   </span>
                   <span className="mt-1 block text-[12px] leading-4 text-warmMuted">
                     {partner.carriers.map(getCarrierLabel).join(' · ')} 멤버십 혜택

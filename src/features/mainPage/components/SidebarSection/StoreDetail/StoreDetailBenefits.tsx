@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { TbCheck } from 'react-icons/tb';
 import NoResult from '../../../../../components/NoResult';
+import BenefitConditions from '../../../../allBenefitsPage/components/BenefitConditions';
 import { RootState } from '../../../../../store';
 import { BenefitDetailResponse } from '../../../types/api';
 import { Platform } from '../../../types';
@@ -12,6 +13,7 @@ import {
   isGradeApplicableToProfile,
   isCarrierCode,
 } from '../../../../../utils/membership';
+import { useReferenceData } from '../../../../../components/ReferenceDataProvider';
 import {
   BENEFIT_USAGE_CHANNEL_LABELS,
   BENEFIT_USAGE_CHANNEL_ORDER,
@@ -42,6 +44,7 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
   detailData,
   isLoading = false,
 }) => {
+  const { data: referenceData } = useReferenceData();
   const user = useSelector((state: RootState) => state.auth.user);
 
   const isUserGrade = (grade: string, tierCarrier?: string | null) =>
@@ -50,14 +53,16 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
       benefitGrade: grade,
       userCarrier: user?.carrier,
       userGrade: user?.membershipGradeCode ?? user?.membershipGrade,
+      referenceData,
     });
 
-  const getGradeDisplayName = (grade: string) => getMembershipGradeLabel(grade);
+  const getGradeDisplayName = (grade: string) => getMembershipGradeLabel(grade, referenceData);
 
-  const platformBenefitGroups = groupPlatformBenefitsByCarrier(platform);
+  const platformBenefitGroups = groupPlatformBenefitsByCarrier(platform, referenceData);
   const detailBenefitGroups = groupDetailBenefitsByCarrier(
     detailData?.data?.tierBenefits ?? [],
-    detailData?.data?.carrier
+    detailData?.data?.carrier,
+    referenceData
   );
   // 지도 검색 결과에 이미 통신사별 혜택이 들어있으면 상세 탭은 API 재조회 없이
   // 그 데이터를 보기 좋게 필터링해서 보여준다. 상세 API는 이미지/URL/이용방법/액션 ID 보강용이다.
@@ -190,6 +195,19 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
                 />
               </div>
             )}
+
+            {detailData?.data &&
+            (!detailData.data.carrier || detailData.data.carrier === activeCarrier) ? (
+              <BenefitConditions
+                conditions={detailData.data.conditions}
+                sourceUrl={detailData.data.sourceUrl}
+                sourceCapturedAt={detailData.data.sourceCapturedAt}
+                manual={detailData.data.manual}
+                usageType={detailData.data.usageType}
+                includeTierDetails={false}
+                className="mt-4"
+              />
+            ) : null}
 
             {/* 구분선 - 혜택이 있을 때만 표시 */}
             {hasBenefits && <div className="mt-4 w-full border-b border-[#E8E9EE]" />}

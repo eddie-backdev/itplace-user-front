@@ -6,6 +6,7 @@ import { TbBookmark, TbBookmarkFilled, TbExternalLink, TbMapPin } from 'react-ic
 import { Link, useNavigate } from '@/lib/navigation';
 import SafeImage from '@/components/SafeImage';
 import NearbyStoresButton from './NearbyStoresButton';
+import BenefitConditions from './BenefitConditions';
 import type { RootState } from '@/store';
 import {
   addFavorite,
@@ -21,6 +22,10 @@ import {
 import { getCarrierLabel, getMembershipGradeLabel, type CarrierCode } from '@/utils/membership';
 import { getLoginHref } from '@/features/loginPage/utils/returnTo.mjs';
 import styles from './BenefitExplorerDetail.module.css';
+import { useReferenceData } from '@/components/ReferenceDataProvider';
+import { getCategoryLabel } from '@/utils/referenceData';
+import { hasKnownStores } from '../apis/benefitChannelFacts.mjs';
+import { getApplicableTierBenefits, hasEligibleStructuredOffer, hasStructuredOffers } from '../apis/partnerBenefitModel';
 
 interface BenefitExplorerDetailProps {
   partner: PartnerBenefitItem;
@@ -30,12 +35,6 @@ interface BenefitExplorerDetailProps {
   onFavoriteChange?: (benefitId: number, isFavorite: boolean) => void;
   onClose?: () => void;
 }
-
-const usageLabel = (type: CarrierBenefitDetail['usageType']) => {
-  if (type === 'ONLINE') return '온라인';
-  if (type === 'OFFLINE') return '오프라인';
-  return '온라인 · 오프라인';
-};
 
 const validHttpUrl = (value?: string | null) => {
   if (!value) return null;
@@ -55,6 +54,7 @@ export default function BenefitExplorerDetail({
   onFavoriteChange,
   onClose,
 }: BenefitExplorerDetailProps) {
+  const { data: referenceData } = useReferenceData();
   const navigate = useNavigate();
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const isAuthRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
@@ -122,9 +122,13 @@ export default function BenefitExplorerDetail({
       .filter((preview) => preview.carrier === selectedGroup.carrier)
       .sort((a, b) => {
         const aMatchesGrade =
-          !grade || a.tierBenefits.some((tier) => tier.isAll || tier.grade === grade);
+          !grade || (hasStructuredOffers(a)
+            ? hasEligibleStructuredOffer(a, selectedGroup.carrier, grade, referenceData)
+            : a.tierBenefits.some((tier) => tier.isAll || tier.grade === grade));
         const bMatchesGrade =
-          !grade || b.tierBenefits.some((tier) => tier.isAll || tier.grade === grade);
+          !grade || (hasStructuredOffers(b)
+            ? hasEligibleStructuredOffer(b, selectedGroup.carrier, grade, referenceData)
+            : b.tierBenefits.some((tier) => tier.isAll || tier.grade === grade));
         if (aMatchesGrade !== bMatchesGrade) return aMatchesGrade ? -1 : 1;
         const aHasContext = a.tierBenefits.some((tier) => tier.context?.trim());
         const bHasContext = b.tierBenefits.some((tier) => tier.context?.trim());
@@ -137,7 +141,7 @@ export default function BenefitExplorerDetail({
         (rank.get(a.benefitId) ?? Number.MAX_SAFE_INTEGER) -
         (rank.get(b.benefitId) ?? Number.MAX_SAFE_INTEGER)
     );
-  }, [grade, partner.previews, selectedGroup]);
+  }, [grade, partner.previews, referenceData, selectedGroup]);
 
   const toggleFavorite = async (benefit: CarrierBenefitDetail) => {
     if (pendingFavoriteId !== null) return;
@@ -194,12 +198,16 @@ export default function BenefitExplorerDetail({
 
   const renderBenefit = (benefit: CarrierBenefitDetail) => {
     const officialUrl = validHttpUrl(benefit.url);
-    const tierConditions = benefit.tierBenefits
+    const tierConditions = getApplicableTierBenefits(
+      benefit.tierBenefits,
+      selectedGroup?.carrier,
+      grade
+    )
       .filter((tier) => tier.context?.trim())
       .reduce<Array<{ context: string; grades: string[] }>>((groups, tier) => {
         const context = tier.context.trim();
         const existing = groups.find((group) => group.context === context);
-        const label = tier.isAll ? '전체 등급' : getMembershipGradeLabel(tier.grade);
+        const label = tier.isAll ? '전체 등급' : getMembershipGradeLabel(tier.grade, referenceData);
         if (existing) {
           if (!existing.grades.includes(label)) existing.grades.push(label);
         } else {
@@ -225,7 +233,6 @@ export default function BenefitExplorerDetail({
                 원본 선택명: {getSourceOptionLabel(benefit)}
               </p>
             )}
-            <p>{usageLabel(benefit.usageType)}</p>
           </div>
           <button
             type="button"
@@ -243,53 +250,34 @@ export default function BenefitExplorerDetail({
           </button>
         </header>
 
-        {grade && <p className={styles.gradeContext}>{getMembershipGradeLabel(grade)} 기준 혜택</p>}
-        {tierConditions.length > 0 ? (
-          <ul className={styles.tierList} aria-label="등급별 혜택">
-            {tierConditions.map((condition) => (
-              <li key={condition.context}>
-                <span className={styles.tierGrade}>{condition.grades.join(', ')}</span>
-                <p>{condition.context}</p>
-              </li>
-            ))}
-          </ul>
-        ) : benefit.description ? (
-          <p className={styles.description}>{benefit.description}</p>
-        ) : null}
-
-        {benefit.benefitLimit && (
-          <dl className={styles.limitRow}>
-            <dt>이용 제한</dt>
-            <dd>{benefit.benefitLimit}</dd>
-          </dl>
-        )}
+        <BenefitConditions
+          conditions={benefit.conditions}
+          legacyLimit={benefit.benefitLimit}
+          sourceUrl={benefit.sourceUrl}
+          sourceCapturedAt={benefit.sourceCapturedAt}
+          manual={benefit.manual}
+          usageType={benefit.usageType}
+          carrier={selectedGroup?.carrier}
+          grade={grade}
+          tierConditions={
+            tierConditions.length > 0
+              ? tierConditions.map((condition) => ({
+                  grades: condition.grades,
+                  context: condition.context,
+                }))
+              : !hasStructuredOffers(benefit.conditions) && benefit.description
+                ? [{ grades: [], context: benefit.description }]
+                : []
+          }
+          className={styles.conditionFacts}
+        />
         {favoriteErrorId === benefit.benefitId && (
           <p className={styles.errorMessage} role="alert">
             관심 혜택을 변경하지 못했습니다. 다시 시도해 주세요.
           </p>
         )}
-        {(benefit.manual ||
-          benefit.sourceUrl ||
-          (tierConditions.length > 0 && benefit.description)) && (
-          <details className={styles.moreDetails}>
-            <summary>이용 안내 및 유의사항</summary>
-            <div className={styles.longText}>
-              {tierConditions.length > 0 && benefit.description && <p>{benefit.description}</p>}
-              {benefit.manual && <p>{benefit.manual}</p>}
-              {validHttpUrl(benefit.sourceUrl) && (
-                <a
-                  href={validHttpUrl(benefit.sourceUrl) ?? undefined}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  안내 출처 보기 <TbExternalLink aria-hidden="true" />
-                </a>
-              )}
-            </div>
-          </details>
-        )}
         <div className={styles.actions}>
-          {benefit.usageType !== 'ONLINE' ? (
+          {hasKnownStores(detail?.hasStores) ? (
             <NearbyStoresButton
               partner={{
                 partnerId: partner.partnerId,
@@ -356,7 +344,7 @@ export default function BenefitExplorerDetail({
             <div className={styles.identityText}>
               <h3>{detail?.partnerName ?? partner.partnerName}</h3>
               {(detail?.category ?? partner.category) && (
-                <p>{detail?.category ?? partner.category}</p>
+                <p>{getCategoryLabel(detail?.category ?? partner.category, referenceData)}</p>
               )}
             </div>
           </section>

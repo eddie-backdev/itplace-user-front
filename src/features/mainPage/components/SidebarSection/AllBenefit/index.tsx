@@ -8,6 +8,8 @@ import {
   BENEFIT_USAGE_CHANNEL_LABELS,
   groupPlatformBenefitsByCarrier,
 } from '../../../utils/benefitGrouping';
+import { useReferenceData } from '../../../../../components/ReferenceDataProvider';
+import { getCategoryLabel } from '../../../../../utils/referenceData';
 
 interface StoreCardsSectionProps {
   platforms: Platform[];
@@ -96,6 +98,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
   displayMode = 'list',
   backButton,
 }) => {
+  const { data: referenceData } = useReferenceData();
   const [drilldown, setDrilldown] = useState<SummaryDrilldown | null>(null);
 
   useEffect(() => {
@@ -125,13 +128,13 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
     >();
 
     platforms.forEach((platform) => {
-      const category = platform.category || '기타';
+      const category = getCategoryLabel(platform.category, referenceData) || '기타';
       categoryMap.set(category, [...(categoryMap.get(category) ?? []), platform]);
 
       const partnerKey = String(platform.partnerId);
       partnerMap.set(partnerKey, [...(partnerMap.get(partnerKey) ?? []), platform]);
 
-      groupPlatformBenefitsByCarrier(platform).forEach((carrierGroup) => {
+      groupPlatformBenefitsByCarrier(platform, referenceData).forEach((carrierGroup) => {
         const carrier = carrierMap.get(carrierGroup.key) ?? {
           label: carrierGroup.label,
           platforms: [],
@@ -175,7 +178,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
         return {
           key: partnerId,
           title: representative?.partnerName || representative?.name || '제휴처',
-          subtitle: representative?.category || '카테고리 없음',
+          subtitle: getCategoryLabel(representative?.category, referenceData) || '카테고리 없음',
           countLabel: `${orderedPlatforms.length}개 매장 · 가장 가까운 곳 ${formatDistance(representative?.distance ?? 0)}`,
           platforms: orderedPlatforms,
           imageUrl: representative?.imageUrl,
@@ -228,7 +231,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
       totalBenefits: benefitMap.size,
       hasBenefitDetails: platforms.some((platform) => (platform.benefitDetails?.length ?? 0) > 0),
     };
-  }, [displayMode, platforms]);
+  }, [displayMode, platforms, referenceData]);
 
   const renderHeader = (title: string, subtitle?: string, onBack?: () => void) => (
     <div className="mb-2 px-4 max-sm:px-3">

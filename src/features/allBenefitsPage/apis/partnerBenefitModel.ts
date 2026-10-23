@@ -1,5 +1,8 @@
 import benefitDisplay from '../../../content/benefit-display.json';
-import type { CarrierCode } from '../../../utils/membership';
+import { isGradeApplicableToProfile, type CarrierCode } from '../../../utils/membership';
+import type { ReferenceData } from '../../../utils/referenceData';
+import type { BenefitConditions, BenefitOffer } from './benefitConditions.mjs';
+import { getApplicableTierBenefits } from './tierBenefitResolver.mjs';
 import {
   getCarrierBenefitDisplayName,
   getMembershipOptionLabel,
@@ -15,6 +18,31 @@ export interface TierBenefit {
   isAll: boolean;
 }
 
+export { getApplicableTierBenefits };
+
+export const hasStructuredOffers = (value?: { offers?: BenefitOffer[]; offerResolution?: string | null } | null) =>
+  value?.offers !== undefined || value?.offerResolution != null;
+
+export const hasEligibleStructuredOffer = (
+  value: { offers?: BenefitOffer[]; offerResolution?: string | null } | null | undefined,
+  carrier: CarrierCode,
+  grade?: string | null,
+  referenceData?: ReferenceData | null
+) => {
+  if (!value || value.offerResolution === 'UNRESOLVED') return false;
+  return (value.offers ?? []).some((offer) =>
+    offer.allGrades === true || Boolean(grade && offer.gradeCodes.some((benefitGrade) =>
+      isGradeApplicableToProfile({
+        benefitCarrier: carrier,
+        benefitGrade,
+        userCarrier: carrier,
+        userGrade: grade,
+        referenceData,
+      })
+    ))
+  );
+};
+
 export interface CarrierBenefitDetail {
   benefitId: number;
   benefitName: string;
@@ -27,7 +55,9 @@ export interface CarrierBenefitDetail {
   manual?: string | null;
   url?: string | null;
   sourceUrl?: string | null;
-  usageType: 'ONLINE' | 'OFFLINE' | 'BOTH';
+  sourceCapturedAt?: string | null;
+  conditions?: BenefitConditions | null;
+  usageType: 'ONLINE' | 'OFFLINE' | 'BOTH' | 'UNKNOWN';
   tierBenefits: TierBenefit[];
   isFavorite: boolean;
   favoriteCount: number;
@@ -43,6 +73,7 @@ export interface PartnerBenefitDetailResponse {
   partnerName: string;
   category: string | null;
   image: string | null;
+  hasStores: boolean;
   carrierGroups: CarrierBenefitGroup[];
 }
 
@@ -76,10 +107,57 @@ const mergeDuplicateBenefit = (
   current: CarrierBenefitDetail,
   candidate: CarrierBenefitDetail
 ): CarrierBenefitDetail => {
+  const currentCapturedAt = Date.parse(current.sourceCapturedAt ?? '');
+  const candidateCapturedAt = Date.parse(candidate.sourceCapturedAt ?? '');
+  const currentHasCapture = Number.isFinite(currentCapturedAt);
+  const candidateHasCapture = Number.isFinite(candidateCapturedAt);
+  const currentHasStructuredOffers = hasStructuredOffers(current.conditions);
+  const candidateHasStructuredOffers = hasStructuredOffers(candidate.conditions);
   const [primary, secondary] =
-    getBenefitRichness(candidate) > getBenefitRichness(current)
-      ? [candidate, current]
-      : [current, candidate];
+    currentHasCapture !== candidateHasCapture
+      ? currentHasCapture
+        ? [current, candidate]
+        : [candidate, current]
+      : currentHasCapture && candidateCapturedAt !== currentCapturedAt
+        ? candidateCapturedAt > currentCapturedAt
+          ? [candidate, current]
+          : [current, candidate]
+        : currentHasStructuredOffers !== candidateHasStructuredOffers
+          ? currentHasStructuredOffers
+            ? [current, candidate]
+            : [candidate, current]
+          : getBenefitRichness(candidate) > getBenefitRichness(current)
+            ? [candidate, current]
+            : [current, candidate];
+  const hasAnyStructuredOffers = currentHasStructuredOffers || candidateHasStructuredOffers;
+  if (hasAnyStructuredOffers) {
+    // Source-derived facts form one snapshot. Never fill its gaps from a duplicate
+    // with another capture date (or from an undated legacy response).
+    return {
+      ...secondary,
+      ...primary,
+      description: primary.description,
+      benefitLimit: primary.benefitLimit,
+      manual: primary.manual,
+      url: primary.url,
+      sourceUrl: primary.sourceUrl,
+      sourceCapturedAt: primary.sourceCapturedAt,
+      conditions: primary.conditions ?? null,
+      tierBenefits: primary.tierBenefits,
+      isFavorite: primary.isFavorite || secondary.isFavorite,
+      favoriteCount: Math.max(primary.favoriteCount, secondary.favoriteCount),
+    };
+  }
+  const conditions: BenefitConditions = {
+    ...secondary.conditions,
+    ...primary.conditions,
+  };
+  (['products', 'availability', 'limits', 'usage', 'exclusions'] as const).forEach((field) => {
+    if (!primary.conditions?.[field]?.length && secondary.conditions?.[field]?.length) {
+      conditions[field] = secondary.conditions[field];
+    }
+  });
+
 
   return {
     ...secondary,
@@ -89,6 +167,10 @@ const mergeDuplicateBenefit = (
     manual: primary.manual?.trim() ? primary.manual : secondary.manual,
     url: primary.url?.trim() ? primary.url : secondary.url,
     sourceUrl: primary.sourceUrl?.trim() ? primary.sourceUrl : secondary.sourceUrl,
+    sourceCapturedAt: primary.sourceCapturedAt?.trim()
+      ? primary.sourceCapturedAt
+      : secondary.sourceCapturedAt,
+    conditions: Object.keys(conditions).length ? conditions : null,
     tierBenefits: mergeTierBenefits(primary.tierBenefits, secondary.tierBenefits),
     isFavorite: primary.isFavorite || secondary.isFavorite,
     favoriteCount: Math.max(primary.favoriteCount, secondary.favoriteCount),
@@ -120,3 +202,28 @@ export const normalizePartnerBenefitDetail = (
     };
   }),
 });
+
+export const mergePartnerBenefitDetails = (
+  canonicalDetail: PartnerBenefitDetailResponse | null | undefined,
+  selectedDetail?: PartnerBenefitDetailResponse | null
+): PartnerBenefitDetailResponse | null => {
+  if (!canonicalDetail) return selectedDetail ?? null;
+  if (!selectedDetail) return canonicalDetail;
+
+  const groups = new Map(
+    canonicalDetail.carrierGroups.map((group) => [group.carrier, group] as const)
+  );
+  selectedDetail.carrierGroups.forEach((group) => {
+    const existing = groups.get(group.carrier);
+    groups.set(
+      group.carrier,
+      existing ? { ...existing, benefits: [...existing.benefits, ...group.benefits] } : group
+    );
+  });
+
+  return normalizePartnerBenefitDetail({
+    ...canonicalDetail,
+    ...selectedDetail,
+    carrierGroups: [...groups.values()],
+  });
+};

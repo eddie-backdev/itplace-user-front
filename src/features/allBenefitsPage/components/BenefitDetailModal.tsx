@@ -5,6 +5,7 @@ import { TbExternalLink, TbMapPin, TbStar, TbStarFilled } from 'react-icons/tb';
 import Modal from '../../../components/DetailModal';
 import NoResult from '../../../components/NoResult';
 import SafeImage from '../../../components/SafeImage';
+import BenefitConditions from './BenefitConditions';
 import { RootState } from '../../../store';
 import { showToast } from '../../../utils/toast';
 import {
@@ -25,6 +26,10 @@ import {
   getMembershipGradeLabel,
   isCarrierCode,
 } from '../../../utils/membership';
+import { useReferenceData } from '../../../components/ReferenceDataProvider';
+import { getCategoryLabel } from '../../../utils/referenceData';
+import { hasKnownStores } from '../apis/benefitChannelFacts.mjs';
+import { getApplicableTierBenefits, hasStructuredOffers } from '../apis/partnerBenefitModel';
 
 interface BenefitDetailModalProps {
   isOpen: boolean;
@@ -32,20 +37,17 @@ interface BenefitDetailModalProps {
   onClose: () => void;
 }
 
-const getUsageTypeLabel = (usageType: CarrierBenefitDetail['usageType']) => {
-  if (usageType === 'ONLINE') return '온라인';
-  if (usageType === 'OFFLINE') return '오프라인';
-  return '온라인 · 오프라인';
-};
-
 const groupTierBenefitConditions = (
-  tierBenefits: CarrierBenefitDetail['tierBenefits']
+  tierBenefits: CarrierBenefitDetail['tierBenefits'],
+  referenceData?: import('../../../utils/referenceData').ReferenceData | null
 ): Array<{ context: string; gradeLabels: string[] }> =>
   tierBenefits.reduce<Array<{ context: string; gradeLabels: string[] }>>((groups, tierBenefit) => {
     const context = tierBenefit.context?.trim();
     if (!context) return groups;
 
-    const gradeLabel = getMembershipGradeLabel(tierBenefit.grade);
+    const gradeLabel = tierBenefit.isAll
+      ? '전체 등급'
+      : getMembershipGradeLabel(tierBenefit.grade, referenceData);
     const existingGroup = groups.find((group) => group.context === context);
 
     if (existingGroup) {
@@ -60,8 +62,13 @@ const groupTierBenefitConditions = (
   }, []);
 
 const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProps) => {
+  const { data: referenceData } = useReferenceData();
   const navigate = useNavigate();
   const preferredCarrier = useSelector((state: RootState) => state.auth.user?.carrier);
+  const preferredGrade = useSelector(
+    (state: RootState) =>
+      state.auth.user?.membershipGradeCode ?? state.auth.user?.membershipGrade ?? null
+  );
   const [detail, setDetail] = useState<PartnerBenefitDetailResponse | null>(null);
   const [selectedCarrier, setSelectedCarrier] = useState<CarrierCode | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -114,6 +121,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
     () => detail?.carrierGroups.find((group) => group.carrier === selectedCarrier) ?? null,
     [detail, selectedCarrier]
   );
+  const selectedGrade = selectedGroup?.carrier === preferredCarrier ? preferredGrade : null;
 
   const toggleFavorite = async (benefit: CarrierBenefitDetail) => {
     if (pendingFavoriteId !== null) return;
@@ -194,7 +202,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                     {detail.partnerName}
                   </h4>
                   <p className="mt-1 text-body-4 font-medium text-grey05">
-                    {detail.category || '카테고리 미분류'}
+                    {getCategoryLabel(detail.category, referenceData) || '카테고리 미분류'}
                   </p>
                 </div>
               </section>
@@ -265,16 +273,25 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
 
               <section className="mt-3 space-y-3" role="tabpanel">
                 {selectedGroup?.benefits.map((benefit) => {
+                  const applicableTierBenefits = getApplicableTierBenefits(
+                    benefit.tierBenefits,
+                    selectedGroup.carrier,
+                    selectedGrade
+                  );
                   const orderedGrades = getCarrierGradeOrder(
                     selectedGroup.carrier,
-                    benefit.tierBenefits.map((tierBenefit) => tierBenefit.grade)
+                    applicableTierBenefits.map((tierBenefit) => tierBenefit.grade),
+                    referenceData
                   );
                   const orderedTierBenefits = orderedGrades
                     .map((grade) =>
-                      benefit.tierBenefits.find((tierBenefit) => tierBenefit.grade === grade)
+                      applicableTierBenefits.find((tierBenefit) => tierBenefit.grade === grade)
                     )
                     .filter((tierBenefit) => tierBenefit !== undefined);
-                  const conditionGroups = groupTierBenefitConditions(orderedTierBenefits);
+                  const conditionGroups = groupTierBenefitConditions(
+                    orderedTierBenefits,
+                    referenceData
+                  );
 
                   return (
                     <article
@@ -296,9 +313,6 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                               원본 선택명: {getSourceOptionLabel(benefit)}
                             </p>
                           )}
-                          <p className="mt-1.5 inline-flex rounded-full bg-grey01 px-2.5 py-1 text-[11px] font-bold leading-none text-grey05">
-                            {getUsageTypeLabel(benefit.usageType)}
-                          </p>
                         </div>
                         <button
                           type="button"
@@ -318,79 +332,39 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                       </header>
 
                       <div className="mt-3 border-t border-grey01 pt-3">
-                        <p className="text-[11px] font-bold text-grey05">혜택 내용</p>
-                        <div className="mt-2 space-y-2.5">
-                          {conditionGroups.length > 0 ? (
-                            conditionGroups.map((conditionGroup) => (
-                              <div
-                                key={`${benefit.benefitId}-${conditionGroup.context}`}
-                                className="rounded-[12px] border border-purple01 bg-purple01/55 px-3 py-3"
-                              >
-                                <div
-                                  className="flex flex-wrap gap-1.5"
-                                  aria-label={`적용 등급 ${conditionGroup.gradeLabels.join(', ')}`}
-                                >
-                                  {conditionGroup.gradeLabels.map((gradeLabel) => (
-                                    <span
-                                      key={gradeLabel}
-                                      className="rounded-full bg-white px-2 py-1 text-[11px] font-bold leading-none text-purple05"
-                                    >
-                                      {gradeLabel}
-                                    </span>
-                                  ))}
-                                </div>
-                                <p className="mt-2 whitespace-pre-line break-words text-body-3 font-bold leading-6 text-grey07 max-md:text-body-4 max-md:leading-5">
-                                  {conditionGroup.context}
-                                </p>
-                              </div>
-                            ))
-                          ) : benefit.description ? (
-                            <div className="rounded-[12px] border border-purple01 bg-purple01/55 px-3 py-3">
-                              <p className="whitespace-pre-line break-words text-body-3 font-bold leading-6 text-grey07 max-md:text-body-4 max-md:leading-5">
-                                {benefit.description}
-                              </p>
-                            </div>
-                          ) : null}
+                        <BenefitConditions
+                          conditions={benefit.conditions}
+                          legacyLimit={benefit.benefitLimit}
+                          sourceUrl={benefit.sourceUrl}
+                          sourceCapturedAt={benefit.sourceCapturedAt}
+                          manual={benefit.manual}
+                          usageType={benefit.usageType}
+                          carrier={selectedGroup.carrier}
+                          grade={selectedGrade}
+                          tierConditions={
+                            conditionGroups.length > 0
+                              ? conditionGroups.map((group) => ({
+                                  grades: group.gradeLabels,
+                                  context: group.context,
+                                }))
+                              : !hasStructuredOffers(benefit.conditions) && benefit.description
+                                ? [{ grades: [], context: benefit.description }]
+                                : []
+                          }
+                        />
 
-                          {benefit.benefitLimit ? (
-                            <div className="flex items-start justify-between gap-4 rounded-[10px] bg-grey01/60 px-3 py-2.5">
-                              <p className="shrink-0 text-[11px] font-bold text-grey05">
-                                이용 제한
-                              </p>
-                              <p className="whitespace-pre-line text-right text-body-4 leading-5 text-grey06">
-                                {benefit.benefitLimit}
-                              </p>
-                            </div>
-                          ) : null}
-
-                          {benefit.manual ? (
-                            <details className="rounded-[12px] border border-grey02 px-3 py-2.5">
-                              <summary className="cursor-pointer text-body-4 font-bold text-grey06">
-                                이용 방법 보기
-                              </summary>
-                              <p className="mt-2 whitespace-pre-line break-words text-body-4 leading-5 text-grey06">
-                                {benefit.manual}
-                              </p>
-                            </details>
-                          ) : null}
-
-                          {benefit.url ? (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                window.open(
-                                  benefit.url ?? undefined,
-                                  '_blank',
-                                  'noopener,noreferrer'
-                                )
-                              }
-                              className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[12px] border border-grey02 text-body-4 font-bold text-grey06 transition-colors hover:border-purple02 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
-                            >
-                              통신사 혜택 페이지
-                              <TbExternalLink className="h-4 w-4" aria-hidden="true" />
-                            </button>
-                          ) : null}
-                        </div>
+                        {benefit.url ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              window.open(benefit.url ?? undefined, '_blank', 'noopener,noreferrer')
+                            }
+                            className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[12px] border border-grey02 text-body-4 font-bold text-grey06 transition-colors hover:border-purple02 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                          >
+                            통신사 혜택 페이지
+                            <TbExternalLink className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        ) : null}
                       </div>
                     </article>
                   );
@@ -400,20 +374,22 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
           ) : null}
         </div>
 
-        <div className="shrink-0 border-t border-grey01 bg-white px-4 py-3 max-md:px-3">
-          <button
-            type="button"
-            onClick={() => {
-              navigate(`/map?search=${encodeURIComponent(partner.partnerName)}`);
-              showToast(`${partner.partnerName} 매장을 검색합니다`, 'info');
-              onClose();
-            }}
-            className="mx-auto flex h-11 w-full max-w-[240px] items-center justify-center gap-1.5 rounded-[12px] bg-purple04 text-body-3 font-bold text-white max-md:text-body-4"
-          >
-            <TbMapPin className="h-4 w-4" aria-hidden="true" />
-            지도에서 매장 찾기
-          </button>
-        </div>
+        {hasKnownStores(detail?.hasStores) ? (
+          <div className="shrink-0 border-t border-grey01 bg-white px-4 py-3 max-md:px-3">
+            <button
+              type="button"
+              onClick={() => {
+                navigate(`/map?search=${encodeURIComponent(partner.partnerName)}`);
+                showToast(`${partner.partnerName} 매장을 검색합니다`, 'info');
+                onClose();
+              }}
+              className="mx-auto flex h-11 w-full max-w-[240px] items-center justify-center gap-1.5 rounded-[12px] bg-purple04 text-body-3 font-bold text-white max-md:text-body-4"
+            >
+              <TbMapPin className="h-4 w-4" aria-hidden="true" />
+              지도에서 매장 찾기
+            </button>
+          </div>
+        ) : null}
       </div>
     </Modal>
   );

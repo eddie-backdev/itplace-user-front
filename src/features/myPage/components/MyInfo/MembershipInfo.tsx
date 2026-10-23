@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { getCarrierLabel, getMembershipGradeLabel, isValidCarrierGradePair } from '../../../../utils/membership';
+import { useReferenceData } from '../../../../components/ReferenceDataProvider';
 
 type Props = {
   carrier?: string | null;
@@ -17,7 +18,8 @@ const MembershipInfo: React.FC<Props> = ({
   saving = false,
   onChangeProfileClick,
 }) => {
-  const hasProfile = Boolean(carrier && grade && isValidCarrierGradePair(carrier, grade));
+  const { data } = useReferenceData();
+  const hasProfile = Boolean(carrier && grade && isValidCarrierGradePair(carrier, grade, data));
   const isMvno = carrier === 'MVNO';
   const verificationStatus =
     verified === true
@@ -48,7 +50,7 @@ const MembershipInfo: React.FC<Props> = ({
           ) : hasProfile ? (
             <>
               <p className="mt-2 break-words text-xl font-bold text-brandStrong">
-                {getCarrierLabel(carrier)} · {getMembershipGradeLabel(grade)}
+                {getCarrierLabel(carrier)} · {getMembershipGradeLabel(grade, data)}
               </p>
               <p className="mt-1 text-sm text-grey05">{verificationStatus}</p>
             </>

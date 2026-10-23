@@ -324,8 +324,9 @@
   margin: 2px 0 0;
   color: var(--itplace-color-muted);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.5;
   overflow-wrap: anywhere;
+  word-break: keep-all;
 }
 .offerLink {
   display: inline-flex;
@@ -402,12 +403,15 @@
   min-width: 0;
   gap: 4px;
 }
-.shelfCopy strong,
-.shelfCopy span,
-.shelfCopy small {
+.shelfCopy strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.shelfCopy span,
+.shelfCopy small {
+  overflow-wrap: anywhere;
+  word-break: keep-all;
 }
 .shelfCopy strong {
   font-size: 14px;
@@ -416,6 +420,10 @@
   font-size: 14px;
 }
 .shelfCopy small {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   color: var(--itplace-color-muted);
   font-size: 12px;
 }

@@ -13,6 +13,8 @@ import LoadingSpinner from '../../../../../components/LoadingSpinner';
 import { RootState } from '../../../../../store';
 import { CarrierCode, isCarrierCode } from '../../../../../utils/membership';
 import { addFavoritesChangedListener } from '../../../utils/favoriteEvents';
+import Link from 'next/link';
+import { getStorePath } from '@/utils/storeSeo';
 
 interface StoreDetailCardProps {
   platform: Platform;
@@ -418,6 +420,12 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({
           postCode={platform.postCode}
           distance={platform.distance}
         />
+        <Link
+          href={getStorePath(platform.storeId, platform.name)}
+          className="mb-5 inline-flex min-h-11 items-center rounded-lg px-1 text-sm font-medium text-[#6154D9] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9]"
+        >
+          매장 정보 페이지
+        </Link>
 
         {isLoading && !hasLocalBenefitDetails ? (
           <div className="flex h-40 items-center justify-center">

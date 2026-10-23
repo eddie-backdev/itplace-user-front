@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import JsonLd from '@/components/JsonLd';
 import AppProviders from './AppProviders';
 import { SITE_ORIGIN } from '@/lib/metadata';
+import { getPublicReferenceData } from '@/server/userApi';
 import '@/index.css';
 
 const description =
@@ -104,11 +105,13 @@ const websiteStructuredData = {
   ],
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const referenceData = await getPublicReferenceData();
+
   return (
     <html lang="ko">
       <body>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders initialReferenceData={referenceData}>{children}</AppProviders>
         <JsonLd data={websiteStructuredData} />
       </body>
     </html>

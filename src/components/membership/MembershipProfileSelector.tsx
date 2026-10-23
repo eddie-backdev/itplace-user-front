@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import clsx from 'clsx';
 import { CARRIER_OPTIONS, getMembershipGradeOptions, isCarrierCode } from '../../utils/membership';
+import { useReferenceData } from '../ReferenceDataProvider';
 
 type MembershipProfileSelectorProps = {
   carrier: string;
@@ -34,7 +35,8 @@ const MembershipProfileSelector = ({
 }: MembershipProfileSelectorProps) => {
   const carrierId = useId();
   const gradeId = useId();
-  const gradeOptions = getMembershipGradeOptions(carrier);
+  const { data } = useReferenceData();
+  const gradeOptions = getMembershipGradeOptions(carrier, data);
 
   const handleCarrierChange = (nextCarrier: string) => {
     onCarrierChange(nextCarrier);

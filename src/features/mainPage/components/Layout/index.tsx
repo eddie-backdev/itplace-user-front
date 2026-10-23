@@ -10,7 +10,8 @@ import SidebarSection from '../SidebarSection';
 import MapSection from '../MapSection';
 import SearchSection from '../SidebarSection/SearchSection';
 import { Platform, MapLocation, MapBounds, MapCluster, MapViewportChangeReason } from '../../types';
-import { CATEGORIES } from '../../constants';
+import { toCategoryOptions } from '@/utils/referenceData';
+import { useReferenceData } from '@/components/ReferenceDataProvider';
 import { useStoreData } from '../../hooks/useStoreData';
 import { getViewportChangeActions } from '../../utils/mapUtils';
 import { TbChevronLeft } from 'react-icons/tb';
@@ -60,6 +61,8 @@ const getBottomSheetMaxHeight = (viewportHeight: number) => {
  */
 
 const MainPageLayout: React.FC = () => {
+  const { data: referenceData } = useReferenceData();
+  const categories = toCategoryOptions(referenceData);
   const [isMapUnavailable, setIsMapUnavailable] = useState(
     () => getKakaoMapSdkStatus() === 'error'
   );
@@ -735,7 +738,7 @@ const MainPageLayout: React.FC = () => {
                   onLocationChange={handleLocationChange}
                   onMapCenterChange={handleMapCenterChange}
                   onLocationMove={handleLocationMove}
-                  categories={CATEGORIES}
+                  categories={categories}
                   selectedCategory={selectedCategory || '전체'}
                   onCategorySelect={handleCategorySelect}
                   hideCategoryTabs
@@ -857,7 +860,7 @@ const MainPageLayout: React.FC = () => {
                 onLocationChange={handleLocationChange}
                 onMapCenterChange={handleMapCenterChange}
                 onLocationMove={handleLocationMove}
-                categories={CATEGORIES}
+                categories={categories}
                 selectedCategory={selectedCategory || '전체'}
                 onCategorySelect={handleCategorySelect}
                 hideCategoryTabs

@@ -7,6 +7,7 @@ import {
 import { OPTIONAL_SIGNUP_CARRIER } from '../../utils/signupMembership.mjs';
 import styles from './SignupForm.module.css';
 import MembershipGradeSelect from './MembershipGradeSelect';
+import { useReferenceData } from '../../../../components/ReferenceDataProvider';
 
 const SIGNUP_CARRIER_OPTIONS = [
   ...CARRIER_OPTIONS,
@@ -29,7 +30,8 @@ export default function SignupMembershipFields({
 }: SignupMembershipFieldsProps) {
   const carrierGroupName = `signup-carrier-${useId()}`;
   const gradeFieldId = `${carrierGroupName}-grade`;
-  const gradeOptions = getMembershipGradeOptions(carrier);
+  const { data } = useReferenceData();
+  const gradeOptions = getMembershipGradeOptions(carrier, data);
   const carrierSkipped = carrier === OPTIONAL_SIGNUP_CARRIER;
 
   const changeCarrier = (nextCarrier: string) => {

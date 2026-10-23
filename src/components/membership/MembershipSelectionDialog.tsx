@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import MembershipProfileSelector from './MembershipProfileSelector';
 import { isCarrierCode, isValidCarrierGradePair } from '@/utils/membership';
 import styles from './MembershipSelectionDialog.module.css';
+import { useReferenceData } from '@/components/ReferenceDataProvider';
 
 export type MembershipSelectionDialogProps = {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export default function MembershipSelectionDialog({
   onApply,
 }: MembershipSelectionDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const { data, error, retry } = useReferenceData();
   const [draftCarrier, setDraftCarrier] = useState(carrier);
   const [draftGrade, setDraftGrade] = useState(grade);
 
@@ -48,7 +50,7 @@ export default function MembershipSelectionDialog({
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!isCarrierCode(draftCarrier) || !isValidCarrierGradePair(draftCarrier, draftGrade)) return;
+    if (!isCarrierCode(draftCarrier) || !isValidCarrierGradePair(draftCarrier, draftGrade, data)) return;
     onApply(draftCarrier, draftGrade);
     onClose();
   };
@@ -81,12 +83,13 @@ export default function MembershipSelectionDialog({
         <button
           type="submit"
           disabled={
-            !isCarrierCode(draftCarrier) || !isValidCarrierGradePair(draftCarrier, draftGrade)
+            !isCarrierCode(draftCarrier) || !isValidCarrierGradePair(draftCarrier, draftGrade, data)
           }
           className={styles.submit}
         >
           선택 완료
         </button>
+        {error ? <p role="alert">참조 코드 정보를 불러오지 못했습니다. <button type="button" onClick={retry}>다시 시도</button></p> : null}
       </form>
     </dialog>
   );

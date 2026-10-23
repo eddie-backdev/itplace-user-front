@@ -3,6 +3,7 @@ import { TbBookmark } from 'react-icons/tb';
 import { FavoriteItem } from '../../../../types/favorites';
 import { getPartnerBenefitPreview } from '../../../../utils/benefitPreview';
 import { getCarrierLabel, isCarrierCode } from '../../../../utils/membership';
+import { useReferenceData } from '../../../../components/ReferenceDataProvider';
 
 interface BenefitCardListProps {
   items: FavoriteItem[];
@@ -29,16 +30,21 @@ export default function BenefitCardList({
   setSelectedItems,
   onRequestDelete,
 }: BenefitCardListProps) {
+  const { data: referenceData } = useReferenceData();
   return (
     <div className="divide-y divide-warmBorder border-y border-warmBorder">
       {items.map((item) => {
-        const previewSource = { partnerName: item.partnerName, previews: item.previews };
+        const previewSource = {
+          partnerName: item.partnerName,
+          previews: item.previews,
+        };
         const preview =
           getPartnerBenefitPreview(
             previewSource,
             isCarrierCode(userCarrier) ? userCarrier : undefined,
-            userGrade ?? undefined
-          ) ?? getPartnerBenefitPreview(previewSource);
+            userGrade ?? undefined,
+            referenceData
+          ) ?? getPartnerBenefitPreview(previewSource, undefined, undefined, referenceData);
         const isSelected = selectedItems.includes(item.benefitId);
         const isActive = selectedId === item.benefitId;
         const checkboxId = `favorite-benefit-${item.benefitId}`;

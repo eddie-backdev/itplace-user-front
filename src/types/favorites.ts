@@ -1,4 +1,5 @@
 import type { PartnerBenefitPreview } from '@/features/allBenefitsPage/apis/allBenefitsApi';
+import type { BenefitConditions } from '@/features/allBenefitsPage/apis/benefitConditions.mjs';
 
 // 즐겨찾기 목록 아이템
 export interface FavoriteItem {
@@ -46,6 +47,10 @@ export interface FavoriteDetail {
     carrier: string;
     description: string | null;
     benefitLimit: string | null;
+    conditions?: BenefitConditions | null;
+    sourceCapturedAt?: string | null;
+    sourceUrl?: string | null;
+    manual?: string | null;
   }>;
 }
 

@@ -1,21 +1,8 @@
-import benefitDisplay from '../content/benefit-display.json';
+import { getBenefitGradeOptions, type ReferenceData } from './referenceData';
 
 export type CarrierCode = 'LGU' | 'SKT' | 'KT';
 
-export type MembershipGradeCode =
-  | 'BASIC'
-  | 'VIP'
-  | 'VVIP'
-  | 'VIP콕'
-  | 'SKT_SILVER'
-  | 'SKT_GOLD'
-  | 'SKT_VIP'
-  | 'KT_GENERAL'
-  | 'KT_WHITE'
-  | 'KT_SILVER'
-  | 'KT_GOLD'
-  | 'KT_VIP'
-  | 'KT_VVIP';
+export type MembershipGradeCode = string;
 
 export type MembershipGradeOption = {
   code: MembershipGradeCode;
@@ -28,27 +15,6 @@ export const CARRIER_OPTIONS: Array<{ code: CarrierCode; label: string }> = [
   { code: 'LGU', label: 'LG U+' },
 ];
 
-export const MEMBERSHIP_GRADE_OPTIONS_BY_CARRIER: Record<CarrierCode, MembershipGradeOption[]> = {
-  LGU: [
-    { code: 'BASIC', label: '우수' },
-    { code: 'VIP', label: 'VIP' },
-    { code: 'VVIP', label: 'VVIP' },
-  ],
-  SKT: [
-    { code: 'SKT_SILVER', label: 'Silver' },
-    { code: 'SKT_GOLD', label: 'Gold' },
-    { code: 'SKT_VIP', label: 'VIP' },
-  ],
-  KT: [
-    { code: 'KT_GENERAL', label: '일반' },
-    { code: 'KT_WHITE', label: 'White' },
-    { code: 'KT_SILVER', label: 'Silver' },
-    { code: 'KT_GOLD', label: 'Gold' },
-    { code: 'KT_VIP', label: 'VIP' },
-    { code: 'KT_VVIP', label: 'VVIP' },
-  ],
-};
-
 const CARRIER_LABELS = CARRIER_OPTIONS.reduce<Record<string, string>>(
   (acc, option) => {
     acc[option.code] = option.label;
@@ -57,7 +23,6 @@ const CARRIER_LABELS = CARRIER_OPTIONS.reduce<Record<string, string>>(
   { MVNO: '알뜰폰' }
 );
 
-const GRADE_LABELS: Record<string, string> = benefitDisplay.gradeLabels;
 
 export const isCarrierCode = (value?: string | null): value is CarrierCode =>
   value === 'LGU' || value === 'SKT' || value === 'KT';
@@ -67,54 +32,63 @@ export const getCarrierLabel = (carrier?: string | null) => {
   return CARRIER_LABELS[carrier] ?? carrier;
 };
 
-export const getMembershipGradeOptions = (carrier?: string | null): MembershipGradeOption[] => {
-  if (!isCarrierCode(carrier)) return [];
-  return MEMBERSHIP_GRADE_OPTIONS_BY_CARRIER[carrier];
+export const getMembershipGradeOptions = (carrier?: string | null, referenceData?: ReferenceData | null): MembershipGradeOption[] => {
+  if (!isCarrierCode(carrier) || !referenceData) return [];
+  return referenceData.grades.filter((grade) => grade.carrier === carrier && grade.active && grade.profileSelectable)
+    .sort((a, b) => a.sortOrder - b.sortOrder).map(({ code, label }) => ({ code, label }));
 };
 
-export const getMembershipGradeLabel = (grade?: string | null) => {
+export const getBenefitMembershipGradeOptions = (carrier?: string | null, referenceData?: ReferenceData | null): MembershipGradeOption[] =>
+  getBenefitGradeOptions(carrier, referenceData);
+
+export const getMembershipGradeLabel = (grade?: string | null, referenceData?: ReferenceData | null) => {
   if (!grade) return '미선택';
-  return GRADE_LABELS[grade] ?? grade;
+  return referenceData?.grades.find((item) => item.code === grade)?.label ?? grade;
 };
 
-export const isValidCarrierGradePair = (carrier?: string | null, grade?: string | null) => {
+export const isValidCarrierGradePair = (carrier?: string | null, grade?: string | null, referenceData?: ReferenceData | null) => {
   if (!carrier && !grade) return true;
-  if (!isCarrierCode(carrier) || !grade) return false;
-  return MEMBERSHIP_GRADE_OPTIONS_BY_CARRIER[carrier].some((option) => option.code === grade);
+  if (!isCarrierCode(carrier) || !grade || !referenceData) return false;
+  return getMembershipGradeOptions(carrier, referenceData).some((option) => option.code === grade);
 };
 
-export const getMembershipFilter = (carrier?: string | null, grade?: string | null) =>
-  isCarrierCode(carrier) && (!grade || isValidCarrierGradePair(carrier, grade))
+export const getMembershipFilter = (carrier?: string | null, grade?: string | null, referenceData?: ReferenceData | null) =>
+  isCarrierCode(carrier) && (!grade || isValidCarrierGradePair(carrier, grade, referenceData))
     ? { carrier, grade: grade || undefined }
     : undefined;
+
+export const getBenefitMembershipFilter = (carrier?: string | null, grade?: string | null, referenceData?: ReferenceData | null) =>
+  isCarrierCode(carrier) && (!grade || getBenefitGradeOptions(carrier, referenceData).some((option) => option.code === grade))
+    ? { carrier, grade: grade || undefined }
+    : undefined;
+
+export const isValidBenefitCarrierGradePair = (carrier?: string | null, grade?: string | null, referenceData?: ReferenceData | null) =>
+  !carrier && !grade ? true : Boolean(grade && getBenefitMembershipFilter(carrier, grade, referenceData));
 
 export const isGradeApplicableToProfile = ({
   benefitCarrier,
   benefitGrade,
   userCarrier,
   userGrade,
+  referenceData,
 }: {
   benefitCarrier?: string | null;
   benefitGrade?: string | null;
   userCarrier?: string | null;
   userGrade?: string | null;
+  referenceData?: ReferenceData | null;
 }) => {
   if (!benefitGrade || !userGrade) return false;
   if (benefitCarrier && userCarrier && benefitCarrier !== userCarrier) return false;
 
   if (benefitGrade === userGrade) return true;
 
-  return (
-    userCarrier === 'LGU' &&
-    benefitGrade === 'VIP콕' &&
-    (userGrade === 'VIP' || userGrade === 'VVIP')
-  );
+  return referenceData?.gradeMatches.some((match) => match.carrier === userCarrier && match.profileGrade === userGrade && match.benefitGrade === benefitGrade) ?? false;
 };
 
-export const getCarrierGradeOrder = (carrier?: string | null, availableGrades: string[] = []) => {
-  const baseOrder = getMembershipGradeOptions(carrier).map((option) => option.code as string);
-  const lguVipKok = carrier === 'LGU' && availableGrades.includes('VIP콕') ? ['VIP콕'] : [];
-  const ordered = [...lguVipKok, ...baseOrder];
+export const getCarrierGradeOrder = (carrier?: string | null, availableGrades: string[] = [], referenceData?: ReferenceData | null) => {
+  const baseOrder = referenceData?.grades.filter(({ carrier: gradeCarrier }) => gradeCarrier === carrier).sort((a, b) => a.sortOrder - b.sortOrder).map(({ code }) => code) ?? [];
+  const ordered = baseOrder;
   const extras = availableGrades.filter((grade) => !ordered.includes(grade));
 
   return [...ordered, ...extras];

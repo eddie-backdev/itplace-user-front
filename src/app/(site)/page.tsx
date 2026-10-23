@@ -2,9 +2,9 @@ import JsonLd from '@/components/JsonLd';
 import { createPageStructuredData } from '@/lib/structuredData';
 import BenefitHomePage from '@/screens/BenefitHomePage';
 import { createPageMetadata } from '@/lib/metadata';
-import { getPublicPartnerBenefits } from '@/server/userApi';
-import { CARRIER_OPTIONS, isCarrierCode, isValidCarrierGradePair } from '@/utils/membership';
-import { CATEGORIES } from '@/features/mainPage/constants';
+import { getPublicPartnerBenefits, getPublicReferenceData } from '@/server/userApi';
+import { CARRIER_OPTIONS, getBenefitMembershipGradeOptions, getBenefitMembershipFilter, isCarrierCode } from '@/utils/membership';
+import { toCategoryOptions } from '@/utils/referenceData';
 
 const pageMetadata = {
   title: '통신 3사 멤버십 혜택 비교·검색 | 잇플레이스',
@@ -21,27 +21,21 @@ type HomePageProps = {
 const firstValue = (value: string | string[] | undefined) =>
   Array.isArray(value) ? value[0] : value;
 
-const defaultGrade: Record<string, string> = {
-  SKT: 'SKT_VIP',
-  KT: 'KT_VIP',
-  LGU: 'VIP',
-};
-
 export default async function HomePage({ searchParams }: HomePageProps) {
+  const referenceData = await getPublicReferenceData();
   const query = await searchParams;
   const carrierValue = firstValue(query.carrier);
   const selectedCarrier = isCarrierCode(carrierValue) ? carrierValue : 'SKT';
   const gradeValue = firstValue(query.grade);
-  const selectedGrade = isValidCarrierGradePair(selectedCarrier, gradeValue)
-    ? gradeValue!
-    : defaultGrade[selectedCarrier];
+  const selectedGrade = getBenefitMembershipFilter(selectedCarrier, gradeValue, referenceData)?.grade
+    ?? getBenefitMembershipGradeOptions(selectedCarrier, referenceData)[0]?.code ?? '';
   const requestedCategory = firstValue(query.category);
-  const category = CATEGORIES.some(({ id }) => id === requestedCategory && id !== '전체')
+  const category = toCategoryOptions(referenceData).some(({ id }) => id === requestedCategory && id !== '전체')
     ? requestedCategory
     : undefined;
   const sections = await Promise.all(
     CARRIER_OPTIONS.map(async ({ code }) => {
-      const grade = code === selectedCarrier ? selectedGrade : defaultGrade[code];
+      const grade = code === selectedCarrier ? selectedGrade : getBenefitMembershipGradeOptions(code, referenceData)[0]?.code ?? '';
       const data = await getPublicPartnerBenefits({ carrier: code, grade, category, size: 12 });
       return { carrier: code, partners: data?.content ?? null };
     })

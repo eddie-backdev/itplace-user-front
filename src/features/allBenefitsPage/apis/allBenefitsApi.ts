@@ -1,5 +1,6 @@
 import axiosInstance from '../../../apis/axiosInstance';
 import { CarrierCode } from '../../../utils/membership';
+import type { BenefitConditions } from './benefitConditions.mjs';
 
 import {
   normalizePartnerBenefitDetail,
@@ -23,8 +24,8 @@ export type {
 export interface BenefitItem {
   benefitId: number;
   benefitName: string;
-  mainCategory: 'VIP_COCK' | 'BASIC_BENEFIT';
-  usageType: 'ONLINE' | 'OFFLINE';
+  mainCategory: string;
+  usageType: 'ONLINE' | 'OFFLINE' | 'BOTH' | 'UNKNOWN';
   category: string;
   image: string;
   carrier?: string | null;
@@ -42,7 +43,7 @@ export interface BenefitResponse {
 }
 
 export interface BenefitApiParams {
-  mainCategory: 'VIP_COCK' | 'BASIC_BENEFIT';
+  mainCategory: string;
   page?: number;
   size?: number;
   keyword?: string;
@@ -57,8 +58,25 @@ export interface PartnerBenefitPreview {
   benefitId: number;
   benefitName: string;
   benefitLimit: string | null;
-  usageType: 'ONLINE' | 'OFFLINE' | 'BOTH';
+  usageType: 'ONLINE' | 'OFFLINE' | 'BOTH' | 'UNKNOWN';
   tierBenefits: Pick<TierBenefit, 'grade' | 'context' | 'isAll'>[];
+  summary?: {
+    offerKey: string;
+    title: string;
+    condition: string;
+    limit: string;
+    usage: 'ONLINE' | 'OFFLINE' | 'BOTH' | 'UNKNOWN';
+    grades: string[];
+    allGrades: boolean;
+    version: '1';
+  } | null;
+  offers?: BenefitConditions['offers'];
+  offerResolution?: BenefitConditions['offerResolution'];
+  channelDecision?: BenefitConditions['channelDecision'];
+  sourceBlocks?: BenefitConditions['sourceBlocks'];
+  normalizationIssues?: BenefitConditions['normalizationIssues'];
+  sourceUrl?: string | null;
+  sourceCapturedAt?: string | null;
 }
 
 export interface PartnerBenefitItem {
@@ -102,6 +120,9 @@ export interface BenefitDetailResponse {
   manual: string;
   url: string;
   sourceUrl?: string | null;
+  sourceCapturedAt?: string | null;
+  conditions?: BenefitConditions | null;
+  usageType?: 'ONLINE' | 'OFFLINE' | 'BOTH' | 'UNKNOWN';
   partnerName: string;
   carrier?: string | null;
   image: string;
@@ -175,7 +196,7 @@ export const getPartnerBenefitDetail = async (
   const response = await axiosInstance.get(`/api/v1/benefits/partners/${partnerId}`, {
     params: membership
       ? { ...membership, mainCategory: undefined }
-      : { mainCategory: 'BASIC_BENEFIT' },
+      : {},
   });
   return normalizePartnerBenefitDetail(response.data.data);
 };

@@ -1,634 +1,467 @@
+'use client';
+
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { TbSend, TbRefresh, TbX } from 'react-icons/tb';
+import { TbMessageCircle, TbSend, TbRefresh, TbX, TbMovie, TbCoffee, TbDeviceLaptop, TbMapPin, TbChevronRight, TbArrowUpRight } from 'react-icons/tb';
 import SafeImage from '../../../components/SafeImage';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import {
-  getQuestionRecommendation,
+  streamQuestionRecommendation,
   QuestionRecommendationError,
 } from '../../mainPage/api/questionRecommendationApi';
 import { getCurrentLocation } from '../../mainPage/api/storeApi';
 import { useResponsive } from '../../../hooks/useResponsive';
-import type { QuestionRecommendationPartner } from '../../../types/questionRecommendation';
+import { getPartnerBenefitPath } from '../../../utils/partnerSeo';
+import { getBenefitMembershipFilter, getCarrierLabel, getMembershipGradeLabel } from '../../../utils/membership';
+import { useReferenceData } from '../../../components/ReferenceDataProvider';
+import { getCategoryLabel } from '../../../utils/referenceData';
+import { buildBrandCardSummary, buildChatHistory, createRequestGeneration, createRetryContext, getPreviousCandidateKeys, groupPartnersByBrand, normalizeStoredChatMessages } from '../utils/chatModel.mjs';
+import type {
+  QuestionRecommendationMessage,
+  QuestionRecommendationPartner,
+  QuestionRecommendationData,
+} from '../../../types/questionRecommendation';
+import styles from './QuestionRecommendationChat.module.css';
 
-const QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY = 'questionRecommendationChatMessages';
-const LEGACY_CHAT_MESSAGES_KEY = 'chatMessages';
-const INITIAL_MESSAGE = '어떤 혜택이나 장소가 필요하세요? 질문형 AI 추천에 편하게 물어보세요!';
-const DEFAULT_RECOMMENDATION_LOCATION = { lat: 37.5665, lng: 126.978 };
-
-type RecommendationLocation = typeof DEFAULT_RECOMMENDATION_LOCATION;
+const STORAGE_PREFIX = 'questionRecommendationChatMessages:';
+const INITIAL_MESSAGE = '어떤 혜택이 궁금하세요? 예시를 눌러 바로 물어보거나 직접 질문해보세요.';
+const MAX_QUESTION = 500;
+const MAX_SAVED_MESSAGES = 30;
+const EXAMPLES = ['영화 할인', '커피 혜택', '온라인 혜택', '근처에서 쓸 혜택'];
+const EXAMPLE_ICONS = [TbMovie, TbCoffee, TbDeviceLaptop, TbMapPin];
+const CARRIERS = ['SKT', 'KT', 'LGU'];
+const STREAM_STAGE_LABELS = {
+  connecting: '질문을 보내고 있어요…',
+  planning: '질문을 확인하고 있어요…',
+  searching: '혜택을 찾고 있어요…',
+  answering: '혜택 설명을 확인하고 있어요…',
+} as const;
+const usageLabel = (usageType?: string) =>
+  usageType === 'ONLINE' ? '온라인' : usageType === 'OFFLINE' ? '매장' : usageType === 'BOTH' ? '온라인·매장' : null;
 
 interface Message {
   sender: 'user' | 'bot';
   text: string;
   partners?: QuestionRecommendationPartner[];
+  suggestedQuestions?: string[];
+  retry?: { question: string; messages: QuestionRecommendationMessage[]; previousCandidateKeys: string[] };
+  includeInHistory?: boolean;
 }
 
-interface QuestionRecommendationChatRoomProps {
+interface Props {
   onClose: () => void;
-  presentation?: 'embedded' | 'drawer' | 'modal';
+  accountKey?: string;
+  presentation?: 'embedded' | 'drawer' | 'modal' | 'floating';
   onSearchPartner?: (partnerName: string) => void;
   onChangeTab?: (tabId: string) => void;
   onBottomSheetReset?: () => void;
 }
 
-const normalizeBotText = (text: string) =>
-  text
-    .replace(/\r\n/g, '\n')
-    .replace(/[ \t]*•[ \t]*/g, '\n• ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-
-const BotMessageContent: React.FC<{ text: string }> = ({ text }) => {
-  const lines = normalizeBotText(text).split('\n');
-
-  return (
-    <div className="space-y-2 leading-relaxed">
-      {lines.map((line, index) => {
-        const trimmedLine = line.trim();
-        if (!trimmedLine) {
-          return <div key={index} className="h-1" aria-hidden="true" />;
-        }
-
-        if (trimmedLine.startsWith('•')) {
-          return (
-            <div key={index} className="flex gap-2">
-              <span className="mt-[1px] text-purple04" aria-hidden="true">
-                •
-              </span>
-              <span className="min-w-0 flex-1">{trimmedLine.slice(1).trim()}</span>
-            </div>
-          );
-        }
-
-        return <p key={index}>{trimmedLine}</p>;
-      })}
-    </div>
-  );
+const safeRead = (key: string): Message[] => {
+  try {
+    return normalizeStoredChatMessages(JSON.parse(sessionStorage.getItem(key) || '[]')) as Message[];
+  } catch {
+    return [];
+  }
 };
 
-const QuestionRecommendationChatRoom: React.FC<QuestionRecommendationChatRoomProps> = ({
+const safeWrite = (key: string, messages: Message[]) => {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(messages.slice(-MAX_SAVED_MESSAGES)));
+  } catch {
+    // Storage can be disabled or full; in-memory chat remains usable.
+  }
+};
+
+const dedupePartners = (partners: QuestionRecommendationPartner[]) => {
+  const seen = new Set<string>();
+  return partners.filter((partner) => {
+    const key = partner.candidateKey || [
+      partner.policyId ?? partner.partnerId ?? partner.partnerName,
+      partner.tierBenefitId ?? '',
+      partner.benefitId ?? partner.benefitName ?? '',
+      partner.carrier ?? '',
+      partner.grade ?? '',
+      partner.usageType ?? '',
+    ].join(':');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+const QuestionRecommendationChatRoom: React.FC<Props> = ({
   onClose,
+  accountKey = 'legacy',
   onSearchPartner,
-  onChangeTab,
   onBottomSheetReset,
   presentation = 'embedded',
 }) => {
+  const { data: referenceData } = useReferenceData();
   const { isMobile, isTablet } = useResponsive();
   const isDrawer = presentation === 'drawer' && !isMobile && !isTablet;
-  const [isBotLoading, setIsBotLoading] = React.useState(false);
+  const storageKey = `${STORAGE_PREFIX}${encodeURIComponent(accountKey)}`;
+  const [messages, setMessages] = React.useState<Message[]>(() => safeRead(storageKey));
   const [input, setInput] = React.useState('');
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const recommendationLocationRef = React.useRef<RecommendationLocation | null>(null);
-  const pendingLocationRef = React.useRef<Promise<RecommendationLocation> | null>(null);
-  const [isInitialized, setIsInitialized] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [streamStage, setStreamStage] = React.useState<keyof typeof STREAM_STAGE_LABELS | null>(null);
+  const [previewPartners, setPreviewPartners] = React.useState<QuestionRecommendationPartner[]>([]);
+  const [errorText, setErrorText] = React.useState('');
   const [showClearConfirm, setShowClearConfirm] = React.useState(false);
+  const endRef = React.useRef<HTMLDivElement>(null);
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  const clearDialogRef = React.useRef<HTMLDivElement>(null);
+  const clearCancelRef = React.useRef<HTMLButtonElement>(null);
+  const clearButtonRef = React.useRef<HTMLButtonElement>(null);
+  const wasClearConfirmRef = React.useRef(false);
+  const previousFocusRef = React.useRef<HTMLElement | null>(null);
+  const inFlightRef = React.useRef(false);
+  const controllerRef = React.useRef<AbortController | null>(null);
+  const requestGenerationRef = React.useRef(createRequestGeneration());
+  const composingRef = React.useRef(false);
 
-  // sessionStorage에서 메시지 복원
-  const getInitialMessages = (): Message[] => {
-    const saved =
-      sessionStorage.getItem(QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY) ??
-      sessionStorage.getItem(LEGACY_CHAT_MESSAGES_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      } catch {
-        // 파싱 실패 시 기본값 반환
-      }
-    }
-    return [{ sender: 'bot', text: INITIAL_MESSAGE }];
-  };
-
-  const [messages, setMessages] = React.useState<Message[]>(getInitialMessages());
-
-  // 컴포넌트 마운트 시 sessionStorage에서 메시지 복원
   React.useEffect(() => {
-    const saved =
-      sessionStorage.getItem(QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY) ??
-      sessionStorage.getItem(LEGACY_CHAT_MESSAGES_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setMessages(parsed);
-        }
-      } catch (error) {
-        console.warn('sessionStorage 복원 실패:', error);
-      }
-    }
-    setIsInitialized(true);
+    safeWrite(storageKey, messages);
+    endRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+  }, [messages, previewPartners, streamStage, isLoading, errorText, storageKey]);
+
+  React.useEffect(() => {
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.focus();
+    return () => previousFocusRef.current?.focus();
   }, []);
 
-  // 메시지 변경 시 sessionStorage에 저장 (초기화 완료 후에만)
   React.useEffect(() => {
-    if (isInitialized) {
-      sessionStorage.setItem(QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY, JSON.stringify(messages));
-      sessionStorage.removeItem(LEGACY_CHAT_MESSAGES_KEY);
+    if (showClearConfirm) {
+      requestAnimationFrame(() => clearCancelRef.current?.focus());
+    } else if (wasClearConfirmRef.current) {
+      requestAnimationFrame(() => clearButtonRef.current?.focus());
     }
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, isBotLoading, isInitialized]);
+    wasClearConfirmRef.current = showClearConfirm;
+  }, [showClearConfirm]);
 
-  // 채팅방 닫기 (세션 유지)
-  const handleClose = () => {
-    onClose();
-  };
-
-  // 채팅 내용 초기화
-  const handleClearChat = () => {
-    const initialMessages: Message[] = [{ sender: 'bot', text: INITIAL_MESSAGE }];
-    setMessages(initialMessages);
-    sessionStorage.setItem(
-      QUESTION_RECOMMENDATION_CHAT_MESSAGES_KEY,
-      JSON.stringify(initialMessages)
-    );
-    sessionStorage.removeItem(LEGACY_CHAT_MESSAGES_KEY);
-    setShowClearConfirm(false);
-  };
-
-  // 컴포넌트 마운트/언마운트 시 body 스타일 관리
   React.useEffect(() => {
-    // 컴포넌트 마운트 시 현재 스크롤 위치 저장
     const originalScrollY = window.scrollY;
-
-    // 모바일에서만 body 스크롤 방지 (키보드로 인한 레이아웃 변화 방지)
     if (isMobile) {
-      // 현재 body 스타일 저장
-      const originalBodyHeight = document.body.style.height;
-      const originalBodyOverflow = document.body.style.overflow;
-      const originalBodyPosition = document.body.style.position;
-
-      // body 스크롤 방지
+      const { height, overflow, position, top, left, right } = document.body.style;
       document.body.style.position = 'fixed';
       document.body.style.top = `-${originalScrollY}px`;
       document.body.style.left = '0';
       document.body.style.right = '0';
       document.body.style.overflow = 'hidden';
-
-      // 바텀시트를 초기 상태로 리셋
-      if (onBottomSheetReset) {
-        onBottomSheetReset();
-      }
-
-      // 컴포넌트 언마운트 시 정리
+      onBottomSheetReset?.();
       return () => {
-        // body 스타일 복원
-        document.body.style.height = originalBodyHeight;
-        document.body.style.overflow = originalBodyOverflow;
-        document.body.style.position = originalBodyPosition;
-        document.body.style.top = '';
-        document.body.style.left = '';
-        document.body.style.right = '';
-
-        // 스크롤 위치 복원
-        requestAnimationFrame(() => {
-          window.scrollTo(0, originalScrollY);
-        });
+        Object.assign(document.body.style, { height, overflow, position, top, left, right });
+        requestAnimationFrame(() => window.scrollTo(0, originalScrollY));
       };
-    } else {
-      // 모바일이 아닌 경우 바텀시트만 리셋
-      if (onBottomSheetReset) {
-        onBottomSheetReset();
-      }
     }
-  }, [onBottomSheetReset, isMobile]);
+    onBottomSheetReset?.();
+  }, [isMobile, onBottomSheetReset]);
 
-  // 모바일 키보드 처리를 위한 추가 이펙트
   React.useEffect(() => {
     if (!isMobile) return;
-
-    const handleResize = () => {
-      // 키보드가 나타나거나 사라질 때의 처리
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    };
-
-    // 초기 설정
-    handleResize();
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-
+    const updateViewport = () =>
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    window.addEventListener('orientationchange', updateViewport);
     return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
+      window.removeEventListener('resize', updateViewport);
+      window.removeEventListener('orientationchange', updateViewport);
       document.documentElement.style.removeProperty('--vh');
     };
   }, [isMobile]);
 
-  const resolveRecommendationLocation =
-    React.useCallback(async (): Promise<RecommendationLocation> => {
-      if (recommendationLocationRef.current) {
-        return recommendationLocationRef.current;
-      }
-
-      if (!pendingLocationRef.current) {
-        pendingLocationRef.current = getCurrentLocation()
-          .then((location) => {
-            recommendationLocationRef.current = location;
-            return location;
-          })
-          .catch((locationError) => {
-            console.warn('위치 정보를 가져올 수 없어 기본 위치를 사용합니다:', locationError);
-            recommendationLocationRef.current = DEFAULT_RECOMMENDATION_LOCATION;
-            return DEFAULT_RECOMMENDATION_LOCATION;
-          })
-          .finally(() => {
-            pendingLocationRef.current = null;
-          });
-      }
-
-      return pendingLocationRef.current;
-    }, []);
-
-  const getRecommendationErrorMessage = (error: unknown) => {
-    if (error instanceof QuestionRecommendationError) {
-      switch (error.code) {
-        case 'FORBIDDEN_WORD_DETECTED':
-          return '죄송합니다. 부적절한 내용이 포함된 질문입니다. 다른 질문으로 시도해주세요.';
-        case 'NO_STORE_FOUND':
-          return '현재 위치 주변에 해당하는 제휴처가 없습니다. 다른 지역이나 다른 키워드로 검색해보세요.';
-        case 'AI_SERVICE_UNAVAILABLE':
-        case 'INTERNAL_SERVER_ERROR':
-          return '현재 AI 서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
-        default:
-          return error.message;
-      }
-    }
-
-    if (error instanceof Error) {
-      return error.message;
-    }
-
-    return '죄송합니다. 현재 추천 정보를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.';
-  };
-
-  const requestRecommendation = React.useCallback(
-    async (question: string) => {
-      const trimmed = question.trim();
-      if (!trimmed || isBotLoading) return;
-
-      setMessages((prev) => [...prev, { sender: 'user', text: trimmed }]);
-      setInput('');
-      setIsBotLoading(true);
-
-      try {
-        const location = await resolveRecommendationLocation();
-        const response = await getQuestionRecommendation({
-          question: trimmed,
-          lat: location.lat,
-          lng: location.lng,
-        });
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: 'bot',
-            text: response.data.reason,
-            partners: response.data.partners,
-          },
-        ]);
-      } catch (error) {
-        console.error('추천 정보를 가져오는 중 오류가 발생했습니다:', error);
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: 'bot',
-            text: getRecommendationErrorMessage(error),
-          },
-        ]);
-      } finally {
-        setIsBotLoading(false);
-      }
+  React.useEffect(
+    () => () => {
+      requestGenerationRef.current.cancel();
+      controllerRef.current?.abort();
     },
-    [isBotLoading, resolveRecommendationLocation]
+    []
   );
 
-  const handleSend = () => {
-    void requestRecommendation(input);
+  const request = React.useCallback(
+    async (
+      question: string,
+      history: QuestionRecommendationMessage[],
+      previousCandidateKeys: string[],
+      addUserMessage: boolean
+    ) => {
+      const trimmed = question.trim().slice(0, MAX_QUESTION);
+      if (!trimmed || inFlightRef.current) return;
+      inFlightRef.current = true;
+      setIsLoading(true);
+      setStreamStage('connecting');
+      setPreviewPartners([]);
+      setErrorText('');
+      const generation = requestGenerationRef.current.begin();
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      if (addUserMessage) {
+        setMessages((current) => [...current, { sender: 'user' as const, text: trimmed, includeInHistory: false }].slice(-MAX_SAVED_MESSAGES));
+        setInput('');
+      }
+
+      try {
+        const locationRequested = /(근처|주변|가까운|인근)/.test(trimmed);
+        let location: { lat: number; lng: number } | undefined;
+        if (locationRequested) {
+          try {
+            location = await getCurrentLocation();
+          } catch {
+            // The server can respond with useful guidance when coordinates are omitted.
+          }
+        }
+        const data = await streamQuestionRecommendation(
+          {
+            question: trimmed,
+            messages: history,
+            previousCandidateKeys,
+            ...(location || {}),
+          },
+          {
+            onStatus: (stage) => {
+              if (requestGenerationRef.current.isCurrent(generation)) setStreamStage(stage);
+            },
+            onCards: (preview: QuestionRecommendationData) => {
+              if (requestGenerationRef.current.isCurrent(generation)) setPreviewPartners(dedupePartners(preview.partners || []));
+            },
+          },
+          controller.signal
+        );
+        if (!requestGenerationRef.current.isCurrent(generation)) return;
+        setMessages((current) => {
+          const lastUserIndex = current.findLastIndex((message) => message.sender === 'user');
+          return [
+            ...current.map((message, index) =>
+              index === lastUserIndex && message.text === trimmed && message.includeInHistory === false
+                ? { ...message, includeInHistory: data.status !== 'UNAVAILABLE' }
+                : message
+            ),
+            {
+              sender: 'bot' as const,
+              text: data.reason || '조건에 맞는 혜택을 확인했어요.',
+              partners: dedupePartners(data.partners || []),
+              suggestedQuestions: data.suggestedQuestions || [],
+              retry: data.status === 'UNAVAILABLE' ? createRetryContext(trimmed, history, previousCandidateKeys) : undefined,
+              includeInHistory: data.status !== 'UNAVAILABLE',
+            },
+          ].slice(-MAX_SAVED_MESSAGES);
+        });
+        if (data.status === 'UNAVAILABLE') {
+          setErrorText('일시적으로 답변을 만들지 못했어요. 같은 질문으로 다시 시도할 수 있어요.');
+        }
+        setPreviewPartners([]);
+        setStreamStage(null);
+      } catch (error) {
+        if (!requestGenerationRef.current.isCurrent(generation) || controller.signal.aborted) return;
+        const retryable = error instanceof QuestionRecommendationError && error.retryable;
+        const message =
+          error instanceof Error ? error.message : '답변을 가져오지 못했어요. 다시 시도해주세요.';
+        setMessages((current) =>
+          [
+            ...current,
+            {
+              sender: 'bot' as const,
+              text: message,
+              retry: retryable ? createRetryContext(trimmed, history, previousCandidateKeys) : undefined,
+              includeInHistory: false,
+            },
+          ].slice(-MAX_SAVED_MESSAGES)
+        );
+      } finally {
+        if (requestGenerationRef.current.isCurrent(generation)) {
+          inFlightRef.current = false;
+          controllerRef.current = null;
+          setIsLoading(false);
+          setStreamStage(null);
+          setPreviewPartners([]);
+        }
+      }
+    },
+    []
+  );
+
+  const send = (value: string) => {
+    if (inFlightRef.current) return;
+    void request(value, buildChatHistory(messages, INITIAL_MESSAGE), getPreviousCandidateKeys(messages), true);
   };
 
-  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-      e.preventDefault(); // 기본 동작 방지
-      void requestRecommendation(input);
-    }
+  const clearChat = () => {
+    requestGenerationRef.current.cancel();
+    controllerRef.current?.abort();
+    inFlightRef.current = false;
+    setIsLoading(false);
+    setStreamStage(null);
+    setPreviewPartners([]);
+    setErrorText('');
+    setMessages([]);
+    safeWrite(storageKey, []);
+    setShowClearConfirm(false);
   };
 
-  // 예시 질문 버튼 클릭 처리 (바로 전송)
-  const handleExampleClick = (question: string) => {
-    void requestRecommendation(question);
-  };
-
-  // 예시 질문들
-  const exampleQuestions = [
-    '날씨가 더운데 시원하게 갈만한 곳 추천해줘',
-    '근처에서 할인되는 카페 알려줘',
-    '데이트하기 좋은 제휴처 추천해줘',
-    '아이랑 갈만한 실내 장소 있어?',
-  ];
-
-  // 제휴업체 카드 클릭 처리
-  const handlePartnerClick = (partnerName: string) => {
-    if (onSearchPartner) {
-      onSearchPartner(partnerName);
-    }
-    if (onChangeTab) {
-      onChangeTab('ai'); // 맞춤 AI 추천 탭 유지
-    }
-    // 채팅방 닫기
+  const close = () => {
+    requestGenerationRef.current.cancel();
+    controllerRef.current?.abort();
+    setStreamStage(null);
+    setPreviewPartners([]);
     onClose();
   };
 
-  const recommendationMetaText = (partner: QuestionRecommendationPartner) =>
-    [partner.category, partner.storeCount ? `주변 ${partner.storeCount}곳` : null]
-      .filter(Boolean)
-      .join(' · ');
+  const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      if (showClearConfirm) setShowClearConfirm(false);
+      else close();
+    } else if (event.key === 'Tab' && dialogRef.current) {
+      const scope = showClearConfirm ? clearDialogRef.current : dialogRef.current;
+      const focusable = Array.from(scope?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ) ?? []);
+      if (!focusable.length) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (scope && (!scope.contains(document.activeElement) || document.activeElement === scope)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  };
 
-  // 채팅방 JSX 컴포넌트
+  const openPartner = (partner: QuestionRecommendationPartner) => {
+    onSearchPartner?.(partner.partnerName);
+    close();
+  };
+
+  const cards = (partners: QuestionRecommendationPartner[]) =>
+    groupPartnersByBrand(partners).map((group, groupIndex) => {
+      const first = group.partners[0];
+      const summary = buildBrandCardSummary(group.partners);
+      const carrier = summary.carrier && CARRIERS.includes(summary.carrier)
+        ? getCarrierLabel(summary.carrier)
+        : null;
+      const membership = carrier
+        ? getBenefitMembershipFilter(summary.carrier, summary.grade, referenceData)
+          ?? getBenefitMembershipFilter(summary.carrier, undefined, referenceData)
+        : null;
+      const params = membership ? new URLSearchParams({ carrier: membership.carrier }) : null;
+      if (membership?.grade) params?.set('grade', membership.grade);
+      const baseHref = first.partnerId ? getPartnerBenefitPath(first.partnerId, group.partnerName) : '/benefits';
+      const query = params?.toString();
+      const href = query ? `${baseHref}?${query}` : baseHref;
+      const grade = membership?.grade && referenceData?.grades.some(({ code }) => code === membership.grade)
+        ? getMembershipGradeLabel(membership.grade, referenceData)
+        : null;
+      const carriers = summary.carriers
+        .filter((code) => CARRIERS.includes(code))
+        .map((code) => getCarrierLabel(code));
+      const usage = usageLabel(summary.usageType);
+      const metadata = [carriers.length ? carriers.join(', ') : null, grade, usage].filter(Boolean);
+      const nearby = summary.storeCount
+        ? [summary.category && getCategoryLabel(summary.category, referenceData), `주변 ${summary.storeCount}곳`].filter(Boolean).join(' · ')
+        : null;
+      const label = carriers.length > 1 ? '혜택 비교·상세 보기' : '혜택 상세 보기';
+
+      return (
+        <a
+          key={group.key}
+          href={href}
+          onClick={() => openPartner(first)}
+          className={styles.benefitCard}
+          aria-label={`${groupIndex + 1}. ${group.partnerName}, ${summary.benefitName}, ${label}`}
+        >
+          <span className={styles.brandOrdinal} aria-hidden="true">{groupIndex + 1}</span>
+          <SafeImage src={first.imgUrl ?? ''} alt={`${group.partnerName} 로고`} fallbackLabel={group.partnerName} className={styles.benefitLogo} />
+          <div className={styles.benefitCopy}>
+            <h4>{group.partnerName}</h4>
+            <p className={styles.benefitName}>{summary.benefitName}</p>
+            {summary.needsConfirmation && <p className={styles.benefitWarning}>이용 전 적용 등급과 제한 사항을 확인해 주세요.</p>}
+            {nearby && <p className={styles.benefitMeta}>{nearby}</p>}
+            {metadata.length > 0 && <p className={styles.conditions}>{metadata.join(' · ')}</p>}
+            <span className={styles.detailLabel}>{label}<TbChevronRight size={16} aria-hidden="true" /></span>
+          </div>
+        </a>
+      );
+    });
+
+  const presentSuggestion = (question: string) => {
+    if (question === '전체 비교') return '전체 비교';
+    if (['SKT', 'KT', 'LG U+'].includes(question)) return question;
+    const carrierMatch = question.match(/^(SKT|KT|LG U\+|LGU) 등급은 모르겠어$/);
+    if (carrierMatch) return `${getCarrierLabel(carrierMatch[1] === 'LG U+' ? 'LGU' : carrierMatch[1])} 등급 모름`;
+    const gradeMatch = question.match(/^(SKT|KT|LG U\+|LGU) (.+) 등급이야$/);
+    if (gradeMatch) {
+      const carrierCode = gradeMatch[1] === 'LG U+' ? 'LGU' : gradeMatch[1];
+      const grade = referenceData?.grades.find(({ carrier, code, label }) => carrier === carrierCode && (code === gradeMatch[2] || label === gradeMatch[2]));
+      if (grade) return `${getCarrierLabel(carrierCode)} ${grade.label}`;
+    }
+    return question;
+  };
+
   const chatRoomContent = (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="혜택 질문 챗봇"
+      tabIndex={-1}
+      onKeyDown={handleDialogKeyDown}
       data-itplace-transient-layer={isMobile || isTablet ? 'open' : undefined}
-      className={`bg-white p-0 flex flex-col items-center z-[9999] ${
-        isDrawer
-          ? 'h-full w-full overflow-hidden border-r border-grey02 shadow-[4px_0_18px_rgba(16,17,20,0.08)]'
-          : `rounded-[18px] shadow-lg border border-grey02 ${isMobile || isTablet ? '' : 'h-full'}`
-      }`}
-      style={
-        isMobile || isTablet
-          ? {
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '90vw',
-              maxWidth: '400px',
-              height: 'calc(var(--vh, 1vh) * 70)',
-              maxHeight: '600px',
-              minHeight: '400px',
-              overflow: 'hidden',
-              zIndex: 'var(--itplace-layer-transient-surface)',
-              boxShadow:
-                '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-            }
-          : isDrawer
-            ? {
-                height: '100%',
-                maxHeight: 'none',
-                minHeight: 0,
-                overflow: 'hidden',
-              }
-            : {
-                height: '60vh',
-                maxHeight: '60vh',
-                minHeight: '500px',
-                overflow: 'hidden',
-              }
-      }
+      className={`${styles.room} ${presentation === 'floating' ? styles.floatingRoom : ''} ${presentation === 'embedded' ? styles.embeddedRoom : ''} ${isDrawer ? styles.drawerRoom : ''}`}
+      style={presentation === 'floating' ? undefined : isMobile || isTablet ? { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90vw', maxWidth: '400px', height: 'calc(var(--vh, 1vh) * 70)', maxHeight: '600px', minHeight: '400px', overflow: 'hidden', zIndex: 'var(--itplace-layer-transient-surface)' } : isDrawer ? { height: '100%', maxHeight: 'none', minHeight: 0, overflow: 'hidden' } : { height: '60vh', maxHeight: '60vh', minHeight: '500px', overflow: 'hidden' }}
     >
-      {/* 상단 프로필/타이틀 */}
-      <div
-        className={`w-full flex items-center justify-between px-5 pt-5 pb-4 relative ${
-          isDrawer ? 'border-b border-grey02 bg-white px-6 pb-5 pt-6 text-grey06' : ''
-        }`}
-      >
-        {isDrawer ? (
-          <div>
-            <p className="text-body-4 text-purple04">IT: PLACE</p>
-            <h2 className="text-title-6 text-grey06">질문형 AI 추천</h2>
-            <p className="mt-1 text-body-4 text-grey04">상황에 맞는 제휴처를 바로 찾아드릴게요</p>
-          </div>
-        ) : (
-          <span className="absolute left-1/2 transform -translate-x-1/2 text-title-6 text-purple04">
-            질문형 AI 채팅방
-          </span>
-        )}
-        <div className="flex items-center gap-2">
-          {/* 채팅 초기화 버튼 */}
-          <button
-            className={`text-title-4 transition-colors ${isDrawer ? 'text-grey03 hover:text-purple04' : 'text-grey03 hover:text-grey04'}`}
-            onClick={() => setShowClearConfirm(true)}
-            aria-label="채팅 내용 초기화"
-          >
-            <TbRefresh />
-          </button>
-          {/* 닫기 버튼 */}
-          <button
-            className={`text-title-4 transition-colors ${isDrawer ? 'text-grey03 hover:text-purple04' : 'text-grey03 hover:text-grey04'}`}
-            onClick={handleClose}
-            aria-label="채팅방 닫기"
-          >
-            <TbX />
-          </button>
+      <div className={styles.roomHeader}>
+        <div className={styles.roomBrand}><span className={styles.brandMark} aria-hidden="true"><TbMessageCircle size={19} /></span><h2>혜택 도우미</h2></div>
+        <div className={styles.headerActions}>
+          <button ref={clearButtonRef} type="button" className={`${styles.headerAction} ${styles.headerClear}`} onClick={() => setShowClearConfirm(true)} aria-label="채팅 내용 초기화"><TbRefresh size={17} aria-hidden="true" /><span>새 대화</span></button>
+          <button type="button" className={`${styles.headerAction} ${styles.headerClose}`} onClick={close} aria-label="채팅방 닫기"><TbX size={19} aria-hidden="true" /></button>
         </div>
       </div>
-      {/* 안내 문구 삭제됨, 챗봇이 첫 메시지로 안내함 */}
 
-      {/* 메시지 영역 */}
-      <div
-        className={`w-full overflow-y-auto p-4 ${isDrawer ? 'border-0 bg-gradient-to-b from-purple01/50 via-grey01 to-white' : 'border-l border-r border-grey02 bg-grey01'}`}
-        style={{ flex: 1, maxHeight: isMobile || isTablet ? '50vh' : 'none', height: '100%' }}
-      >
-        {messages.length === 1 && messages[0].sender === 'bot' ? (
-          // 초기 상태일 때 예시 질문 버튼들 표시
-          <div className="space-y-3">
-            {/* 봇의 첫 메시지 */}
-            <div className="flex flex-col items-start">
-              <div className="flex justify-start">
-                <img
-                  src="/images/main/mainCharacter.webp"
-                  alt="잇콩이"
-                  className="w-7 h-7 rounded-full border border-purple02 bg-white mr-2"
-                />
-                <div className="px-4 py-3 max-w-none break-words shadow bg-white text-black text-body-3 rounded-[10px]">
-                  <BotMessageContent text={messages[0].text} />
-                </div>
-              </div>
-            </div>
-
-            {/* 예시 질문 버튼들 */}
-            <div className="ml-9 space-y-2">
-              <div className="text-body-4 text-grey04 mb-2">아래와 같이 질문해보세요 🐰</div>
-              {exampleQuestions.map((question, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleExampleClick(question)}
-                  className="block w-full text-left px-3 py-2 bg-white hover:bg-purple01 text-purple04 text-body-4 rounded-[10px] transition-colors"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
+      <div className={styles.conversation}>
+        {messages.length === 0 ? (
+          <div className={styles.intro}>
+            <div className={styles.welcome}><h3>어떤 혜택을 찾고 계세요?</h3><p>{INITIAL_MESSAGE}</p></div>
+            <div className={styles.examples}><p>이런 질문을 해보세요</p>{EXAMPLES.map((question, index) => { const Icon = EXAMPLE_ICONS[index]; return <button key={question} type="button" disabled={isLoading} onClick={() => send(question)}><Icon size={17} aria-hidden="true" /><span>{question}</span></button>; })}</div>
           </div>
-        ) : messages.length === 0 ? (
-          <div className="text-grey05 text-body-3 text-center py-10">
-            잇콩이에게 궁금한 점을 물어보세요!
+        ) : <div role="log" aria-live="polite" aria-relevant="additions text" className={styles.messages}>
+          {messages.map((message, index) => message.sender === 'user' ? (
+            <div key={`${index}-${message.text}`} className={styles.userMessage}><span>{message.text}</span></div>
+          ) : (
+            <div key={`${index}-${message.text}`} className={styles.botMessage}><div className={styles.botBubble}>{message.text}</div>{message.retry && <button type="button" disabled={isLoading} onClick={() => void request(message.retry!.question, message.retry!.messages, message.retry!.previousCandidateKeys, false)} className={styles.retryButton}><TbRefresh size={16} aria-hidden="true" /><span>다시 시도</span></button>}{message.partners?.length ? <div className={styles.cardList}>{cards(message.partners)}</div> : null}{message.suggestedQuestions?.length ? <div className={styles.suggestions}>{message.suggestedQuestions.map((question) => <button key={question} type="button" disabled={isLoading} onClick={() => send(question)} aria-label={`질문 선택: ${question}`}><span>{presentSuggestion(question)}</span><TbArrowUpRight size={15} aria-hidden="true" /></button>)}</div> : null}</div>
+          ))}
+        </div>}
+        {isLoading && <div className={styles.botMessage}>
+          <div role="status" className={styles.loadingBubble}>
+            <div aria-hidden="true" className="contents"><LoadingSpinner className="mr-3 inline-block h-4 w-4 border-2 border-purple04 border-t-transparent" /></div>
+            {STREAM_STAGE_LABELS[streamStage ?? 'connecting']}
           </div>
-        ) : (
-          <div className="space-y-3">
-            {messages.map((msg, idx) => {
-              // 사용자 메시지
-              if (msg.sender === 'user') {
-                return (
-                  <div key={idx} className="flex justify-end">
-                    <div style={{ maxWidth: '80%' }}>
-                      <span
-                        className="inline-block px-4 py-2 shadow bg-purple04 text-white text-body-3 font-light rounded-[10px]"
-                        style={{
-                          wordWrap: 'break-word',
-                          overflowWrap: 'break-word',
-                          wordBreak: 'break-word',
-                        }}
-                      >
-                        {msg.text}
-                      </span>
-                    </div>
-                  </div>
-                );
-              }
-
-              // 봇 메시지
-              return (
-                <div key={idx} className="flex items-start gap-2">
-                  <img
-                    src="/images/main/mainCharacter.webp"
-                    alt="잇콩이"
-                    className="w-7 h-7 rounded-full border border-purple02 bg-white flex-shrink-0"
-                  />
-                  <div className="flex flex-col gap-2" style={{ maxWidth: 'calc(100% - 2.25rem)' }}>
-                    <div className="px-4 py-3 break-words shadow bg-white text-black text-body-3 font-light rounded-[10px]">
-                      <BotMessageContent text={msg.text} />
-                    </div>
-                    {/* 제휴업체 카드 */}
-                    {msg.partners && msg.partners.length > 0 && (
-                      <div className="w-full">
-                        <div className="grid grid-cols-1 gap-2">
-                          {msg.partners.map((partner, partnerIdx) => (
-                            <div
-                              key={`${partner.partnerId ?? partner.partnerName}-${partner.benefitId ?? partnerIdx}`}
-                              className="bg-white rounded-[10px] p-3 shadow hover:shadow-md transition-shadow cursor-pointer"
-                              onClick={() => handlePartnerClick(partner.partnerName)}
-                            >
-                              <div className="flex items-start gap-3">
-                                <SafeImage
-                                  src={partner.imgUrl ?? ''}
-                                  alt={`${partner.partnerName} 로고`}
-                                  fallbackLabel={partner.partnerName}
-                                  className="w-12 h-12 rounded-lg object-contain border border-grey02"
-                                />
-                                <div className="min-w-0 flex-1">
-                                  <h4 className="text-body-2-bold text-grey05">
-                                    {partner.partnerName}
-                                  </h4>
-                                  {partner.benefitName && (
-                                    <p className="mt-1 text-body-4 text-purple04">
-                                      {partner.benefitName}
-                                    </p>
-                                  )}
-                                  {partner.benefitText &&
-                                    partner.benefitText !== partner.benefitName && (
-                                      <p className="mt-1 text-body-4 text-grey05">
-                                        {partner.benefitText}
-                                      </p>
-                                    )}
-                                  {partner.representativeStoreName && (
-                                    <p className="mt-1 text-body-4 text-grey04">
-                                      대표 매장: {partner.representativeStoreName}
-                                    </p>
-                                  )}
-                                  {recommendationMetaText(partner) && (
-                                    <p className="mt-1 text-body-4 text-grey03">
-                                      {recommendationMetaText(partner)}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-            {isBotLoading && (
-              <div className="flex justify-start items-center mt-2">
-                <img
-                  src="/images/main/mainCharacter.webp"
-                  alt="잇콩이"
-                  className="w-7 h-7 rounded-full border border-grey02 bg-white mr-2"
-                />
-                <div className="flex items-center justify-center px-4 py-2 max-w-[90%] break-words shadow bg-white text-black text-body-3 font-light rounded-[10px]">
-                  <LoadingSpinner className="mr-4 h-4 w-4 border-2 border-purple04 border-t-transparent" />
-                  <span className="text-center">답변을 준비 중이에요...</span>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </div>
-      {/* 입력창 영역 */}
-      <div className={`w-full border-t border-grey01 bg-white px-5 pb-5 flex gap-2 items-center`}>
-        <input
-          type="text"
-          className="flex-1 rounded-[10px] px-4 mt-4 text-body-3 bg-grey01 focus:bg-white focus:outline-purple03"
-          style={{ height: '44px', minHeight: '44px' }}
-          placeholder="메시지를 입력하세요..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleInputKeyDown}
-        />
-        <button
-          className={`bg-purple04 text-white mt-4 rounded-[10px] text-body-3 hover:bg-purple03 flex items-center justify-center ${isMobile || isTablet ? 'px-2 min-w-[40px]' : 'px-5'}`}
-          style={{ height: '44px', minHeight: '44px', paddingTop: '0', paddingBottom: '0' }}
-          onClick={() => void handleSend()}
-        >
-          <TbSend size={22} />
-        </button>
+          {previewPartners.length > 0 && <div className={styles.cardList} aria-live="off">{cards(previewPartners)}</div>}
+        </div>}
+        {errorText && <p role="status" className={styles.error}>{errorText}</p>}
+        <div ref={endRef} />
       </div>
 
-      {/* 채팅 초기화 확인 모달 */}
-      {showClearConfirm && (
-        <div className="absolute inset-0 flex items-center justify-center z-50 rounded-[18px]">
-          <div className="bg-white rounded-[12px] p-6 mx-4 max-w-xs w-full shadow-lg border border-grey02">
-            <h3 className="text-title-6 text-grey05 mb-3 text-center">채팅 내용 초기화</h3>
-            <p className="text-body-3 text-grey04 mb-6 text-center">
-              모든 대화 내용이 삭제됩니다.
-              <br />
-              정말 초기화하시겠습니까?
-            </p>
-            <div className="flex gap-3">
-              <button
-                className="flex-1 px-4 py-2 text-body-3 text-grey04 bg-grey01 hover:bg-grey02 rounded-[8px] transition-colors"
-                onClick={() => setShowClearConfirm(false)}
-              >
-                취소
-              </button>
-              <button
-                className="flex-1 px-4 py-2 text-body-3 text-white bg-purple04 hover:bg-purple03 rounded-[8px] transition-colors"
-                onClick={handleClearChat}
-              >
-                초기화
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <form className={styles.composer} onSubmit={(event) => { event.preventDefault(); send(input); }}>
+        <input type="text" maxLength={MAX_QUESTION} aria-label="질문" autoComplete="off" name="question" placeholder="메시지를 입력하세요…" value={input} onChange={(event) => setInput(event.target.value)} onCompositionStart={() => { composingRef.current = true; }} onCompositionEnd={() => { composingRef.current = false; }} onKeyDown={(event) => { if (event.key === 'Enter' && !composingRef.current && !event.nativeEvent.isComposing) { event.preventDefault(); send(input); } }} />
+        <button type="submit" disabled={isLoading || !input.trim()} aria-label="질문 보내기" aria-busy={isLoading}><TbSend size={19} aria-hidden="true" /></button>
+      </form>
+
+      {showClearConfirm && <div className={styles.confirmBackdrop}><div ref={clearDialogRef} role="dialog" aria-modal="true" aria-labelledby="chat-clear-title" className={styles.confirmDialog}><h3 id="chat-clear-title">채팅 내용 초기화</h3><p>모든 대화 내용이 삭제됩니다.<br />정말 초기화하시겠습니까?</p><div className={styles.confirmActions}><button ref={clearCancelRef} type="button" onClick={() => setShowClearConfirm(false)}>취소</button><button type="button" onClick={clearChat}><TbRefresh size={16} aria-hidden="true" /><span>초기화</span></button></div></div></div>}
     </div>
   );
 
-  // 모바일/태블릿에서는 포털로 렌더링, 웹에서는 직접 렌더링
-  if (isMobile || isTablet) {
-    return createPortal(chatRoomContent, document.body);
-  }
-
-  return chatRoomContent;
+  return presentation !== 'floating' && (isMobile || isTablet) ? createPortal(chatRoomContent, document.body) : chatRoomContent;
 };
 
 export default QuestionRecommendationChatRoom;

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useReferenceData } from '../../../../components/ReferenceDataProvider';
 import { AxiosError } from 'axios';
 import { showToast } from '../../../../utils/toast';
 import AuthButton from '../common/AuthButton';
@@ -55,6 +56,7 @@ const SignUpFinalForm = ({
   initialCarrier = '',
   initialMembershipGradeCode = '',
 }: SignUpFinalFormProps) => {
+  const { data: referenceData } = useReferenceData();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -147,7 +149,7 @@ const SignUpFinalForm = ({
     isSignupMembershipValid(
       formData.carrier,
       formData.membershipGradeCode,
-      isValidCarrierGradePair
+      (carrier, grade) => isValidCarrierGradePair(carrier, grade, referenceData)
     ) &&
     !errors.birth;
 

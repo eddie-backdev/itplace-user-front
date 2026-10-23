@@ -45,6 +45,7 @@ interface KakaoMapProps {
   isRoadviewMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
   searchQuery?: string;
+  categoryLabels?: Record<string, string>;
 }
 
 interface MarkerDisplayPosition {
@@ -290,7 +291,7 @@ const updateAdministrativeClusterElement = (
   element.replaceChildren(content);
 };
 
-const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapCluster) => {
+const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapCluster, categoryLabels: Record<string, string>) => {
   const administrativeUnitName = cluster.administrativeUnitName?.trim();
   if (administrativeUnitName) {
     updateAdministrativeClusterElement(element, cluster, administrativeUnitName);
@@ -298,7 +299,7 @@ const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapClus
   }
 
   const isSingleLocation = cluster.count <= 1;
-  const categoryLabel = cluster.category && cluster.category !== '전체' ? cluster.category : '혜택';
+  const categoryLabel = cluster.category && cluster.category !== '전체' ? categoryLabels[cluster.category] ?? cluster.category : '혜택';
   const accentColor = isSingleLocation
     ? getCategoryPinColor()
     : getClusterDensityColor(cluster.count);
@@ -366,10 +367,10 @@ const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapClus
   element.replaceChildren(badge);
 };
 
-const createServerClusterElement = (cluster: MapCluster) => {
+const createServerClusterElement = (cluster: MapCluster, categoryLabels: Record<string, string>) => {
   const element = document.createElement('button');
   element.type = 'button';
-  updateServerClusterElement(element, cluster);
+  updateServerClusterElement(element, cluster, categoryLabels);
   const setEmphasis = (active: boolean) => {
     element.style.transform = active ? 'translateY(-2px) scale(1.04)' : '';
     element.style.filter = active
@@ -496,6 +497,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   isRoadviewMode = false,
   onMapClick,
   searchQuery = '',
+  categoryLabels = {},
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMapType | null>(null);
@@ -1256,7 +1258,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
           didUpdate = true;
         }
         if (existingEntry.contentKey !== contentKey) {
-          updateServerClusterElement(existingEntry.element, cluster);
+          updateServerClusterElement(existingEntry.element, cluster, categoryLabels);
           existingEntry.contentKey = contentKey;
           didUpdate = true;
         }
@@ -1265,7 +1267,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         return;
       }
 
-      const element = createServerClusterElement(cluster);
+      const element = createServerClusterElement(cluster, categoryLabels);
       const clickHandler = () => {
         const latestCluster = serverClusterRegistryRef.current.get(clusterId)?.cluster;
         const currentMap = mapRef.current;
@@ -1329,6 +1331,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     setCustomMarkersVisibility,
     setServerClustersVisibility,
     useServerClusters,
+    categoryLabels,
   ]);
 
   // 마커 업데이트 useEffect

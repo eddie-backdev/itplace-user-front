@@ -1,6 +1,7 @@
 import { getCarrierGradeOrder, getCarrierLabel, isCarrierCode } from '../../../utils/membership';
 import { Platform, PlatformBenefit } from '../types';
 import { DetailTierBenefit } from '../types/api';
+import type { ReferenceData } from '../../../utils/referenceData';
 
 export type BenefitUsageChannel = 'online' | 'offline' | 'common';
 
@@ -41,26 +42,15 @@ export const BENEFIT_USAGE_CHANNEL_ORDER: BenefitUsageChannel[] = ['online', 'of
 const CARRIER_GROUP_ORDER = ['SKT', 'KT', 'LGU'];
 const MISSING_CARRIER_KEY = 'MISSING_CARRIER';
 
-const LGU_GRADES = ['BASIC', 'VIP', 'VVIP', 'VIP콕'];
-
-const inferCarrierFromGrade = (grade: string) => {
-  if (grade.startsWith('SKT_')) return 'SKT';
-  if (grade.startsWith('KT_')) return 'KT';
-  if (LGU_GRADES.includes(grade)) return 'LGU';
-
-  return null;
-};
-
 const getEffectiveCarrier = (
   benefitCarrier: string | null | undefined,
   benefitGrade: string,
-  fallbackCarrier: string | null | undefined
+  fallbackCarrier: string | null | undefined,
+  referenceData?: ReferenceData | null
 ) => {
   if (isCarrierCode(benefitCarrier)) return benefitCarrier;
-
-  const inferredCarrier = inferCarrierFromGrade(benefitGrade);
-  if (inferredCarrier) return inferredCarrier;
-
+  const gradeCarrier = referenceData?.grades.find(({ code }) => code === benefitGrade)?.carrier;
+  if (isCarrierCode(gradeCarrier)) return gradeCarrier;
   return isCarrierCode(fallbackCarrier) ? fallbackCarrier : null;
 };
 
@@ -72,8 +62,8 @@ const getCarrierGroupLabel = (carrier: string | null) => {
   return isCarrierCode(carrier) ? getCarrierLabel(carrier) : '통신사 정보 없음';
 };
 
-const getGradeSortIndex = (carrier: string | null, grades: string[]) => {
-  const gradeOrder = getCarrierGradeOrder(isCarrierCode(carrier) ? carrier : null, grades);
+const getGradeSortIndex = (carrier: string | null, grades: string[], referenceData?: ReferenceData | null) => {
+  const gradeOrder = getCarrierGradeOrder(isCarrierCode(carrier) ? carrier : null, grades, referenceData);
   const indexes = grades.map((grade) => gradeOrder.indexOf(grade)).filter((index) => index !== -1);
 
   return indexes.length > 0 ? Math.min(...indexes) : Number.MAX_SAFE_INTEGER;
@@ -84,14 +74,14 @@ const getChannelSortIndex = (channel: BenefitUsageChannel) => {
   return index === -1 ? BENEFIT_USAGE_CHANNEL_ORDER.length : index;
 };
 
-const sortDisplayBenefitsByGradeOrder = (benefits: DisplayBenefit[]) => {
+const sortDisplayBenefitsByGradeOrder = (benefits: DisplayBenefit[], referenceData?: ReferenceData | null) => {
   return [...benefits].sort((a, b) => {
     const aChannelIndex = getChannelSortIndex(a.channel);
     const bChannelIndex = getChannelSortIndex(b.channel);
     if (aChannelIndex !== bChannelIndex) return aChannelIndex - bChannelIndex;
 
-    const aIndex = getGradeSortIndex(a.carrier, a.grades);
-    const bIndex = getGradeSortIndex(b.carrier, b.grades);
+    const aIndex = getGradeSortIndex(a.carrier, a.grades, referenceData);
+    const bIndex = getGradeSortIndex(b.carrier, b.grades, referenceData);
 
     if (aIndex !== bIndex) return aIndex - bIndex;
     return a.context.localeCompare(b.context);
@@ -165,12 +155,13 @@ const getBenefitChannelContexts = <T extends CarrierGradeBenefit>(benefit: T): C
 
 const mergeBenefitsByCarrierAndContext = <T extends CarrierGradeBenefit>(
   benefits: T[],
-  fallbackCarrier: string | null | undefined
+  fallbackCarrier: string | null | undefined,
+  referenceData?: ReferenceData | null
 ) => {
   const merged = new Map<string, DisplayBenefit>();
 
   benefits.forEach((benefit) => {
-    const carrier = getEffectiveCarrier(benefit.carrier, benefit.grade, fallbackCarrier);
+    const carrier = getEffectiveCarrier(benefit.carrier, benefit.grade, fallbackCarrier, referenceData);
 
     getBenefitChannelContexts(benefit).forEach(({ channel, context }) => {
       const normalizedContext = normalizeBenefitContext(context);
@@ -198,9 +189,10 @@ const mergeBenefitsByCarrierAndContext = <T extends CarrierGradeBenefit>(
 
 export const groupBenefitsByCarrier = <T extends CarrierGradeBenefit>(
   benefits: T[],
-  fallbackCarrier: string | null | undefined
+  fallbackCarrier: string | null | undefined,
+  referenceData?: ReferenceData | null
 ): BenefitCarrierGroup[] => {
-  const groups = mergeBenefitsByCarrierAndContext(benefits, fallbackCarrier).reduce<
+  const groups = mergeBenefitsByCarrierAndContext(benefits, fallbackCarrier, referenceData).reduce<
     Record<string, BenefitCarrierGroup>
   >((acc, benefit) => {
     const key = getCarrierGroupKey(benefit.carrier);
@@ -220,7 +212,7 @@ export const groupBenefitsByCarrier = <T extends CarrierGradeBenefit>(
   return Object.values(groups)
     .map((group) => ({
       ...group,
-      benefits: sortDisplayBenefitsByGradeOrder(group.benefits),
+      benefits: sortDisplayBenefitsByGradeOrder(group.benefits, referenceData),
     }))
     .sort((a, b) => {
       const aIndex = CARRIER_GROUP_ORDER.indexOf(a.key);
@@ -236,13 +228,14 @@ export const groupBenefitsByCarrier = <T extends CarrierGradeBenefit>(
     });
 };
 
-export const groupPlatformBenefitsByCarrier = (platform: Platform) => {
-  return groupBenefitsByCarrier(getPlatformBenefitItems(platform), platform.carrier);
+export const groupPlatformBenefitsByCarrier = (platform: Platform, referenceData?: ReferenceData | null) => {
+  return groupBenefitsByCarrier(getPlatformBenefitItems(platform), platform.carrier, referenceData);
 };
 
 export const groupDetailBenefitsByCarrier = (
   benefits: DetailTierBenefit[],
-  fallbackCarrier: string | null | undefined
+  fallbackCarrier: string | null | undefined,
+  referenceData?: ReferenceData | null
 ) => {
-  return groupBenefitsByCarrier(benefits, fallbackCarrier);
+  return groupBenefitsByCarrier(benefits, fallbackCarrier, referenceData);
 };

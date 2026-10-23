@@ -5,6 +5,9 @@ import type { PartnerBenefitItem } from '@/features/allBenefitsPage/apis/allBene
 import { type CarrierCode, getCarrierLabel } from '@/utils/membership';
 import { getPartnerBenefitPreview } from '@/utils/benefitPreview';
 import styles from './BenefitExplorerCard.module.css';
+import { useReferenceData } from '@/components/ReferenceDataProvider';
+import { getCategoryLabel } from '@/utils/referenceData';
+import { formatSourceCapturedDate } from '../apis/benefitConditions.mjs';
 
 type BenefitExplorerCardProps = {
   partner: PartnerBenefitItem;
@@ -27,15 +30,24 @@ export default function BenefitExplorerCard({
   favoriteBusy = false,
   onToggleFavorite,
 }: BenefitExplorerCardProps) {
+  const { data: referenceData } = useReferenceData();
   const preview =
-    getPartnerBenefitPreview(partner, carrier, grade) ?? getPartnerBenefitPreview(partner);
+    getPartnerBenefitPreview(partner, carrier, grade, referenceData) ?? getPartnerBenefitPreview(partner, undefined, undefined, referenceData);
+  const sourcePreview = partner.previews?.find((item) => item.carrier === preview?.carrier);
   const otherCarrierCount = preview
     ? new Set(
         partner.carriers.filter(
-          (code) => code !== preview.carrier && getPartnerBenefitPreview(partner, code)
+          (code) => code !== preview.carrier && getPartnerBenefitPreview(partner, code, undefined, referenceData)
         )
       ).size
     : 0;
+  const capturedDate = formatSourceCapturedDate(sourcePreview?.sourceCapturedAt);
+  const safeSourceUrl = (() => {
+    try {
+      const url = new URL(sourcePreview?.sourceUrl ?? '');
+      return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+    } catch { return null; }
+  })();
 
   return (
     <article className={styles.card}>
@@ -56,7 +68,7 @@ export default function BenefitExplorerCard({
             <span className={styles.partnerName}>{partner.partnerName}</span>
             <span className={styles.metadata}>
               {getCarrierLabel(preview?.carrier ?? carrier ?? partner.carriers[0])} ·{' '}
-              {partner.category ?? '분야 미분류'}
+              {getCategoryLabel(partner.category, referenceData) || '분야 미분류'}
               {otherCarrierCount > 0 ? ` · 다른 통신사 혜택 ${otherCarrierCount}개` : ''}
             </span>
           </span>
@@ -85,6 +97,15 @@ export default function BenefitExplorerCard({
       <Link href={href} prefetch={false} onClick={onPreview} className={styles.openDetail}>
         자세히 <TbChevronRight size={16} aria-hidden="true" />
       </Link>
+      {sourcePreview?.offerResolution === 'PARTIAL' || sourcePreview?.offerResolution === 'UNRESOLVED' ? (
+        <details className="px-3 pb-2 text-sm leading-6 text-[#686B73]">
+          <summary className="min-h-11 cursor-pointer py-2 font-medium">추가 이용 안내</summary>
+          <p>상세 원문에 추가 조건이 있어요. 이용 전에 적용 등급과 제한 사항을 확인해 주세요.</p>
+          <Link href={href} prefetch={false} onClick={onPreview} className="mt-2 inline-block underline">혜택별 상세와 전체 원문 보기</Link>
+          {safeSourceUrl ? <a href={safeSourceUrl} target="_blank" rel="noreferrer" className="ml-3 underline">공식 출처</a> : null}
+          {capturedDate ? <p className="mt-2 text-xs">{capturedDate} 확인</p> : null}
+        </details>
+      ) : null}
     </article>
   );
 }

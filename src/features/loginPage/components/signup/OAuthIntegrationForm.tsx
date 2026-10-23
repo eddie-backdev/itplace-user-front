@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useReferenceData } from '../../../../components/ReferenceDataProvider';
 import AuthInput from '../common/AuthInput';
 import AuthButton from '../common/AuthButton';
 import BirthDateInput from './BirthDateInput';
@@ -42,6 +43,7 @@ const OAuthIntegrationForm = ({
   membershipGradeCode: initialMembershipGradeCode,
   onNext,
 }: OAuthIntegrationFormProps) => {
+  const { data: referenceData } = useReferenceData();
   const [nicknameValue, setNicknameValue] = useState(nickname);
   const [birthday, setBirthday] = useState(formatBirthDateInput(initialBirthday));
   const [gender, setGender] = useState(initialGender);
@@ -53,7 +55,9 @@ const OAuthIntegrationForm = ({
     !!email &&
     isCompleteBirthDateInput(birthday) &&
     (gender === 'MALE' || gender === 'FEMALE') &&
-    isSignupMembershipValid(carrier, membershipGradeCode, isValidCarrierGradePair);
+    isSignupMembershipValid(carrier, membershipGradeCode, (carrierValue, gradeValue) =>
+      isValidCarrierGradePair(carrierValue, gradeValue, referenceData)
+    );
 
   return (
     <div className={`${styles.signupForm} ${styles.fieldStack}`}>

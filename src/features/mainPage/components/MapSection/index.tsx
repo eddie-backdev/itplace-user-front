@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Platform,
   Category,
@@ -82,6 +82,7 @@ const MapSection: React.FC<MapSectionProps> = ({
 }) => {
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [isRoadviewMode, setIsRoadviewMode] = useState(false);
+  const categoryLabels = useMemo(() => Object.fromEntries(categories.map(({ id, name }) => [id, name])), [categories]);
   const [roadviewClickedLatLng, setRoadviewClickedLatLng] = useState<{
     lat: number;
     lng: number;
@@ -192,6 +193,7 @@ const MapSection: React.FC<MapSectionProps> = ({
           selectedPlatform={selectedPlatform}
           onPlatformSelect={onPlatformSelect}
           searchQuery={searchQuery}
+          categoryLabels={categoryLabels}
           mobileSheetBottomInset={mobileSheetBottomInset}
           onLocationChange={onLocationChange}
           onMapCenterChange={handleMapCenterChange}

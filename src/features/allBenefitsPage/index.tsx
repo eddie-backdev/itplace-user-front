@@ -24,12 +24,15 @@ import {
   CARRIER_OPTIONS,
   getCarrierLabel,
   getMembershipGradeLabel,
-  getMembershipGradeOptions,
+  getBenefitMembershipGradeOptions,
   isCarrierCode,
+  isValidBenefitCarrierGradePair,
   isValidCarrierGradePair,
 } from '@/utils/membership';
-import { CATEGORIES } from '@/features/mainPage/constants';
+import { toCategoryOptions } from '@/utils/referenceData';
+import { useReferenceData } from '@/components/ReferenceDataProvider';
 import { getPartnerBenefitPath } from '@/utils/partnerSeo';
+import { isPreviewSummaryEligible } from '@/utils/benefitPreview';
 import styles from './BenefitsExplorer.module.css';
 
 const ITEMS_PER_PAGE = 15;
@@ -43,13 +46,14 @@ export default function AllBenefitsLayout({
   initialData = null,
   initialRequestKey,
 }: AllBenefitsLayoutProps) {
+  const { data: referenceData } = useReferenceData();
   const searchParams = useSearchParams();
   const navigate = useNavigate();
   const keyword = searchParams.get('q')?.trim().slice(0, 100) ?? '';
   const carrierValue = searchParams.get('carrier')?.trim();
   const selectedCarrier = isCarrierCode(carrierValue) ? carrierValue : undefined;
   const gradeValue = searchParams.get('grade')?.trim();
-  const selectedGrade = isValidCarrierGradePair(selectedCarrier, gradeValue)
+  const selectedGrade = isValidBenefitCarrierGradePair(selectedCarrier, gradeValue, referenceData)
     ? gradeValue
     : undefined;
   const partnerValue = Number(searchParams.get('partner'));
@@ -57,7 +61,7 @@ export default function AllBenefitsLayout({
     Number.isSafeInteger(partnerValue) && partnerValue > 0 ? partnerValue : null;
   const categoryValue = searchParams.get('category')?.trim();
   const selectedCategory =
-    CATEGORIES.find((category) => category.id === categoryValue)?.id ?? '전체';
+    toCategoryOptions(referenceData).find((category) => category.id === categoryValue)?.id ?? '전체';
   const pageValue = Number(searchParams.get('page') ?? 1);
   const currentPage = Number.isSafeInteger(pageValue) && pageValue > 0 ? pageValue : 1;
   const membershipRequested = searchParams.get('membership') === 'mine';
@@ -70,7 +74,7 @@ export default function AllBenefitsLayout({
   const profileCarrier = isLoggedIn && isCarrierCode(user?.carrier) ? user.carrier : undefined;
   const profileGrade = user?.membershipGradeCode || user?.membershipGrade || '';
   const hasMembershipProfile = Boolean(
-    profileCarrier && profileGrade && isValidCarrierGradePair(profileCarrier, profileGrade)
+    profileCarrier && profileGrade && isValidCarrierGradePair(profileCarrier, profileGrade, referenceData)
   );
   const membershipOnly = membershipRequested && isLoggedIn && hasMembershipProfile;
   const waitingForMembership = membershipRequested && !isAuthReady;
@@ -79,9 +83,9 @@ export default function AllBenefitsLayout({
   const dialogCarrier = effectiveCarrier ?? (isCarrierCode(user?.carrier) ? user.carrier : 'SKT');
   const dialogGrade =
     effectiveGrade ??
-    (profileCarrier === dialogCarrier && isValidCarrierGradePair(dialogCarrier, profileGrade)
+    (profileCarrier === dialogCarrier && isValidCarrierGradePair(dialogCarrier, profileGrade, referenceData)
       ? profileGrade
-      : (getMembershipGradeOptions(dialogCarrier)[0]?.code ?? ''));
+      : (getBenefitMembershipGradeOptions(dialogCarrier, referenceData)[0]?.code ?? ''));
   const requestKey = [
     keyword,
     effectiveCarrier,
@@ -318,7 +322,7 @@ export default function AllBenefitsLayout({
   const profileDescription = !isAuthReady
     ? '멤버십 확인 중…'
     : hasMembershipProfile
-      ? `${getCarrierLabel(profileCarrier)} · ${getMembershipGradeLabel(profileGrade)}`
+      ? `${getCarrierLabel(profileCarrier)} · ${getMembershipGradeLabel(profileGrade, referenceData)}`
       : isLoggedIn
         ? '통신사와 등급을 설정하면 내 조건으로 볼 수 있어요.'
         : '통신사와 등급을 선택해 혜택을 살펴보세요.';
@@ -372,7 +376,7 @@ export default function AllBenefitsLayout({
               onClick={() => setIsMembershipDialogOpen(true)}
             >
               {effectiveCarrier && effectiveGrade
-                ? `${getCarrierLabel(effectiveCarrier)} · ${getMembershipGradeLabel(effectiveGrade)}`
+                ? `${getCarrierLabel(effectiveCarrier)} · ${getMembershipGradeLabel(effectiveGrade, referenceData)}`
                 : '멤버십 선택'}
             </button>
             <details
@@ -474,7 +478,7 @@ export default function AllBenefitsLayout({
                 >
                   <option value="">모든 등급</option>
                   {effectiveCarrier
-                    ? getMembershipGradeOptions(effectiveCarrier).map((grade) => (
+                    ? getBenefitMembershipGradeOptions(effectiveCarrier, referenceData).map((grade) => (
                         <option key={grade.code} value={grade.code}>
                           {grade.label}
                         </option>
@@ -492,7 +496,7 @@ export default function AllBenefitsLayout({
                   }
                 >
                   <option value="">모든 분야</option>
-                  {CATEGORIES.filter((category) => category.id !== '전체').map((category) => (
+                  {toCategoryOptions(referenceData).filter((category) => category.id !== '전체').map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
@@ -545,7 +549,7 @@ export default function AllBenefitsLayout({
               {membershipOnly
                 ? '내 조건에 맞는 혜택'
                 : effectiveGrade
-                  ? `${getMembershipGradeLabel(effectiveGrade)} 조건의 혜택`
+                  ? `${getMembershipGradeLabel(effectiveGrade, referenceData)} 조건의 혜택`
                   : keyword
                     ? `“${keyword}” 검색 결과`
                     : '혜택 제휴처'}
@@ -562,9 +566,9 @@ export default function AllBenefitsLayout({
               </p>
               <div className={styles.activeFilters} aria-label="적용 중인 필터">
                 {effectiveCarrier ? <span>{getCarrierLabel(effectiveCarrier)}</span> : null}
-                {effectiveGrade ? <span>{getMembershipGradeLabel(effectiveGrade)}</span> : null}
+                {effectiveGrade ? <span>{getMembershipGradeLabel(effectiveGrade, referenceData)}</span> : null}
                 {selectedCategory !== '전체' ? (
-                  <span>{CATEGORIES.find(({ id }) => id === selectedCategory)?.name}</span>
+                  <span>{toCategoryOptions(referenceData).find(({ id }) => id === selectedCategory)?.name}</span>
                 ) : null}
                 {membershipOnly ? <span>내 멤버십</span> : null}
               </div>
@@ -607,9 +611,11 @@ export default function AllBenefitsLayout({
                       : previews;
                     const gradeCandidates = effectiveGrade
                       ? candidates.filter((preview) =>
-                          preview.tierBenefits.some(
-                            (tier) => tier.isAll || tier.grade === effectiveGrade
-                          )
+                          preview.summary !== undefined
+                            ? preview.summary === null || isPreviewSummaryEligible(preview, effectiveGrade, referenceData)
+                            : preview.offers !== undefined || preview.offerResolution !== undefined
+                            ? (preview.offers?.length ?? 0) > 0
+                            : preview.tierBenefits.some((tier) => tier.isAll || tier.grade === effectiveGrade)
                         )
                       : candidates;
                     const favoriteBenefitId =

@@ -26,7 +26,6 @@ const rewriteToNotFound = (request: NextRequest) => {
 const fetchCurrentPartnerName = async (partnerId: number) => {
   try {
     const url = new URL(`/api/v1/benefits/partners/${partnerId}`, configuredUserApiBaseUrl);
-    url.searchParams.set('mainCategory', 'BASIC_BENEFIT');
     const response = await fetch(url, {
       headers: { Accept: 'application/json' },
       cache: 'no-store',

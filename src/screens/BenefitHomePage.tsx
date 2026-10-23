@@ -21,16 +21,18 @@ import { getFavoritesList } from '@/features/mainPage/api/favoritesListApi';
 import type { PartnerBenefitItem } from '@/features/allBenefitsPage/apis/allBenefitsApi';
 import { useNavigate, useSearchParams } from '@/lib/navigation';
 import { RootState } from '@/store';
-import { getPartnerBenefitPreview } from '@/utils/benefitPreview';
+import { getPartnerBenefitPreview, hasExplicitPreviewSummary, isPreviewSummaryEligible } from '@/utils/benefitPreview';
 import { getPartnerBenefitPath } from '@/utils/partnerSeo';
+import { getApplicableTierBenefits } from '../features/allBenefitsPage/apis/tierBenefitResolver.mjs';
+import { hasEligibleStructuredOffer, hasStructuredOffers } from '@/features/allBenefitsPage/apis/partnerBenefitModel';
 import { getLoginHref } from '@/features/loginPage/utils/returnTo.mjs';
 import { showToast } from '@/utils/toast';
-import { CATEGORIES } from '@/features/mainPage/constants';
+import { toCategoryOptions } from '@/utils/referenceData';
+import { useReferenceData } from '@/components/ReferenceDataProvider';
 import {
   getCarrierLabel,
   getMembershipGradeLabel,
   isCarrierCode,
-  isGradeApplicableToProfile,
   isValidCarrierGradePair,
   type CarrierCode,
 } from '@/utils/membership';
@@ -41,41 +43,40 @@ export type CarrierHomeSection = {
   partners: PartnerBenefitItem[] | null;
 };
 
-const categoryItems = [
-  { id: '푸드', Icon: PiCoffeeDuotone },
-  { id: '생활/편의', Icon: PiStorefrontDuotone },
-  { id: '뷰티/건강', Icon: PiSparkleDuotone },
-  { id: '문화/여가', Icon: PiFilmSlateDuotone },
-  { id: '엑티비티', Icon: PiTicketDuotone },
-  { id: '여행/교통', Icon: PiAirplaneTiltDuotone },
-  { id: '쇼핑', Icon: PiShoppingBagDuotone },
-  { id: '교육', Icon: PiBookOpenDuotone },
-];
+const categoryIcons: Record<string, typeof PiCoffeeDuotone> = {
+  푸드: PiCoffeeDuotone, '생활/편의': PiStorefrontDuotone, '뷰티/건강': PiSparkleDuotone,
+  '문화/여가': PiFilmSlateDuotone, 엑티비티: PiTicketDuotone, '여행/교통': PiAirplaneTiltDuotone,
+  쇼핑: PiShoppingBagDuotone, 교육: PiBookOpenDuotone,
+};
 const emptyPartners: PartnerBenefitItem[] = [];
 const focus =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2';
 
-function eligiblePreview(partner: PartnerBenefitItem, carrier: CarrierCode, grade: string) {
-  return partner.previews?.find(
-    (preview) =>
-      preview.carrier === carrier &&
-      preview.tierBenefits.some(
-        (tier) =>
-          !grade ||
-          tier.isAll ||
-          isGradeApplicableToProfile({
-            benefitCarrier: carrier,
-            benefitGrade: tier.grade,
-            userCarrier: carrier,
-            userGrade: grade,
-          })
-      )
-  );
+function eligiblePreview(partner: PartnerBenefitItem, carrier: CarrierCode, grade: string, referenceData?: import('@/utils/referenceData').ReferenceData | null) {
+  return partner.previews?.find((preview) => {
+    if (preview.carrier !== carrier) return false;
+    if (hasExplicitPreviewSummary(preview)) {
+      return preview.summary === null || isPreviewSummaryEligible(preview, grade, referenceData);
+    }
+    return hasStructuredOffers(preview)
+      ? hasEligibleStructuredOffer(preview, carrier, grade, referenceData)
+      : getApplicableTierBenefits(preview.tierBenefits, carrier, grade).length > 0;
+  });
 }
 
 function getOfferPath(partner: PartnerBenefitItem, carrier: CarrierCode, grade: string) {
   const params = new URLSearchParams({ carrier, grade });
   return `${getPartnerBenefitPath(partner.partnerId, partner.partnerName)}?${params.toString()}`;
+}
+
+function getPreviewDetails(condition?: string, limit?: string, fallback?: string) {
+  const primary = condition?.trim();
+  const secondary = limit?.trim();
+  if (!primary) return secondary || fallback;
+  if (!secondary || primary.includes(secondary) || secondary.includes(primary)) {
+    return primary.length >= (secondary?.length ?? 0) ? primary : secondary;
+  }
+  return `${primary} · ${secondary}`;
 }
 
 function OfferSaveButton({
@@ -148,6 +149,7 @@ export default function BenefitHomePage({
   selectedCarrier: CarrierCode;
   selectedGrade: string;
 }) {
+  const { data: referenceData } = useReferenceData();
   const [searchParams, setSearchParams] = useSearchParams();
   const auth = useSelector((state: RootState) => state.auth);
   const isRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
@@ -162,11 +164,11 @@ export default function BenefitHomePage({
   const partnerOffers = useMemo(
     () =>
       partners.flatMap((partner) => {
-        const raw = eligiblePreview(partner, selectedCarrier, selectedGrade);
-        const preview = getPartnerBenefitPreview(partner, selectedCarrier, selectedGrade);
+        const raw = eligiblePreview(partner, selectedCarrier, selectedGrade, referenceData);
+        const preview = getPartnerBenefitPreview(partner, selectedCarrier, selectedGrade, referenceData);
         return raw && preview ? [{ partner, raw, preview }] : [];
       }),
-    [partners, selectedCarrier, selectedGrade]
+    [partners, referenceData, selectedCarrier, selectedGrade]
   );
 
   useEffect(() => {
@@ -204,7 +206,7 @@ export default function BenefitHomePage({
   };
 
   const applyMembership = (carrier: string, grade: string) => {
-    if (!isCarrierCode(carrier) || !isValidCarrierGradePair(carrier, grade)) return;
+    if (!isCarrierCode(carrier) || !isValidCarrierGradePair(carrier, grade, referenceData)) return;
     const next = new URLSearchParams(searchParams);
     next.set('carrier', carrier);
     next.set('grade', grade);
@@ -221,7 +223,7 @@ export default function BenefitHomePage({
     });
   };
 
-  const selectedLabel = `${getCarrierLabel(selectedCarrier)} ${getMembershipGradeLabel(selectedGrade)}`;
+  const selectedLabel = `${getCarrierLabel(selectedCarrier)} ${getMembershipGradeLabel(selectedGrade, referenceData)}`;
   const selectionQuery = new URLSearchParams({
     carrier: selectedCarrier,
     grade: selectedGrade,
@@ -260,9 +262,9 @@ export default function BenefitHomePage({
         <nav aria-label="혜택 카테고리" className={styles.categoryPanel}>
           <h2 className="sr-only">혜택 카테고리</h2>
           <div className={styles.categoryGrid}>
-            {categoryItems.map(({ id, Icon }) => {
-              const category = CATEGORIES.find((item) => item.id === id);
-              return category ? (
+            {toCategoryOptions(referenceData).filter(({ id }) => id !== '전체').map(({ id, name }) => {
+              const Icon = categoryIcons[id] ?? PiSparkleDuotone;
+              return (
                 <Link
                   key={id}
                   href={`/benefits?${selectionQuery}&category=${encodeURIComponent(id)}`}
@@ -271,9 +273,9 @@ export default function BenefitHomePage({
                   <span className={styles.categoryIcon}>
                     <Icon aria-hidden="true" size={32} />
                   </span>
-                  <span>{category.name}</span>
+                  <span>{name}</span>
                 </Link>
-              ) : null;
+              );
             })}
           </div>
         </nav>
@@ -316,9 +318,11 @@ export default function BenefitHomePage({
                 </div>
                 <h3>{topOffers[0].preview.title}</h3>
                 <p className={styles.primaryCondition}>
-                  {[topOffers[0].preview.condition, topOffers[0].preview.limit]
-                    .filter(Boolean)
-                    .join(' · ') || selectedLabel}
+                  {getPreviewDetails(
+                    topOffers[0].preview.condition,
+                    topOffers[0].preview.limit,
+                    selectedLabel
+                  )}
                 </p>
                 <div className={styles.primaryActions}>
                   <Link
@@ -359,8 +363,7 @@ export default function BenefitHomePage({
                       </div>
                       <h3>{preview.title}</h3>
                       <p className={styles.offerCondition}>
-                        {[preview.condition, preview.limit].filter(Boolean).join(' · ') ||
-                          selectedLabel}
+                        {getPreviewDetails(preview.condition, preview.limit, selectedLabel)}
                       </p>
                       <Link
                         href={getOfferPath(partner, selectedCarrier, selectedGrade)}
@@ -412,7 +415,7 @@ export default function BenefitHomePage({
                   <span className={styles.shelfCopy}>
                     <strong>{partner.partnerName}</strong>
                     <span>{preview.title}</span>
-                    <small>{preview.limit || preview.condition || selectedLabel}</small>
+                    <small>{getPreviewDetails(preview.condition, preview.limit, selectedLabel)}</small>
                   </span>
                 </Link>
               ))}

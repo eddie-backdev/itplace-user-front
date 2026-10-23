@@ -17,6 +17,8 @@ import {
   isFavoriteTierApplicableToProfile,
 } from '../../utils/favoriteMembership.mjs';
 import { getPartnerBenefitPath } from '../../../../utils/partnerSeo';
+import { useReferenceData } from '../../../../components/ReferenceDataProvider';
+import BenefitConditions from '../../../allBenefitsPage/components/BenefitConditions';
 
 interface Props {
   benefitId: number;
@@ -36,6 +38,7 @@ export default function BenefitDetailTabs({
   userCarrier,
   userGrade,
 }: Props) {
+  const { data: referenceData } = useReferenceData();
   const [detail, setDetail] = useState<FavoriteDetail | null>(null);
   const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
@@ -85,7 +88,7 @@ export default function BenefitDetailTabs({
   const gradeConditions = selectedGroup?.tiers.filter((tier) => !tier.isAll) ?? [];
   const availableGrades = Array.from(new Set(gradeConditions.map((tier) => tier.grade)));
   const gradeTabs = selectedGroup
-    ? getCarrierGradeOrder(selectedGroup.carrier, availableGrades).filter((grade) =>
+    ? getCarrierGradeOrder(selectedGroup.carrier, availableGrades, referenceData).filter((grade) =>
         availableGrades.includes(grade)
       )
     : [];
@@ -105,7 +108,7 @@ export default function BenefitDetailTabs({
         selectedCondition,
         userCarrier,
         userGrade,
-        isGradeApplicableToProfile
+        (args) => isGradeApplicableToProfile({ ...args, referenceData })
       )
   );
 
@@ -171,11 +174,6 @@ export default function BenefitDetailTabs({
     : mayUseLegacyMetadata
       ? detail.benefitLimit
       : null;
-  const normalizedLimit = selectedLimit?.trim();
-  const limitText =
-    normalizedLimit && normalizedLimit !== '제한없음'
-      ? normalizedLimit
-      : '이용 방법에서 횟수·한도를 확인해 주세요.';
   const allGradeContext = allGradeCondition?.context?.trim();
   const selectedConditionContext = selectedCondition?.context?.trim();
   const fullDetailHref =
@@ -246,12 +244,6 @@ export default function BenefitDetailTabs({
         </p>
       ) : null}
       {selectedGroup ? (
-        <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-grey05">
-          <span className="font-semibold text-ink">횟수·한도</span> · {limitText}
-        </p>
-      ) : null}
-
-      {selectedGroup ? (
         <div className="mt-4 rounded-xl border border-warmBorder bg-white p-4">
           {allGradeCondition ? (
             <div>
@@ -284,7 +276,7 @@ export default function BenefitDetailTabs({
                         : 'border-warmBorder bg-white text-grey05 hover:bg-warmCanvas'
                     }`}
                   >
-                    {getMembershipGradeLabel(grade)}
+                    {getMembershipGradeLabel(grade, referenceData)}
                   </button>
                 ))}
               </div>
@@ -305,6 +297,15 @@ export default function BenefitDetailTabs({
               {eligibilityMessage}
             </p>
           ) : null}
+          <BenefitConditions
+            conditions={carrierPolicy?.conditions}
+            legacyLimit={selectedLimit}
+            sourceUrl={carrierPolicy?.sourceUrl}
+            sourceCapturedAt={carrierPolicy?.sourceCapturedAt}
+            manual={carrierPolicy?.manual}
+            includeTierDetails={false}
+            className="mt-4"
+          />
         </div>
       ) : (
         <p className="mt-4 rounded-xl bg-warmCanvas p-4 text-sm leading-6 text-grey05">

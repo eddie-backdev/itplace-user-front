@@ -23,7 +23,9 @@ const loadModule = (path, dependencies = {}) => {
   })((name) => dependencies[name] ?? require(name), exports);
   return exports;
 };
+const referenceData = loadModule('src/utils/referenceData.ts');
 const membership = loadModule('src/utils/membership.ts', {
+  './referenceData': referenceData,
   '../content/benefit-display.json': require('../src/content/benefit-display.json'),
 });
 const storeUtils = loadModule('src/features/mainPage/utils/storeUtils.ts', {
