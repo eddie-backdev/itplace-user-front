@@ -23,11 +23,11 @@ Workflow는 `scripts/deploy-userfront.sh`와 upstream 템플릿도 매번 서버
 
 Actions secrets로 `OCI_HOST`, `OCI_USER`, `OCI_SSH_KEY`, 검증된 known-hosts 항목인 `OCI_KNOWN_HOSTS`를 등록한다. SSH 호스트 키는 신뢰된 경로에서 확인한 값을 사용한다. SSH 사용자는 Docker 실행, `/home/ubuntu/app/scripts`, `/home/ubuntu/app/nginx/conf.d` 쓰기 권한이 필요하다. Workflow는 GITHUB_TOKEN으로 원격 GHCR 로그인을 하며, 토큰은 SSH stdin으로만 보내고 임시 Docker 설정 디렉터리를 종료 시 삭제한다. GHCR 패키지에서 해당 저장소 Workflow의 토큰이 패키지를 읽도록 허용한다.
 
-공개 빌드 변수는 Actions Variables에 설정한다. `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY`는 필수다. `NEXT_PUBLIC_APP_BASE_URL` 기본값은 `https://userapi.itplace.click/`, `NEXT_PUBLIC_KAKAO_REDIRECT_URI`는 `https://userapi.itplace.click/oauth/kakao`, `NEXT_PUBLIC_CONTACT_EMAIL`은 `noreply.itplace@gmail.com`, `NEXT_PUBLIC_BENEFIT_CHAT_ENABLED`는 `true`다. 값은 이미지 빌드 시 포함되며 `NEXT_DEPLOYMENT_ID`는 커밋 SHA로 지정한다.
+공개 빌드 변수는 Actions Variables에 설정한다. `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY`는 필수다. `NEXT_PUBLIC_APP_BASE_URL` 기본값은 `https://userapi.itplace.click/`, `NEXT_PUBLIC_KAKAO_REDIRECT_URI`는 `https://userapi.itplace.click/oauth2/authorization/kakao`, `NEXT_PUBLIC_CONTACT_EMAIL`은 `noreply.itplace@gmail.com`, `NEXT_PUBLIC_BENEFIT_CHAT_ENABLED`는 `true`다. Kakao 로그인의 기존 Spring Security 시작 경로가 `/oauth2/authorization/kakao`이므로 이 값을 사용한다. 값은 이미지 빌드 시 포함되며 `NEXT_DEPLOYMENT_ID`는 커밋 SHA로 지정한다.
 
 ## 배포와 복구
 
-`main` 푸시는 lint, typecheck, 테스트, Next 빌드, standalone production 검증 및 배포 스크립트 mock 테스트를 통과한 뒤 진행된다. 이미지는 ARM64 전용으로 빌드하고 GitHub Actions 캐시를 사용한다.
+`main` 푸시는 lint, typecheck, 테스트, Next 빌드, standalone production 검증 및 배포 스크립트 mock 테스트를 통과한 뒤 진행된다. 배포 job은 GitHub의 native ARM64 runner에서 이미지를 빌드하고 GitHub Actions 캐시를 사용한다.
 
 배포 스크립트는 직렬화 잠금을 잡고 새 이미지의 정적 청크를 공유 디렉터리에 누적한다. 새 컨테이너에는 이 디렉터리를 `/app/.next/static`으로 읽기 전용 연결해, 배포 전에 열린 페이지가 이전 해시 청크를 계속 받을 수 있게 한다. 새 슬롯은 사설 Docker 네트워크에서 1GiB 메모리 제한으로 구동한다. `/login`, `/`, 정적 asset 응답을 검사한 뒤 upstream을 바꾸고 nginx 설정 검사와 reload를 수행한다. 검사 실패 시 현재 트래픽은 유지된다. nginx 실패 시 upstream을 되돌린다. 성공 뒤 이전 컨테이너는 수동 복구를 위해 남겨 둔다.
 

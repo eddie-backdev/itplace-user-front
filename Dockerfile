@@ -10,7 +10,7 @@ COPY . .
 
 ARG NEXT_PUBLIC_APP_BASE_URL=https://userapi.itplace.click/
 ARG NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY=
-ARG NEXT_PUBLIC_KAKAO_REDIRECT_URI=https://userapi.itplace.click/oauth/kakao
+ARG NEXT_PUBLIC_KAKAO_REDIRECT_URI=https://userapi.itplace.click/oauth2/authorization/kakao
 ARG NEXT_PUBLIC_CONTACT_EMAIL=noreply.itplace@gmail.com
 ARG NEXT_PUBLIC_BENEFIT_CHAT_ENABLED=true
 ARG NEXT_DEPLOYMENT_ID
