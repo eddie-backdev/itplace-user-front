@@ -1,10 +1,22 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { cpSync, existsSync, mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createServer } from 'node:http';
 import { createServer as createNetServer } from 'node:net';
 
 const workers = process.argv.includes('--workers');
-const runtimeName = workers ? 'workers' : 'production';
+const standalone = process.argv.includes('--standalone');
+assert.ok(!(workers && standalone), 'Workers와 standalone 검증은 함께 실행할 수 없습니다');
+const runtimeName = workers ? 'workers' : standalone ? 'standalone' : 'production';
+
+if (standalone) {
+  const standaloneDir = resolve('.next/standalone');
+  assert.ok(existsSync(resolve(standaloneDir, 'server.js')), 'standalone server.js가 있어야 합니다');
+  mkdirSync(resolve(standaloneDir, '.next'), { recursive: true });
+  cpSync(resolve('.next/static'), resolve(standaloneDir, '.next/static'), { recursive: true });
+  cpSync(resolve('public'), resolve(standaloneDir, 'public'), { recursive: true });
+}
 
 const mockPartner = {
   partnerId: 284,
@@ -950,18 +962,22 @@ const nextServer = spawn(
         `USER_API_BASE_URL:${mockOrigin}`,
         '--show-interactive-dev-session=false',
       ]
-    : [
-        'node_modules/next/dist/bin/next',
-        'start',
-        '--hostname',
-        '127.0.0.1',
-        '--port',
-        String(appPort),
-      ],
+    : standalone
+      ? ['.next/standalone/server.js']
+      : [
+          'node_modules/next/dist/bin/next',
+          'start',
+          '--hostname',
+          '127.0.0.1',
+          '--port',
+          String(appPort),
+        ],
   {
     env: {
       ...process.env,
       NODE_ENV: 'production',
+      PORT: String(appPort),
+      HOSTNAME: '127.0.0.1',
       USER_API_BASE_URL: mockOrigin,
       NEXT_PUBLIC_APP_BASE_URL: mockOrigin,
       WRANGLER_SEND_METRICS: 'false',

@@ -21,6 +21,8 @@ const legacyHtmlRedirects = [
 ] as const;
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
+  deploymentId: process.env.NEXT_DEPLOYMENT_ID,
   reactStrictMode: true,
   poweredByHeader: false,
   devIndicators: false,

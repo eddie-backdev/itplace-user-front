@@ -30,7 +30,7 @@
 - 비밀번호 변경·회원 탈퇴 중 중복 제출과 모달 닫기를 막고, 실패하면 입력을 보존합니다.
 - 지도 compact 응답·viewport 재사용과 공개 안내 콘텐츠·공식 출처·검색 메타데이터를 반영했습니다. 기존 Next.js의 서버 렌더링, OAuth 정보 보호, 지도 SDK·줌 처리, WOFF2 최적화는 유지합니다.
 
-`npm run verify`는 린트·타입 검사·Next.js 및 지도 compact 회귀 테스트·production 빌드·모의 API를 이용한 SSR/필터/SEO 검증을 수행합니다. 실제 문자 수신과 운영 계정·OAuth 인증은 모의 응답 검증과 별도로 확인해야 합니다. Git 배포 기준은 기존 `eddie-backdev/itplace-user-front` 저장소의 `main`입니다. Next.js 변경을 원격 main에 반영한 뒤 Workers 배포 성공과 운영 도메인 연결을 확인합니다.
+`npm run verify`는 린트·타입 검사·회귀 테스트·배포 실패 복구 검사·production 빌드와 Node/standalone 환경의 SSR·필터·SEO 검증을 수행합니다. 실제 문자 수신과 운영 계정·OAuth 인증은 모의 응답 검증과 별도로 확인해야 합니다. `eddie-backdev/itplace-user-front`의 `main` 푸시는 GitHub Actions에서 검증한 뒤 OCI에 배포합니다.
 
 ## 혜택 사용 기록
 
@@ -138,14 +138,14 @@ src/
 
 ## 배포
 
-Cloudflare Workers용 OpenNext 설정을 추가했습니다. 기존 `next dev` / `next build` / `next start`도 사용할 수 있으며, API와 DB는 OCI 구성을 유지합니다.
+운영 배포는 Next.js standalone ARM64 Docker 이미지와 기존 OCI Nginx를 사용합니다. GitHub Actions가 검증·이미지 빌드·GHCR 업로드를 수행하고, OCI에서 새 컨테이너의 상태를 확인한 뒤 Nginx upstream을 전환합니다. Cloudflare는 DNS·프록시·CDN 역할을 유지합니다.
 
 ```bash
-npm run verify:workers   # 린트·타입·테스트·Workers 빌드·로컬 workerd 검증
-npm run preview:workers  # 빌드된 Worker를 http://127.0.0.1:8787 에서 확인
+npm run verify                     # 기존 검사와 standalone·배포 복구 검사
+npm run test:production:standalone  # 빌드 후 실제 standalone 서버 검증
 ```
 
-Next.js 코드는 저장소 루트에 있으므로 Workers Builds에서 저장소 `eddie-backdev/itplace-user-front`, 브랜치 `main`, Root directory `/`를 선택합니다. 최초 main 푸시 전에는 기존 Pages 프로젝트의 Git 자동 배포를 중지하고, Workers 배포 성공 후 운영 도메인을 전환합니다. 대시보드 입력값과 환경 변수는 [Workers 배포 안내](docs/WORKERS_DEPLOYMENT.md)를 참고하세요.
+환경변수, 최초 설치, 자동 배포와 복구 절차는 [OCI 배포 안내](docs/OCI_DEPLOYMENT.md)를 참고하세요. 기존 OpenNext·Wrangler 설정과 마지막 Workers 배포는 초기 이전의 복구 경로로 보관합니다. Workers 자동 빌드는 중지하며, [Workers 배포 안내](docs/WORKERS_DEPLOYMENT.md)는 이전 배포 방식의 참고 자료입니다.
 
 ## 연관 저장소
 

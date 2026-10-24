@@ -1,0 +1,3 @@
+upstream userfront_active {
+    server __USERFRONT_CONTAINER__:3000;
+}

@@ -1,0 +1,12 @@
+.git
+.next
+.open-next
+.wrangler
+node_modules
+coverage
+output
+out
+.env*
+!.env.example
+*.log
+npm-debug.log*
