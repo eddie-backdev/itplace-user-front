@@ -1,3 +1,5 @@
+'use client';
+
 import type { PartnerBenefitDetailResponse } from '@/features/allBenefitsPage/apis/partnerBenefitModel';
 import { getApplicableTierBenefits, hasStructuredOffers } from '@/features/allBenefitsPage/apis/partnerBenefitModel';
 import { getCarrierLabel, getMembershipGradeLabel } from '@/utils/membership';

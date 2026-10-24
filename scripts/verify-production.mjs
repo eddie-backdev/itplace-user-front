@@ -227,6 +227,45 @@ const startMockApi = async () => {
       return;
     }
 
+    if (url.pathname === '/api/v1/reference-data') {
+      const grades = [
+        ['SKT', 'SKT_VIP', 'VIP'], ['SKT', 'SKT_GOLD', '골드'], ['SKT', 'SKT_SILVER', '실버'],
+        ['KT', 'KT_VIP', 'VIP'], ['KT', 'KT_VVIP', 'VVIP'], ['KT', 'KT_GOLD', '골드'],
+        ['KT', 'KT_SILVER', '실버'], ['LGU', 'VIP', 'VIP'], ['LGU', 'VVIP', 'VVIP'], ['LGU', 'BASIC', '일반'],
+      ].map(([carrier, code, label], sortOrder) => ({
+        carrier, code, label, sortOrder, active: true, profileSelectable: true,
+        benefitEnabled: true, allGradeMember: true,
+      }));
+      json(response, 200, { data: {
+        grades,
+        programs: [],
+        categories: ['생활/편의', '푸드', '쇼핑', '뷰티/건강', '엑티비티', '문화/여가', '여행/교통', '교육']
+          .map((code, sortOrder) => ({ code, label: code === '푸드' ? '음식·카페' : code, sortOrder, active: true })),
+        gradeMatches: grades.map(({ carrier, code }) => ({ carrier, profileGrade: code, benefitGrade: code })),
+      } });
+      return;
+    }
+
+    const storeId = url.pathname.match(/^\/api\/v1\/maps\/stores\/(\d+)$/)?.[1];
+    if (storeId && ['269', '499', '1408'].includes(storeId)) {
+      const storeNames = { 269: '굽네치킨 서초1동점', 499: '굽네치킨 논현1동점', 1408: '뚜레쥬르강남대로점' };
+      json(response, 200, { data: {
+        store: { storeId: Number(storeId), storeName: storeNames[storeId], latitude: 37.5, longitude: 127.03, address: '서울 강남구 테스트로 1', roadAddress: '서울 강남구 테스트로 1' },
+        partner: { partnerId: 284, partnerName: '스타벅스', category: '카페' },
+      } });
+      return;
+    }
+
+    if (url.pathname === '/api/v1/maps/nearby/previews/compact/page') {
+      json(response, 200, { data: {
+        stores: [{ storeId: 269, partnerId: 284, storeName: '굽네치킨 서초1동점', latitude: 37.5, longitude: 127.03, address: '서울 강남구 테스트로 1', roadAddress: '서울 강남구 테스트로 1' }],
+        partners: [{ partnerId: 284, partnerName: '스타벅스', category: '카페', tierBenefit: [{ carrier: 'SKT' }] }],
+        hasMore: false,
+        nextCursor: null,
+      } });
+      return;
+    }
+
     if (url.pathname.startsWith('/api/v1/benefits/partners/')) {
       json(response, 404, { data: null });
       return;
@@ -675,19 +714,36 @@ const runChecks = async (origin, mockApi) => {
 
   const guestInvalidGradeRequestsBefore = mockApi.requests.length;
   const guestInvalidGradeResponse = await fetch(`${origin}/benefits?carrier=SKT&grade=KT_VIP`);
-  const guestInvalidGradeRequest = mockApi.requests
+  const guestInvalidGradeRequests = mockApi.requests
     .slice(guestInvalidGradeRequestsBefore)
-    .find((url) => url.pathname === '/api/v1/benefits/partners');
+    .filter((url) => url.pathname === '/api/v1/benefits/partners');
   assert.equal(guestInvalidGradeResponse.status, 200);
-  assert.ok(guestInvalidGradeRequest, '잘못된 등급은 기본 공개 혜택 목록을 호출해야 합니다');
-  assert.equal(guestInvalidGradeRequest.searchParams.get('carriers'), 'SKT');
-  assert.equal(guestInvalidGradeRequest.searchParams.has('grade'), false);
-  assert.equal(guestInvalidGradeRequest.searchParams.get('mainCategory'), 'BASIC_BENEFIT');
+  assert.equal(guestInvalidGradeRequests.length, 0, '잘못된 등급은 공개 혜택 API에 전달하지 않아야 합니다');
 
   const membershipResponse = await fetch(`${origin}/membership/skt`);
   const membershipHtml = await membershipResponse.text();
   assert.equal(membershipResponse.status, 200);
   assert.match(membershipHtml, /CollectionPage/);
+
+  for (const [storeId, storeName] of [
+    ['269', '굽네치킨 서초1동점'],
+    ['499', '굽네치킨 논현1동점'],
+    ['1408', '뚜레쥬르강남대로점'],
+  ]) {
+    const response = await fetch(`${origin}/stores/${storeId}/${encodeURIComponent(storeName)}`);
+    const html = await response.text();
+    assert.equal(response.status, 200, `${storeName} 매장 페이지 SSR`);
+    assert.ok(plainText(mainContent(html)).includes(storeName));
+    assert.ok(plainText(mainContent(html)).includes('통신사·등급별 혜택 비교'));
+  }
+
+  const regionResponse = await fetch(`${origin}/places/gangnam-station`);
+  const regionHtml = await regionResponse.text();
+  assert.equal(regionResponse.status, 200);
+  assert.match(plainText(mainContent(regionHtml)), /직선거리 약 .*km/);
+  assert.match(plainText(mainContent(regionHtml)), /도보 이동 거리가 아닙니다/);
+  assert.match(plainText(mainContent(regionHtml)), /혜택 정보: SKT/);
+  assert.match(plainText(mainContent(regionHtml)), /개별 매장의 혜택 적용 여부나 이용 가능 여부를 보장하지 않으므로/);
 
   const canonicalPartnerPath = `/benefits/partners/284/${encodeURIComponent('스타벅스')}`;
   const partnerResponse = await fetch(`${origin}${canonicalPartnerPath}`);
@@ -702,7 +758,7 @@ const runChecks = async (origin, mockApi) => {
   );
   const guestGradeDetailHtml = await guestGradeDetailResponse.text();
   assert.equal(guestGradeDetailResponse.status, 200);
-  assert.match(guestGradeDetailHtml, /VIP 전용 테스트 혜택/);
+  assert.ok(plainText(mainContent(guestGradeDetailHtml)).includes('VIP 전용 테스트 혜택'));
   assert.match(
     mainContent(guestGradeDetailHtml),
     /href="\/benefits\?carrier=SKT&amp;grade=SKT_VIP"[^>]*>[\s\S]*?혜택찾기/
@@ -715,10 +771,13 @@ const runChecks = async (origin, mockApi) => {
   const filteredHtml = await filteredResponse.text();
   assert.equal(filteredResponse.status, 200);
   assert.match(filteredResponse.headers.get('cache-control') ?? '', /private|no-store/);
-  assert.match(filteredHtml, /VIP 전용 테스트 혜택/);
-  assert.ok(plainText(mainContent(filteredHtml)).includes('내 멤버십 혜택'));
-  assert.equal(countOccurrences(filteredHtml, 'id="benefit-503"'), 1);
-  assert.equal(countOccurrences(filteredHtml, 'id="benefit-502"'), 0);
+  const filteredContent = mainContent(filteredHtml);
+  assert.ok(plainText(filteredContent).includes('VIP 전용 테스트 혜택'));
+  assert.match(filteredContent, /<option value="503"[^>]*>VIP 전용 테스트 혜택<\/option>/);
+  assert.ok(plainText(filteredContent).includes('내 멤버십 혜택'));
+  // SSR combines canonical and filtered offers, but initially selects canonical benefit 502; filtered 503 remains selectable.
+  assert.equal(countOccurrences(filteredHtml, 'id="benefit-502"'), 1);
+  assert.equal(countOccurrences(filteredHtml, 'id="benefit-503"'), 0);
   const emptyHtml = await (
     await fetch(`${origin}${canonicalPartnerPath}?carrier=SKT&grade=SKT_GOLD`)
   ).text();

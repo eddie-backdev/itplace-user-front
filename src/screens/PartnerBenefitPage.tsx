@@ -45,7 +45,7 @@ import { getLoginHref } from '../features/loginPage/utils/returnTo.mjs';
 import MembershipSelectionDialog from '@/components/membership/MembershipSelectionDialog';
 import PartnerBenefitComparison from './PartnerBenefitComparison';
 import BenefitConditions from '../features/allBenefitsPage/components/BenefitConditions';
-import { formatOfferRewardFacts } from '../features/allBenefitsPage/apis/benefitFactFormatting.mjs';
+import { getScopedBenefitHeadline } from './partnerBenefitHeadline.mjs';
 import styles from './PartnerBenefitPage.module.css';
 import { useReferenceData } from '@/components/ReferenceDataProvider';
 import { getCategoryLabel } from '@/utils/referenceData';
@@ -59,7 +59,8 @@ const getManualExcerpt = (manual?: string | null) => {
   return `${text.slice(0, boundary > 0 ? boundary : 180).trim()}…`;
 };
 
-const VERIFIED_PARTNER_NOTE_IDS = new Set<number>([112, 131, 288]);
+// 공식 출처·현재 통신사 데이터 대조 기록: docs/content/partner-notes-verification-2026-10-24.md
+const VERIFIED_PARTNER_NOTE_IDS = new Set<number>([17, 21, 30, 93, 108, 112, 131, 287, 288, 291]);
 
 const groupTierBenefitConditions = (
   tierBenefits: CarrierBenefitDetail['tierBenefits'],
@@ -409,13 +410,11 @@ const PartnerBenefitPage = ({
     selectedConditions[0]?.context.split('※') ?? [];
   const selectedBenefitHeadline =
     hasScopedOffers
-      ? [
-          ...selectedOffers.map((offer) => [...formatOfferRewardFacts(offer.facts), offer.title.trim()].filter(Boolean).join(' · ')),
-          ...(selectedOffers.length === 1 &&
-          selectedBenefit?.conditions?.offerResolution === 'SINGLE'
-            ? selectedConditions.map(({ context }) => context.trim()).filter(Boolean)
-            : []),
-        ].join(' · ') || '선택 등급의 적용 혜택을 확인해 주세요'
+      ? getScopedBenefitHeadline({
+          offers: selectedOffers,
+          offerResolution: selectedBenefit?.conditions?.offerResolution,
+          eligibleTierContexts: selectedConditions.map(({ context }) => context.trim()).filter(Boolean),
+        })
       : conditionHeadline
           .trim()
           .replace(detail?.partnerName ?? '', '')

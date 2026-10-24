@@ -17,6 +17,7 @@ const MembershipGuidePage = () => {
             { id: 'online-offline', label: '주문 경로 구분' },
             { id: 'discount-vs-points', label: '할인·적립 비교' },
             { id: 'when-it-fails', label: '적용되지 않을 때' },
+            { id: 'decision-examples-title', label: '상황별 계산 예시' },
           ].map((item) => (
             <a
               key={item.id}
@@ -134,6 +135,30 @@ const MembershipGuidePage = () => {
             </section>
           ))}
         </div>
+
+        <section aria-labelledby="decision-examples-title" className="border-t border-warmBorder pt-7">
+          <h2 id="decision-examples-title" className="scroll-mt-28 text-balance text-xl font-semibold tracking-[-0.02em] text-ink">
+            결제 상황에 대입해 보기
+          </h2>
+          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {guide.decisionExamples.map((example) => (
+              <article key={example.title} className="min-w-0 break-keep rounded-xl border border-warmBorder bg-white p-5">
+                <h3 className="text-base font-bold leading-6 text-ink">{example.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-grey06">{example.situation}</p>
+                <p className="mt-3 text-sm leading-6 text-grey06">{example.calculation}</p>
+                <p className="mt-3 text-sm font-medium leading-6 text-ink">{example.decision}</p>
+                <a
+                  href={example.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-brandStrong underline underline-offset-4 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  {example.sourceLabel} 원문 보기
+                </a>
+              </article>
+            ))}
+          </div>
+        </section>
 
         <section className="border-t border-warmBorder pt-7">
           <h2 className="text-xl font-semibold tracking-[-0.02em] text-ink">통신사별 확인 팁</h2>

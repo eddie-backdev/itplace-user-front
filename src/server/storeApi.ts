@@ -33,7 +33,12 @@ export type StorePreviewBatch = {
     address?: string | null;
     roadAddress?: string | null;
   }>;
-  partners: Array<{ partnerId: number; partnerName: string; category?: string | null }>;
+  partners: Array<{
+    partnerId: number;
+    partnerName: string;
+    category?: string | null;
+    tierBenefit?: Array<{ carrier?: string | null }>;
+  }>;
   hasMore: boolean;
   nextCursor: number | null;
 };
@@ -66,7 +71,10 @@ const isStorePreviewBatch = (value: unknown): value is StorePreviewBatch => {
     && Number.isSafeInteger(store.storeId) && Number.isSafeInteger(store.partnerId)
     && typeof store.storeName === 'string' && isFiniteNumber(store.latitude) && isFiniteNumber(store.longitude))
     && value.partners.every((partner) => isRecord(partner)
-      && Number.isSafeInteger(partner.partnerId) && typeof partner.partnerName === 'string');
+      && Number.isSafeInteger(partner.partnerId) && typeof partner.partnerName === 'string'
+      && (partner.tierBenefit === undefined || (Array.isArray(partner.tierBenefit)
+        && partner.tierBenefit.every((item) => isRecord(item)
+          && (item.carrier === undefined || item.carrier === null || typeof item.carrier === 'string')))));
 };
 
 const getPublicData = async <T>(path: string, isData: (value: unknown) => value is T): Promise<StoreFetchResult<T>> => {
