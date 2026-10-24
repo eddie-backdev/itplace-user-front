@@ -115,4 +115,11 @@ SWITCHED=true
 CONFIG_WRITTEN=false
 rm -f "$BACKUP"
 BACKUP=""
-echo "[userfront] traffic switched to ${NEW_CONTAINER}; kept ${OLD_CONTAINER} for recovery"
+echo "[userfront] traffic switched to ${NEW_CONTAINER}"
+if [[ "$ACTIVE" != none ]]; then
+  OLD_CONTAINERS="$(docker ps -a --format '{{.Names}}')"
+  if grep -qx "$OLD_CONTAINER" <<< "$OLD_CONTAINERS"; then
+    docker rm -f "$OLD_CONTAINER" >/dev/null
+    echo "[userfront] removed previous container ${OLD_CONTAINER}"
+  fi
+fi

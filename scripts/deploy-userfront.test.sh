@@ -33,11 +33,13 @@ case "$1 $2" in
     fi
     ;;
 esac
+if [[ "$1 ${2:-} ${3:-}" == "rm -f userfront-green" && "${FAIL_OLD_REMOVE:-0}" == 1 ]]; then exit 1; fi
 if [[ "$1" == cp ]]; then
   [[ "${FAIL_ASSET_COPY:-0}" != 1 ]] || exit 1
   mkdir -p "$3/chunks"
   touch "$3/chunks/test.js"
 fi
+if [[ "$1 $2" == "ps -a" ]]; then printf 'userfront-blue\nuserfront-green\n'; fi
 MOCK
 chmod +x "$TMP/bin/docker"
 printf '#!/usr/bin/env bash\nexit 0\n' > "$TMP/bin/flock"
@@ -53,6 +55,7 @@ run_deploy() {
 
 if FAIL_HEALTH=1 run_deploy >/dev/null 2>&1; then echo "health failure unexpectedly deployed" >&2; exit 1; fi
 ! grep -Eq 'nginx-proxy nginx -s reload' "$TMP/trace"
+! grep -Eq 'rm -f userfront-blue' "$TMP/trace"
 grep -Eq 'server userfront-blue:3000' "$TMP/nginx/conf.d/userfront-upstream.conf"
 
 : > "$TMP/trace"
@@ -71,23 +74,34 @@ grep -Eq 'rm -f userfront-assets-green' "$TMP/trace"
 if FAIL_NGINX_TEST=1 run_deploy >/dev/null 2>&1; then echo "invalid Nginx config unexpectedly deployed" >&2; exit 1; fi
 grep -Eq 'server userfront-blue:3000' "$TMP/nginx/conf.d/userfront-upstream.conf"
 grep -Eq 'nginx-proxy nginx -s reload' "$TMP/trace"
+! grep -Eq 'rm -f userfront-blue' "$TMP/trace"
 
 : > "$TMP/trace"
 if FAIL_NGINX_RELOAD=1 run_deploy >/dev/null 2>&1; then echo "failed nginx reload unexpectedly deployed" >&2; exit 1; fi
 grep -Eq 'server userfront-blue:3000' "$TMP/nginx/conf.d/userfront-upstream.conf"
 [[ "$(grep -c 'nginx-proxy nginx -s reload' "$TMP/trace")" -eq 2 ]]
+! grep -Eq 'rm -f userfront-blue' "$TMP/trace"
 
 : > "$TMP/trace"
 run_deploy >/dev/null
 grep -Eq 'server userfront-green:3000' "$TMP/nginx/conf.d/userfront-upstream.conf"
-! grep -Eq 'rm -f userfront-blue' "$TMP/trace"
 grep -Fq 'pull ghcr.io/eddie-backdev/itplace-user-front:test-tag' "$TMP/trace"
 grep -Fq 'tag ghcr.io/eddie-backdev/itplace-user-front:test-tag itplace-user-front:test-tag' "$TMP/trace"
 grep -Fq 'create --name userfront-assets-green itplace-user-front:test-tag' "$TMP/trace"
 grep -Fq -- '--label itplace.service=user-front itplace-user-front:test-tag' "$TMP/trace"
+reload_line="$(grep -n 'nginx-proxy nginx -s reload' "$TMP/trace" | tail -n 1 | cut -d: -f1)"
+old_remove_line="$(grep -n 'rm -f userfront-blue' "$TMP/trace" | tail -n 1 | cut -d: -f1)"
+[[ "$old_remove_line" -gt "$reload_line" ]]
+
+: > "$TMP/trace"
+if FAIL_OLD_REMOVE=1 run_deploy >/dev/null 2>&1; then echo "old container removal failure unexpectedly succeeded" >&2; exit 1; fi
+grep -Eq 'server userfront-blue:3000' "$TMP/nginx/conf.d/userfront-upstream.conf"
+[[ "$(grep -c 'nginx-proxy nginx -s reload' "$TMP/trace")" -eq 1 ]]
+[[ "$(grep -c 'rm -f userfront-blue' "$TMP/trace")" -eq 1 ]]
 
 rm "$TMP/nginx/conf.d/userfront-upstream.conf"
 : > "$TMP/trace"
 run_deploy >/dev/null
 grep -Eq 'server userfront-blue:3000' "$TMP/nginx/conf.d/userfront-upstream.conf"
+! grep -Eq 'rm -f userfront-none' "$TMP/trace"
 echo "deploy-userfront checks passed"
