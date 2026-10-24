@@ -8,14 +8,26 @@ GitHub Actions가 Next.js standalone 빌드를 검증하고 ARM64 이미지를 G
 
 최초 배포 전에는 nginx 설정을 변경하지 않는다. GitHub Actions의 수동 실행으로 이미지를 배포하면 스크립트가 `userfront-blue`를 시작하고 검사한 뒤 `/home/ubuntu/app/nginx/conf.d/userfront-upstream.conf`를 생성한다. 기존 nginx 설정이 이 파일을 아직 include하지 않아도 된다. 이 첫 실행은 nginx 설정을 검사하고 reload해도 기존 라우팅을 유지한다.
 
-첫 배포가 성공한 다음 `infra/oci/userfront-site.conf`를 `/home/ubuntu/app/nginx/conf.d/userfront-site.conf`에 한 번 설치한다. 그 다음 nginx `http` 설정에 아래 두 파일을 명시적으로 include하고 `nginx -t` 후 reload한다. 사이트 설정은 초기 구성에서만 설치하며 CI 배포가 덮어쓰지 않는다.
+첫 배포가 성공한 다음 `infra/oci/userfront-site.conf`를 호스트의 `/home/ubuntu/app/nginx/conf.d/userfront-site.conf`에 한 번 설치한다. Docker nginx 안에서는 아래처럼 컨테이너 경로를 `/etc/nginx/conf.d`로 지정해 `http` 설정에 두 파일을 명시적으로 include하고 `nginx -t` 후 reload한다. nginx의 `/etc/nginx/nginx.conf`는 호스트 `/home/ubuntu/app/nginx/nginx.conf`를 read-only 파일 bind mount한 것이므로 파일을 직접 수정한다. 이 파일을 rename하거나 atomic replace하지 않는다. 사이트 설정은 초기 구성에서만 설치하며 CI 배포가 덮어쓰지 않는다.
 
 ```nginx
-include /home/ubuntu/app/nginx/conf.d/userfront-upstream.conf;
-include /home/ubuntu/app/nginx/conf.d/userfront-site.conf;
+include /etc/nginx/conf.d/userfront-upstream.conf;
+include /etc/nginx/conf.d/userfront-site.conf;
 ```
 
 이 파일은 기존 TLS 경로(`/etc/ssl/certs/itplace.pem`, `/etc/ssl/private/itplace.key`)를 사용하고 두 웹 호스트를 `userfront_active`에 proxy한다. `X-ITPLACE-Origin: oci` 응답 헤더로 OCI 라우팅을 확인할 수 있다. 기존 API upstream include와 TLS 설정은 유지한다.
+
+## Cloudflare 전환과 롤백
+
+OCI 웹 라우팅과 TLS를 먼저 확인하고, Cloudflare SSL/TLS 모드를 **Full (strict)**로 설정한다. 전환 시 기존 Workers의 `itplace.click` 및 `www.itplace.click` custom domain binding을 제거한 다음 두 호스트의 proxied A 레코드를 `134.185.107.168`로 지정한다. `userapi.itplace.click`, `adminapi.itplace.click` 및 다른 API 레코드는 변경하지 않는다. 기존 Worker와 설정은 삭제하지 않고 빌드만 비활성화해 둔다.
+
+OCI에 문제가 생기면 apex/www A 레코드를 제거하고 기존 Workers의 두 custom domain binding을 복구한다. 기존 Worker를 유지했으므로 롤백 시 새 Worker를 만들 필요가 없다. API 레코드는 계속 그대로 유지한다.
+
+## 운영 전환 기록 (2026-10-25 KST)
+
+전환은 [GitHub Actions run 40112216562](https://github.com/eddie-backdev/itplace-user-front/actions/runs/40112216562)에서 빌드와 배포가 성공한 뒤 완료했다. 현재 OCI `userfront-blue`가 이미지 `1c665e6ff9e696389feee6b09187754e16f4eb97`으로 실행 중이며 health check가 정상이다. Cloudflare proxied apex/www A 레코드는 `134.185.107.168`을 가리키고 기존 Worker custom domain binding은 제거했으며 Worker 자체는 롤백용으로 보존했다. 기존 `userapi` 및 `adminapi` 백엔드 호스트와 프런트엔드 API 연결은 유지했다.
+
+검증에서 origin 및 Cloudflare edge를 통해 10개 경로(9개 200, 임의 경로 404), `www` 응답, 정적 asset 39개(이전 배포 asset 34개 포함)를 확인했다. 지도에서 400개 매장과 검색·상세 화면도 확인했고 브라우저 오류는 없었다. Kakao 버튼이 `accounts.kakao.com` 로그인 화면까지 이동하는 것은 확인했지만, 계정 자격 증명을 입력하거나 실제 로그인 완료 흐름은 검증하지 않았다.
 
 Workflow는 `scripts/deploy-userfront.sh`와 upstream 템플릿도 매번 서버에 복사한다. 배포 스크립트는 `/home/ubuntu/app/env/userfront.env`, `/home/ubuntu/app/nginx/conf.d/userfront-upstream.conf`, `/home/ubuntu/app/userfront-static`을 기본 경로로 사용한다.
 
