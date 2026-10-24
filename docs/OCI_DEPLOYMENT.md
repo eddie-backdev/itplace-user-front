@@ -25,7 +25,7 @@ OCI에 문제가 생기면 apex/www A 레코드를 제거하고 기존 Workers�
 
 ## 운영 전환 기록 (2026-10-25 KST)
 
-전환은 [GitHub Actions run 40112216562](https://github.com/eddie-backdev/itplace-user-front/actions/runs/40112216562)에서 빌드와 배포가 성공한 뒤 완료했다. 현재 OCI `userfront-blue`가 이미지 `1c665e6ff9e696389feee6b09187754e16f4eb97`으로 실행 중이며 health check가 정상이다. Cloudflare proxied apex/www A 레코드는 `134.185.107.168`을 가리키고 기존 Worker custom domain binding은 제거했으며 Worker 자체는 롤백용으로 보존했다. 기존 `userapi` 및 `adminapi` 백엔드 호스트와 프런트엔드 API 연결은 유지했다.
+전환은 [GitHub Actions run 40112216562](https://github.com/eddie-backdev/itplace-user-front/actions/runs/40112216562)에서 빌드와 배포가 성공한 뒤 완료했다. 전환 당시 OCI `userfront-blue`가 GHCR의 전체 SHA 태그 `ghcr.io/eddie-backdev/itplace-user-front:1c665e6ff9e696389feee6b09187754e16f4eb97`으로 실행 중이었고 health check는 정상이었다. 이 초기 배포 기록은 전체 SHA를 그대로 둔다. 후속 배포부터 GHCR에서 7자리 SHA를 pull한 뒤 로컬 이미지 이름 `itplace-user-front:<7자리 SHA>`로 실행한다. Cloudflare proxied apex/www A 레코드는 `134.185.107.168`을 가리키고 기존 Worker custom domain binding은 제거했으며 Worker 자체는 롤백용으로 보존했다. 기존 `userapi` 및 `adminapi` 백엔드 호스트와 프런트엔드 API 연결은 유지했다.
 
 검증에서 origin 및 Cloudflare edge를 통해 10개 경로(9개 200, 임의 경로 404), `www` 응답, 정적 asset 39개(이전 배포 asset 34개 포함)를 확인했다. 지도에서 400개 매장과 검색·상세 화면도 확인했고 브라우저 오류는 없었다. Kakao 버튼이 `accounts.kakao.com` 로그인 화면까지 이동하는 것은 확인했지만, 계정 자격 증명을 입력하거나 실제 로그인 완료 흐름은 검증하지 않았다.
 
@@ -41,7 +41,7 @@ Actions secrets로 `OCI_HOST`, `OCI_USER`, `OCI_SSH_KEY`, 검증된 known-hosts 
 
 `main` 푸시는 lint, typecheck, 테스트, Next 빌드, standalone production 검증 및 배포 스크립트 mock 테스트를 통과한 뒤 진행된다. 배포 job은 GitHub의 native ARM64 runner에서 이미지를 빌드하고 GitHub Actions 캐시를 사용한다.
 
-배포 스크립트는 직렬화 잠금을 잡고 새 이미지의 정적 청크를 공유 디렉터리에 누적한다. 새 컨테이너에는 이 디렉터리를 `/app/.next/static`으로 읽기 전용 연결해, 배포 전에 열린 페이지가 이전 해시 청크를 계속 받을 수 있게 한다. 새 슬롯은 사설 Docker 네트워크에서 1GiB 메모리 제한으로 구동한다. `/login`, `/`, 정적 asset 응답을 검사한 뒤 upstream을 바꾸고 nginx 설정 검사와 reload를 수행한다. 검사 실패 시 현재 트래픽은 유지된다. nginx 실패 시 upstream을 되돌린다. 성공 뒤 이전 컨테이너는 수동 복구를 위해 남겨 둔다.
+배포 job은 커밋의 앞 7자리 SHA를 GHCR 이미지 태그로 사용한다. 서버는 `ghcr.io/eddie-backdev/itplace-user-front:<7자리 SHA>`를 pull하고 로컬 이름 `itplace-user-front:<7자리 SHA>`로 tag한 뒤, 정적 asset 추출과 실행 모두 로컬 이름을 사용한다. `NEXT_DEPLOYMENT_ID`에는 전체 SHA를 계속 사용한다. 배포 스크립트는 직렬화 잠금을 잡고 새 이미지의 정적 청크를 공유 디렉터리에 누적한다. 새 컨테이너에는 이 디렉터리를 `/app/.next/static`으로 읽기 전용 연결해, 배포 전에 열린 페이지가 이전 해시 청크를 계속 받을 수 있게 한다. 새 슬롯은 사설 Docker 네트워크에서 1GiB 메모리 제한으로 구동한다. `/login`, `/`, 정적 asset 응답을 검사한 뒤 upstream을 바꾸고 nginx 설정 검사와 reload를 수행한다. 검사 실패 시 현재 트래픽은 유지된다. nginx 실패 시 upstream을 되돌린다. 성공 뒤 이전 컨테이너는 수동 복구를 위해 남겨 둔다.
 
 복구할 때는 upstream 파일의 `userfront-blue` 또는 `userfront-green`을 이전 슬롯으로 바꾸고 `docker exec nginx-proxy nginx -t`, `docker exec nginx-proxy nginx -s reload`를 실행한다. 기존 Worker의 정적 청크도 첫 전환 전에 공유 디렉터리에 복사하면, 전환 중 열려 있던 Workers 페이지의 청크 요청도 유지할 수 있다.
 

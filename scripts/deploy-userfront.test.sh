@@ -19,6 +19,9 @@ case "$1 $2" in
   "pull ghcr.io/eddie-backdev/itplace-user-front:test-tag")
     [[ "${FAIL_PULL:-0}" != 1 ]] || exit 1
     ;;
+  "tag ghcr.io/eddie-backdev/itplace-user-front:test-tag")
+    [[ "${FAIL_TAG:-0}" != 1 ]] || exit 1
+    ;;
   "run --rm")
     [[ "${FAIL_HEALTH:-0}" != 1 ]] || exit 1
     ;;
@@ -57,6 +60,10 @@ if FAIL_PULL=1 run_deploy >/dev/null 2>&1; then echo "pull failure unexpectedly 
 ! grep -Eq 'rm -f userfront-green' "$TMP/trace"
 
 : > "$TMP/trace"
+if FAIL_TAG=1 run_deploy >/dev/null 2>&1; then echo "tag failure unexpectedly deployed" >&2; exit 1; fi
+! grep -Eq 'rm -f userfront-green|userfront-assets-green' "$TMP/trace"
+
+: > "$TMP/trace"
 if FAIL_ASSET_COPY=1 run_deploy >/dev/null 2>&1; then echo "asset copy failure unexpectedly deployed" >&2; exit 1; fi
 grep -Eq 'rm -f userfront-assets-green' "$TMP/trace"
 
@@ -74,6 +81,10 @@ grep -Eq 'server userfront-blue:3000' "$TMP/nginx/conf.d/userfront-upstream.conf
 run_deploy >/dev/null
 grep -Eq 'server userfront-green:3000' "$TMP/nginx/conf.d/userfront-upstream.conf"
 ! grep -Eq 'rm -f userfront-blue' "$TMP/trace"
+grep -Fq 'pull ghcr.io/eddie-backdev/itplace-user-front:test-tag' "$TMP/trace"
+grep -Fq 'tag ghcr.io/eddie-backdev/itplace-user-front:test-tag itplace-user-front:test-tag' "$TMP/trace"
+grep -Fq 'create --name userfront-assets-green itplace-user-front:test-tag' "$TMP/trace"
+grep -Fq -- '--label itplace.service=user-front itplace-user-front:test-tag' "$TMP/trace"
 
 rm "$TMP/nginx/conf.d/userfront-upstream.conf"
 : > "$TMP/trace"

@@ -7,6 +7,8 @@ GHCR_USERNAME="${2:-}"
 
 IMAGE_REPOSITORY="${IMAGE_REPOSITORY:-ghcr.io/eddie-backdev/itplace-user-front}"
 IMAGE="${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+LOCAL_IMAGE_NAME="${LOCAL_IMAGE_NAME:-itplace-user-front}"
+LOCAL_IMAGE="${LOCAL_IMAGE_NAME}:${IMAGE_TAG}"
 APP_NETWORK="${APP_NETWORK:-app-network}"
 ENV_FILE="${ENV_FILE:-/home/ubuntu/app/env/userfront.env}"
 UPSTREAM_FILE="${UPSTREAM_FILE:-/home/ubuntu/app/nginx/conf.d/userfront-upstream.conf}"
@@ -67,12 +69,13 @@ fi
 
 echo "[userfront] deploying ${IMAGE} to ${NEW_CONTAINER}; current=${OLD_CONTAINER}"
 docker pull "$IMAGE"
+docker tag "$IMAGE" "$LOCAL_IMAGE"
 docker rm -f "$NEW_CONTAINER" >/dev/null 2>&1 || true
 
 # Keep every hashed Next.js asset so pages already open in a browser survive a release.
 ASSET_CONTAINER="userfront-assets-${INACTIVE}"
 docker rm -f "$ASSET_CONTAINER" >/dev/null 2>&1 || true
-docker create --name "$ASSET_CONTAINER" "$IMAGE" >/dev/null
+docker create --name "$ASSET_CONTAINER" "$LOCAL_IMAGE" >/dev/null
 ASSET_CREATED=true
 docker cp "$ASSET_CONTAINER:/app/.next/static/." "$STATIC_DIR/"
 docker rm "$ASSET_CONTAINER" >/dev/null
@@ -84,7 +87,7 @@ docker run -d \
   --network "$APP_NETWORK" --memory 1g --memory-reservation 512m --cpus 1.5 \
   --env-file "$ENV_FILE" -e PORT=3000 -e HOSTNAME=0.0.0.0 \
   -v "$STATIC_DIR:/app/.next/static:ro" \
-  --label itplace.service=user-front "$IMAGE" >/dev/null
+  --label itplace.service=user-front "$LOCAL_IMAGE" >/dev/null
 
 echo "[userfront] waiting for ${NEW_CONTAINER}/login"
 for ((i=1; i<=HEALTH_CHECK_MAX_ATTEMPTS; i++)); do
