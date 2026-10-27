@@ -45,7 +45,9 @@ Workflow는 `scripts/deploy-userfront.sh`와 upstream 템플릿도 매번 서버
 
 Actions secrets로 `OCI_HOST`, `OCI_USER`, `OCI_SSH_KEY`, 검증된 known-hosts 항목인 `OCI_KNOWN_HOSTS`를 등록한다. SSH 호스트 키는 신뢰된 경로에서 확인한 값을 사용한다. SSH 사용자는 Docker 실행, `/home/ubuntu/app/scripts`, `/home/ubuntu/app/nginx/conf.d` 쓰기 권한이 필요하다. Workflow는 GITHUB_TOKEN으로 원격 GHCR 로그인을 하며, 토큰은 SSH stdin으로만 보내고 임시 Docker 설정 디렉터리를 종료 시 삭제한다. GHCR 패키지에서 해당 저장소 Workflow의 토큰이 패키지를 읽도록 허용한다.
 
-공개 빌드 변수는 Actions Variables에 설정한다. `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY`는 필수다. `NEXT_PUBLIC_APP_BASE_URL` 기본값은 `https://userapi.itplace.click/`, `NEXT_PUBLIC_KAKAO_REDIRECT_URI`는 `https://userapi.itplace.click/oauth2/authorization/kakao`, `NEXT_PUBLIC_CONTACT_EMAIL`은 `noreply.itplace@gmail.com`, `NEXT_PUBLIC_BENEFIT_CHAT_ENABLED`는 `true`다. Kakao 로그인의 기존 Spring Security 시작 경로가 `/oauth2/authorization/kakao`이므로 이 값을 사용한다. 값은 이미지 빌드 시 포함되며 `NEXT_DEPLOYMENT_ID`는 커밋 SHA로 지정한다.
+공개 빌드 변수는 Actions Variables에 설정한다. `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY`는 필수다. `NEXT_PUBLIC_APP_BASE_URL` 기본값은 `https://userapi.itplace.click/`, `NEXT_PUBLIC_KAKAO_REDIRECT_URI`는 `https://userapi.itplace.click/oauth2/authorization/kakao`, `NEXT_PUBLIC_CONTACT_EMAIL`은 `noreply.itplace@gmail.com`, `NEXT_PUBLIC_BENEFIT_CHAT_ENABLED`는 `true`다. Kakao 로그인의 기존 Spring Security 시작 경로가 `/oauth2/authorization/kakao`이므로 이 값을 사용한다. GA4를 사용할 때는 Actions Variables에 `NEXT_PUBLIC_GA_MEASUREMENT_ID`를 `G-...` 형식의 measurement ID로 설정한다. 이 ID는 브라우저에 공개되는 설정값이며 비밀키로 취급하지 않는다. GA4는 운영 호스트에서만 수집하고, ID가 비어 있으면 로컬 개발 및 분석 없는 빌드가 유효하다. 값은 이미지 빌드 시 포함되므로 변경 후 재빌드·재배포해야 하며, `NEXT_DEPLOYMENT_ID`는 커밋 SHA로 지정한다.
+
+GA4 스크립트는 production root layout에서 한 번만 연결한다. 페이지뷰는 앱의 pathname 변경을 직접 보내며 query string과 hash는 경로에 포함하지 않는다. GA4 Enhanced measurement의 page-history 변경 추적은 꺼서 수동 페이지뷰와 중복 집계되지 않게 한다. Google signals와 광고 개인화도 사용하지 않는다.
 
 ## 배포와 복구
 

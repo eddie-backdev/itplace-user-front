@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import JsonLd from '@/components/JsonLd';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 import AppProviders from './AppProviders';
 import { SITE_ORIGIN } from '@/lib/metadata';
 import { getPublicReferenceData } from '@/server/userApi';
@@ -112,6 +113,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="ko">
       <body>
         <AppProviders initialReferenceData={referenceData}>{children}</AppProviders>
+        <GoogleAnalytics />
         <JsonLd data={websiteStructuredData} />
       </body>
     </html>

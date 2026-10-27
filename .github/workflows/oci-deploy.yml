@@ -22,6 +22,7 @@ jobs:
       NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY: ${{ vars.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY }}
       NEXT_PUBLIC_KAKAO_REDIRECT_URI: ${{ vars.NEXT_PUBLIC_KAKAO_REDIRECT_URI || 'https://userapi.itplace.click/oauth2/authorization/kakao' }}
       NEXT_PUBLIC_CONTACT_EMAIL: ${{ vars.NEXT_PUBLIC_CONTACT_EMAIL || 'noreply.itplace@gmail.com' }}
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
       NEXT_PUBLIC_BENEFIT_CHAT_ENABLED: ${{ vars.NEXT_PUBLIC_BENEFIT_CHAT_ENABLED || 'true' }}
       NEXT_DEPLOYMENT_ID: ${{ github.sha }}
     steps:
@@ -72,6 +73,7 @@ jobs:
             NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY=${{ vars.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY }}
             NEXT_PUBLIC_KAKAO_REDIRECT_URI=${{ vars.NEXT_PUBLIC_KAKAO_REDIRECT_URI || 'https://userapi.itplace.click/oauth2/authorization/kakao' }}
             NEXT_PUBLIC_CONTACT_EMAIL=${{ vars.NEXT_PUBLIC_CONTACT_EMAIL || 'noreply.itplace@gmail.com' }}
+            NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
             NEXT_PUBLIC_BENEFIT_CHAT_ENABLED=${{ vars.NEXT_PUBLIC_BENEFIT_CHAT_ENABLED || 'true' }}
             NEXT_DEPLOYMENT_ID=${{ github.sha }}
       - name: Deploy over SSH
