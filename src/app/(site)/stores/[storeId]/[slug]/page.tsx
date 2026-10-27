@@ -50,9 +50,14 @@ export default async function StoreSeoPage({ params }: Props) {
     getPublicPartnerBenefitDetail(partner.partnerId),
     getPublicReferenceData(),
   ]);
-  const benefitLinks = [...new Set(benefits?.carrierGroups.flatMap((group) =>
-    group.benefits.map((benefit) => benefit.sourceUrl || benefit.url)
-  ) ?? [])].filter((url): url is string => Boolean(url));
+  const benefitLinks = new Map<string, Set<string>>();
+  benefits?.carrierGroups.forEach((group) => group.benefits.forEach((benefit) => {
+    const url = (benefit.sourceUrl || benefit.url)?.trim();
+    if (!url) return;
+    const carriers = benefitLinks.get(url) ?? new Set<string>();
+    carriers.add(getCarrierLabel(group.carrier));
+    benefitLinks.set(url, carriers);
+  }));
   const mapUrl = `https://map.kakao.com/link/map/${encodeURIComponent(store.storeName)},${store.latitude},${store.longitude}`;
 
   return (
@@ -86,15 +91,20 @@ export default async function StoreSeoPage({ params }: Props) {
         <h2 id="partner-benefit-title" className="text-xl font-bold text-[#202124]">{partner.partnerName} 브랜드 혜택</h2>
         <p className="mt-2 text-sm leading-6 text-[#686B73]">아래 내용은 제휴 브랜드 전체에 등록된 혜택 정보입니다. 이 매장에서 혜택을 이용할 수 있다는 보장은 아니며, 적용 매장과 조건은 제휴사 공식 안내에서 확인해 주세요.</p>
         {benefits?.carrierGroups.length ? <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          {benefits.carrierGroups.map((group) => <li key={group.carrier} className="rounded-xl border border-[#E8E9EE] bg-white p-4">
-            <h3 className="font-semibold text-[#202124]">{getCarrierLabel(group.carrier)}</h3>
-            <p className="mt-1 text-sm text-[#686B73]">등록 혜택 {group.benefits.length}개</p>
-            <p className="mt-2 text-sm leading-6 text-[#686B73]">{group.benefits.slice(0, 2).map((benefit) => benefit.displayName || benefit.benefitName).join(' · ')}{group.benefits.length > 2 ? ' 외' : ''}</p>
-          </li>)}</ul> : <p className="mt-4 text-sm text-[#686B73]">현재 표시할 브랜드 혜택 정보가 없습니다.</p>}
-        {benefitLinks.length ? (
+          {benefits.carrierGroups.map((group) => {
+            const benefitNames = [...new Set(group.benefits
+              .map((benefit) => (benefit.displayName?.trim() || benefit.benefitName.trim()))
+              .filter(Boolean))];
+            return <li key={group.carrier} className="rounded-xl border border-[#E8E9EE] bg-white p-4">
+              <h3 className="font-semibold text-[#202124]">{getCarrierLabel(group.carrier)}</h3>
+              <p className="mt-1 text-sm text-[#686B73]">등록 혜택 {group.benefits.length}개</p>
+              <p className="mt-2 text-sm leading-6 text-[#686B73]">{benefitNames.slice(0, 2).join(' · ')}{benefitNames.length > 2 ? ' 외' : ''}</p>
+            </li>;
+          })}</ul> : <p className="mt-4 text-sm text-[#686B73]">현재 표시할 브랜드 혜택 정보가 없습니다.</p>}
+        {benefitLinks.size ? (
           <ul aria-label="제휴사 공식 혜택 안내 링크" className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
-            {benefitLinks.map((url) => (
-              <li key={url}><a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-sm text-[#6154D9] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9]">제휴사 공식 안내 보기</a></li>
+            {[...benefitLinks].map(([url, carriers]) => (
+              <li key={url}><a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-sm text-[#6154D9] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9]">{[...carriers].join(' · ')} 공식 안내 보기</a></li>
             ))}
           </ul>
         ) : <p className="mt-4 text-sm text-[#686B73]">별도 연결된 제휴사 공식 안내가 없습니다. <Link href={partnerPath} className="inline-flex min-h-11 items-center text-[#6154D9] underline underline-offset-2">제휴사 혜택 확인</Link></p>}
