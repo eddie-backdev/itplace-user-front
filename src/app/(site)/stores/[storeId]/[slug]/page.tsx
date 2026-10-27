@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import JsonLd from '@/components/JsonLd';
-import PartnerBenefitComparison from '@/screens/PartnerBenefitComparison';
 import { getPublicPartnerBenefitDetail } from '@/server/userApi';
 import { getPublicReferenceData } from '@/server/userApi';
 import { getStoreSeoDetail } from '@/server/storeApi';
@@ -10,6 +9,7 @@ import { createPageMetadata, SITE_ORIGIN } from '@/lib/metadata';
 import { createStoreSlug, getStorePath } from '@/utils/storeSeo';
 import { getPartnerBenefitPath } from '@/utils/partnerSeo';
 import { getCategoryLabel } from '@/utils/referenceData';
+import { getCarrierLabel } from '@/utils/membership';
 
 type Props = { params: Promise<{ storeId: string; slug: string }> };
 
@@ -46,8 +46,10 @@ export default async function StoreSeoPage({ params }: Props) {
   const { store, partner } = data;
   const partnerPath = getPartnerBenefitPath(partner.partnerId, partner.partnerName);
   const address = store.roadAddress || store.address;
-  const benefits = await getPublicPartnerBenefitDetail(partner.partnerId);
-  const referenceData = await getPublicReferenceData();
+  const [benefits, referenceData] = await Promise.all([
+    getPublicPartnerBenefitDetail(partner.partnerId),
+    getPublicReferenceData(),
+  ]);
   const benefitLinks = [...new Set(benefits?.carrierGroups.flatMap((group) =>
     group.benefits.map((benefit) => benefit.sourceUrl || benefit.url)
   ) ?? [])].filter((url): url is string => Boolean(url));
@@ -63,10 +65,18 @@ export default async function StoreSeoPage({ params }: Props) {
         <p className="mb-2 text-sm font-medium text-[#6154D9]">{getCategoryLabel(partner.category, referenceData) || '멤버십 제휴처'}</p>
         <h1 className="text-3xl font-bold leading-tight text-[#202124] max-md:text-2xl">{store.storeName}</h1>
         <p className="mt-2 text-[#686B73]">{partner.partnerName} 매장 정보</p>
-        {address && <p className="mt-7 border-t border-[#E8E9EE] pt-5 text-[#202124]">{address}</p>}
-        {store.postCode && <p className="mt-1 text-sm text-[#686B73]">우편번호 {store.postCode}</p>}
-        {store.business && <p className="mt-1 text-sm text-[#686B73]">업종 {store.business}</p>}
-        <div className="mt-6 flex flex-wrap gap-3">
+        <section aria-labelledby="store-address-title" className="mt-7 border-t border-[#E8E9EE] pt-5">
+          <h2 id="store-address-title" className="font-semibold text-[#202124]">주소</h2>
+          {address ? <p className="mt-2 text-[#202124]">{address}</p> : <p className="mt-2 text-sm text-[#686B73]">등록된 주소가 없습니다.</p>}
+          {(store.city || store.town || store.legalDong) && <p className="mt-1 text-sm text-[#686B73]">{[store.city, store.town, store.legalDong].filter(Boolean).join(' ')}</p>}
+          {store.postCode && <p className="mt-1 text-sm text-[#686B73]">우편번호 {store.postCode}</p>}
+        </section>
+        {store.business && <p className="mt-3 text-sm text-[#686B73]">업종 {store.business}</p>}
+        <section aria-labelledby="store-visit-title" className="mt-6">
+          <h2 id="store-visit-title" className="font-semibold text-[#202124]">방문 정보</h2>
+          <p className="mt-2 text-sm leading-6 text-[#686B73]">주소와 지도 위치를 확인한 뒤 방문해 주세요. 운영 시간과 휴무 정보는 제공되지 않습니다.</p>
+        </section>
+        <div className="mt-4 flex flex-wrap gap-3">
           <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-lg bg-[#6154D9] px-4 font-semibold text-white hover:bg-[#5145c5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9] focus-visible:ring-offset-2">카카오맵에서 위치 보기</a>
           <Link href={partnerPath} className="inline-flex min-h-11 items-center rounded-lg border border-[#E8E9EE] px-4 font-semibold text-[#202124] hover:border-[#6154D9] hover:text-[#6154D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9]">{partner.partnerName} 혜택 확인</Link>
         </div>
@@ -74,8 +84,13 @@ export default async function StoreSeoPage({ params }: Props) {
 
       <section aria-labelledby="partner-benefit-title" className="mt-9 max-w-3xl">
         <h2 id="partner-benefit-title" className="text-xl font-bold text-[#202124]">{partner.partnerName} 브랜드 혜택</h2>
-        <p className="mt-2 text-sm leading-6 text-[#686B73]">제휴사 전체 안내에 등록된 통신사·등급별 조건입니다. 이 매장에서의 적용 여부와 이용 조건은 제휴사 안내를 확인해 주세요.</p>
-        <div className="mt-4"><PartnerBenefitComparison detail={benefits} /></div>
+        <p className="mt-2 text-sm leading-6 text-[#686B73]">아래 내용은 제휴 브랜드 전체에 등록된 혜택 정보입니다. 이 매장에서 혜택을 이용할 수 있다는 보장은 아니며, 적용 매장과 조건은 제휴사 공식 안내에서 확인해 주세요.</p>
+        {benefits?.carrierGroups.length ? <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          {benefits.carrierGroups.map((group) => <li key={group.carrier} className="rounded-xl border border-[#E8E9EE] bg-white p-4">
+            <h3 className="font-semibold text-[#202124]">{getCarrierLabel(group.carrier)}</h3>
+            <p className="mt-1 text-sm text-[#686B73]">등록 혜택 {group.benefits.length}개</p>
+            <p className="mt-2 text-sm leading-6 text-[#686B73]">{group.benefits.slice(0, 2).map((benefit) => benefit.displayName || benefit.benefitName).join(' · ')}{group.benefits.length > 2 ? ' 외' : ''}</p>
+          </li>)}</ul> : <p className="mt-4 text-sm text-[#686B73]">현재 표시할 브랜드 혜택 정보가 없습니다.</p>}
         {benefitLinks.length ? (
           <ul aria-label="제휴사 공식 혜택 안내 링크" className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
             {benefitLinks.map((url) => (

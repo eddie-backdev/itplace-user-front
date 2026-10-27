@@ -13,17 +13,26 @@ import { useReferenceData } from '@/components/ReferenceDataProvider';
 
 export function PartnerBenefitComparison({
   detail,
+  selectedBenefitId,
 }: {
   detail: PartnerBenefitDetailResponse | null;
+  selectedBenefitId?: number | null;
 }) {
   const { data } = useReferenceData();
   if (!detail?.carrierGroups.length) return null;
+  const comparisonGroups = detail.carrierGroups
+    .map((group) => ({
+      ...group,
+      benefits: group.benefits.filter((benefit) => benefit.benefitId !== selectedBenefitId),
+    }))
+    .filter((group) => group.benefits.length > 0);
+  if (!comparisonGroups.length) return null;
 
   return (
     <section className={styles.comparison} aria-labelledby="benefit-comparison-title">
       <h3 id="benefit-comparison-title">통신사·등급별 혜택 비교</h3>
       <div className={styles.comparisonGroups}>
-        {detail.carrierGroups.map((group) => (
+        {comparisonGroups.map((group) => (
           <section className={styles.comparisonGroup} key={group.carrier}>
             <h4>{getCarrierLabel(group.carrier)}</h4>
             {group.benefits.map((benefit) => {
@@ -53,6 +62,7 @@ export function PartnerBenefitComparison({
                   </p>
                   <BenefitConditions
                     collapsibleConditions
+                    offerHeadingLevel={5}
                     conditions={benefit.conditions}
                     legacyLimit={benefit.benefitLimit}
                     sourceUrl={benefit.sourceUrl}

@@ -33,6 +33,7 @@ type BenefitConditionsProps = {
   tierConditions?: Array<{ grades: string[]; context: string }>;
   includeTierDetails?: boolean;
   collapsibleConditions?: boolean;
+  offerHeadingLevel?: 3 | 4 | 5;
 };
 
 const validHttpUrl = (value?: string | null) => {
@@ -89,6 +90,7 @@ function OfferCard({
   showAllOffers,
   offerResolution,
   summaryContext,
+  headingLevel,
 }: {
   offer: BenefitOffer;
   carrier?: CarrierCode;
@@ -96,8 +98,10 @@ function OfferCard({
   showAllOffers: boolean;
   offerResolution?: BenefitConditionsData['offerResolution'];
   summaryContext?: string;
+  headingLevel: 3 | 4 | 5;
 }) {
   const { data: referenceData } = useReferenceData();
+  const Heading = `h${headingLevel}` as const;
   const grades =
     offer.allGrades === true
       ? ['전체 등급']
@@ -123,10 +127,10 @@ function OfferCard({
 
   return (
     <article className="rounded-xl border border-[#E8E9EE] bg-white p-3">
-      <h3 className="font-semibold text-[#202124]">
+      <Heading className="font-semibold text-[#202124]">
         {rewardFacts.length ? `${rewardFacts.join(' · ')} · ` : ''}
         {offer.title || '혜택 조건 확인 필요'}
-      </h3>
+      </Heading>
       <p className="mt-1 text-xs font-medium text-[#686B73]">{eligibilityLabel}</p>
       {summaryContext ? (
         <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[#202124]">
@@ -241,6 +245,7 @@ export default function BenefitConditions({
   tierConditions,
   includeTierDetails = true,
   collapsibleConditions = false,
+  offerHeadingLevel = 3,
 }: BenefitConditionsProps) {
   const { data: referenceData } = useReferenceData();
   const offers = getBenefitOffers(conditions);
@@ -328,6 +333,7 @@ export default function BenefitConditions({
               showAllOffers={showAllOffers}
               offerResolution={conditions?.offerResolution}
               summaryContext={singleOfferSummary}
+              headingLevel={offerHeadingLevel}
             />
           ))}
           {partitionedOffers.otherGrades.length ? (
@@ -344,6 +350,7 @@ export default function BenefitConditions({
                     eligibility={getEligibility(offer)}
                     showAllOffers={showAllOffers}
                     offerResolution={conditions?.offerResolution}
+                    headingLevel={offerHeadingLevel}
                   />
                 ))}
               </div>

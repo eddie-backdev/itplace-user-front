@@ -15,6 +15,10 @@
   align-items: center;
   gap: 32px;
 }
+.introCopy {
+  display: grid;
+  gap: 7px;
+}
 .intro h1 {
   max-width: none;
   margin: 0;
@@ -25,6 +29,12 @@
   overflow-wrap: anywhere;
   text-wrap: balance;
   word-break: keep-all;
+}
+.introCopy p {
+  margin: 0;
+  color: var(--itplace-color-muted);
+  font-size: 13px;
+  line-height: 1.6;
 }
 .searchForm {
   display: flex;

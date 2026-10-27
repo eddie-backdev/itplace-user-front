@@ -2,7 +2,9 @@ import type { MetadataRoute } from 'next';
 import partnerCatalog from '@/data/partner-catalog.json';
 import { SITE_ORIGIN } from '@/lib/metadata';
 import { getPublicPartnerBenefits } from '@/server/userApi';
+import { getNearbyStorePreviewBatch } from '@/server/storeApi';
 import { getPartnerBenefitPath } from '@/utils/partnerSeo';
+import { getStorePath } from '@/utils/storeSeo';
 import { storeRegions } from '@/data/storeRegions';
 
 const staticPaths = [
@@ -24,6 +26,9 @@ const staticPaths = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const regionalBatchesPromise = Promise.all(storeRegions.map((region) =>
+    getNearbyStorePreviewBatch(region.latitude, region.longitude, region.radiusMeters)
+  ));
   const partnersById = new Map<number, { partnerId: number; partnerName: string }>();
   const pageSize = 200;
   let page = 0;
@@ -66,5 +71,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticEntries, ...partnerEntries];
+  const regionalBatches = await regionalBatchesPromise;
+  const storesById = new Map<number, { storeId: number; storeName: string }>();
+  regionalBatches.forEach((result) => {
+    if (result.status !== 'success') return;
+    result.data.stores.slice(0, 20).forEach((store) => {
+      const address = store.roadAddress?.trim() || store.address?.trim();
+      if (!Number.isSafeInteger(store.storeId) || store.storeId <= 0 || !store.storeName.trim()
+        || !Number.isFinite(store.latitude) || Math.abs(store.latitude) > 90
+        || !Number.isFinite(store.longitude) || Math.abs(store.longitude) > 180 || !address) return;
+      storesById.set(store.storeId, { storeId: store.storeId, storeName: store.storeName.trim() });
+    });
+  });
+  const storeEntries: MetadataRoute.Sitemap = [...storesById.values()].map((store) => ({
+    url: `${SITE_ORIGIN}${getStorePath(store.storeId, store.storeName)}`,
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }));
+
+  return [...staticEntries, ...partnerEntries, ...storeEntries];
 }

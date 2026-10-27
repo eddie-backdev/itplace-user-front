@@ -13,7 +13,7 @@ import {
   getEffectiveBenefitUsageType,
   hasKnownStores,
 } from '../src/features/allBenefitsPage/apis/benefitChannelFacts.mjs';
-import { formatOfferFacts, formatOfferRewardFacts } from '../src/features/allBenefitsPage/apis/benefitFactFormatting.mjs';
+import { formatOfferFact, formatOfferFacts, formatOfferRewardFacts } from '../src/features/allBenefitsPage/apis/benefitFactFormatting.mjs';
 
 test('common benefit facts keep the agreed label order and use one compact unknown value', () => {
   const rows = getBenefitConditionRows({});
@@ -122,6 +122,33 @@ test('reward headline facts retain maximum and basis but exclude thresholds and 
     { type: 'SPEND_CAP', value: 10000, qualifier: 'MAX' },
     { type: 'USAGE_LIMIT', value: 1, unit: 'COUNT', period: 'DAY', qualifier: 'MAX' },
   ]), ['최대 50원 할인 (1,000원당)']);
+});
+
+test('ratio rewards retain their basis and card-specific scope', () => {
+  const sourceText = 'V G 천원당 150원 할인(모바일카드) / 천원당 50원 할인(플라스틱카드)';
+  const pointsSource = 'V G 천원당 100P 적립(모바일카드) / 천원당 50P 적립(플라스틱카드)';
+  assert.deepEqual(formatOfferRewardFacts([
+    { type: 'DISCOUNT_AMOUNT', value: 150, basisAmount: 1000, basisUnit: 'KRW', sourceText },
+    { type: 'DISCOUNT_AMOUNT', value: 50, basisAmount: 1000, basisUnit: 'KRW', sourceText },
+    { type: 'REWARD_POINTS', value: 100, unit: 'POINT', basisAmount: 1000, basisUnit: 'KRW', sourceText: pointsSource },
+  ]), [
+    '150원 할인 (1,000원당) · 모바일카드',
+    '50원 할인 (1,000원당) · 플라스틱카드',
+    '100포인트 적립 (1,000원당) · 모바일카드',
+  ]);
+  assert.equal(formatOfferFact({
+    type: 'DISCOUNT_AMOUNT', value: 150, basisAmount: 1000, basisUnit: 'KRW', sourceText,
+  }), '150원 할인 (1,000원당) · 모바일카드');
+  assert.equal(formatOfferFact({
+    type: 'DISCOUNT_AMOUNT', value: 50, basisAmount: 1000, basisUnit: 'KRW',
+    sourceText: 'S 천원당 50원 할인(모바일카드/플라스틱카드)',
+  }), '50원 할인 (1,000원당) · 모바일카드/플라스틱카드');
+  assert.equal(formatOfferFact({
+    type: 'DISCOUNT_AMOUNT', value: 50, basisAmount: 1000, basisUnit: 'KRW',
+    sourceText: '천원당 50원 할인 · 모바일카드 이용 시',
+  }), '50원 할인 (1,000원당)');
+  assert.equal(formatOfferFact({ type: 'MIN_SPEND', value: 5000, sourceText: '모바일카드 천원당 50원 할인' }),
+    '5,000원 이상 결제');
 });
 
 test('overall summary accordion requires displayable rows or channel evidence', () => {

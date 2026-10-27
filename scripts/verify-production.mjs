@@ -374,7 +374,8 @@ const assertHomeSelection = (
 ) => {
   const section = getHomeBenefitsSection(content);
   assert.ok(section, '추천 혜택 영역이 SSR에 있어야 합니다');
-  assert.match(content, /<h1[^>]*id="home-title"[^>]*>어디에서 쓰고 싶으세요\?<\/h1>/);
+  assert.match(content, /<h1[^>]*id="home-title"[^>]*>통신사 멤버십 혜택, 어디에서 쓰고 싶으세요\?<\/h1>/);
+  assert.equal((content.match(/<h1\b/gi) ?? []).length, 1, '홈에는 H1이 하나만 있어야 합니다');
   assert.match(content, new RegExp(`name="carrier" value="${selectedCarrier}"`));
   assert.match(content, new RegExp(`name="grade" value="${selectedGrade}"`));
   const intro = content.match(/<section(?=[^>]*aria-labelledby="home-title")[^>]*>[\s\S]*?<\/section>/)?.[0] ?? '';
@@ -504,7 +505,7 @@ const runChecks = async (origin, mockApi) => {
     '홈에는 main 랜드마크가 하나만 있어야 합니다'
   );
   const rootContent = mainContent(rootHtml);
-  assert.match(rootContent, /어디에서 쓰고 싶으세요\?/);
+  assert.match(rootContent, /통신사 멤버십 혜택, 어디에서 쓰고 싶으세요\?/);
   assert.match(
     rootContent,
     /<form(?=[^>]*\baction="\/benefits")(?=[^>]*\bmethod="get")(?=[^>]*\brole="search")[^>]*>/
@@ -746,7 +747,8 @@ const runChecks = async (origin, mockApi) => {
     const html = await response.text();
     assert.equal(response.status, 200, `${storeName} 매장 페이지 SSR`);
     assert.ok(plainText(mainContent(html)).includes(storeName));
-    assert.ok(plainText(mainContent(html)).includes('통신사·등급별 혜택 비교'));
+    assert.ok(plainText(mainContent(html)).includes('브랜드 혜택'));
+    assert.match(plainText(mainContent(html)), /등록 혜택 \d+\s+개/);
   }
 
   const regionResponse = await fetch(`${origin}/places/gangnam-station`);

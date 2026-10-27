@@ -9,6 +9,8 @@
 - 통신사별 랜딩: `/membership/skt`, `/membership/kt`, `/membership/lguplus`
 - 전체 제휴처: `/benefits`
 - 제휴처 상세: `/benefits/partners/{partnerId}/{partnerSlug}`
+- 지역 매장 검색: `/places`, `/places/{regionSlug}`
+- 매장 상세: `/stores/{storeId}/{storeSlug}`
 - 지도 탐색: `/map`
 
 Next.js 서버는 공개 사용자 API에서 제휴처 목록과 실제 혜택 내용을 조회해 공개 페이지의 초기 HTML을 렌더링합니다. 공개 데이터는 `no-store`로 요청마다 조회하고 같은 서버 렌더링 요청 안에서만 중복 호출을 합칩니다. API가 일시적으로 응답하지 않으면 해당 요청은 오류 상태 UI로 복구됩니다.
@@ -38,19 +40,18 @@ npm run verify:workers
 
 ## 대표 도메인 통일
 
-코드가 생성하는 canonical URL은 모두 `https://itplace.click`입니다. `www.itplace.click`을 apex 도메인으로 보내는 규칙은 최종 배포 플랫폼에서 한 번 설정해야 합니다. 아래는 Cloudflare를 선택할 경우의 예시입니다.
+코드가 생성하는 canonical URL은 모두 `https://itplace.click`입니다. OCI nginx의 `infra/oci/userfront-site.conf`가 HTTP apex/www와 HTTPS www 요청을 apex HTTPS로 영구 리디렉션합니다. 모든 리디렉션은 원본 경로와 query string을 보존합니다. HTTPS www 연결은 기존 `/etc/ssl/certs/itplace.pem` 인증서를 사용합니다.
 
-1. Cloudflare에서 **Bulk Redirects → Redirect Lists**로 이동합니다.
-2. Source URL을 `https://www.itplace.click/`, Target URL을 `https://itplace.click/`로 입력합니다.
-3. 상태 코드는 `301`, **Preserve query string**은 켭니다.
-4. **Subpath matching**과 **Preserve path suffix**를 켜서 모든 하위 경로를 같은 경로로 보냅니다.
-5. 규칙을 활성화한 뒤 아래 명령으로 확인합니다.
+GitHub Actions 배포 workflow는 이 nginx site 설정 파일을 서버에 복사하거나 갱신하지 않습니다. 도메인 설정을 바꿀 때는 [OCI 배포 안내](OCI_DEPLOYMENT.md)의 백업, 동일 파일 in-place 적용, `nginx -t`, reload 및 복구 절차를 따릅니다. 적용 후 네 요청을 확인합니다.
 
 ```zsh
-curl -I https://www.itplace.click/membership
+curl -sSI 'http://itplace.click/membership?from=seo' | rg -i '^(HTTP/|location:)'
+curl -sSI 'http://www.itplace.click/membership?from=seo' | rg -i '^(HTTP/|location:)'
+curl -sSI 'https://www.itplace.click/membership?from=seo' | rg -i '^(HTTP/|location:)'
+curl -sSI 'https://itplace.click/membership?from=seo' | rg -i '^(HTTP/|location:)'
 ```
 
-응답의 상태가 `301`이고 `location: https://itplace.click/membership`이면 정상입니다.
+앞의 세 요청은 `301`과 `location: https://itplace.click/membership?from=seo`를 반환해야 합니다. 마지막 apex HTTPS 요청은 리디렉션 없이 서비스 응답을 반환해야 합니다.
 
 ## 배포 후 확인 URL
 
@@ -60,6 +61,8 @@ curl -I https://www.itplace.click/membership
 - `https://itplace.click/membership/kt`
 - `https://itplace.click/membership/lguplus`
 - `https://itplace.click/benefits`
+- `https://itplace.click/places`
+- 지역 검색 결과와 매장 상세 URL
 - 대표 제휴처 상세 URL
 - `https://itplace.click/robots.txt`
 - `https://itplace.click/sitemap.xml`

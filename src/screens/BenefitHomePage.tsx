@@ -237,7 +237,10 @@ export default function BenefitHomePage({
     <div className={styles.page}>
       <div className={styles.content}>
         <section className={styles.intro} aria-labelledby="home-title">
-          <h1 id="home-title">어디에서 쓰고 싶으세요?</h1>
+          <div className={styles.introCopy}>
+            <h1 id="home-title">통신사 멤버십 혜택, 어디에서 쓰고 싶으세요?</h1>
+            <p>브랜드와 카테고리별 제휴 혜택을 살펴보고 내 등급의 이용 조건을 확인해 보세요.</p>
+          </div>
           <form action="/benefits" method="get" role="search" className={styles.searchForm}>
             <TbSearch aria-hidden="true" size={21} className={styles.searchIcon} />
             <label className="sr-only" htmlFor="home-search">

@@ -8,14 +8,24 @@ GitHub Actions가 Next.js standalone 빌드를 검증하고 ARM64 이미지를 G
 
 최초 배포 전에는 nginx 설정을 변경하지 않는다. GitHub Actions의 수동 실행으로 이미지를 배포하면 스크립트가 `userfront-blue`를 시작하고 검사한 뒤 `/home/ubuntu/app/nginx/conf.d/userfront-upstream.conf`를 생성한다. 기존 nginx 설정이 이 파일을 아직 include하지 않아도 된다. 이 첫 실행은 nginx 설정을 검사하고 reload해도 기존 라우팅을 유지한다.
 
-첫 배포가 성공한 다음 `infra/oci/userfront-site.conf`를 호스트의 `/home/ubuntu/app/nginx/conf.d/userfront-site.conf`에 한 번 설치한다. Docker nginx 안에서는 아래처럼 컨테이너 경로를 `/etc/nginx/conf.d`로 지정해 `http` 설정에 두 파일을 명시적으로 include하고 `nginx -t` 후 reload한다. nginx의 `/etc/nginx/nginx.conf`는 호스트 `/home/ubuntu/app/nginx/nginx.conf`를 read-only 파일 bind mount한 것이므로 파일을 직접 수정한다. 이 파일을 rename하거나 atomic replace하지 않는다. 사이트 설정은 초기 구성에서만 설치하며 CI 배포가 덮어쓰지 않는다.
+첫 배포가 성공한 다음 `infra/oci/userfront-site.conf`를 호스트의 `/home/ubuntu/app/nginx/conf.d/userfront-site.conf`에 설치한다. GitHub Actions workflow는 배포 스크립트와 `userfront-upstream.conf.template`만 서버로 복사하며 `userfront-site.conf`는 자동 배포하거나 갱신하지 않는다. 도메인 라우팅을 바꾸면 운영자가 기존 파일을 먼저 백업한 뒤 같은 경로의 파일을 in-place로 갱신하고 nginx를 검사·reload해야 한다.
+
+Docker nginx 안에서는 아래처럼 컨테이너 경로를 `/etc/nginx/conf.d`로 지정해 `http` 설정에 두 파일을 명시적으로 include한다. nginx의 `/etc/nginx/nginx.conf`는 호스트 `/home/ubuntu/app/nginx/nginx.conf`를 read-only 파일 bind mount한 것이므로 그 파일을 직접 수정한다. 이 파일과 site 설정 파일은 rename하거나 atomic replace하지 않는다.
 
 ```nginx
 include /etc/nginx/conf.d/userfront-upstream.conf;
 include /etc/nginx/conf.d/userfront-site.conf;
 ```
 
-이 파일은 기존 TLS 경로(`/etc/ssl/certs/itplace.pem`, `/etc/ssl/private/itplace.key`)를 사용하고 두 웹 호스트를 `userfront_active`에 proxy한다. `X-ITPLACE-Origin: oci` 응답 헤더로 OCI 라우팅을 확인할 수 있다. 기존 API upstream include와 TLS 설정은 유지한다.
+site 설정 적용 절차는 다음과 같다.
+
+1. 서버의 `/home/ubuntu/app/nginx/conf.d/userfront-site.conf`를 권한과 시간을 보존해 별도 백업 파일로 복사한다.
+2. 저장소의 `infra/oci/userfront-site.conf` 내용을 서버의 기존 site 설정 파일에 in-place로 적용한다. 임시 파일을 기존 경로로 rename하지 않는다.
+3. `docker exec nginx-proxy nginx -t`가 성공하는지 확인한 다음 `docker exec nginx-proxy nginx -s reload`를 실행한다.
+4. HTTP apex와 www, HTTPS www에서 모두 `https://itplace.click`로 path와 query string을 보존해 리디렉션되는지 확인하고, apex HTTPS가 정상적으로 서비스되는지 확인한다.
+5. 검사 또는 reload가 실패하면 백업 내용을 기존 파일에 in-place로 복원하고 `nginx -t`와 reload를 다시 확인한다.
+
+이 파일은 기존 TLS 경로(`/etc/ssl/certs/itplace.pem`, `/etc/ssl/private/itplace.key`)를 사용한다. HTTP apex/www는 apex HTTPS로 이동하고, HTTPS www 전용 server도 같은 인증서를 사용해 apex HTTPS로 이동한다. apex HTTPS는 `userfront_active`에 proxy한다. `X-ITPLACE-Origin: oci` 응답 헤더로 OCI 라우팅을 확인할 수 있다. 기존 API upstream include와 TLS 설정은 유지한다.
 
 ## Cloudflare 전환과 롤백
 

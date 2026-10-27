@@ -33,15 +33,16 @@ const loadRegion = async (params: Props['params']) => {
   const region = getStoreRegion(regionSlug);
   if (!region) notFound();
   const result = await getNearbyStorePreviewBatch(region.latitude, region.longitude, region.radiusMeters);
-  if (result.status === 'unavailable') throw new Error('지역 매장 정보를 일시적으로 불러오지 못했습니다.');
-  if (result.status === 'not-found') throw new Error('지역 매장 정보를 일시적으로 불러오지 못했습니다.');
+  if (result.status !== 'success') throw new Error('지역 매장 정보를 일시적으로 불러오지 못했습니다.');
   return { region, batch: result.data };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { region } = await loadRegion(params);
+  const { regionSlug } = await params;
+  const region = getStoreRegion(regionSlug);
+  if (!region) notFound();
   const title = `${region.name} 주변 통신사 멤버십 제휴 매장 | 잇플레이스`;
-  const description = `${region.name} 중심 반경 ${(region.radiusMeters / 1000).toFixed(1)}km에서 현재 확인되는 통신사 멤버십 제휴 매장과 위치를 찾아보세요.`;
+  const description = `${region.name}을 중심으로 설정된 반경 ${(region.radiusMeters / 1000).toFixed(1)}km에서 통신사 멤버십 제휴 매장을 찾아보세요. 매장 주소와 지도 위치를 확인하고 브랜드별 공식 혜택 안내를 살펴볼 수 있습니다.`;
   return createPageMetadata({ title, description, path: `/places/${region.slug}` });
 }
 
@@ -66,7 +67,8 @@ export default async function StoreRegionPage({ params }: Props) {
     <section className="mx-auto min-h-[65vh] w-full max-w-[1280px] px-7 py-10 max-md:px-4 max-md:py-7">
       <nav aria-label="현재 위치" className="mb-7 text-sm text-[#686B73]"><Link href="/places" className="rounded-sm hover:text-[#6154D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9]">지역별 매장</Link><span className="mx-2" aria-hidden="true">/</span>{region.name}</nav>
       <h1 className="text-3xl font-bold text-[#202124] max-md:text-2xl">{region.name} 주변 멤버십 제휴 매장</h1>
-      <p className="mt-3 max-w-2xl leading-7 text-[#686B73]">{region.name} 중심 반경 {(region.radiusMeters / 1000).toFixed(1)}km의 지도 검색 결과입니다. 매장까지 거리는 중심점 기준 직선거리이며 도보 이동 거리가 아닙니다. 행정구역 경계가 아니며, 제휴사 목록에 따라 매장 정보가 달라질 수 있습니다.</p>
+      <p className="mt-3 max-w-2xl leading-7 text-[#686B73]">{region.name} 중심 좌표에서 반경 {(region.radiusMeters / 1000).toFixed(1)}km 안의 현재 검색 결과입니다. 매장까지 거리는 중심점 기준 직선거리이며 도보 이동 거리가 아닙니다. 목록에서 매장을 선택하면 주소와 지도 위치를 확인할 수 있습니다. 검색 범위는 행정구역 경계와 다르며, 매장 정보는 제휴사 목록에 따라 달라질 수 있습니다.</p>
+      <h2 className="mt-7 text-xl font-bold text-[#202124]">검색된 매장</h2>
       {entries.length ? (
         <ul className="mt-7 grid max-w-4xl gap-3 sm:grid-cols-2">
           {entries.map(({ store, partner, carriers, distanceKm, href }) => (
@@ -81,7 +83,7 @@ export default async function StoreRegionPage({ params }: Props) {
             </li>
           ))}
         </ul>
-      ) : <p className="mt-7 rounded-xl border border-[#E8E9EE] bg-white p-5 text-[#686B73]">현재 이 검색 범위에서 표시할 제휴 매장이 없습니다.</p>}
+      ) : <p className="mt-4 rounded-xl border border-[#E8E9EE] bg-white p-5 text-[#686B73]">현재 이 검색 범위에서 표시할 제휴 매장이 없습니다.</p>}
       {entries.some(({ carriers }) => carriers.length > 0) && <p className="mt-4 max-w-4xl text-sm leading-6 text-[#686B73]">표시된 통신사는 등록된 혜택 정보의 기준입니다. 개별 매장의 혜택 적용 여부나 이용 가능 여부를 보장하지 않으므로 제휴사 공식 안내를 확인해 주세요.</p>}
       {batch.hasMore && <p className="mt-4 text-sm text-[#686B73]">매장 목록을 20곳까지 표시했습니다. 더 많은 결과는 <Link href="/map" className="rounded-sm text-[#6154D9] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9]">지도에서 검색</Link>하세요.</p>}
       <JsonLd data={[

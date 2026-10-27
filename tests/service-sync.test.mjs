@@ -436,10 +436,16 @@ test('선택 멤버십 응답의 VIP콕 혜택을 공통 비교 데이터에 합
 test('편집 해설은 선택 통신사에 일치하는 제휴처 메모만 반환한다', () => {
   const notes = JSON.parse(readFileSync('src/content/partner-notes.json', 'utf8'));
   const { getPartnerNoteForCarrier } = load('src/utils/partnerNotes.ts');
-  assert.equal(notes.length, 10);
   for (const note of notes) {
     assert.equal(note.carrier, [287, 21].includes(note.partnerId) ? 'KT' : 'SKT');
   }
+  const paris = getPartnerNoteForCarrier(notes, 94, 'SKT');
+  assert.match(paris.title, /파리크라상/);
+  assert.match(paris.paragraphs.join(' '), /할인형에서 SKT VIP·Gold는 모바일 카드로 천원당 100원/);
+  assert.match(paris.paragraphs.join(' '), /적립형은 각각 천원당 100P·50P/);
+  const papaJohns = getPartnerNoteForCarrier(notes, 95, 'SKT');
+  assert.match(papaJohns.title, /파파존스/);
+  assert.match(papaJohns.sourceUrl, /brandId=329/);
   const gs25 = getPartnerNoteForCarrier(notes, 112, 'SKT');
   assert.equal(gs25.carrier, 'SKT');
   assert.equal(gs25.checks[0], '오늘이 화요일인지');

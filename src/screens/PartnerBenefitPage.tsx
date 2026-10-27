@@ -60,7 +60,7 @@ const getManualExcerpt = (manual?: string | null) => {
 };
 
 // 공식 출처·현재 통신사 데이터 대조 기록: docs/content/partner-notes-verification-2026-10-24.md
-const VERIFIED_PARTNER_NOTE_IDS = new Set<number>([17, 21, 30, 93, 108, 112, 131, 287, 288, 291]);
+const VERIFIED_PARTNER_NOTE_IDS = new Set<number>([17, 21, 30, 93, 94, 95, 108, 112, 131, 287, 288, 291]);
 
 const groupTierBenefitConditions = (
   tierBenefits: CarrierBenefitDetail['tierBenefits'],
@@ -610,6 +610,7 @@ const PartnerBenefitPage = ({
               </section>
 
               <section className={styles.contentSection} aria-labelledby="benefit-usage">
+                <h2 id="benefit-usage">이용 방법</h2>
                 {note ? (
                   <section className={styles.verifiedNote} aria-labelledby="verified-note-title">
                     <h3 id="verified-note-title">{note.title}</h3>
@@ -629,7 +630,6 @@ const PartnerBenefitPage = ({
                     </a>
                   </section>
                 ) : null}
-                <h2 id="benefit-usage">이용 방법</h2>
                 <div className={styles.usagePanel}>
                   {manualExcerpt ? (
                     <p className={styles.manual}>{manualExcerpt}</p>
@@ -697,7 +697,10 @@ const PartnerBenefitPage = ({
                 {getCarrierLabel(selectedGroup.carrier)} ·{' '}
                 {getMembershipGradeLabel(selectedGrade ?? '', referenceData)}
               </p>
-              <PartnerBenefitComparison detail={allCarrierDetail} />
+              <PartnerBenefitComparison
+                detail={allCarrierDetail}
+                selectedBenefitId={selectedBenefit.benefitId}
+              />
               <div className={styles.summaryActions}>
                 <button
                   type="button"
