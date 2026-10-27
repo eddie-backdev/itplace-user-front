@@ -19,7 +19,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
   const showTabBar = hasMobileTabs(pathname);
 
   return (
-    <div className="itplace-site-shell min-h-screen">
+    <div className={`itplace-site-shell min-h-screen ${showTabBar && pathname !== '/map' ? 'pb-[var(--itplace-mobile-tab-bar-offset)] md:pb-0' : ''}`}>
       <a href="#site-content" className="skip-link">
         본문으로 건너뛰기
       </a>
@@ -29,9 +29,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
       <main
         id="site-content"
         tabIndex={-1}
-        className={
-          showTabBar ? 'min-w-0 pb-[var(--itplace-mobile-tab-bar-offset)] md:pb-0' : 'min-w-0'
-        }
+        className="min-w-0"
       >
         {children}
       </main>

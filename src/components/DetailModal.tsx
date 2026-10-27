@@ -112,26 +112,26 @@ const DetailModal: React.FC<ModalProps> = ({ isOpen, onClose, title, children })
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative flex h-full max-h-[560px] w-full max-w-[680px] flex-col overflow-hidden rounded-[18px] bg-white max-md:max-h-[68vh] max-md:max-w-[328px] max-md:rounded-[16px]"
+        className="relative flex h-full max-h-[min(560px,calc(100dvh-2rem))] w-full max-w-[680px] flex-col overflow-hidden rounded-[18px] bg-warmSurface max-md:max-h-[calc(100dvh-2rem)] max-md:max-w-[420px] max-md:rounded-[16px]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 모달 헤더 */}
         <div className="flex shrink-0 items-center justify-between rounded-t-[18px] bg-grey01 py-3 pl-5 pr-3 max-md:rounded-t-[16px] max-md:pl-4 max-md:pr-2">
-          <h3 id={titleId} className="text-title-7 font-bold text-grey07 max-md:text-title-8">
+          <h3 id={titleId} className="min-w-0 break-words text-title-7 font-bold text-grey07 max-md:text-title-8">
             {title}
           </h3>
           <button
             ref={closeButtonRef}
             onClick={onClose}
             aria-label="모달 닫기"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <TbX className="h-7 w-7 max-md:h-6 max-md:w-6" />
           </button>
         </div>
 
         {/* 모달 내용 */}
-        <div className="min-h-0 flex-1 overflow-y-auto bg-white">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto bg-warmSurface">{children}</div>
       </div>
     </div>,
     document.body

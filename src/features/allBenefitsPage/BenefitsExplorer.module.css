@@ -2,7 +2,7 @@
   display: flex;
   min-height: 100vh;
   flex-direction: column;
-  background: #f7f8fa;
+  background: var(--itplace-color-canvas, #f7f8fa);
 }
 
 .benefitsWorkspace {
@@ -15,12 +15,12 @@
 }
 
 .page {
-  --explorer-accent: #6154d9;
-  --explorer-canvas: #f7f8fa;
-  --explorer-surface: #fff;
-  --explorer-ink: #202124;
-  --explorer-secondary: #686b73;
-  --explorer-border: #e8e9ee;
+  --explorer-accent: var(--itplace-color-accent, #6154d9);
+  --explorer-canvas: var(--itplace-color-canvas, #f7f8fa);
+  --explorer-surface: var(--itplace-color-surface, #fff);
+  --explorer-ink: var(--itplace-color-text, #202124);
+  --explorer-secondary: var(--itplace-color-text-secondary, #686b73);
+  --explorer-border: var(--itplace-color-border, #e8e9ee);
   min-height: 100%;
   padding: 0;
   background: var(--explorer-canvas);
@@ -72,25 +72,25 @@
 .membershipButton {
   min-height: 44px;
   padding: 0 12px;
-  border: 1px solid #e8e9ee;
+  border: 1px solid var(--itplace-color-border, #e8e9ee);
   border-radius: 10px;
-  background: #fff;
-  color: #6154d9;
+  background: var(--itplace-color-surface, #fff);
+  color: var(--itplace-color-accent, #6154d9);
   font: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 .membershipButton:hover {
-  background: #f0edfc;
+  background: var(--itplace-color-brand-subtle, #f0edfc);
 }
 
 .filters {
   margin: 0;
   padding: 20px;
-  border: 1px solid #fff;
+  border: 1px solid var(--itplace-color-surface, #fff);
   border-radius: 16px;
-  background: #fff;
+  background: var(--itplace-color-surface, #fff);
 }
 .filterToolbar {
   display: flex;
@@ -135,7 +135,7 @@
   text-align: right;
 }
 .selectFilter select:disabled {
-  color: #9699a1;
+  color: var(--itplace-color-text-muted, #686b73);
 }
 .searchForm {
   display: flex;
@@ -147,9 +147,8 @@
   padding: 2px 4px 2px 14px;
   border: 1px solid var(--explorer-border);
   border-radius: 12px;
-  background: #fff;
-  transition:
-    border-color 150ms ease,
+  background: var(--itplace-color-surface, #fff);
+  transition: border-color 150ms ease,
     box-shadow 150ms ease;
 }
 .searchIcon {
@@ -188,7 +187,7 @@
   cursor: pointer;
 }
 .searchButton:hover {
-  background: #f0edfc;
+  background: var(--itplace-color-brand-subtle, #f0edfc);
 }
 .searchForm:focus-within,
 .selectFilter:focus-within {
@@ -231,7 +230,7 @@
   padding: 14px;
   border: 1px solid var(--explorer-border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--itplace-color-surface, #fff);
   box-shadow: 0 10px 24px rgb(32 33 36 / 10%);
 }
 .advancedPanel h2 {
@@ -320,9 +319,9 @@
   min-height: 34px;
   align-items: center;
   padding: 0 12px;
-  border: 1px solid #e4defc;
+  border: 1px solid var(--itplace-color-border, #e8e9ee);
   border-radius: 999px;
-  background: #f0edfc;
+  background: var(--itplace-color-brand-subtle, #f0edfc);
   color: var(--explorer-accent);
   font-size: 12px;
   font-weight: 600;
@@ -347,16 +346,16 @@
   gap: 0;
   overflow: visible;
   padding: 0;
-  border: 1px solid #fff;
+  border: 1px solid var(--itplace-color-surface, #fff);
   border-radius: 14px;
-  background: #fff;
+  background: var(--itplace-color-surface, #fff);
 }
 .skeletonCard {
   min-height: 86px;
   border-width: 0 0 1px;
   border-style: solid;
   border-color: var(--explorer-border);
-  background: #fff;
+  background: var(--itplace-color-surface, #fff);
   animation: pulse 1.6s ease-in-out infinite;
 }
 @keyframes pulse {
@@ -368,7 +367,7 @@
   padding: 40px 18px;
   border: 1px solid var(--explorer-border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--itplace-color-surface, #fff);
   text-align: center;
 }
 .emptyState h3 {
@@ -392,7 +391,7 @@
   border: 0;
   border-radius: 10px;
   background: var(--explorer-accent);
-  color: #fff;
+  color: var(--itplace-color-on-brand, #fff);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -410,7 +409,7 @@
   text-decoration: none;
 }
 .emptyState a:hover {
-  background: #f0edfc;
+  background: var(--itplace-color-brand-subtle, #f0edfc);
 }
 .pagination {
   display: flex;
@@ -437,7 +436,7 @@
   color: var(--explorer-ink);
 }
 .pageNumberSelected {
-  background: #f0edfc;
+  background: var(--itplace-color-brand-subtle, #f0edfc);
   color: var(--explorer-accent);
   font-weight: 700;
 }
@@ -454,7 +453,7 @@
   overflow: auto;
   border: 0;
   border-radius: 0;
-  background: #fff;
+  background: var(--itplace-color-surface, #fff);
   box-shadow: -18px 0 48px rgb(28 30 44 / 14%);
 }
 .previewDialog::backdrop {

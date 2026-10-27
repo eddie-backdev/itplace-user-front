@@ -10,8 +10,8 @@ const StoreDetailUsageGuide: React.FC<StoreDetailUsageGuideProps> = ({ detailDat
 
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold text-[#202124]">이용 방법</h3>
-      <ul className="space-y-2 text-sm leading-6 text-[#686B73]">
+      <h3 className="mb-2 text-sm font-semibold text-[var(--itplace-color-text)]">이용 방법</h3>
+      <ul className="space-y-2 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
         {detailData.data?.manual
           .split('\n')
           .filter((line) => line.trim() !== '')

@@ -79,7 +79,7 @@ const OAuthRedirectHandler = () => {
 
   return (
     <main className="flex min-h-[100dvh] items-center justify-center bg-warmCanvas px-5 text-center">
-      <section className="w-full max-w-[440px] rounded-3xl border border-warmBorder bg-white px-8 py-12">
+      <section className="w-full max-w-[440px] rounded-3xl border border-warmBorder bg-warmSurface px-8 py-12">
         <h1 className="text-title-6 font-bold text-grey07">카카오 로그인 처리 중입니다</h1>
         <p className="mt-2 text-body-3 leading-6 text-grey05">
           계정 정보를 확인하고 있어요. 잠시만 기다려 주세요.

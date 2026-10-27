@@ -18,7 +18,7 @@ type MembershipProfileSelectorProps = {
 };
 
 const selectClass =
-  'block min-h-12 w-full rounded-xl border border-warmBorder bg-white px-4 text-base text-ink focus:border-brandStrong focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-warmCanvas disabled:text-grey04';
+  'block min-h-12 w-full rounded-xl border border-warmBorder bg-warmSurface px-4 text-base text-ink focus:border-accentStrong focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:bg-warmCanvas disabled:text-grey04';
 
 const MembershipProfileSelector = ({
   carrier,
@@ -49,7 +49,7 @@ const MembershipProfileSelector = ({
         <fieldset>
           <legend
             className={clsx(
-              'font-semibold text-[#34343b]',
+              'font-semibold text-grey06',
               compact ? 'mb-2 text-[13px]' : 'mb-3 text-sm'
             )}
           >
@@ -61,10 +61,10 @@ const MembershipProfileSelector = ({
               return (
                 <label
                   key={option.code}
-                  className={`flex cursor-pointer items-center rounded-xl border transition-colors focus-within:ring-2 focus-within:ring-[#6154d9] focus-within:ring-offset-2 ${compact ? 'min-h-[54px] min-w-0 justify-center gap-1.5 px-2 py-2' : 'min-h-[64px] gap-3 px-4 py-3'} ${
+                  className={`flex cursor-pointer items-center rounded-xl border transition-colors focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 ${compact ? 'min-h-[54px] min-w-0 justify-center gap-1.5 px-2 py-2' : 'min-h-[64px] gap-3 px-4 py-3'} ${
                     selected
-                      ? 'border-[#6154d9] bg-[#f7f5ff]'
-                      : 'border-[#e8e9ee] bg-white hover:border-[#c9c4f0]'
+                      ? 'border-accent bg-brandSoft'
+                      : 'border-warmBorder bg-warmSurface hover:border-accent'
                   } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
                 >
                   <input
@@ -79,22 +79,22 @@ const MembershipProfileSelector = ({
                   <span
                     aria-hidden="true"
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                      selected ? 'border-[#6154d9]' : 'border-[#9b9da5]'
+                      selected ? 'border-accent' : 'border-grey04'
                     }`}
                   >
-                    {selected ? <span className="h-2 w-2 rounded-full bg-[#6154d9]" /> : null}
+                    {selected ? <span className="h-2 w-2 rounded-full bg-brand" /> : null}
                   </span>
                   <span className={compact ? 'min-w-0 text-center' : ''}>
                     <span
                       className={clsx(
-                        'block font-bold text-[#202124]',
+                        'block font-bold text-ink',
                         compact ? 'whitespace-nowrap text-[13px]' : 'text-sm'
                       )}
                     >
                       {option.label}
                     </span>
                     <span
-                      className={clsx('mt-0.5 block text-xs text-[#686b73]', compact && 'hidden')}
+                      className={clsx('mt-0.5 block text-xs text-grey05', compact && 'hidden')}
                     >
                       {selected ? '현재 선택' : '통신사'}
                     </span>
@@ -108,7 +108,7 @@ const MembershipProfileSelector = ({
         <fieldset>
           <legend
             className={clsx(
-              'font-semibold text-[#34343b]',
+              'font-semibold text-grey06',
               compact ? 'mb-2 text-[13px]' : 'mb-3 text-sm'
             )}
           >
@@ -120,10 +120,10 @@ const MembershipProfileSelector = ({
               return (
                 <label
                   key={option.code}
-                  className={`flex cursor-pointer items-center rounded-xl border transition-colors focus-within:ring-2 focus-within:ring-[#6154d9] focus-within:ring-offset-2 ${compact ? 'min-h-[44px] min-w-0 justify-center gap-1.5 px-2 py-2' : 'min-h-[56px] min-w-[116px] gap-3 px-4 py-3'} ${
+                  className={`flex cursor-pointer items-center rounded-xl border transition-colors focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 ${compact ? 'min-h-[44px] min-w-0 justify-center gap-1.5 px-2 py-2' : 'min-h-[56px] min-w-[116px] gap-3 px-4 py-3'} ${
                     selected
-                      ? 'border-[#6154d9] bg-[#f7f5ff]'
-                      : 'border-[#e8e9ee] bg-white hover:border-[#c9c4f0]'
+                      ? 'border-accent bg-brandSoft'
+                      : 'border-warmBorder bg-warmSurface hover:border-accent'
                   } ${disabled || !carrier ? 'cursor-not-allowed opacity-60' : ''}`}
                 >
                   <input
@@ -138,14 +138,14 @@ const MembershipProfileSelector = ({
                   <span
                     aria-hidden="true"
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                      selected ? 'border-[#6154d9]' : 'border-[#9b9da5]'
+                      selected ? 'border-accent' : 'border-grey04'
                     }`}
                   >
-                    {selected ? <span className="h-2 w-2 rounded-full bg-[#6154d9]" /> : null}
+                    {selected ? <span className="h-2 w-2 rounded-full bg-brand" /> : null}
                   </span>
                   <span
                     className={clsx(
-                      'font-bold text-[#202124]',
+                      'font-bold text-ink',
                       compact ? 'whitespace-nowrap text-[13px]' : 'text-sm'
                     )}
                   >
@@ -156,7 +156,7 @@ const MembershipProfileSelector = ({
             })}
           </div>
           {gradeOptions.length === 0 ? (
-            <p className="mt-2 text-sm text-[#686b73]">통신사를 먼저 선택해 주세요.</p>
+            <p className="mt-2 text-sm text-grey05">통신사를 먼저 선택해 주세요.</p>
           ) : null}
         </fieldset>
       </div>

@@ -62,7 +62,7 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
   if (isLoading) {
     return (
       <div
-        className={`flex h-full min-h-0 w-full max-w-none flex-col overflow-hidden bg-white ${className}`}
+        className={`flex h-full min-h-0 w-full max-w-none flex-col overflow-hidden bg-warmSurface ${className}`}
       >
         {/* 고정 헤더 - SpeechBubble과 동일한 패딩 */}
         <div className="px-5 pt-4 pb-0 flex-shrink-0 max-md:px-3 max-md:pt-3">
@@ -75,7 +75,7 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
               type="button"
               onClick={onClose}
               aria-label="혜택 상세 닫기"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#69717e] transition-colors hover:bg-[#f1f1ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--itplace-color-text-secondary)] transition-colors hover:bg-[var(--itplace-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
             >
               <TbX size={16} className="text-grey03" />
             </button>
@@ -97,7 +97,7 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
 
     return (
       <div
-        className={`flex h-full min-h-0 w-full max-w-none flex-col overflow-hidden bg-white ${className}`}
+        className={`flex h-full min-h-0 w-full max-w-none flex-col overflow-hidden bg-warmSurface ${className}`}
       >
         {/* 고정 헤더 - SpeechBubble과 동일한 패딩 */}
         <div className="px-5 pt-4 pb-0 flex-shrink-0 max-md:px-3 max-md:pt-3">
@@ -107,7 +107,7 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
               type="button"
               onClick={onClose}
               aria-label="혜택 상세 닫기"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#69717e] transition-colors hover:bg-[#f1f1ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--itplace-color-text-secondary)] transition-colors hover:bg-[var(--itplace-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
             >
               <TbX size={16} className="text-grey03" />
             </button>
@@ -124,7 +124,7 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
 
   return (
     <div
-      className={`flex h-full min-h-0 w-full max-w-none flex-col overflow-hidden bg-white pb-4 ${className}`}
+      className={`flex h-full min-h-0 w-full max-w-none flex-col overflow-hidden bg-warmSurface pb-4 ${className}`}
     >
       {/* 헤더 영역 - 이미지, 파트너명, 페이지네이션, X버튼 위치, SpeechBubble과 동일한 패딩 */}
       <div className="px-5 pt-4 pb-0 flex-shrink-0 max-md:px-3 max-md:pt-3">
@@ -138,7 +138,7 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
               className="h-12 w-12 shrink-0 object-contain"
             />
             {/* 파트너명 텍스트 스타일 */}
-            <h3 className="min-w-0 break-words text-base font-semibold leading-6 text-[#202120] line-clamp-2">
+            <h3 className="min-w-0 break-words text-base font-semibold leading-6 text-[var(--itplace-color-text)] line-clamp-2">
               {currentBenefit.partnerName || currentBenefit.benefitName}
             </h3>
           </div>
@@ -152,12 +152,12 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
                   type="button"
                   onClick={handlePrevious}
                   aria-label="이전 혜택"
-                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#69717e] transition-colors hover:bg-[#f1f1ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--itplace-color-text-secondary)] transition-colors hover:bg-[var(--itplace-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
                 >
                   <TbChevronLeft size={16} className="text-grey04" />
                 </button>
                 {/* 페이지 번호 텍스트 스타일 */}
-                <span className="text-xs text-[#69717e]">
+                <span className="text-xs text-[var(--itplace-color-text-secondary)]">
                   {currentIndex + 1} / {benefitIds.length}
                 </span>
                 {/* 다음 버튼 스타일 */}
@@ -165,7 +165,7 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
                   type="button"
                   onClick={handleNext}
                   aria-label="다음 혜택"
-                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#69717e] transition-colors hover:bg-[#f1f1ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--itplace-color-text-secondary)] transition-colors hover:bg-[var(--itplace-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
                 >
                   <TbChevronRight size={16} className="text-grey04" />
                 </button>
@@ -176,7 +176,7 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
               type="button"
               onClick={onClose}
               aria-label="혜택 상세 닫기"
-              className="ml-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#69717e] transition-colors hover:bg-[#f1f1ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
+              className="ml-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[var(--itplace-color-text-secondary)] transition-colors hover:bg-[var(--itplace-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
             >
               <TbX size={16} className="text-grey03 hover:text-grey04" />
             </button>
@@ -188,8 +188,8 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
       <div className="px-5 pb-4 pt-3 overflow-y-auto flex-1 min-h-0 max-md:px-3 max-md:pb-3">
         {/* 혜택 설명 텍스트 */}
         {currentBenefit.description && (
-          <div className="mb-4 border-b border-[#e6e6e3] pb-4">
-            <p className="break-words text-sm leading-6 text-[#202120]">
+          <div className="mb-4 border-b border-[var(--itplace-color-border)] pb-4">
+            <p className="break-words text-sm leading-6 text-[var(--itplace-color-text)]">
               {currentBenefit.description}
             </p>
           </div>
@@ -199,19 +199,18 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
         {currentBenefit.tierBenefits && currentBenefit.tierBenefits.length > 0 && (
           <div className="mb-4">
             {/* 섹션 제목 스타일 */}
-            <h4 className="mb-2 text-sm font-semibold text-[#202120]">혜택 내용</h4>
-            <div className="divide-y divide-[#e6e6e3]">
+            <h4 className="mb-2 text-sm font-semibold text-[var(--itplace-color-text)]">
+              혜택 내용
+            </h4>
+            <div className="divide-y divide-[var(--itplace-color-border)]">
               {currentBenefit.tierBenefits.map((tier, index) => (
-                <div
-                  key={index}
-                  className="min-w-0 py-3 first:pt-1"
-                >
+                <div key={index} className="min-w-0 py-3 first:pt-1">
                   {/* 등급 뱃지 스타일 */}
-                  <span className="mb-1.5 inline-flex min-h-8 max-w-full items-center rounded-md bg-[#f1f1ee] px-2.5 py-1 text-xs font-semibold text-[#0066cc]">
+                  <span className="mb-1.5 inline-flex min-h-8 max-w-full items-center rounded-md bg-[var(--itplace-color-canvas)] px-2.5 py-1 text-xs font-semibold text-[var(--itplace-color-accent)]">
                     {tier.grade}
                   </span>
                   {/* 혜택 내용 텍스트 스타일 */}
-                  <p className="whitespace-pre-line break-words text-sm leading-6 text-[#69717e]">
+                  <p className="whitespace-pre-line break-words text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
                     {tier.context}
                   </p>
                 </div>
@@ -223,8 +222,10 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
         {/* 이용 한도 섹션 */}
         {currentBenefit.benefitLimit && (
           <div className="mb-4">
-            <h4 className="mb-1 text-sm font-semibold text-[#202120]">이용 한도</h4>
-            <p className="whitespace-pre-line break-words text-sm leading-6 text-[#69717e]">
+            <h4 className="mb-1 text-sm font-semibold text-[var(--itplace-color-text)]">
+              이용 한도
+            </h4>
+            <p className="whitespace-pre-line break-words text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
               {currentBenefit.benefitLimit}
             </p>
           </div>
@@ -233,8 +234,10 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
         {/* 이용 방법 섹션 */}
         {currentBenefit.manual && (
           <div className="mb-4">
-            <h4 className="mb-1 text-sm font-semibold text-[#202120]">이용 방법</h4>
-            <p className="whitespace-pre-line break-words text-sm leading-6 text-[#69717e]">
+            <h4 className="mb-1 text-sm font-semibold text-[var(--itplace-color-text)]">
+              이용 방법
+            </h4>
+            <p className="whitespace-pre-line break-words text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
               {currentBenefit.manual}
             </p>
           </div>
@@ -242,13 +245,13 @@ const BenefitDetailCard: React.FC<BenefitDetailCardProps> = ({
 
         {/* 외부 링크 버튼 스타일 */}
         {currentBenefit.url && (
-          <div className="border-t border-[#e6e6e3] pt-4">
+          <div className="border-t border-[var(--itplace-color-border)] pt-4">
             <a
               href={currentBenefit.url}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${currentBenefit.partnerName || currentBenefit.benefitName} 자세히 보기 (새 창에서 열림)`}
-              className="inline-flex min-h-11 items-center rounded-lg text-sm font-medium text-[#0066cc] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
+              className="inline-flex min-h-11 items-center rounded-lg text-sm font-medium text-[var(--itplace-color-accent)] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
             >
               자세히 보기
               <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">

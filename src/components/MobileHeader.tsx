@@ -48,7 +48,7 @@ const FOCUSABLE_ELEMENT_SELECTOR = [
 
 const MobileHeader = ({
   title,
-  backgroundColor = 'bg-white',
+  backgroundColor = 'bg-warmSurface',
   onMenuClick,
   rightContent,
   iconColor,
@@ -230,8 +230,8 @@ const MobileHeader = ({
                     aria-current={isActive ? 'page' : undefined}
                     className={`flex min-h-11 items-center rounded-xl px-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                       isActive
-                        ? 'bg-brandSoft text-brandStrong'
-                        : 'text-ink hover:bg-warmCanvas hover:text-brandStrong'
+                        ? 'bg-brandSoft text-accentStrong'
+                        : 'text-ink hover:bg-warmCanvas hover:text-accentStrong'
                     }`}
                     onClick={closeSidebar}
                   >
@@ -279,7 +279,7 @@ const MobileHeader = ({
                     navigate(getLoginHref(currentPath), { replace: true });
                     closeSidebar();
                   }}
-                  className="min-h-11 w-full rounded-xl px-3 text-left text-sm font-medium text-brandStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  className="min-h-11 w-full rounded-xl px-3 text-left text-sm font-medium text-accentStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   로그인
                 </button>

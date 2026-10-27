@@ -58,7 +58,7 @@ const EmailVerificationBox = ({
   return (
     <div className="w-full">
       {emailVerified && (
-        <p role="status" className="mb-2 text-sm font-medium text-brandStrong">
+        <p role="status" className="mb-2 text-sm font-medium text-accentStrong">
           이메일 인증 완료
         </p>
       )}
@@ -78,11 +78,11 @@ const EmailVerificationBox = ({
             type="button"
             onClick={handleSendCode}
             disabled={!email || manualLoading}
-            className={`signupEmailAction absolute right-1 top-[31px] h-10 min-w-[68px] rounded-lg px-2 text-body-3-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
+            className={`signupEmailAction absolute right-1 top-[31px] h-10 min-w-[68px] rounded-lg px-2 text-body-3-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
               ${!email ? 'bg-grey02 text-grey04' : 'bg-purple04 text-white'}`}
           >
             {manualLoading ? (
-              <LoadingSpinner className="h-5 w-5 border-2 border-[#6154D9] border-t-transparent" />
+              <LoadingSpinner className="h-5 w-5 border-2 border-accent border-t-transparent" />
             ) : (
               '인증'
             )}
@@ -107,7 +107,7 @@ const EmailVerificationBox = ({
           <button
             type="button"
             onClick={() => verifyCode(code)}
-            className="signupEmailAction absolute right-1 top-[31px] h-10 min-w-[68px] rounded-lg bg-brand px-2 text-body-3-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="signupEmailAction absolute right-1 top-[31px] h-10 min-w-[68px] rounded-lg bg-brand px-2 text-body-3-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             확인
           </button>

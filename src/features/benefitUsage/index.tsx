@@ -363,7 +363,7 @@ export default function BenefitUsagePage() {
         <section className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 rounded-2xl border border-warmBorder bg-warmSurface px-5 py-4 max-md:px-4">
           <div className="min-w-0">
             <p className="text-body-4 font-semibold text-grey05">기록한 절약액</p>
-            <p className="mt-1 break-words text-title-2 font-bold tracking-tight text-brandStrong max-md:text-title-3">
+            <p className="mt-1 break-words text-title-2 font-bold tracking-tight text-accentStrong max-md:text-title-3">
               {isLoading
                 ? '불러오는 중…'
                 : loadError
@@ -426,7 +426,7 @@ export default function BenefitUsagePage() {
           {notice && (
             <p
               role="status"
-              className="rounded-xl bg-brandSoft px-4 py-3 text-body-4 font-semibold text-brandStrong"
+              className="rounded-xl bg-brandSoft px-4 py-3 text-body-4 font-semibold text-accentStrong"
             >
               {notice}
             </p>
@@ -477,7 +477,7 @@ export default function BenefitUsagePage() {
                       required
                       value={selectedBenefitId}
                       onChange={(event) => setSelectedBenefitId(event.target.value)}
-                      className="min-h-11 w-full rounded-xl border border-warmBorder bg-white px-3 text-base text-ink focus:outline-none focus:ring-2 focus:ring-brand"
+                      className="min-h-11 w-full rounded-xl border border-warmBorder bg-warmSurface px-3 text-base text-ink focus:outline-none focus:ring-2 focus:ring-accent"
                     >
                       <option value="">관심 혜택에서 선택해 주세요</option>
                       {benefitOptions.map((benefit) => (
@@ -513,7 +513,7 @@ export default function BenefitUsagePage() {
                         <span>관심 혜택에서 먼저 혜택을 저장하거나 전체 혜택을 둘러보세요.</span>
                         <Link
                           href="/benefits"
-                          className="inline-flex min-h-11 shrink-0 items-center font-bold text-brandStrong underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                          className="inline-flex min-h-11 shrink-0 items-center font-bold text-accentStrong underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                         >
                           혜택 둘러보기
                         </Link>
@@ -524,7 +524,7 @@ export default function BenefitUsagePage() {
                       type="button"
                       onClick={() => void loadBenefitChoices(benefitChoicesPage + 1)}
                       disabled={benefitChoicesLoading}
-                      className="mt-1 inline-flex min-h-11 items-center rounded-lg px-2 text-body-4 font-semibold text-brandStrong underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50"
+                      className="mt-1 inline-flex min-h-11 items-center rounded-lg px-2 text-body-4 font-semibold text-accentStrong underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
                     >
                       {benefitChoicesLoading ? '불러오는 중…' : '관심 혜택 더 불러오기'}
                     </button>
@@ -555,7 +555,7 @@ export default function BenefitUsagePage() {
                       max={todayKst}
                       required
                       onChange={(event) => setUsedAt(event.target.value)}
-                      className="min-h-11 w-full rounded-xl border border-warmBorder bg-white px-3 text-base text-ink focus:outline-none focus:ring-2 focus:ring-brand"
+                      className="min-h-11 w-full rounded-xl border border-warmBorder bg-warmSurface px-3 text-base text-ink focus:outline-none focus:ring-2 focus:ring-accent"
                     />
                   </div>
                   <div>
@@ -576,7 +576,7 @@ export default function BenefitUsagePage() {
                         value={savedAmount}
                         onChange={(event) => setSavedAmount(event.target.value)}
                         placeholder="입력하지 않아도 돼요"
-                        className="min-h-11 w-full rounded-xl border border-warmBorder bg-white px-3 pr-10 text-base text-ink placeholder:text-grey04 focus:outline-none focus:ring-2 focus:ring-brand"
+                        className="min-h-11 w-full rounded-xl border border-warmBorder bg-warmSurface px-3 pr-10 text-base text-ink placeholder:text-grey04 focus:outline-none focus:ring-2 focus:ring-accent"
                       />
                       <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-body-4 text-grey04">
                         원
@@ -599,7 +599,7 @@ export default function BenefitUsagePage() {
                     value={memo}
                     onChange={(event) => setMemo(event.target.value)}
                     placeholder="사용하면서 기억할 내용을 적어 보세요"
-                    className="w-full resize-y rounded-xl border border-warmBorder bg-white px-3 py-2.5 text-base leading-6 text-ink placeholder:text-grey04 focus:outline-none focus:ring-2 focus:ring-brand"
+                    className="w-full resize-y rounded-xl border border-warmBorder bg-warmSurface px-3 py-2.5 text-base leading-6 text-ink placeholder:text-grey04 focus:outline-none focus:ring-2 focus:ring-accent"
                   />
                   <p className="mt-1 text-right text-caption text-grey04">{memo.length}/200</p>
                 </div>
@@ -619,7 +619,7 @@ export default function BenefitUsagePage() {
                   type="button"
                   onClick={resetForm}
                   disabled={isSaving}
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-warmBorder bg-white px-4 text-body-3-bold text-grey05 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-warmBorder bg-warmSurface px-4 text-body-3-bold text-grey05 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
                 >
                   취소
                 </button>
@@ -672,7 +672,7 @@ export default function BenefitUsagePage() {
               </p>
               <Link
                 href="/benefits"
-                className="mt-2 inline-flex min-h-11 items-center px-3 text-body-4 font-semibold text-brandStrong underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="mt-2 inline-flex min-h-11 items-center px-3 text-body-4 font-semibold text-accentStrong underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 전체 혜택 둘러보기
               </Link>
@@ -712,7 +712,7 @@ export default function BenefitUsagePage() {
                               {record.memo}
                             </p>
                           ) : null}
-                          <p className="mt-2 flex items-center justify-between gap-3 text-body-4 font-semibold text-brandStrong">
+                          <p className="mt-2 flex items-center justify-between gap-3 text-body-4 font-semibold text-accentStrong">
                             <span className="text-caption font-medium text-grey04">
                               기록한 절약액
                             </span>
@@ -727,7 +727,7 @@ export default function BenefitUsagePage() {
                       <div className="flex flex-wrap items-center gap-1 border-t border-warmBorder pt-2">
                         <Link
                           href={detailHref}
-                          className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg px-3 text-body-4 font-semibold text-brandStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:flex-none"
+                          className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg px-3 text-body-4 font-semibold text-accentStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:flex-none"
                         >
                           혜택 보기
                         </Link>
@@ -774,7 +774,7 @@ export default function BenefitUsagePage() {
                             type="button"
                             onClick={() => setDeleteCandidateId(null)}
                             disabled={isDeleting}
-                            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder bg-white px-3 text-body-4-bold text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50"
+                            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder bg-warmSurface px-3 text-body-4-bold text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
                           >
                             취소
                           </button>

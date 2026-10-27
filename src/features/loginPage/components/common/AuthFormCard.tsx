@@ -30,8 +30,8 @@ const AuthFormCard = ({ children, radius = 'all', variant = 'default' }: Props) 
     : 'w-[583px] max-xl:w-[500px] max-lg:w-[375px] max-md:w-full max-sm:w-full h-[639px] max-xl:h-[548px] max-lg:h-[430px] max-md:h-auto max-sm:h-auto';
   const layoutClass = isSignup ? 'items-center justify-start' : 'items-center justify-center';
   const visualClass = isSignup
-    ? 'relative border border-white/80 bg-white/[0.96] shadow-[0_24px_60px_rgba(16,17,20,0.12)] backdrop-blur-sm before:absolute before:inset-x-10 before:top-0 before:h-[3px] before:rounded-full before:bg-gradient-to-r before:from-purple02 before:via-purple04 before:to-purple05'
-    : 'bg-white drop-shadow-basic';
+    ? 'relative border border-white/80 bg-warmSurface/[0.96] shadow-[0_24px_60px_rgba(16,17,20,0.12)] backdrop-blur-sm before:absolute before:inset-x-10 before:top-0 before:h-[3px] before:rounded-full before:bg-gradient-to-r before:from-purple02 before:via-purple04 before:to-purple05'
+    : 'bg-warmSurface drop-shadow-basic';
 
   return (
     <div className={`${sizeClass} ${visualClass} flex flex-col ${layoutClass} ${radiusClass}`}>

@@ -328,7 +328,7 @@ export default function SignUpPhoneVerificationForm({
           <button
             type="button"
             onClick={copyCurrentPageAddress}
-            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-4 text-sm font-semibold text-ink hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-4 text-sm font-semibold text-ink hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             이 페이지 주소 복사
           </button>
@@ -409,7 +409,7 @@ export default function SignUpPhoneVerificationForm({
                 <button
                   type="button"
                   onClick={() => handlePhoneChange('')}
-                  className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-3 text-sm font-semibold text-grey06 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-3 text-sm font-semibold text-grey06 hover:bg-warmSurface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   다른 번호로 인증
                 </button>

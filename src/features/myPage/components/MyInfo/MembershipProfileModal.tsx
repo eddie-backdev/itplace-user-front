@@ -73,7 +73,7 @@ export default function MembershipProfileModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="min-h-11 flex-1 rounded-lg border border-warmBorder px-3 text-base font-semibold text-grey05 transition hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+            className="min-h-11 flex-1 rounded-lg border border-warmBorder px-3 text-base font-semibold text-grey05 transition hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
           >
             취소
           </button>
@@ -81,7 +81,7 @@ export default function MembershipProfileModal({
             type="button"
             disabled={!canSave}
             onClick={() => onSave(draftCarrier, draftGrade)}
-            className={`min-h-11 flex-1 rounded-lg px-3 text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed ${
+            className={`min-h-11 flex-1 rounded-lg px-3 text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed ${
               canSave ? 'bg-brand text-white hover:bg-brandStrong' : 'bg-grey01 text-grey03'
             }`}
           >

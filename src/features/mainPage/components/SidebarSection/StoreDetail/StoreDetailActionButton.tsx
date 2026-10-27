@@ -117,10 +117,10 @@ const StoreDetailActionButton: React.FC<StoreDetailActionButtonProps> = ({
     <button
       ref={favoriteButtonRef}
       type="button"
-      className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl text-body-3-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9] focus-visible:ring-offset-2 ${
+      className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl text-body-3-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)] focus-visible:ring-offset-2 ${
         isDisabled
           ? 'cursor-not-allowed bg-grey03 text-grey04'
-          : 'bg-[#6154D9] text-white hover:bg-[#5146C7]'
+          : 'bg-[var(--itplace-color-brand)] text-[var(--itplace-color-on-brand)] hover:bg-[var(--itplace-color-brand)]'
       }`}
       onClick={handleFavoriteToggle}
       disabled={isDisabled}

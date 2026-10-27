@@ -31,7 +31,9 @@ const getCategoryIcon = (
   categoryId: string,
   isSelected: boolean
 ): React.ReactElement | undefined => {
-  const iconColor = isSelected ? 'text-[#6154d9]' : 'text-[#686b73]';
+  const iconColor = isSelected
+    ? 'text-[var(--itplace-color-accent)]'
+    : 'text-[var(--itplace-color-text-secondary)]';
   const iconSize = 18;
 
   const iconMap: Record<string, React.ReactElement> = {
@@ -112,12 +114,12 @@ const CategoryTabsSection: React.FC<CategoryTabsSectionProps> = ({
                 className={`${styles.button} ${
                   selectedCategory === category.id
                     ? mode === 'map'
-                      ? 'border-[#e4defc] bg-[#f0edfc] text-[#6154d9]'
-                      : 'border-brand bg-brand text-white'
+                      ? 'border-[var(--itplace-color-border)] bg-[var(--itplace-color-brand-subtle)] text-[var(--itplace-color-accent)]'
+                      : 'border-brand bg-brand text-[var(--itplace-color-on-brand)]'
                     : mode === 'map'
-                      ? 'border-transparent bg-white text-[#686b73] hover:bg-[#f7f8fa] hover:text-[#202124]'
+                      ? 'border-transparent bg-warmSurface text-[var(--itplace-color-text-secondary)] hover:bg-[var(--itplace-color-canvas)] hover:text-[var(--itplace-color-text)]'
                       : 'border-warmBorder bg-warmSurface text-grey06 hover:border-brand/30 hover:bg-brandSoft'
-                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]`}
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]`}
               >
                 {styles.showIcon && category.id !== '전체' && (
                   <span className="flex-shrink-0 [&_svg]:h-[18px] [&_svg]:w-[18px]">
@@ -140,7 +142,7 @@ const CategoryTabsSection: React.FC<CategoryTabsSectionProps> = ({
             className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="이전 카테고리"
           >
-            <TbChevronLeft className="h-5 w-5 text-brand hover:text-brandStrong max-md:h-4 max-md:w-4 max-sm:h-3 max-sm:w-3" />
+            <TbChevronLeft className="h-5 w-5 text-accent hover:text-accentStrong max-md:h-4 max-md:w-4 max-sm:h-3 max-sm:w-3" />
           </button>
 
           <button
@@ -149,7 +151,7 @@ const CategoryTabsSection: React.FC<CategoryTabsSectionProps> = ({
             className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="다음 카테고리"
           >
-            <TbChevronRight className="h-5 w-5 text-brand hover:text-brandStrong max-md:h-4 max-md:w-4 max-sm:h-3 max-sm:w-3" />
+            <TbChevronRight className="h-5 w-5 text-accent hover:text-accentStrong max-md:h-4 max-md:w-4 max-sm:h-3 max-sm:w-3" />
           </button>
         </div>
       )}

@@ -50,7 +50,7 @@ const PasswordInputForm = ({
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
             aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-            className="signupPasswordToggle absolute right-1 top-[29px] flex h-11 w-11 items-center justify-center rounded-lg text-grey04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="signupPasswordToggle absolute right-1 top-[29px] flex h-11 w-11 items-center justify-center rounded-lg text-grey04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             {showPassword ? (
               <TbEyeOff size={18} className="text-[18px]" />
@@ -81,7 +81,7 @@ const PasswordInputForm = ({
             type="button"
             onClick={() => setShowPasswordConfirm((prev) => !prev)}
             aria-label={showPasswordConfirm ? '비밀번호 숨기기' : '비밀번호 보기'}
-            className="signupPasswordToggle absolute right-1 top-[29px] flex h-11 w-11 items-center justify-center rounded-lg text-grey04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="signupPasswordToggle absolute right-1 top-[29px] flex h-11 w-11 items-center justify-center rounded-lg text-grey04 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             {showPasswordConfirm ? (
               <TbEyeOff size={18} className="text-[18px]" />

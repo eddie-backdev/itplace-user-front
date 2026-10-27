@@ -51,7 +51,7 @@ const AuthInput = ({
   onKeyDown,
   className,
   bgColor = 'bg-grey01',
-  textColor = 'text-[#202124]',
+  textColor = 'text-ink',
   placeholderColor = 'placeholder-grey03',
   disabled = false,
 }: AuthInputProps) => {
@@ -72,7 +72,7 @@ const AuthInput = ({
       {visibleLabel && (
         <label
           htmlFor={`auth-${name}`}
-          className="mb-1.5 block text-sm font-semibold leading-5 text-[#202124]"
+          className="mb-1.5 block text-sm font-semibold leading-5 text-ink"
         >
           {visibleLabel}
         </label>
@@ -93,7 +93,7 @@ const AuthInput = ({
         onKeyDown={disabled ? undefined : onKeyDown}
         disabled={disabled}
         className={clsx(
-          'h-12 w-full rounded-xl border border-[#E8E9EE] bg-white px-4 text-base font-normal text-[#202124] placeholder:text-[#686B73] focus:border-[#6154D9] focus:outline-none focus:ring-2 focus:ring-[#6154D9]/20 disabled:cursor-not-allowed disabled:bg-grey01 disabled:text-grey04',
+          'h-12 w-full rounded-xl border border-warmBorder bg-warmSurface px-4 text-base font-normal text-ink placeholder:text-grey05 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:bg-grey01 disabled:text-grey04',
           bgColor !== 'bg-grey01' && bgColor,
           textColor,
           placeholderColor,

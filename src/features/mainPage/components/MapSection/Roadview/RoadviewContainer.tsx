@@ -48,7 +48,7 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
         if (markerElement) {
           const storeId = parseInt(markerElement.getAttribute('data-store-id') || '0');
           const isSelected = newSelectedStoreId === storeId;
-          const accentColor = isSelected ? '#0066CC' : '#A3ABB5';
+          const accentColor = isSelected ? 'var(--itplace-color-accent)' : '#A3ABB5';
           const markerName = markerElement.getAttribute('title') || '가맹점';
 
           overlay.setZIndex(isSelected ? 1000 : 1);
@@ -315,14 +315,14 @@ const RoadviewContainer: React.FC<RoadviewContainerProps> = ({
 
       {/* 로드뷰 닫기 버튼 */}
       <div className="absolute left-4 right-4 top-4 z-[1001] flex items-center justify-between gap-3 max-md:left-3 max-md:right-3 max-md:top-[calc(env(safe-area-inset-top)+12px)]">
-        <h2 className="rounded-xl border border-[#e6e6e3] bg-white px-3 py-2 text-sm font-semibold text-[#202120] shadow-[var(--itplace-shadow-card)]">
+        <h2 className="rounded-xl border border-[var(--itplace-color-border)] bg-warmSurface px-3 py-2 text-sm font-semibold text-[var(--itplace-color-text)] shadow-[var(--itplace-shadow-card)]">
           로드뷰
         </h2>
         <button
           onClick={() => onCloseRef.current()}
           type="button"
           aria-label="로드뷰 닫고 지도로 돌아가기"
-          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e6e6e3] bg-white px-4 text-sm font-semibold text-[#202120] shadow-[var(--itplace-shadow-card)] transition-colors hover:bg-[#f1f1ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--itplace-color-border)] bg-warmSurface px-4 text-sm font-semibold text-[var(--itplace-color-text)] shadow-[var(--itplace-shadow-card)] transition-colors hover:bg-[var(--itplace-color-canvas)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
         >
           지도 화면으로 돌아가기
         </button>

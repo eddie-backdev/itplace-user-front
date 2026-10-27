@@ -31,7 +31,7 @@ const MembershipInfo: React.FC<Props> = ({
   return (
     <section
       aria-labelledby="membership-profile-heading"
-      className="rounded-2xl border border-warmBorder bg-white p-5 sm:p-6"
+      className="rounded-2xl border border-warmBorder bg-warmSurface p-5 sm:p-6"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
@@ -40,7 +40,7 @@ const MembershipInfo: React.FC<Props> = ({
           </h2>
           {isMvno ? (
             <>
-              <p className="mt-2 break-words text-xl font-bold text-brandStrong">
+              <p className="mt-2 break-words text-xl font-bold text-accentStrong">
                 {getCarrierLabel(carrier)}
               </p>
               <p className="mt-1 text-sm leading-6 text-grey05">
@@ -49,7 +49,7 @@ const MembershipInfo: React.FC<Props> = ({
             </>
           ) : hasProfile ? (
             <>
-              <p className="mt-2 break-words text-xl font-bold text-brandStrong">
+              <p className="mt-2 break-words text-xl font-bold text-accentStrong">
                 {getCarrierLabel(carrier)} · {getMembershipGradeLabel(grade, data)}
               </p>
               <p className="mt-1 text-sm text-grey05">{verificationStatus}</p>
@@ -64,7 +64,7 @@ const MembershipInfo: React.FC<Props> = ({
           type="button"
           onClick={onChangeProfileClick}
           disabled={saving}
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? '저장 중…' : hasProfile ? '멤버십 정보 변경' : '멤버십 정보 등록'}
         </button>
@@ -72,7 +72,7 @@ const MembershipInfo: React.FC<Props> = ({
       {hasProfile ? (
         <Link
           href="/benefits?membership=mine"
-          className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-warmBorder px-4 text-sm font-semibold text-brandStrong transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-warmBorder px-4 text-sm font-semibold text-accentStrong transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           이 조건으로 혜택 보기
         </Link>

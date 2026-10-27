@@ -470,24 +470,24 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
         <section className="text-left" aria-labelledby="find-id-title">
           <h1
             id="find-id-title"
-            className="text-[30px] font-bold leading-9 tracking-[-0.04em] text-[#202124]"
+            className="text-[30px] font-bold leading-9 tracking-[-0.04em] text-ink"
           >
             아이디 찾기
           </h1>
-          <p className="mt-4 break-keep text-[15px] leading-7 text-[#686b73]">
+          <p className="mt-4 break-keep text-[15px] leading-7 text-grey05">
             잇플레이스 로그인 아이디는 가입할 때 사용한 이메일 주소예요. 가입 이메일 조회는 지원하지
             않으니 받은 메일함을 확인하거나 문의해 주세요.
           </p>
           <Link
             to="/contact"
-            className="mt-4 inline-flex min-h-11 items-center font-semibold text-[#6154d9] underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+            className="mt-4 inline-flex min-h-11 items-center font-semibold text-accent underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             문의하기
           </Link>
           <button
             type="button"
             onClick={goToLogin}
-            className="mt-6 flex min-h-12 w-full items-center justify-center rounded-xl border border-[#e8e9ee] font-semibold text-[#34343b] hover:bg-[#f7f8fa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+            className="mt-6 flex min-h-12 w-full items-center justify-center rounded-xl border border-warmBorder font-semibold text-grey06 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             로그인으로 돌아가기
           </button>

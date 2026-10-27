@@ -98,7 +98,7 @@ export default function BenefitExplorerCard({
         자세히 <TbChevronRight size={16} aria-hidden="true" />
       </Link>
       {sourcePreview?.offerResolution === 'PARTIAL' || sourcePreview?.offerResolution === 'UNRESOLVED' ? (
-        <details className="px-3 pb-2 text-sm leading-6 text-[#686B73]">
+        <details className="px-3 pb-2 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
           <summary className="min-h-11 cursor-pointer py-2 font-medium">추가 이용 안내</summary>
           <p>상세 원문에 추가 조건이 있어요. 이용 전에 적용 등급과 제한 사항을 확인해 주세요.</p>
           <Link href={href} prefetch={false} onClick={onPreview} className="mt-2 inline-block underline">혜택별 상세와 전체 원문 보기</Link>

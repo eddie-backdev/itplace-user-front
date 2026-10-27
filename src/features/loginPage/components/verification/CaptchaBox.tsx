@@ -44,7 +44,7 @@ const CaptchaBox = ({ onCaptchaChange }: Props) => {
           className="transform origin-center scale-100 max-xl:scale-90 max-lg:scale-75 max-md:scale-95 max-sm:scale-95"
         />
         {loading && (
-          <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center rounded">
+          <div className="absolute inset-0 bg-warmSurface bg-opacity-50 flex items-center justify-center rounded">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
         )}

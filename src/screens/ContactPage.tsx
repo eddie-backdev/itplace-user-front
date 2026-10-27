@@ -43,7 +43,7 @@ const ContactPage = () => {
             <a
               key={subject}
               href={getContactHref(subject)}
-              className="grid gap-1 py-5 hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand md:grid-cols-[200px_1fr] md:gap-6"
+              className="grid gap-1 py-5 hover:text-accentStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:grid-cols-[200px_1fr] md:gap-6"
             >
               <span className="font-semibold text-ink">{label}</span>
               <span className="text-[14px] leading-6 text-grey06">{description}</span>
@@ -54,7 +54,7 @@ const ContactPage = () => {
           항목을 선택하면 메일 앱에서 제목이 채워집니다. 내용을 확인한 뒤 직접 보내주세요.{' '}
           <a
             href={CONTACT_MAILTO}
-            className="font-medium text-brandStrong underline underline-offset-4"
+            className="font-medium text-accentStrong underline underline-offset-4"
           >
             {CONTACT_EMAIL}
           </a>
@@ -75,13 +75,13 @@ const ContactPage = () => {
         <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
           <Link
             to="/privacy"
-            className="inline-flex min-h-11 items-center font-semibold text-brandStrong underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+            className="inline-flex min-h-11 items-center font-semibold text-accentStrong underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
           >
             개인정보처리방침
           </Link>
           <Link
             to="/account-deletion"
-            className="inline-flex min-h-11 items-center font-semibold text-brandStrong underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+            className="inline-flex min-h-11 items-center font-semibold text-accentStrong underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
           >
             계정 삭제 안내
           </Link>

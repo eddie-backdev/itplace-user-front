@@ -4,7 +4,7 @@ import { TbMapPin, TbSearch } from 'react-icons/tb';
 import styles from '@/screens/BenefitHomePage.module.css';
 
 const focusClass =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:ring-brandStrong';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-warmSurface focus-visible:ring-brandStrong';
 
 export default function HomeWelcomeHero() {
   return (

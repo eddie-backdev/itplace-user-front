@@ -56,7 +56,7 @@ const AboutPage = () => {
         description="잇플레이스(ITPLACE, 잇플)는 흩어져 있는 통신 3사 멤버십 혜택을 지도, 목록과 검색으로 찾고, 등급별 조건과 실제 이용 방법을 비교하는 서비스입니다."
       >
         <section className="border-b border-warmBorder pb-7">
-          <p className="text-sm font-semibold text-brandStrong">잇플레이스에서 할 수 있는 일</p>
+          <p className="text-sm font-semibold text-accentStrong">잇플레이스에서 할 수 있는 일</p>
           <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
             통신사 혜택을 찾고, 조건을 비교하고, 다시 기록하세요
           </h2>
@@ -71,13 +71,13 @@ const AboutPage = () => {
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
               to="/benefits"
-              className="inline-flex min-h-12 items-center rounded-xl bg-brand px-5 font-semibold text-white hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              className="inline-flex min-h-12 items-center rounded-xl bg-brand px-5 font-semibold text-white hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
             >
               혜택 둘러보기
             </Link>
             <Link
               to="/map"
-              className="inline-flex min-h-12 items-center rounded-xl border border-warmBorder bg-white px-5 font-semibold text-ink hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              className="inline-flex min-h-12 items-center rounded-xl border border-warmBorder bg-warmSurface px-5 font-semibold text-ink hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
             >
               지도에서 찾기
             </Link>
@@ -108,7 +108,7 @@ const AboutPage = () => {
           </ul>
         </section>
         <section className="border-t border-warmBorder pt-8">
-          <h2 className="text-xl font-semibold tracking-[-0.02em] text-brandStrong sm:text-2xl">
+          <h2 className="text-xl font-semibold tracking-[-0.02em] text-accentStrong sm:text-2xl">
             혜택 조건과 해설은 어떻게 구분하나요?
           </h2>
           <div className="mt-4 max-w-[70ch] space-y-4 leading-7 text-grey06">
@@ -128,7 +128,7 @@ const AboutPage = () => {
               통신사·제휴처명과 공식 안내 주소를{' '}
               <Link
                 to="/contact"
-                className="font-bold text-brandStrong underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+                className="font-bold text-accentStrong underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
               >
                 문의로 알려주세요
               </Link>
@@ -148,13 +148,13 @@ const AboutPage = () => {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="group block py-4 transition-colors hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  className="group block py-4 transition-colors hover:text-accentStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex h-11 w-11 items-center justify-center text-brandStrong">
+                    <span className="flex h-11 w-11 items-center justify-center text-accentStrong">
                       <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
                     </span>
-                    <span className="font-semibold text-ink group-hover:text-brandStrong">
+                    <span className="font-semibold text-ink group-hover:text-accentStrong">
                       {item.label}
                     </span>
                   </div>

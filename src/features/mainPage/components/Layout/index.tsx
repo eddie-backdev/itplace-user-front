@@ -132,6 +132,26 @@ const MainPageLayout: React.FC = () => {
     setSearchQuery(query);
   }, []);
 
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const root = document.documentElement;
+    root.style.setProperty(
+      '--itplace-mobile-chat-launcher-bottom',
+      `calc(var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px) + ${bottomSheetHeight}px + 12px)`
+    );
+    root.style.setProperty('--itplace-mobile-chat-launcher-right', '72px');
+    root.style.setProperty(
+      '--itplace-mobile-chat-launcher-display',
+      mobileViewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - bottomSheetHeight < 120 ? 'none' : 'inline-flex'
+    );
+    return () => {
+      root.style.removeProperty('--itplace-mobile-chat-launcher-bottom');
+      root.style.removeProperty('--itplace-mobile-chat-launcher-right');
+      root.style.removeProperty('--itplace-mobile-chat-launcher-display');
+    };
+  }, [bottomSheetHeight, isMobile, mobileViewportHeight]);
+
   const getMaxHeight = useCallback(() => maxBottomSheetHeight, [maxBottomSheetHeight]);
 
   const clampBottomSheetHeight = useCallback(
@@ -826,7 +846,7 @@ const MainPageLayout: React.FC = () => {
       {isMobile && (
         <>
           {/* 모바일 레이아웃 */}
-          <div className="flex h-screen flex-col overflow-hidden bg-warmCanvas md:hidden">
+          <div className="flex h-dvh flex-col overflow-hidden bg-warmCanvas md:hidden">
             {/* 토스트 컨테이너 z-index 조정 */}
             <style>
               {`
@@ -916,14 +936,14 @@ const MainPageLayout: React.FC = () => {
                   aria-controls="map-store-sheet-content"
                   disabled={!canExpandBottomSheet}
                   onClick={handleSheetHandleClick}
-                  className="flex h-11 w-full shrink-0 select-none touch-none cursor-grab items-center justify-center gap-2 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0066cc] disabled:cursor-not-allowed"
+                  className="flex h-11 w-full shrink-0 select-none touch-none cursor-grab items-center justify-center gap-2 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--itplace-color-accent)] disabled:cursor-not-allowed"
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
                   onMouseDown={handleMouseDown}
                 >
                   <div className="h-1 w-9 rounded-full bg-grey03" aria-hidden="true" />
-                  <span className="text-xs font-medium text-[#69717e]">
+                  <span className="text-xs font-medium text-[var(--itplace-color-text-secondary)]">
                     {sheetHandleLabel.replace('매장 ', '')}
                   </span>
                 </button>

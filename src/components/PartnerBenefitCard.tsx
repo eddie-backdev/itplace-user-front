@@ -27,7 +27,7 @@ export default function PartnerBenefitCard({
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--itplace-color-mint)] p-1.5"
+          className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--itplace-color-logo-surface)] p-1.5"
         >
           <SafeImage
             src={partner.image}

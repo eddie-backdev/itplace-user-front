@@ -126,37 +126,37 @@ function OfferCard({
   const rewardFacts = formatOfferRewardFacts(offer.facts);
 
   return (
-    <article className="rounded-xl border border-[#E8E9EE] bg-white p-3">
-      <Heading className="font-semibold text-[#202124]">
+    <article className="rounded-xl border border-[var(--itplace-color-border)] bg-[var(--itplace-color-surface)] p-3">
+      <Heading className="font-semibold text-[var(--itplace-color-text)]">
         {rewardFacts.length ? `${rewardFacts.join(' · ')} · ` : ''}
         {offer.title || '혜택 조건 확인 필요'}
       </Heading>
-      <p className="mt-1 text-xs font-medium text-[#686B73]">{eligibilityLabel}</p>
+      <p className="mt-1 text-xs font-medium text-[var(--itplace-color-text-secondary)]">{eligibilityLabel}</p>
       {summaryContext ? (
-        <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[#202124]">
+        <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[var(--itplace-color-text)]">
           <span className="font-medium">혜택 내용 · </span>{summaryContext}
         </p>
       ) : null}
       {offer.facts?.length ? (
         <>
-        <ul className="mt-2 space-y-1 text-sm leading-6 text-[#202124]">
+        <ul className="mt-2 space-y-1 text-sm leading-6 text-[var(--itplace-color-text)]">
           {formatOfferFacts(offer.facts).map((label, index) => (
             <li key={`${offer.key}-${index}`}>{label}</li>
           ))}
         </ul>
-        {offer.facts.some((fact) => fact.sharedLimitGroup) ? <p className="mt-1 text-xs text-[#686B73]">{offer.facts.some((fact) => fact.sharedLimitGroup?.includes('VVIP_CHOICE')) ? '이 한도는 해당 VVIP 초이스 제휴사 전체에서 함께 사용해요.' : '이 한도는 해당 초이스 제휴사 전체에서 함께 사용해요.'}</p> : null}
+        {offer.facts.some((fact) => fact.sharedLimitGroup) ? <p className="mt-1 text-xs text-[var(--itplace-color-text-secondary)]">{offer.facts.some((fact) => fact.sharedLimitGroup?.includes('VVIP_CHOICE')) ? '이 한도는 해당 VVIP 초이스 제휴사 전체에서 함께 사용해요.' : '이 한도는 해당 초이스 제휴사 전체에서 함께 사용해요.'}</p> : null}
         </>
       ) : null}
-      <dl className="mt-2 divide-y divide-[#E8E9EE] border-y border-[#E8E9EE]">
+      <dl className="mt-2 divide-y divide-[var(--itplace-color-border)] border-y border-[var(--itplace-color-border)]">
         <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 py-2 text-sm leading-6 max-sm:grid-cols-[5rem_minmax(0,1fr)]">
-          <dt className="font-medium text-[#686B73]">이용 채널</dt>
-          <dd className="m-0 text-[#202124]">
+          <dt className="font-medium text-[var(--itplace-color-text-secondary)]">이용 채널</dt>
+          <dd className="m-0 text-[var(--itplace-color-text)]">
             {channelLabel(offerResolution === 'UNRESOLVED' ? 'UNKNOWN' : offer.usageType)}
           </dd>
         </div>
         <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 py-2 text-sm leading-6 max-sm:grid-cols-[5rem_minmax(0,1fr)]">
-          <dt className="font-medium text-[#686B73]">적용 등급</dt>
-          <dd className="m-0 text-[#202124]">{grades.join(' · ')}</dd>
+          <dt className="font-medium text-[var(--itplace-color-text-secondary)]">적용 등급</dt>
+          <dd className="m-0 text-[var(--itplace-color-text)]">{grades.join(' · ')}</dd>
         </div>
         {offerFields.map(([key, label]) => {
           const values = offer[key].filter((value) => typeof value === 'string' && value.trim());
@@ -165,8 +165,8 @@ function OfferCard({
               key={key}
               className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 py-2 text-sm leading-6 max-sm:grid-cols-[5rem_minmax(0,1fr)]"
             >
-              <dt className="font-medium text-[#686B73]">{label}</dt>
-              <dd className="m-0 min-w-0 whitespace-pre-line break-words text-[#202124]">
+              <dt className="font-medium text-[var(--itplace-color-text-secondary)]">{label}</dt>
+              <dd className="m-0 min-w-0 whitespace-pre-line break-words text-[var(--itplace-color-text)]">
                 {values.map((value, index) => (
                   <p key={index}>{value}</p>
                 ))}
@@ -176,11 +176,11 @@ function OfferCard({
         })}
       </dl>
       {offer.channelEvidence.length ? (
-        <details className="mt-2 rounded-lg border border-[#E8E9EE] px-3">
-          <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[#686B73]">
+        <details className="mt-2 rounded-lg border border-[var(--itplace-color-border)] px-3">
+          <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[var(--itplace-color-text-secondary)]">
             이용 채널 근거
           </summary>
-          <ul className="list-disc space-y-1 pb-3 pl-5 text-sm leading-6 text-[#686B73]">
+          <ul className="list-disc space-y-1 pb-3 pl-5 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
             {offer.channelEvidence.map((item, index) => (
               <li key={index}>{item}</li>
             ))}
@@ -188,11 +188,11 @@ function OfferCard({
         </details>
       ) : null}
       {offer.sourceText?.trim() ? (
-        <details className="mt-2 rounded-lg border border-[#E8E9EE] px-3">
-          <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[#686B73]">
+        <details className="mt-2 rounded-lg border border-[var(--itplace-color-border)] px-3">
+          <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[var(--itplace-color-text-secondary)]">
             안내 원문 보기
           </summary>
-          <p className="whitespace-pre-line break-words pb-3 text-sm leading-6 text-[#686B73]">
+          <p className="whitespace-pre-line break-words pb-3 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
             {offer.sourceText}
           </p>
         </details>
@@ -205,15 +205,15 @@ function ConditionRows({ rows }: { rows: ConditionRow[] }) {
   if (!rows.length) return null;
 
   return (
-    <dl className="divide-y divide-[#E8E9EE] border-y border-[#E8E9EE]">
+    <dl className="divide-y divide-[var(--itplace-color-border)] border-y border-[var(--itplace-color-border)]">
       {rows.map((row) => (
         <div
           key={row.key}
           className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 py-2.5 text-sm leading-6 max-sm:grid-cols-[5rem_minmax(0,1fr)]"
         >
-          <dt className="font-medium text-[#686B73]">{row.label}</dt>
+          <dt className="font-medium text-[var(--itplace-color-text-secondary)]">{row.label}</dt>
           <dd
-            className={`m-0 min-w-0 whitespace-pre-line break-words ${row.isUnknown ? 'text-[#686B73]' : 'text-[#202124]'}`}
+            className={`m-0 min-w-0 whitespace-pre-line break-words ${row.isUnknown ? 'text-[var(--itplace-color-text-secondary)]' : 'text-[var(--itplace-color-text)]'}`}
           >
             {isTierRow(row) ? (
               row.values.join(' · ')
@@ -297,17 +297,17 @@ export default function BenefitConditions({
   return (
     <div className={className}>
       {!hasOffers && !unresolved ? (
-        <p className="mb-2 text-xs text-[#686B73]">
-          <span className="font-medium text-[#202124]">이용 채널</span> · {usageChannel}
+        <p className="mb-2 text-xs text-[var(--itplace-color-text-secondary)]">
+          <span className="font-medium text-[var(--itplace-color-text)]">이용 채널</span> · {usageChannel}
         </p>
       ) : null}
       {unresolved ? (
-        <p className="mb-2 text-sm text-[#686B73]">
+        <p className="mb-2 text-sm text-[var(--itplace-color-text-secondary)]">
           혜택별 조건을 확인하기 어려워요. 이용 전 공식 안내에서 혜택과 적용 등급을 확인해 주세요.
         </p>
       ) : null}
       {conditions?.offerResolution === 'PARTIAL' ? (
-        <div className="mb-2 rounded-lg bg-[#FFF8E8] p-3 text-sm leading-6 text-[#5E4A1B]">
+        <div className="mb-2 rounded-lg bg-[var(--itplace-color-surface-subtle)] p-3 text-sm leading-6 text-[var(--itplace-color-warning)]">
           추가 이용 안내가 있어요. 전체 등급과 여러 혜택의 안내가 포함되어 있으니 선택한 등급·혜택에 해당하는 조건을 확인해 주세요.
           {conditions.normalizationIssues?.length ? <details className="mt-2">
             <summary className="min-h-9 cursor-pointer font-medium">추가 이용 안내(전체 혜택)</summary>
@@ -337,8 +337,8 @@ export default function BenefitConditions({
             />
           ))}
           {partitionedOffers.otherGrades.length ? (
-            <details className="rounded-lg border border-[#E8E9EE] px-3">
-              <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[#686B73]">
+            <details className="rounded-lg border border-[var(--itplace-color-border)] px-3">
+              <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[var(--itplace-color-text-secondary)]">
                 다른 등급 혜택 {partitionedOffers.otherGrades.length}개 보기
               </summary>
               <div className="space-y-3 pb-3">
@@ -357,19 +357,19 @@ export default function BenefitConditions({
             </details>
           ) : null}
           {hasOverallBenefitSummaryContent(overallRows, conditions?.channelDecision) ? (
-            <details className="rounded-lg border border-[#E8E9EE] px-3">
-              <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[#686B73]">
+            <details className="rounded-lg border border-[var(--itplace-color-border)] px-3">
+              <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[var(--itplace-color-text-secondary)]">
                 전체 안내 요약
               </summary>
               {overallRows.length ? (
-                <dl className="divide-y divide-[#E8E9EE] border-y border-[#E8E9EE]">
+                <dl className="divide-y divide-[var(--itplace-color-border)] border-y border-[var(--itplace-color-border)]">
                   {overallRows.map((row) => (
                     <div
                       key={row.key}
                       className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 py-2 text-sm leading-6 max-sm:grid-cols-[5rem_minmax(0,1fr)]"
                     >
-                      <dt className="font-medium text-[#686B73]">{row.label}</dt>
-                      <dd className="m-0 whitespace-pre-line break-words text-[#202124]">
+                      <dt className="font-medium text-[var(--itplace-color-text-secondary)]">{row.label}</dt>
+                      <dd className="m-0 whitespace-pre-line break-words text-[var(--itplace-color-text)]">
                         {row.values.join('\n')}
                       </dd>
                     </div>
@@ -377,7 +377,7 @@ export default function BenefitConditions({
                 </dl>
               ) : null}
               {conditions?.channelDecision?.evidence.length ? (
-                <div className="py-2 text-sm leading-6 text-[#686B73]">
+                <div className="py-2 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
                   <p className="mb-1 font-medium">이용 채널을 확인한 안내 문구</p>
                   {[
                     ...conditions.channelDecision.evidence,
@@ -387,7 +387,7 @@ export default function BenefitConditions({
                 </div>
               ) : null}
               {hasManual ? (
-                <div className="py-2 text-sm leading-6 text-[#686B73]">
+                <div className="py-2 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
                   <p className="mb-1 font-medium">전체 공식 안내 원문</p>
                   <p className="mb-1 text-xs">전체 등급과 여러 혜택의 안내가 포함되어 있어요. 선택한 등급·혜택에 해당하는 조건을 확인해 주세요.</p>
                   <p className="whitespace-pre-line break-words">{manual}</p>
@@ -395,31 +395,31 @@ export default function BenefitConditions({
               ) : null}
             </details>
           ) : hasManual ? (
-            <details className="rounded-lg border border-[#E8E9EE] px-3">
-              <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[#686B73]">
+            <details className="rounded-lg border border-[var(--itplace-color-border)] px-3">
+              <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[var(--itplace-color-text-secondary)]">
                 전체 공식 안내 원문 보기
               </summary>
-              <p className="whitespace-pre-line break-words pb-3 text-sm leading-6 text-[#686B73]">
+              <p className="whitespace-pre-line break-words pb-3 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
                 {manual}
               </p>
             </details>
           ) : null}
         </div>
       ) : unresolved ? (
-        <details className="rounded-lg border border-[#E8E9EE] px-3">
-          <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[#686B73]">
+        <details className="rounded-lg border border-[var(--itplace-color-border)] px-3">
+          <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[var(--itplace-color-text-secondary)]">
             전체 안내 원문 보기
           </summary>
-          <p className="py-2 text-xs leading-5 text-[#686B73]">전체 등급과 여러 혜택의 안내가 포함되어 있어요. 선택한 등급·혜택에 해당하는 조건을 확인해 주세요.</p>
+          <p className="py-2 text-xs leading-5 text-[var(--itplace-color-text-secondary)]">전체 등급과 여러 혜택의 안내가 포함되어 있어요. 선택한 등급·혜택에 해당하는 조건을 확인해 주세요.</p>
           <ConditionRows rows={rows.filter((row) => !isTierRow(row))} />
           {conditions?.channelDecision?.evidence.length ? (
-            <div className="py-2 text-sm leading-6 text-[#686B73]">
+            <div className="py-2 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
               <p className="mb-1 font-medium">이용 채널을 확인한 안내 문구</p>
               {conditions.channelDecision.evidence.map((item, index) => <p key={index}>{item}</p>)}
             </div>
           ) : null}
           {hasManual ? (
-            <div className="py-2 text-sm leading-6 text-[#686B73]">
+            <div className="py-2 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
               <p className="mb-1 font-medium">전체 공식 안내 원문</p>
               <p className="mb-1 text-xs">전체 등급과 여러 혜택의 안내가 포함되어 있어요. 선택한 등급·혜택에 해당하는 조건을 확인해 주세요.</p>
               <p className="whitespace-pre-line break-words">{manual}</p>
@@ -430,13 +430,13 @@ export default function BenefitConditions({
         <>
           <ConditionRows rows={collapsibleConditions ? rows.filter(isTierRow) : rows} />
           {collapsibleConditions ? (
-            <details className="mt-2 rounded-lg border border-[#E8E9EE] px-3">
-              <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[#686B73] hover:text-[#202124] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6154D9]">
+            <details className="mt-2 rounded-lg border border-[var(--itplace-color-border)] px-3">
+              <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[var(--itplace-color-text-secondary)] hover:text-[var(--itplace-color-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--itplace-color-accent)]">
                 이용 조건 보기
               </summary>
               <ConditionRows rows={rows.filter((row) => !isTierRow(row))} />
               {hasManual ? (
-                <div className="py-2 text-sm leading-6 text-[#686B73]">
+                <div className="py-2 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
                   <p className="mb-1 font-medium">전체 공식 안내 원문</p>
                   <p className="mb-1 text-xs">전체 등급과 여러 혜택의 안내가 포함되어 있어요. 선택한 등급·혜택에 해당하는 조건을 확인해 주세요.</p>
                   <p className="whitespace-pre-line break-words">{manual}</p>
@@ -444,11 +444,11 @@ export default function BenefitConditions({
               ) : null}
             </details>
           ) : hasManual ? (
-            <details className="mt-2 rounded-lg border border-[#E8E9EE] px-3">
-              <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[#686B73] hover:text-[#202124] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6154D9]">
+            <details className="mt-2 rounded-lg border border-[var(--itplace-color-border)] px-3">
+              <summary className="min-h-11 cursor-pointer py-2.5 text-sm font-medium text-[var(--itplace-color-text-secondary)] hover:text-[var(--itplace-color-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--itplace-color-accent)]">
                 전체 공식 안내 원문 보기
               </summary>
-              <p className="whitespace-pre-line break-words pb-2 text-sm leading-6 text-[#686B73]">
+              <p className="whitespace-pre-line break-words pb-2 text-sm leading-6 text-[var(--itplace-color-text-secondary)]">
                 {manual}
               </p>
             </details>
@@ -456,13 +456,13 @@ export default function BenefitConditions({
         </>
       )}
       {safeSourceUrl || capturedDate ? (
-        <p className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-[#686B73]">
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-[var(--itplace-color-text-secondary)]">
           {safeSourceUrl ? (
             <a
               href={safeSourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="underline hover:text-[#202124] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6154D9]"
+              className="underline hover:text-[var(--itplace-color-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--itplace-color-accent)]"
             >
               출처 보기
             </a>

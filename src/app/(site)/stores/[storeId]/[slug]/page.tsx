@@ -62,52 +62,52 @@ export default async function StoreSeoPage({ params }: Props) {
 
   return (
     <section className="mx-auto min-h-[65vh] w-full max-w-[1280px] px-7 py-10 max-md:px-4 max-md:py-7">
-      <nav aria-label="현재 위치" className="mb-7 text-sm text-[#686B73]">
-        <Link href="/places" className="rounded-sm hover:text-[#6154D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9]">지역별 매장</Link>
+      <nav aria-label="현재 위치" className="mb-7 text-sm text-warmMuted">
+        <Link href="/places" className="rounded-sm hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">지역별 매장</Link>
         <span className="mx-2" aria-hidden="true">/</span><span>{partner.partnerName}</span>
       </nav>
-      <article className="max-w-3xl rounded-2xl border border-[#E8E9EE] bg-white p-7 shadow-sm max-md:p-5">
-        <p className="mb-2 text-sm font-medium text-[#6154D9]">{getCategoryLabel(partner.category, referenceData) || '멤버십 제휴처'}</p>
-        <h1 className="text-3xl font-bold leading-tight text-[#202124] max-md:text-2xl">{store.storeName}</h1>
-        <p className="mt-2 text-[#686B73]">{partner.partnerName} 매장 정보</p>
-        <section aria-labelledby="store-address-title" className="mt-7 border-t border-[#E8E9EE] pt-5">
-          <h2 id="store-address-title" className="font-semibold text-[#202124]">주소</h2>
-          {address ? <p className="mt-2 text-[#202124]">{address}</p> : <p className="mt-2 text-sm text-[#686B73]">등록된 주소가 없습니다.</p>}
-          {(store.city || store.town || store.legalDong) && <p className="mt-1 text-sm text-[#686B73]">{[store.city, store.town, store.legalDong].filter(Boolean).join(' ')}</p>}
-          {store.postCode && <p className="mt-1 text-sm text-[#686B73]">우편번호 {store.postCode}</p>}
+      <article className="max-w-3xl rounded-2xl border border-warmBorder bg-warmSurface p-7 shadow-sm max-md:p-5">
+        <p className="mb-2 text-sm font-medium text-accent">{getCategoryLabel(partner.category, referenceData) || '멤버십 제휴처'}</p>
+        <h1 className="text-3xl font-bold leading-tight text-ink max-md:text-2xl">{store.storeName}</h1>
+        <p className="mt-2 text-warmMuted">{partner.partnerName} 매장 정보</p>
+        <section aria-labelledby="store-address-title" className="mt-7 border-t border-warmBorder pt-5">
+          <h2 id="store-address-title" className="font-semibold text-ink">주소</h2>
+          {address ? <p className="mt-2 text-ink">{address}</p> : <p className="mt-2 text-sm text-warmMuted">등록된 주소가 없습니다.</p>}
+          {(store.city || store.town || store.legalDong) && <p className="mt-1 text-sm text-warmMuted">{[store.city, store.town, store.legalDong].filter(Boolean).join(' ')}</p>}
+          {store.postCode && <p className="mt-1 text-sm text-warmMuted">우편번호 {store.postCode}</p>}
         </section>
-        {store.business && <p className="mt-3 text-sm text-[#686B73]">업종 {store.business}</p>}
+        {store.business && <p className="mt-3 text-sm text-warmMuted">업종 {store.business}</p>}
         <section aria-labelledby="store-visit-title" className="mt-6">
-          <h2 id="store-visit-title" className="font-semibold text-[#202124]">방문 정보</h2>
-          <p className="mt-2 text-sm leading-6 text-[#686B73]">주소와 지도 위치를 확인한 뒤 방문해 주세요. 운영 시간과 휴무 정보는 제공되지 않습니다.</p>
+          <h2 id="store-visit-title" className="font-semibold text-ink">방문 정보</h2>
+          <p className="mt-2 text-sm leading-6 text-warmMuted">주소와 지도 위치를 확인한 뒤 방문해 주세요. 운영 시간과 휴무 정보는 제공되지 않습니다.</p>
         </section>
         <div className="mt-4 flex flex-wrap gap-3">
-          <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-lg bg-[#6154D9] px-4 font-semibold text-white hover:bg-[#5145c5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9] focus-visible:ring-offset-2">카카오맵에서 위치 보기</a>
-          <Link href={partnerPath} className="inline-flex min-h-11 items-center rounded-lg border border-[#E8E9EE] px-4 font-semibold text-[#202124] hover:border-[#6154D9] hover:text-[#6154D9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9]">{partner.partnerName} 혜택 확인</Link>
+          <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-lg bg-[#6154D9] px-4 font-semibold text-white hover:bg-[#5145c5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">카카오맵에서 위치 보기</a>
+          <Link href={partnerPath} className="inline-flex min-h-11 items-center rounded-lg border border-warmBorder px-4 font-semibold text-ink hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">{partner.partnerName} 혜택 확인</Link>
         </div>
       </article>
 
       <section aria-labelledby="partner-benefit-title" className="mt-9 max-w-3xl">
-        <h2 id="partner-benefit-title" className="text-xl font-bold text-[#202124]">{partner.partnerName} 브랜드 혜택</h2>
-        <p className="mt-2 text-sm leading-6 text-[#686B73]">아래 내용은 제휴 브랜드 전체에 등록된 혜택 정보입니다. 이 매장에서 혜택을 이용할 수 있다는 보장은 아니며, 적용 매장과 조건은 제휴사 공식 안내에서 확인해 주세요.</p>
+        <h2 id="partner-benefit-title" className="text-xl font-bold text-ink">{partner.partnerName} 브랜드 혜택</h2>
+        <p className="mt-2 text-sm leading-6 text-warmMuted">아래 내용은 제휴 브랜드 전체에 등록된 혜택 정보입니다. 이 매장에서 혜택을 이용할 수 있다는 보장은 아니며, 적용 매장과 조건은 제휴사 공식 안내에서 확인해 주세요.</p>
         {benefits?.carrierGroups.length ? <ul className="mt-4 grid gap-3 sm:grid-cols-2">
           {benefits.carrierGroups.map((group) => {
             const benefitNames = [...new Set(group.benefits
               .map((benefit) => (benefit.displayName?.trim() || benefit.benefitName.trim()))
               .filter(Boolean))];
-            return <li key={group.carrier} className="rounded-xl border border-[#E8E9EE] bg-white p-4">
-              <h3 className="font-semibold text-[#202124]">{getCarrierLabel(group.carrier)}</h3>
-              <p className="mt-1 text-sm text-[#686B73]">등록 혜택 {group.benefits.length}개</p>
-              <p className="mt-2 text-sm leading-6 text-[#686B73]">{benefitNames.slice(0, 2).join(' · ')}{benefitNames.length > 2 ? ' 외' : ''}</p>
+            return <li key={group.carrier} className="rounded-xl border border-warmBorder bg-warmSurface p-4">
+              <h3 className="font-semibold text-ink">{getCarrierLabel(group.carrier)}</h3>
+              <p className="mt-1 text-sm text-warmMuted">등록 혜택 {group.benefits.length}개</p>
+              <p className="mt-2 text-sm leading-6 text-warmMuted">{benefitNames.slice(0, 2).join(' · ')}{benefitNames.length > 2 ? ' 외' : ''}</p>
             </li>;
-          })}</ul> : <p className="mt-4 text-sm text-[#686B73]">현재 표시할 브랜드 혜택 정보가 없습니다.</p>}
+          })}</ul> : <p className="mt-4 text-sm text-warmMuted">현재 표시할 브랜드 혜택 정보가 없습니다.</p>}
         {benefitLinks.size ? (
           <ul aria-label="제휴사 공식 혜택 안내 링크" className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
             {[...benefitLinks].map(([url, carriers]) => (
-              <li key={url}><a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-sm text-[#6154D9] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9]">{[...carriers].join(' · ')} 공식 안내 보기</a></li>
+              <li key={url}><a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-sm text-accent underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">{[...carriers].join(' · ')} 공식 안내 보기</a></li>
             ))}
           </ul>
-        ) : <p className="mt-4 text-sm text-[#686B73]">별도 연결된 제휴사 공식 안내가 없습니다. <Link href={partnerPath} className="inline-flex min-h-11 items-center text-[#6154D9] underline underline-offset-2">제휴사 혜택 확인</Link></p>}
+        ) : <p className="mt-4 text-sm text-warmMuted">별도 연결된 제휴사 공식 안내가 없습니다. <Link href={partnerPath} className="inline-flex min-h-11 items-center text-accent underline underline-offset-2">제휴사 혜택 확인</Link></p>}
       </section>
       <JsonLd data={[
         {

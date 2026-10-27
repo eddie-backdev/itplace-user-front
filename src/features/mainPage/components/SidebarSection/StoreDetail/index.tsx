@@ -388,7 +388,7 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({
   };
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden rounded-t-2xl bg-white md:rounded-l-2xl">
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-t-2xl bg-warmSurface md:rounded-l-2xl">
       {closeMode === 'dismiss' && (
         <StoreDetailHeader
           platform={platform}
@@ -397,7 +397,7 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({
           closeMode={closeMode}
         />
       )}
-      <div className="min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4 pb-6">
+      <div className="min-h-0 flex-1 overflow-y-auto bg-warmSurface px-4 py-4 pb-6">
         {closeMode === 'back' && (
           <StoreDetailHeader
             platform={platform}
@@ -422,14 +422,14 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({
         />
         <Link
           href={getStorePath(platform.storeId, platform.name)}
-          className="mb-5 inline-flex min-h-11 items-center rounded-lg px-1 text-sm font-medium text-[#6154D9] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9]"
+          className="mb-5 inline-flex min-h-11 items-center rounded-lg px-1 text-sm font-medium text-[var(--itplace-color-accent)] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
         >
           매장 정보 페이지
         </Link>
 
         {isLoading && !hasLocalBenefitDetails ? (
           <div className="flex h-40 items-center justify-center">
-            <LoadingSpinner className="h-12 w-12 border-4 border-[#6154D9] border-t-transparent" />
+            <LoadingSpinner className="h-12 w-12 border-4 border-[var(--itplace-color-accent)] border-t-transparent" />
           </div>
         ) : detailData ? (
           <StoreDetailUsageGuide detailData={detailData} />
@@ -437,7 +437,7 @@ const StoreDetailCard: React.FC<StoreDetailCardProps> = ({
       </div>
 
       {/* 고정 버튼 */}
-      <div className="relative z-10 flex-shrink-0 border-t border-[#E8E9EE] bg-white px-4 pt-3 pb-2">
+      <div className="relative z-10 flex-shrink-0 border-t border-[var(--itplace-color-border)] bg-warmSurface px-4 pt-3 pb-2">
         <StoreDetailActionButton
           benefitId={selectedCarrierBenefitId}
           isFavorite={activeIsFavorite}

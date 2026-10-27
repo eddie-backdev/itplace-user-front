@@ -80,10 +80,10 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
     <>
       {shouldShowLoading && (
         <div className="mb-5">
-          <h3 className="mb-2 text-sm font-semibold text-[#202124]">상세 혜택</h3>
+          <h3 className="mb-2 text-sm font-semibold text-[var(--itplace-color-text)]">상세 혜택</h3>
           <div className="space-y-2">
-            <div className="h-24 animate-pulse rounded-xl bg-[#f6f6f4]" />
-            <div className="h-20 animate-pulse rounded-xl bg-[#f6f6f4]" />
+            <div className="h-24 animate-pulse rounded-xl bg-[var(--itplace-color-canvas)]" />
+            <div className="h-20 animate-pulse rounded-xl bg-[var(--itplace-color-canvas)]" />
           </div>
         </div>
       )}
@@ -91,17 +91,17 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
       {!shouldShowLoading && (
         <>
           {carrierOptions.length > 1 && (
-            <div className="mb-4 flex flex-wrap gap-2 border-b border-[#E8E9EE] pb-3">
+            <div className="mb-4 flex flex-wrap gap-2 border-b border-[var(--itplace-color-border)] pb-3">
               {carrierOptions.map((carrier) => (
                 <button
                   key={carrier}
                   type="button"
                   onClick={() => onCarrierChange(carrier)}
                   aria-pressed={activeCarrier === carrier}
-                  className={`inline-flex min-h-11 items-center rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154D9] ${
+                  className={`inline-flex min-h-11 items-center rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)] ${
                     activeCarrier === carrier
-                      ? 'border-[#6154D9] bg-white text-[#6154D9]'
-                      : 'border-[#E8E9EE] bg-white text-[#686B73] hover:bg-[#F7F8FA] hover:text-[#202124]'
+                      ? 'border-[var(--itplace-color-accent)] bg-warmSurface text-[var(--itplace-color-accent)]'
+                      : 'border-[var(--itplace-color-border)] bg-warmSurface text-[var(--itplace-color-text-secondary)] hover:bg-[var(--itplace-color-canvas)] hover:text-[var(--itplace-color-text)]'
                   }`}
                 >
                   {getCarrierLabel(carrier)}
@@ -111,15 +111,21 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
           )}
 
           <div className={`${hasBenefits ? 'mb-5' : ''}`}>
-            <h3 className="mb-2 text-sm font-semibold text-[#202124]">상세 혜택</h3>
+            <h3 className="mb-2 text-sm font-semibold text-[var(--itplace-color-text)]">
+              상세 혜택
+            </h3>
 
             {hasBenefits ? (
-              <div className="divide-y divide-[#E8E9EE]">
+              <div className="divide-y divide-[var(--itplace-color-border)]">
                 {visibleBenefitGroups.map((group) => (
                   <section key={group.key} className="min-w-0 py-3 first:pt-1 last:pb-1">
                     <div className="mb-2 flex items-center gap-2 max-md:mb-1.5">
-                      <span className="text-sm font-semibold text-[#202124]">{group.label}</span>
-                      <span className="text-xs text-[#686B73]">{group.benefits.length}개 혜택</span>
+                      <span className="text-sm font-semibold text-[var(--itplace-color-text)]">
+                        {group.label}
+                      </span>
+                      <span className="text-xs text-[var(--itplace-color-text-secondary)]">
+                        {group.benefits.length}개 혜택
+                      </span>
                     </div>
 
                     <div className="space-y-3">
@@ -129,7 +135,7 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
                           className="min-w-0 space-y-1.5"
                         >
                           <div className="flex min-h-7 items-center">
-                            <span className="text-xs font-medium text-[#686B73]">
+                            <span className="text-xs font-medium text-[var(--itplace-color-text-secondary)]">
                               {section.label}
                             </span>
                           </div>
@@ -147,15 +153,17 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
                                   <TbCheck
                                     size={20}
                                     className={`shrink-0 ${
-                                      isHighlighted ? 'text-[#6154D9]' : 'text-[#686B73]'
+                                      isHighlighted
+                                        ? 'text-[var(--itplace-color-accent)]'
+                                        : 'text-[var(--itplace-color-text-secondary)]'
                                     }`}
                                     aria-hidden="true"
                                   />
                                   <span
                                     className={`min-w-0 break-words text-sm leading-5 ${
                                       isHighlighted
-                                        ? 'font-semibold text-[#6154D9]'
-                                        : 'font-medium text-[#202124]'
+                                        ? 'font-semibold text-[var(--itplace-color-accent)]'
+                                        : 'font-medium text-[var(--itplace-color-text)]'
                                     }`}
                                   >
                                     {benefit.grades.map(getGradeDisplayName).join(', ')}
@@ -163,7 +171,9 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
                                 </div>
                                 <p
                                   className={`min-w-0 whitespace-pre-line break-words pl-7 text-sm leading-6 max-md:pl-7 ${
-                                    isHighlighted ? 'font-medium text-[#202124]' : 'text-[#686B73]'
+                                    isHighlighted
+                                      ? 'font-medium text-[var(--itplace-color-text)]'
+                                      : 'text-[var(--itplace-color-text-secondary)]'
                                   }`}
                                 >
                                   {benefit.context}
@@ -178,7 +188,7 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
                 ))}
                 {visibleBenefitGroups.length === 0 && (
                   <div className="px-2 py-5 text-center">
-                    <p className="text-sm text-[#686B73]">
+                    <p className="text-sm text-[var(--itplace-color-text-secondary)]">
                       선택한 통신사에서 제공하는 혜택이 없어요.
                     </p>
                   </div>
@@ -210,7 +220,9 @@ const StoreDetailBenefits: React.FC<StoreDetailBenefitsProps> = ({
             ) : null}
 
             {/* 구분선 - 혜택이 있을 때만 표시 */}
-            {hasBenefits && <div className="mt-4 w-full border-b border-[#E8E9EE]" />}
+            {hasBenefits && (
+              <div className="mt-4 w-full border-b border-[var(--itplace-color-border)]" />
+            )}
           </div>
         </>
       )}

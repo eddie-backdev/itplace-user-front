@@ -9,7 +9,7 @@ type AuthButtonProps = {
 
 const AuthButton = ({ label, onClick, variant = 'default', className }: AuthButtonProps) => {
   const baseClasses =
-    'h-12 w-full max-w-[320px] rounded-xl text-body-2-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed';
+    'h-12 w-full max-w-[320px] rounded-xl text-body-2-bold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed';
 
   const variantClasses = {
     default: 'bg-brand text-white hover:bg-brandStrong',

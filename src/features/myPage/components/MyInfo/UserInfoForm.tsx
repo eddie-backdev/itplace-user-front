@@ -54,7 +54,7 @@ const UserInfoForm: React.FC<Props> = ({
       {showProfile && (
         <section
           aria-labelledby="account-info-heading"
-          className="rounded-2xl border border-warmBorder bg-white p-5 sm:p-6"
+          className="rounded-2xl border border-warmBorder bg-warmSurface p-5 sm:p-6"
         >
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="account-info-heading" className="text-lg font-semibold text-ink">
@@ -83,7 +83,7 @@ const UserInfoForm: React.FC<Props> = ({
       {showSecurity && (
         <section
           aria-labelledby="account-security-heading"
-          className="rounded-2xl border border-warmBorder bg-white p-5 sm:p-6"
+          className="rounded-2xl border border-warmBorder bg-warmSurface p-5 sm:p-6"
         >
           <div className="mt-4 border-t border-warmBorder pt-4">
             <h2 id="account-security-heading" className="text-lg font-semibold text-ink">
@@ -94,7 +94,7 @@ const UserInfoForm: React.FC<Props> = ({
               <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 text-sm leading-6 text-ink">
                 <span>{displayValue(phoneNumber)}</span>
                 {phoneVerified ? (
-                  <span className="rounded-full bg-[#f0edfc] px-2.5 py-1 text-xs font-semibold text-[#5144c7]">
+                  <span className="rounded-full bg-brandSoft px-2.5 py-1 text-xs font-semibold text-accentStrong">
                     인증 완료
                   </span>
                 ) : (
@@ -105,7 +105,7 @@ const UserInfoForm: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={onPhoneVerificationClick}
-                      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-3 text-sm font-semibold text-ink hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-3 text-sm font-semibold text-ink hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     >
                       휴대폰 번호 인증
                     </button>
@@ -133,7 +133,7 @@ const UserInfoForm: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={onChangePasswordClick}
-                  className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-4 text-sm font-semibold text-grey06 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-4 text-sm font-semibold text-grey06 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   비밀번호 변경
                 </button>

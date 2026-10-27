@@ -564,7 +564,7 @@ export default function AllBenefitsLayout({
                       ? '목록을 불러오지 못했어요.'
                       : `${numberFormatter.format(totalElements)}개 브랜드 · 현재 ${partners.length}개 제휴처`}
               </p>
-              <div className={styles.activeFilters} aria-label="적용 중인 필터">
+              <div className={styles.activeFilters} role="group" aria-label="적용 중인 필터">
                 {effectiveCarrier ? <span>{getCarrierLabel(effectiveCarrier)}</span> : null}
                 {effectiveGrade ? <span>{getMembershipGradeLabel(effectiveGrade, referenceData)}</span> : null}
                 {selectedCategory !== '전체' ? (

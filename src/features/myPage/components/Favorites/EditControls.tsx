@@ -51,7 +51,7 @@ export default function EditControls({
             setIsEditing(true);
             setSelectedItems([]);
           }}
-          className="inline-flex min-h-11 items-center rounded-lg px-3 text-grey05 text-body-0-bold transition-colors hover:bg-brandSoft hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-xl:text-body-2-bold"
+          className="inline-flex min-h-11 items-center rounded-lg px-3 text-grey05 text-body-0-bold transition-colors hover:bg-brandSoft hover:text-accentStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent max-xl:text-body-2-bold"
         >
           편집
         </button>

@@ -69,13 +69,13 @@ export default function MyFavoritesPage() {
                 관심 혜택을 다시 찾고, 사용 기록까지 이어가세요.
               </p>
             </header>
-            <div className="mb-5 rounded-xl border border-warmBorder bg-[#f7f8fa] p-3 sm:p-4">
+            <div className="mb-5 rounded-xl border border-warmBorder bg-warmCanvas p-3 sm:p-4">
               <SearchBar
                 placeholder="브랜드 또는 혜택 검색"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 onClear={() => setKeyword('')}
-                backgroundColor="bg-white"
+                backgroundColor="bg-warmSurface"
                 className="h-12 w-full"
               />
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -84,7 +84,7 @@ export default function MyFavoritesPage() {
                   onChange={setBenefitFilter}
                   width="w-full sm:w-[240px]"
                   heightClass="min-h-11"
-                  className="!mb-0 bg-white"
+                  className="!mb-0 bg-warmSurface"
                   fontSize="text-sm"
                   disabledMyMembership={!hasMembershipProfile}
                 />
@@ -97,13 +97,13 @@ export default function MyFavoritesPage() {
               !loadError && (
                 <div
                   role="status"
-                  className="mb-3 rounded-lg border border-brandSoft bg-brandSoft/50 px-3 py-2 text-sm leading-6 text-grey06"
+                  className="mb-3 rounded-lg border border-accentSoft bg-brandSoft/50 px-3 py-2 text-sm leading-6 text-grey06"
                 >
                   일부 혜택의 멤버십 조건을 확인하지 못해 관심 혜택도 함께 표시하고 있어요.
                   <button
                     type="button"
                     onClick={() => void reloadFavorites()}
-                    className="ml-2 min-h-11 font-semibold text-brandStrong underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+                    className="ml-2 min-h-11 font-semibold text-accentStrong underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
                   >
                     다시 확인
                   </button>
@@ -145,7 +145,7 @@ export default function MyFavoritesPage() {
                 <LoadingSpinner />
               </div>
             ) : loadError ? (
-              <div className="mt-8 rounded-2xl border border-warmBorder bg-white">
+              <div className="mt-8 rounded-2xl border border-warmBorder bg-warmSurface">
                 <NoResult
                   variant="error"
                   message1="관심 혜택을 불러오지 못했어요"
@@ -158,7 +158,7 @@ export default function MyFavoritesPage() {
               </div>
             ) : keyword.trim() ? (
               currentItems.length === 0 ? (
-                <div className="mt-8 rounded-2xl border border-warmBorder bg-white">
+                <div className="mt-8 rounded-2xl border border-warmBorder bg-warmSurface">
                   <NoResult
                     message1="검색 결과가 없어요."
                     message2="다른 키워드로 검색해보세요."
@@ -184,7 +184,7 @@ export default function MyFavoritesPage() {
                 />
               )
             ) : allFavorites.length === 0 ? (
-              <div className="mt-8 rounded-2xl border border-warmBorder bg-white">
+              <div className="mt-8 rounded-2xl border border-warmBorder bg-warmSurface">
                 <NoResult
                   message1={
                     benefitFilter === 'myMembership'
@@ -241,7 +241,7 @@ export default function MyFavoritesPage() {
                         setIsEditing(false);
                         setSelectedItems([]);
                       }}
-                      className="inline-flex min-h-11 items-center rounded-lg border border-warmBorder bg-white px-4 text-sm font-semibold text-grey05 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-xl:text-body-5"
+                      className="inline-flex min-h-11 items-center rounded-lg border border-warmBorder bg-warmSurface px-4 text-sm font-semibold text-grey05 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent max-xl:text-body-5"
                     >
                       편집 취소
                     </button>
@@ -250,7 +250,7 @@ export default function MyFavoritesPage() {
                         setPendingDeleteId(null);
                         setIsDeleteModalOpen(true);
                       }}
-                      className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 max-xl:text-body-5"
+                      className="inline-flex min-h-11 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-white hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 max-xl:text-body-5"
                     >
                       삭제하기
                     </button>
@@ -266,7 +266,7 @@ export default function MyFavoritesPage() {
       {/* ✅ 모바일에서만, 편집 모드일 때 하단 고정 버튼 */}
       {isMobile && isEditing && (
         <div
-          className="fixed left-0 z-[9999] flex w-full border-grey03 bg-white p-4"
+          className="fixed left-0 z-[9999] flex w-full border-grey03 bg-warmSurface p-4"
           style={{ bottom: 'var(--itplace-mobile-tab-bar-offset, 64px)' }}
         >
           <button
@@ -274,7 +274,7 @@ export default function MyFavoritesPage() {
               setIsEditing(false);
               setSelectedItems([]);
             }}
-            className="min-h-11 rounded-xl border border-warmBorder bg-white px-5 text-sm font-semibold text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="min-h-11 rounded-xl border border-warmBorder bg-warmSurface px-5 text-sm font-semibold text-grey05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             취소
           </button>
@@ -287,7 +287,7 @@ export default function MyFavoritesPage() {
                 setIsDeleteModalOpen(true);
               }
             }}
-            className={`ml-3 min-h-11 flex-1 rounded-xl text-sm font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
+            className={`ml-3 min-h-11 flex-1 rounded-xl text-sm font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
               selectedItems.length > 0 ? 'bg-purple04' : 'bg-grey03 text-grey04'
             }`}
           >
@@ -313,7 +313,7 @@ export default function MyFavoritesPage() {
             {selectedFavorite ? (
               <Link
                 to={`/mypage/activity?benefitId=${selectedFavorite.benefitId}`}
-                className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-brand px-4 text-sm font-semibold text-brandStrong transition-colors hover:bg-brandSoft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-accent px-4 text-sm font-semibold text-accentStrong transition-colors hover:bg-brandSoft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
                 사용 기록 남기기
               </Link>

@@ -64,7 +64,7 @@ const MobileAppTabBar = () => {
               aria-label={`${tab.label} 탭으로 이동`}
               aria-current={selected ? 'page' : undefined}
               className={`relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
-                selected ? 'bg-softMint text-brandStrong' : 'text-warmMuted'
+                selected ? 'bg-softMint text-accentStrong' : 'text-warmMuted'
               }`}
             >
               <Icon

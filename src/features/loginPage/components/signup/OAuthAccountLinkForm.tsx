@@ -34,7 +34,7 @@ const OAuthAccountLinkForm = ({
           value={email}
           disabled
           bgColor="bg-purple01/35"
-          textColor="text-purple05"
+          textColor="text-accentStrong"
         />
         <AuthInput
           name="oauthLinkPassword"
@@ -61,7 +61,7 @@ const OAuthAccountLinkForm = ({
           type="button"
           onClick={onBack}
           disabled={loading}
-          className="min-h-11 rounded-xl border border-grey02 text-body-3-bold text-grey04 transition hover:border-brand hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+          className="min-h-11 rounded-xl border border-grey02 text-body-3-bold text-grey04 transition hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
         >
           로그인으로 돌아가기
         </button>

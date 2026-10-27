@@ -3,11 +3,11 @@
   min-width: 0;
   min-height: 100%;
   padding: 24px;
-  border: 1px solid #e5e5e8;
+  border: 1px solid var(--itplace-color-border, #e8e9ee);
   border-radius: 16px;
   overflow: auto;
-  background: #fff;
-  color: #1d1d1f;
+  background: var(--itplace-color-surface, #fff);
+  color: var(--itplace-color-text, #202124);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -16,7 +16,7 @@
   min-height: 36px;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e8e8ed;
+  border-bottom: 1px solid var(--itplace-color-border, #e8e9ee);
   padding-bottom: 14px;
 }
 
@@ -33,8 +33,8 @@
   margin: -6px -8px -6px 12px;
   border: 0;
   border-radius: 12px;
-  background: #f7f8fa;
-  color: #6154d9;
+  background: var(--itplace-color-canvas, #f7f8fa);
+  color: var(--itplace-color-accent, #6154d9);
   font: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -47,7 +47,7 @@
   align-items: center;
   gap: 16px;
   padding: 22px 0;
-  border-bottom: 1px solid #e8e8ed;
+  border-bottom: 1px solid var(--itplace-color-border, #e8e9ee);
 }
 
 .logo {
@@ -58,6 +58,9 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-radius: 12px;
+  padding: 5px;
+  background: var(--itplace-color-logo-surface, #fff);
 }
 
 .logoImage {
@@ -69,7 +72,7 @@
 .logoFallback {
   border-radius: 0 !important;
   background: transparent !important;
-  color: #1d1d1f !important;
+  color: var(--itplace-color-text, #202124) !important;
   font-size: 14px;
   text-align: center;
   overflow-wrap: anywhere;
@@ -91,7 +94,7 @@
 .identityText p,
 .carrierLabel {
   margin: 5px 0 0;
-  color: #6e6e73;
+  color: var(--itplace-color-text-secondary, #686b73);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -114,7 +117,7 @@
   border-radius: 8px;
   padding: 0 12px;
   background: transparent;
-  color: #6e6e73;
+  color: var(--itplace-color-text-secondary, #686b73);
   cursor: pointer;
   font: inherit;
   font-size: 13px;
@@ -122,14 +125,14 @@
 }
 
 .carrierButtonActive {
-  border-color: #d2d2d7;
-  color: #1d1d1f;
+  border-color: var(--itplace-color-border, #e8e9ee);
+  color: var(--itplace-color-text, #202124);
 }
 
 .benefit {
   min-width: 0;
   padding: 18px 0 22px;
-  border-top: 1px solid #e8e8ed;
+  border-top: 1px solid var(--itplace-color-border, #e8e9ee);
   scroll-margin-top: 24px;
 }
 
@@ -138,14 +141,14 @@
 }
 
 .otherBenefits {
-  border-top: 1px solid #e8e8ed;
+  border-top: 1px solid var(--itplace-color-border, #e8e9ee);
 }
 
 .otherBenefits > summary {
   display: flex;
   min-height: 48px;
   align-items: center;
-  color: #6154d9;
+  color: var(--itplace-color-accent, #6154d9);
   cursor: pointer;
   font-size: 13px;
   font-weight: 550;
@@ -173,7 +176,7 @@
 
 .titleBlock p {
   margin: 3px 0 0;
-  color: #86868b;
+  color: var(--itplace-color-text-muted, #686b73);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -183,8 +186,8 @@
   margin-top: 6px;
   border-radius: 999px;
   padding: 4px 8px;
-  background: #f0edfc;
-  color: #5043c7;
+  background: var(--itplace-color-brand-subtle, #f0edfc);
+  color: var(--itplace-color-accent, #6154d9);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
@@ -192,7 +195,7 @@
 
 .sourceOptionLabel {
   margin: 4px 0 0;
-  color: #6e6e73;
+  color: var(--itplace-color-text-secondary, #686b73);
   font-size: 12px;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -209,7 +212,7 @@
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: #4b4b50;
+  color: var(--itplace-color-text-secondary, #686b73);
   cursor: pointer;
 }
 
@@ -219,7 +222,7 @@
 }
 
 .favoriteButton[aria-pressed='true'] {
-  color: #6154d9;
+  color: var(--itplace-color-accent, #6154d9);
 }
 
 .favoriteButton:disabled {
@@ -233,7 +236,7 @@
 
 .errorMessage {
   margin: 7px 0;
-  color: #b42318;
+  color: var(--itplace-color-danger, #b42318);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -252,7 +255,7 @@
   justify-content: center;
   gap: 6px;
   border-radius: 10px;
-  color: #6154d9;
+  color: var(--itplace-color-accent, #6154d9);
   font-size: 14px;
   font-weight: 600;
   text-align: center;
@@ -260,8 +263,8 @@
 }
 
 .primaryAction {
-  background: #6154d9;
-  color: #fff;
+  background: var(--itplace-color-brand, #6154d9);
+  color: var(--itplace-color-on-brand, #fff);
 }
 
 .primaryAction svg {
@@ -270,7 +273,7 @@
 }
 
 .primaryAction:hover {
-  background: #5043c7;
+  background: var(--itplace-color-brand-hover, #5145c5);
 }
 
 .detailAction:hover,
@@ -282,14 +285,14 @@
 .message,
 .messageBlock {
   padding: 24px 0;
-  color: #6e6e73;
+  color: var(--itplace-color-text-secondary, #686b73);
   font-size: 14px;
   line-height: 1.6;
 }
 
 .messageBlock p {
   margin: 0;
-  color: #29292e;
+  color: var(--itplace-color-text, #202124);
 }
 
 .messageBlock span {
@@ -299,11 +302,11 @@
 
 .textButton {
   margin: 10px 0 0 -12px;
-  color: #6154d9;
+  color: var(--itplace-color-accent, #6154d9);
 }
 
 .panel :focus-visible {
-  outline: 2px solid #6154d9;
+  outline: 2px solid var(--itplace-color-accent, #6154d9);
   outline-offset: 2px;
 }
 

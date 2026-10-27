@@ -174,7 +174,7 @@ const Modal: React.FC<ModalProps> = ({
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={message || subMessage ? descriptionId : undefined}
         tabIndex={-1}
-        className={`relative max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain ${widthClass ?? 'w-full max-w-[500px]'} bg-white rounded-[20px] shadow-xl p-10 flex flex-col items-center sm:max-h-[calc(100dvh-2rem)] max-sm:p-5 max-sm:w-full`}
+        className={`relative max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain ${widthClass ?? 'w-full max-w-[500px]'} bg-warmSurface rounded-[20px] shadow-xl p-10 flex flex-col items-center sm:max-h-[calc(100dvh-2rem)] max-sm:p-5 max-sm:w-full`}
         style={shadowStyle}
       >
         {/* 닫기 버튼 */}
@@ -193,7 +193,7 @@ const Modal: React.FC<ModalProps> = ({
         {title && (
           <h2
             id={titleId}
-            className="text-title-4 font-bold text-black text-center w-full max-sm:text-title-6 max-sm:font-bold"
+            className="text-title-4 font-bold text-ink text-center w-full px-8 break-words max-sm:text-title-6 max-sm:font-bold"
           >
             {title}
           </h2>
@@ -203,7 +203,7 @@ const Modal: React.FC<ModalProps> = ({
         {message && (
           <p
             id={descriptionId}
-            className="text-body-0 text-black whitespace-pre-line text-center mt-[16px] w-full max-sm:text-body-2"
+            className="text-body-0 text-ink whitespace-pre-line text-center mt-[16px] w-full max-sm:text-body-2"
           >
             {message}
           </p>
@@ -213,7 +213,7 @@ const Modal: React.FC<ModalProps> = ({
         {subMessage && (
           <p
             id={!message ? descriptionId : undefined}
-            className={`text-center text-black w-full mt-[8px] text-body-0 whitespace-pre-line max-sm:text-body-2 ${subMessageClass}`}
+            className={`text-center text-ink w-full mt-[8px] text-body-0 whitespace-pre-line max-sm:text-body-2 ${subMessageClass}`}
           >
             {subMessage}
           </p>
@@ -225,7 +225,7 @@ const Modal: React.FC<ModalProps> = ({
             type={inputType}
             name="modalInput"
             aria-label={inputPlaceholder || '입력'}
-            className="w-full max-w-[436px] h-[50px] mt-[20px] px-[20px] bg-grey01 rounded-[10px] text-body-2 text-grey05 placeholder-grey03 max-sm:text-body-3"
+            className="w-full max-w-[436px] h-[50px] mt-[20px] px-[20px] bg-grey01 rounded-[10px] text-base text-ink placeholder:text-warmMuted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             placeholder={inputPlaceholder}
             value={inputValue}
             onChange={(e) => onInputChange?.(e.target.value)}

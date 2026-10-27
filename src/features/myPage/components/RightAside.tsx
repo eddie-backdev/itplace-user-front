@@ -14,7 +14,7 @@ export default function RightAside({ children }: RightAsideProps) {
   return (
     <aside
       className={
-        'flex min-h-0 w-full flex-col rounded-2xl border border-warmBorder bg-white px-5 py-5 lg:w-[380px] lg:min-w-[360px] lg:flex-none 2xl:w-[400px] 2xl:min-w-[400px] max-md:rounded-[18px] max-md:p-4 ' +
+        'flex min-h-0 w-full flex-col rounded-2xl border border-warmBorder bg-warmSurface px-5 py-5 lg:w-[380px] lg:min-w-[360px] lg:flex-none 2xl:w-[400px] 2xl:min-w-[400px] max-md:rounded-[18px] max-md:p-4 ' +
         (isSimpleLayout ? ' max-md:hidden' : '')
       }
     >

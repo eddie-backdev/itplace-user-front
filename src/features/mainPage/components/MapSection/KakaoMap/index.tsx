@@ -92,9 +92,9 @@ const MOBILE_MAP_EDGE_CLEARANCE = 8;
 const SERVER_CLUSTER_STYLE_VERSION = 'neutral-cluster-v17';
 const CLUSTER_DENSITY_COLORS = {
   low: '#7b8491',
-  medium: '#596171',
+  medium: 'var(--itplace-color-text-secondary)',
   high: '#3c4452',
-  extreme: '#202120',
+  extreme: 'var(--itplace-color-text)',
 } as const;
 const administrativeClusterBackgroundCache = new Map<string, string>();
 
@@ -153,7 +153,7 @@ const markerRegistryKey = (platform: Platform): string =>
   `${platform.id}:${platform.partnerId}:${platform.carrier ?? 'ALL'}`;
 
 const getCategoryPinColor = () => {
-  return '#69717e';
+  return 'var(--itplace-color-text-secondary)';
 };
 
 const getClusterDensityColor = (count: number) => {
@@ -178,9 +178,9 @@ const getClusterDensityShadows = (count: number) => {
 
 const getAdministrativeClusterColor = (unitType?: MapCluster['administrativeUnitType']) => {
   if (unitType === 'CITY') return '#3c4452';
-  if (unitType === 'TOWN') return '#596171';
+  if (unitType === 'TOWN') return 'var(--itplace-color-text-secondary)';
   if (unitType === 'LEGAL_DONG') return '#7b8491';
-  return '#69717e';
+  return 'var(--itplace-color-text-secondary)';
 };
 
 const updateAdministrativeClusterElement = (
@@ -260,7 +260,7 @@ const updateAdministrativeClusterElement = (
     'overflow:hidden',
     'text-overflow:ellipsis',
     'white-space:nowrap',
-    'color:#202120',
+    'color:var(--itplace-color-text)',
     'font-size:13px',
     'font-weight:800',
     'line-height:1',
@@ -291,7 +291,11 @@ const updateAdministrativeClusterElement = (
   element.replaceChildren(content);
 };
 
-const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapCluster, categoryLabels: Record<string, string>) => {
+const updateServerClusterElement = (
+  element: HTMLButtonElement,
+  cluster: MapCluster,
+  categoryLabels: Record<string, string>
+) => {
   const administrativeUnitName = cluster.administrativeUnitName?.trim();
   if (administrativeUnitName) {
     updateAdministrativeClusterElement(element, cluster, administrativeUnitName);
@@ -299,7 +303,10 @@ const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapClus
   }
 
   const isSingleLocation = cluster.count <= 1;
-  const categoryLabel = cluster.category && cluster.category !== '전체' ? categoryLabels[cluster.category] ?? cluster.category : '혜택';
+  const categoryLabel =
+    cluster.category && cluster.category !== '전체'
+      ? (categoryLabels[cluster.category] ?? cluster.category)
+      : '혜택';
   const accentColor = isSingleLocation
     ? getCategoryPinColor()
     : getClusterDensityColor(cluster.count);
@@ -367,7 +374,10 @@ const updateServerClusterElement = (element: HTMLButtonElement, cluster: MapClus
   element.replaceChildren(badge);
 };
 
-const createServerClusterElement = (cluster: MapCluster, categoryLabels: Record<string, string>) => {
+const createServerClusterElement = (
+  cluster: MapCluster,
+  categoryLabels: Record<string, string>
+) => {
   const element = document.createElement('button');
   element.type = 'button';
   updateServerClusterElement(element, cluster, categoryLabels);
@@ -1700,7 +1710,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
           role="alert"
           className="absolute inset-0 flex items-center justify-center bg-warmCanvas/95 px-6 text-center"
         >
-          <div className="max-w-sm rounded-2xl border border-warmBorder bg-white p-6 shadow-soft">
+          <div className="max-w-sm rounded-2xl border border-warmBorder bg-warmSurface p-6 shadow-soft">
             <p className="font-bold text-ink">지도를 열지 못했어요</p>
             <p className="mt-2 text-sm leading-6 text-inkMuted">
               지도를 표시할 수 없습니다. 전체 혜택 목록에서 계속 둘러볼 수 있어요.
@@ -1712,14 +1722,14 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
                     ? `/benefits?q=${encodeURIComponent(searchQuery.trim())}`
                     : '/benefits'
                 }
-                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-4 font-bold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-4 font-bold text-[var(--itplace-color-on-brand)] transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
               >
                 전체 혜택에서 찾기
               </a>
               <button
                 type="button"
                 onClick={() => window.location.reload()}
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-warmBorder bg-white px-4 font-bold text-grey05 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-warmBorder bg-warmSurface px-4 font-bold text-grey05 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
               >
                 다시 시도
               </button>

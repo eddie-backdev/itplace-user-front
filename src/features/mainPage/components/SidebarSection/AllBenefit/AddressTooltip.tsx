@@ -16,7 +16,7 @@ const AddressTooltip: React.FC<AddressTooltipProps> = ({
 }) => {
   return (
     <div
-      className="bg-white border border-grey02 rounded-lg shadow-[0 2px 5px black 0.15] p-3 w-max relative max-md:p-2 max-md:text-sm"
+      className="bg-warmSurface border border-grey02 rounded-lg shadow-[0 2px 5px black 0.15] p-3 w-max relative max-md:p-2 max-md:text-sm"
       onClick={(e) => e.stopPropagation()}
     >
       {/* X 버튼 */}
@@ -38,7 +38,7 @@ const AddressTooltip: React.FC<AddressTooltipProps> = ({
           </span>
           <span className="text-body-4 text-grey05 truncate max-md:text-body-5">{roadAddress}</span>
           <span
-            className="text-body-4 text-purple04 cursor-pointer hover:text-purple05 transition-colors self-center max-md:text-body-5"
+            className="text-body-4 text-accent cursor-pointer hover:text-accentStrong transition-colors self-center max-md:text-body-5"
             onClick={(e) => {
               e.stopPropagation();
               onCopy(roadAddress);
@@ -55,7 +55,7 @@ const AddressTooltip: React.FC<AddressTooltipProps> = ({
           </span>
           <span className="text-body-4 text-grey05 truncate max-md:text-body-5">{lotAddress}</span>
           <span
-            className="text-body-4 text-purple04 cursor-pointer hover:text-purple05 transition-colors self-center max-md:text-body-5"
+            className="text-body-4 text-accent cursor-pointer hover:text-accentStrong transition-colors self-center max-md:text-body-5"
             onClick={(e) => {
               e.stopPropagation();
               onCopy(lotAddress);

@@ -3,23 +3,49 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light dark;
+  --itplace-rgb-surface: 255 255 255;
+  --itplace-rgb-canvas: 247 248 250;
+  --itplace-rgb-hover: 240 241 244;
+  --itplace-rgb-text: 32 33 36;
+  --itplace-rgb-muted: 104 107 115;
+  --itplace-rgb-secondary: 77 80 88;
+  --itplace-rgb-border: 232 233 238;
+  --itplace-rgb-control-border: 148 151 162;
+  --itplace-rgb-accent: 97 84 217;
+  --itplace-rgb-accent-hover: 81 69 197;
+  --itplace-rgb-brand-subtle: 240 237 252;
+  --itplace-rgb-brand-border: 222 217 250;
+  --itplace-rgb-danger: 215 38 61;
+  --itplace-rgb-success: 22 122 76;
+  --itplace-rgb-warning: 139 87 0;
   --itplace-color-brand: #6154d9;
   --itplace-color-brand-hover: #5145c5;
   --itplace-color-brand-light: #8278e7;
-  --itplace-color-brand-subtle: #f0edfc;
-  --itplace-color-benefit: #6154d9;
-  --itplace-color-surface: #ffffff;
-  --itplace-color-surface-subtle: #f7f8fa;
-  --itplace-color-text: #202124;
-  --itplace-color-text-secondary: #686b73;
-  --itplace-color-border: #e8e9ee;
-  --itplace-color-lavender: #f0edfc;
-  --itplace-color-mint: #f0edfc;
-  --itplace-color-peach: #f7f8fa;
-  --itplace-color-lavender-ink: #5145c5;
-  --itplace-color-ink: #202124;
-  --itplace-color-muted: #686b73;
-  --itplace-color-canvas: #f7f8fa;
+  --itplace-color-brand-subtle: rgb(var(--itplace-rgb-brand-subtle));
+  --itplace-color-accent: rgb(var(--itplace-rgb-accent));
+  --itplace-color-accent-hover: rgb(var(--itplace-rgb-accent-hover));
+  --itplace-color-benefit: var(--itplace-color-accent);
+  --itplace-color-surface: rgb(var(--itplace-rgb-surface));
+  --itplace-color-surface-subtle: rgb(var(--itplace-rgb-canvas));
+  --itplace-color-surface-hover: rgb(var(--itplace-rgb-hover));
+  --itplace-color-surface-raised: var(--itplace-color-surface);
+  --itplace-color-text: rgb(var(--itplace-rgb-text));
+  --itplace-color-text-secondary: rgb(var(--itplace-rgb-muted));
+  --itplace-color-border: rgb(var(--itplace-rgb-border));
+  --itplace-color-control-border: rgb(var(--itplace-rgb-control-border));
+  --itplace-color-lavender: var(--itplace-color-brand-subtle);
+  --itplace-color-mint: var(--itplace-color-brand-subtle);
+  --itplace-color-peach: var(--itplace-color-surface-subtle);
+  --itplace-color-lavender-ink: var(--itplace-color-accent-hover);
+  --itplace-color-ink: var(--itplace-color-text);
+  --itplace-color-muted: var(--itplace-color-text-secondary);
+  --itplace-color-canvas: var(--itplace-color-surface-subtle);
+  --itplace-color-danger: rgb(var(--itplace-rgb-danger));
+  --itplace-color-success: rgb(var(--itplace-rgb-success));
+  --itplace-color-warning: rgb(var(--itplace-rgb-warning));
+  --itplace-color-on-brand: #fff;
+  --itplace-color-logo-surface: #fff;
   --itplace-page-width: 1280px;
   --itplace-page-gutter: 28px;
   --itplace-header-height: 72px;
@@ -35,6 +61,30 @@
   --itplace-layer-transient-backdrop: 30000;
   --itplace-layer-transient-surface: 30001;
   --itplace-layer-toast: 50000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --itplace-rgb-surface: 27 28 36;
+    --itplace-rgb-canvas: 18 19 24;
+    --itplace-rgb-hover: 38 40 51;
+    --itplace-rgb-text: 240 241 246;
+    --itplace-rgb-muted: 180 183 197;
+    --itplace-rgb-secondary: 207 209 220;
+    --itplace-rgb-border: 56 59 73;
+    --itplace-rgb-control-border: 114 120 138;
+    --itplace-rgb-accent: 184 175 255;
+    --itplace-rgb-accent-hover: 209 203 255;
+    --itplace-rgb-brand-subtle: 45 40 69;
+    --itplace-rgb-brand-border: 73 67 99;
+    --itplace-rgb-danger: 255 140 155;
+    --itplace-rgb-success: 120 217 164;
+    --itplace-rgb-warning: 239 195 116;
+    --itplace-color-brand-light: #b8afff;
+    --itplace-color-surface-raised: #23252f;
+    --itplace-shadow-card: 0 2px 10px rgb(0 0 0 / 18%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -104,6 +154,7 @@ body:has([data-itplace-transient-layer='open']) .itplace-mobile-app-tab-bar {
 
 html {
   scroll-padding-top: 88px;
+  scroll-padding-bottom: calc(var(--itplace-mobile-tab-bar-offset) + 16px);
 }
 
 @media (min-width: 768px) {
@@ -137,6 +188,25 @@ body {
   min-width: 0;
   background: var(--itplace-color-surface-subtle);
   color: var(--itplace-color-text);
+}
+
+/* Native controls must use the same palette as their surrounding content. */
+input,
+textarea,
+select {
+  color: inherit;
+  accent-color: var(--itplace-color-accent);
+}
+
+select option {
+  background: var(--itplace-color-surface);
+  color: var(--itplace-color-text);
+}
+
+@media (max-width: 767px) {
+  :root {
+    --itplace-page-gutter: 20px;
+  }
 }
 
 .skip-link {
@@ -259,7 +329,8 @@ body {
   height: 32px;
   border-radius: 20px;
   line-height: 32px;
-  transition: all 0.2s ease;
+  color: var(--itplace-color-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
   cursor: pointer;
   font-size: 14px;
   text-align: center;
@@ -283,7 +354,7 @@ body {
 .react-datepicker .react-datepicker__month .react-datepicker__day--selected,
 .react-datepicker .react-datepicker__month .react-datepicker__day--selected:hover {
   background-color: var(--itplace-color-brand) !important;
-  color: var(--itplace-color-surface) !important;
+  color: var(--itplace-color-on-brand) !important;
   border-radius: 20px !important;
   width: 32px !important;
   height: 32px !important;

@@ -73,7 +73,7 @@ const NoResult: React.FC<NoResultProps> = ({
     >
       <div
         aria-hidden="true"
-        className={`mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isBlocked || variant === 'error' ? 'bg-warmCanvas text-brand' : 'bg-brandSoft text-brand'}`}
+        className={`mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isBlocked || variant === 'error' ? 'bg-warmCanvas text-accent' : 'bg-brandSoft text-accent'}`}
       >
         <StateIcon size={30} strokeWidth={1.7} />
       </div>
@@ -87,7 +87,7 @@ const NoResult: React.FC<NoResultProps> = ({
             <button
               type="button"
               onClick={handleSecondaryClick}
-              className="min-h-11 rounded-full border border-warmBorder bg-white px-7 py-2.5 text-body-3 text-warmMuted transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-xl:text-body-4 max-md:text-body-5"
+              className="min-h-11 rounded-full border border-warmBorder bg-warmSurface px-7 py-2.5 text-body-3 text-warmMuted transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-xl:text-body-4 max-md:text-body-5"
             >
               {secondaryButtonText}
             </button>

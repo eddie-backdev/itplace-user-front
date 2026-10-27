@@ -35,7 +35,7 @@ const CurrentLocationButton: React.FC<CurrentLocationButtonProps> = ({
     <button
       onClick={handleClick}
       aria-label="현재 위치로 이동"
-      className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#e6e6e3] bg-white text-[#596171] shadow-[0_2px_8px_rgba(31,38,52,0.08)] transition-colors duration-200 hover:bg-[#f1f1ee] hover:text-[#202120] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc] max-md:h-11 max-md:w-11"
+      className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--itplace-color-border)] bg-warmSurface text-[var(--itplace-color-text-secondary)] shadow-[0_2px_8px_rgba(31,38,52,0.08)] transition-colors duration-200 hover:bg-[var(--itplace-color-canvas)] hover:text-[var(--itplace-color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)] max-md:h-11 max-md:w-11"
     >
       <TbCurrentLocation size={20} />
     </button>

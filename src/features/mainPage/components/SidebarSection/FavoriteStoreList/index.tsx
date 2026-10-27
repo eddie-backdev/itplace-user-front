@@ -32,17 +32,19 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
   if (!isAuthenticated) {
     return (
       <div className="flex min-h-56 flex-1 flex-col items-center justify-center px-4 py-3 text-center md:min-h-full md:pb-[76px] max-md:min-h-0 max-md:mt-0 max-md:py-2">
-        <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#f0edfc] text-[#6154d9] max-md:hidden">
+        <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--itplace-color-brand-subtle)] text-[var(--itplace-color-accent)] max-md:hidden">
           <TbBookmark aria-hidden="true" className="h-5 w-5" />
         </span>
-        <h3 className="text-base font-semibold leading-6 text-[#202124]">로그인이 필요해요</h3>
-        <p className="mt-1 break-keep text-sm leading-5 text-[#686b73]">
+        <h3 className="text-base font-semibold leading-6 text-[var(--itplace-color-text)]">
+          로그인이 필요해요
+        </h3>
+        <p className="mt-1 break-keep text-sm leading-5 text-[var(--itplace-color-text-secondary)]">
           관심 혜택은 로그인 후 확인할 수 있어요.
         </p>
         <Link
           to={getLoginHref('/map')}
           prefetch={true}
-          className="mt-2 inline-flex min-h-11 min-w-32 items-center justify-center rounded-lg bg-[#6154d9] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#5144c7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] focus-visible:ring-offset-2"
+          className="mt-2 inline-flex min-h-11 min-w-32 items-center justify-center rounded-lg bg-[var(--itplace-color-brand)] px-5 text-sm font-semibold text-[var(--itplace-color-on-brand)] transition-colors hover:bg-[var(--itplace-color-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)] focus-visible:ring-offset-2"
         >
           로그인하기
         </Link>
@@ -61,7 +63,7 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
 
   if (error) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center px-4 text-center max-md:min-h-56 [&_button]:min-h-11 [&_button]:rounded-lg [&_button]:px-4 [&_button]:focus-visible:ring-[#0066cc]">
+      <div className="flex flex-1 flex-col items-center justify-center px-4 text-center max-md:min-h-56 [&_button]:min-h-11 [&_button]:rounded-lg [&_button]:px-4 [&_button]:focus-visible:ring-[var(--itplace-color-accent)]">
         <NoResult
           variant="error"
           message1="관심 혜택을 불러오지 못했어요"
@@ -89,7 +91,7 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
           };
 
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4 [&_button]:min-h-11 [&_button]:rounded-lg [&_button]:px-4 [&_button]:focus-visible:ring-[#0066cc] [&_button.bg-purple04]:bg-[#0066cc] [&_button.bg-purple04]:hover:bg-[#0057b8]">
+      <div className="flex-1 flex flex-col items-center justify-center min-h-0 max-md:min-h-56 max-md:mt-4 [&_button]:min-h-11 [&_button]:rounded-lg [&_button]:px-4 [&_button]:focus-visible:ring-[var(--itplace-color-accent)] [&_button.bg-purple04]:bg-[var(--itplace-color-brand)] [&_button.bg-purple04]:hover:bg-[var(--itplace-color-brand-hover)]">
         <NoResult
           {...noResultProps}
           message1FontSize="text-title-6"
@@ -107,7 +109,7 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
           type="button"
           key={favorite.benefitId}
           onClick={() => onItemClick(favorite)}
-          className="flex min-h-[68px] w-full items-center gap-3 border-b border-[#e6e6e3] px-2 text-left hover:bg-[#f8f8f7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0066cc]"
+          className="flex min-h-[68px] w-full items-center gap-3 border-b border-[var(--itplace-color-border)] px-2 text-left hover:bg-[var(--itplace-color-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--itplace-color-accent)]"
         >
           {/* 왼쪽: 파트너 이미지 */}
           <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg">
@@ -116,13 +118,13 @@ const FavoriteStoreList: React.FC<FavoriteStoreListProps> = ({
               alt={`${favorite.partnerName} 로고`}
               fallbackLabel={favorite.partnerName}
               className="h-full w-full object-contain"
-              fallbackClassName="bg-[#f1f1ee] text-[#69717e] text-body-4"
+              fallbackClassName="bg-[var(--itplace-color-canvas)] text-[var(--itplace-color-text-secondary)] text-body-4"
             />
           </div>
 
           {/* 중앙: 파트너 이름 */}
           <div className="min-w-0 flex-1">
-            <span className="block truncate text-[14px] font-semibold text-[#202120]">
+            <span className="block truncate text-[14px] font-semibold text-[var(--itplace-color-text)]">
               {favorite.partnerName}
             </span>
           </div>

@@ -81,12 +81,12 @@ export default function SignupMembershipFields({
         </div>
       ) : null}
       {carrierSkipped ? (
-        <p className={`${styles.membershipNote} text-sm leading-5 text-[#686B73]`}>
+        <p className={`${styles.membershipNote} text-sm leading-5 text-grey05`}>
           멤버십 정보는 가입 후 마이페이지에서 추가할 수 있어요.
         </p>
       ) : null}
       {carrier === 'MVNO' ? (
-        <p className={`${styles.membershipNote} text-sm leading-5 text-[#686B73]`}>
+        <p className={`${styles.membershipNote} text-sm leading-5 text-grey05`}>
           혜택은 SKT·KT·LG U+ 멤버십 기준으로 제공돼요.
         </p>
       ) : null}

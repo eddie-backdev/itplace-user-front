@@ -69,7 +69,7 @@ export default function MyPageLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa]">
+    <div className="min-h-screen bg-warmCanvas">
       <div className="fixed left-0 top-0 z-[9999] hidden w-full max-md:block">
         <MobileHeader title={isFavorites ? '관심 혜택' : '마이페이지'} />
       </div>
@@ -82,53 +82,53 @@ export default function MyPageLayout({ children }: { children: ReactNode }) {
           <SideMenu />
           <div className={styles.guestContent}>
             <header className="mb-6 max-md:mb-4">
-              <h1 className="text-balance text-[32px] font-bold leading-tight tracking-[-0.035em] text-[#202124] max-md:text-2xl">
+              <h1 className="text-balance text-[32px] font-bold leading-tight tracking-[-0.035em] text-ink max-md:text-2xl">
                 {pageTitle}
               </h1>
             </header>
             <section
               aria-labelledby="mypage-login-heading"
-              className="overflow-hidden rounded-2xl border border-[#e8e9ee] bg-white lg:grid lg:grid-cols-[0.92fr_1.08fr]"
+              className="overflow-hidden rounded-2xl border border-warmBorder bg-warmSurface lg:grid lg:grid-cols-[0.92fr_1.08fr]"
             >
               <div className="flex flex-col items-start px-6 py-8 sm:px-10 sm:py-10 max-md:px-5 max-md:py-5">
                 <h2
                   id="mypage-login-heading"
-                  className="text-balance break-keep text-[24px] font-bold leading-snug text-[#202124] max-md:text-xl"
+                  className="text-balance break-keep text-[24px] font-bold leading-snug text-ink max-md:text-xl"
                 >
                   {guestTitle}
                 </h2>
-                <p className="mt-3 max-w-[42ch] break-keep text-[15px] leading-7 text-[#686b73] max-md:mt-2 max-md:text-sm max-md:leading-[21px]">
+                <p className="mt-3 max-w-[42ch] break-keep text-[15px] leading-7 text-grey05 max-md:mt-2 max-md:text-sm max-md:leading-[21px]">
                   {guestDescription}
                 </p>
                 <Link
                   to={getLoginHref(currentPath)}
-                  className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#6154d9] px-6 text-sm font-bold text-white transition-colors hover:bg-[#5144c7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] focus-visible:ring-offset-2 max-md:mt-4 md:w-auto"
+                  className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-brand px-6 text-sm font-bold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 max-md:mt-4 md:w-auto"
                 >
                   로그인하기
                 </Link>
-                <p className="mt-3 text-sm text-[#686b73]">
+                <p className="mt-3 text-sm text-grey05">
                   카카오 또는 이메일로 로그인할 수 있어요
                 </p>
               </div>
-              <div className="bg-[#f7f8fa] px-6 py-7 sm:px-9 sm:py-9 max-md:border-t max-md:px-4 max-md:py-4">
-                <h3 className="mb-2 text-sm font-bold text-[#202124]">
+              <div className="bg-warmCanvas px-6 py-7 sm:px-9 sm:py-9 max-md:border-t max-md:px-4 max-md:py-4">
+                <h3 className="mb-2 text-sm font-bold text-ink">
                   로그인하면 이용할 수 있어요
                 </h3>
-                <ul className="divide-y divide-[#e8e9ee] max-md:grid max-md:grid-cols-3 max-md:divide-x max-md:divide-y-0">
+                <ul className="divide-y divide-warmBorder max-md:grid max-md:grid-cols-3 max-md:divide-x max-md:divide-y-0">
                   {guestFeatures.map(({ title, description, icon: Icon }) => (
                     <li
                       key={title}
                       className="flex gap-3 py-4 first:pt-3 last:pb-3 max-md:flex-col max-md:items-center max-md:gap-1.5 max-md:py-0 max-md:text-center max-md:first:pt-0 max-md:last:pb-0"
                     >
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#6154d9] max-md:mt-0 max-md:h-8 max-md:w-8">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warmSurface text-accent max-md:mt-0 max-md:h-8 max-md:w-8">
                         <Icon
                           aria-hidden="true"
                           className="h-5 w-5 max-md:h-[18px] max-md:w-[18px]"
                         />
                       </span>
                       <div className="min-w-0">
-                        <h4 className="text-sm font-bold text-[#202124] max-md:text-xs">{title}</h4>
-                        <p className="mt-1 break-keep text-sm leading-6 text-[#686b73] max-md:hidden">
+                        <h4 className="text-sm font-bold text-ink max-md:text-xs">{title}</h4>
+                        <p className="mt-1 break-keep text-sm leading-6 text-grey05 max-md:hidden">
                           {description}
                         </p>
                       </div>
@@ -138,12 +138,12 @@ export default function MyPageLayout({ children }: { children: ReactNode }) {
               </div>
             </section>
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 px-1 py-2 max-md:mt-2 max-md:justify-center max-md:py-0">
-              <p className="text-sm text-[#686b73] max-md:hidden">
+              <p className="text-sm text-grey05 max-md:hidden">
                 먼저 어떤 혜택이 있는지 살펴보세요
               </p>
               <Link
                 to="/benefits"
-                className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-[#6154d9] underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+                className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-accent underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 혜택 둘러보기
               </Link>

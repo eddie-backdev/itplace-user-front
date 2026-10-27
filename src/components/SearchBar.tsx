@@ -17,7 +17,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   onChange,
   onClear,
   className = '',
-  backgroundColor,
+  backgroundColor = 'bg-warmSurface',
   onKeyDown,
   onCompositionStart,
   onCompositionEnd,
@@ -40,7 +40,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         onCompositionStart={onCompositionStart}
         onCompositionEnd={onCompositionEnd}
         aria-label={placeholder}
-        className={`h-full w-full rounded-xl border border-warmBorder pl-12 pr-12 text-base text-ink shadow-[0_1px_2px_rgba(36,35,33,0.03)] placeholder:text-body-3 placeholder:text-grey04 focus:border-brand/40 focus:outline-none md:max-xl:text-body-3 ${backgroundColor || ''}`}
+        className={`h-full w-full rounded-xl border border-controlBorder pl-12 pr-12 text-base text-ink shadow-[0_1px_2px_rgba(36,35,33,0.03)] placeholder:text-body-3 placeholder:text-grey04 focus:border-brand/40 focus:outline-none md:max-xl:text-body-3 ${backgroundColor || ''}`}
       />
       {value && (
         <button

@@ -161,7 +161,7 @@ export default function BirthDateInput({
         )}
       />
       {error ? (
-        <p id={`${inputId}-error`} aria-live="polite" className="mt-1.5 text-sm text-[#B42318]">
+        <p id={`${inputId}-error`} aria-live="polite" className="mt-1.5 text-sm text-danger">
           {error}
         </p>
       ) : null}

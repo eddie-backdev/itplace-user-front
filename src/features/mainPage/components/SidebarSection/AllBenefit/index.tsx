@@ -237,16 +237,20 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
     <div className="mb-2 px-4 max-sm:px-3">
       <div className={`${onBack ? 'flex items-start justify-between gap-3' : ''}`}>
         <div>
-          <h3 className="text-[15px] font-semibold leading-5 text-[#202120]">{title}</h3>
+          <h3 className="text-[15px] font-semibold leading-5 text-[var(--itplace-color-text)]">
+            {title}
+          </h3>
           {subtitle && (
-            <p className="mt-0.5 truncate text-[12px] leading-4 text-[#69717e]">{subtitle}</p>
+            <p className="mt-0.5 truncate text-[12px] leading-4 text-[var(--itplace-color-text-secondary)]">
+              {subtitle}
+            </p>
           )}
         </div>
         {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="flex min-h-11 shrink-0 items-center rounded-lg border border-[#e6e6e3] px-3 text-[12px] font-medium text-[#252525] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
+            className="flex min-h-11 shrink-0 items-center rounded-lg border border-[var(--itplace-color-border)] px-3 text-[12px] font-medium text-[var(--itplace-color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
           >
             돌아가기
           </button>
@@ -255,17 +259,24 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
     </div>
   );
 
-  const renderDivider = () => <div className="mb-0 w-full border-b border-[#e6e6e3]" />;
+  const renderDivider = () => (
+    <div className="mb-0 w-full border-b border-[var(--itplace-color-border)]" />
+  );
 
   const renderCompactHeader = (title: string, location: string) => (
     <div className="mb-2 flex min-w-0 items-baseline gap-1 px-4 max-sm:px-3">
-      <h3 className="shrink-0 whitespace-nowrap text-[15px] font-semibold leading-5 text-[#202120]">
+      <h3 className="shrink-0 whitespace-nowrap text-[15px] font-semibold leading-5 text-[var(--itplace-color-text)]">
         {title}
       </h3>
-      <span aria-hidden="true" className="shrink-0 text-[12px] leading-4 text-[#9aa0a8]">
+      <span
+        aria-hidden="true"
+        className="shrink-0 text-[12px] leading-4 text-[var(--itplace-color-text-secondary)]"
+      >
         ·
       </span>
-      <p className="min-w-0 truncate text-[12px] leading-4 text-[#69717e]">{location}</p>
+      <p className="min-w-0 truncate text-[12px] leading-4 text-[var(--itplace-color-text-secondary)]">
+        {location}
+      </p>
     </div>
   );
 
@@ -288,7 +299,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
         >
           <span
             aria-hidden="true"
-            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent"
+            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--itplace-color-accent)] border-t-transparent"
           />
           검색 결과를 업데이트하고 있어요
         </div>
@@ -311,14 +322,14 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
           alt={`${entry.title} 로고`}
           fallbackLabel={entry.badge || entry.title}
           className="h-10 w-10 shrink-0 rounded-lg object-contain"
-          fallbackClassName="bg-[#f1f1ee] text-body-4-bold text-grey05"
+          fallbackClassName="bg-[var(--itplace-color-canvas)] text-body-4-bold text-grey05"
           loading="lazy"
         />
       );
     }
 
     return (
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#f1f1ee] px-1 text-center text-[11px] font-semibold leading-tight text-grey05">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--itplace-color-canvas)] px-1 text-center text-[11px] font-semibold leading-tight text-grey05">
         {entry.badge || entry.title}
       </span>
     );
@@ -335,7 +346,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
           platforms: entry.platforms,
         })
       }
-      className="flex w-full items-center gap-3 rounded-xl border border-[#e6e6e3] bg-white px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc]"
+      className="flex w-full items-center gap-3 rounded-xl border border-[var(--itplace-color-border)] bg-warmSurface px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
     >
       {renderSummaryVisual(entry)}
       <span className="min-w-0 flex-1">
@@ -384,14 +395,14 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
           <div className="mt-5 flex flex-col gap-2">
             <a
               href={benefitsHref}
-              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#0066cc] px-4 text-body-3-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc] focus-visible:ring-offset-2"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--itplace-color-brand)] px-4 text-body-3-bold text-[var(--itplace-color-on-brand)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)] focus-visible:ring-offset-2"
             >
               전체 혜택에서 찾기
             </a>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-warmBorder bg-white px-4 text-body-3-bold text-grey05 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066cc] focus-visible:ring-offset-2"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-warmBorder bg-warmSurface px-4 text-body-3-bold text-grey05 transition-colors hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)] focus-visible:ring-offset-2"
             >
               다시 시도
             </button>
@@ -496,7 +507,7 @@ const StoreCardsSection: React.FC<StoreCardsSectionProps> = ({
         >
           <span
             aria-hidden="true"
-            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent"
+            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--itplace-color-accent)] border-t-transparent"
           />
           검색 결과를 업데이트하고 있어요
         </div>

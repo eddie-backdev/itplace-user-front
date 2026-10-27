@@ -31,7 +31,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
   const outerRadius = center - 2;
   const tailShoulderY = bubbleSize - Math.max(9, Math.round(bubbleSize * 0.18));
   const tailHalfWidth = Math.max(5, Math.round(bubbleSize * 0.12));
-  const accentColor = isSelected ? '#6154D9' : '#A3ABB5';
+  const accentColor = isSelected ? 'var(--itplace-color-accent)' : '#A3ABB5';
 
   return (
     <button
@@ -40,7 +40,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
       title={displayName}
       data-itplace-map-marker="true"
       data-marker-mode={mode}
-      className="relative block cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] focus-visible:ring-offset-2 motion-safe:transition-[filter,transform] motion-safe:duration-200"
+      className="relative block cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)] focus-visible:ring-offset-2 motion-safe:transition-[filter,transform] motion-safe:duration-200"
       style={{
         width,
         height,
@@ -79,7 +79,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
       </svg>
 
       <span
-        className="absolute z-10 inline-flex items-center justify-center overflow-hidden rounded-full bg-white"
+        className="absolute z-10 inline-flex items-center justify-center overflow-hidden rounded-full bg-[var(--itplace-color-logo-surface,#fff)]"
         style={{
           width: imageSize,
           height: imageSize,
@@ -92,7 +92,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
           role="img"
           aria-label={`${displayName} 로고`}
           data-marker-fallback="true"
-          className={`inline-flex h-full w-full items-center justify-center bg-[#f1f1ee] font-extrabold text-[#69717e] ${
+          className={`inline-flex h-full w-full items-center justify-center bg-[var(--itplace-color-canvas)] font-extrabold text-[var(--itplace-color-text-secondary)] ${
             isCompact ? 'text-[10px]' : 'text-xs'
           } ${normalizedImageUrl ? 'hidden' : ''}`}
         >

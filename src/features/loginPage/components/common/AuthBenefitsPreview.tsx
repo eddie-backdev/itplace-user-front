@@ -20,7 +20,7 @@ export default function AuthBenefitsPreview({ partners }: Props) {
   const { data: referenceData } = useReferenceData();
   return (
     <section aria-labelledby="auth-benefits-title" className="w-full max-w-[680px]">
-      <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-brand">
+      <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-accent">
         <span aria-hidden="true" className="h-px w-6 bg-brand" />
         통신사별 혜택을 한눈에
       </p>
@@ -55,9 +55,9 @@ export default function AuthBenefitsPreview({ partners }: Props) {
               <Link
                 href={partner.href}
                 aria-label={`${partner.partnerName} ${getCategoryLabel(partner.category, referenceData)} 혜택 보기`}
-                className="group flex min-h-[78px] items-center gap-3 py-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:gap-4"
+                className="group flex min-h-[78px] items-center gap-3 py-3 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent sm:gap-4"
               >
-                <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F6F7FA] p-1.5">
+                <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--itplace-color-logo-surface)] p-1.5">
                   <SafeImage
                     src={partner.image}
                     alt=""
@@ -80,20 +80,20 @@ export default function AuthBenefitsPreview({ partners }: Props) {
                 <TbChevronRight
                   aria-hidden="true"
                   size={19}
-                  className="shrink-0 text-[#9AA1AC] transition-colors group-hover:text-brand"
+                  className="shrink-0 text-grey04 transition-colors group-hover:text-accent"
                 />
               </Link>
             </li>
           ))}
         </ul>
 
-        <div className="mt-1 flex flex-wrap gap-x-6 gap-y-2 border-t border-warmBorder pt-4 text-[13px] leading-5 text-[#505966]">
+        <div className="mt-1 flex flex-wrap gap-x-6 gap-y-2 border-t border-warmBorder pt-4 text-[13px] leading-5 text-grey06">
           <span className="inline-flex items-center gap-2">
-            <TbHeart aria-hidden="true" size={17} className="text-brand" />
+            <TbHeart aria-hidden="true" size={17} className="text-accent" />
             관심 혜택에 저장
           </span>
           <span className="inline-flex items-center gap-2">
-            <TbHistory aria-hidden="true" size={17} className="text-brand" />
+            <TbHistory aria-hidden="true" size={17} className="text-accent" />
             사용한 혜택 기록
           </span>
         </div>

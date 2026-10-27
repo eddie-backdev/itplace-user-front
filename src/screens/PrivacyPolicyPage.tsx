@@ -48,7 +48,7 @@ const PrivacyPolicyPage = () => {
                           href={link.href}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex min-h-11 items-center rounded-md font-medium text-brandStrong underline underline-offset-4 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                          className="inline-flex min-h-11 items-center rounded-md font-medium text-accentStrong underline underline-offset-4 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                         >
                           {link.label}
                         </a>
@@ -73,7 +73,7 @@ const PrivacyPolicyPage = () => {
               <dt className="font-bold text-grey05">문의 이메일</dt>
               <dd>
                 <a
-                  className="inline-flex min-h-11 items-center rounded-md font-medium text-brandStrong underline underline-offset-4 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  className="inline-flex min-h-11 items-center rounded-md font-medium text-accentStrong underline underline-offset-4 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                   href={CONTACT_MAILTO}
                 >
                   {CONTACT_EMAIL}

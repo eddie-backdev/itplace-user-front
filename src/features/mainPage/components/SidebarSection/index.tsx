@@ -573,7 +573,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
       aria-label={
         hasInlineBenefitDetail ? '추천 혜택 상세' : `${selectedPlatform?.name ?? '매장'} 상세`
       }
-      className={`${externalDetail ? 'relative' : 'absolute inset-0 z-10'} h-full overflow-hidden bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#6154d9]`}
+      className={`${externalDetail ? 'relative' : 'absolute inset-0 z-10'} h-full overflow-hidden bg-warmSurface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--itplace-color-accent)]`}
     >
       {hasInlineBenefitDetail && benefitDetailIds ? (
         <BenefitDetailCard
@@ -592,16 +592,18 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   ) : null;
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-white max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-warmSurface max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
       <div className="mx-4 mb-4 mt-4 flex min-h-0 flex-1 flex-col max-md:mx-0 max-md:mb-0 max-md:mt-0 max-md:w-full">
         <div
           className={isInlineDetail ? 'hidden' : 'shrink-0'}
           aria-hidden={isInlineDetail}
           inert={isInlineDetail}
         >
-          <div className="mb-3 flex items-center justify-between gap-2 md:px-1">
-            <h2 className="text-lg font-semibold tracking-[-0.03em] text-[#202124]">매장 찾기</h2>
-            <span className="max-w-[150px] truncate rounded-full bg-[#f0edfc] px-3 py-1.5 text-xs font-semibold text-[#6154d9]">
+          <div className="mb-3 flex items-center justify-between gap-2 px-4 md:px-1">
+            <h2 className="text-lg font-semibold tracking-[-0.03em] text-[var(--itplace-color-text)]">
+              매장 찾기
+            </h2>
+            <span className="max-w-[150px] truncate rounded-full bg-[var(--itplace-color-brand-subtle)] px-3 py-1.5 text-xs font-semibold text-[var(--itplace-color-accent)]">
               {currentLocation === '위치 정보 로딩 중...' ? '주변 매장' : currentLocation}
             </span>
           </div>
@@ -630,8 +632,10 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
             </div>
 
             {activeTab === 'nearby' ? (
-              <div className="mb-3 min-w-0">
-                <p className="mb-1 px-1 text-xs font-medium text-[#686b73]">분야</p>
+              <div className="mb-3 min-w-0 px-4">
+                <p className="mb-1 text-xs font-medium text-[var(--itplace-color-text-secondary)]">
+                  분야
+                </p>
                 <CategoryTabsSection
                   categories={categories}
                   selectedCategory={mapSelectedCategory}

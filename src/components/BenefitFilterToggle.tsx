@@ -41,8 +41,8 @@ export default function BenefitFilterToggle({
             }}
             disabled={disabled}
             className={`flex-1 rounded-[8px] ${fontSize} transition-colors ${
-              selected ? 'bg-white text-purple04 shadow-sm' : 'bg-transparent text-grey04'
-            } ${disabled ? 'cursor-not-allowed opacity-45' : 'hover:text-purple04'}`}
+              selected ? 'bg-warmSurface text-accent shadow-sm' : 'bg-transparent text-grey04'
+            } ${disabled ? 'cursor-not-allowed opacity-45' : 'hover:text-accent'}`}
           >
             {option.label}
           </button>

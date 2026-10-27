@@ -23,13 +23,13 @@ const FaqPage = () => {
         <div>
           {faqGroups.map((group) => (
             <section key={group.title} className="border-b border-warmBorder pb-6">
-              <h3 className="pb-3 pt-6 text-[15px] font-semibold text-brandStrong">
+              <h3 className="pb-3 pt-6 text-[15px] font-semibold text-accentStrong">
                 {group.title}
               </h3>
               <div className="divide-y divide-warmBorder">
                 {group.items.map((faq) => (
                   <details key={faq.question} className="group">
-                    <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 font-semibold leading-6 text-ink hover:text-brandStrong focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+                    <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 font-semibold leading-6 text-ink hover:text-accentStrong focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
                       {faq.question}
                       <TbChevronDown
                         className="h-5 w-5 shrink-0 text-grey05 transition-transform group-open:rotate-180"
@@ -55,7 +55,7 @@ const FaqPage = () => {
         </p>
         <Link
           to="/guide"
-          className="mt-4 inline-flex min-h-11 items-center font-semibold text-brandStrong underline underline-offset-4 transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          className="mt-4 inline-flex min-h-11 items-center font-semibold text-accentStrong underline underline-offset-4 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
         >
           혜택 이용 가이드 보기
         </Link>

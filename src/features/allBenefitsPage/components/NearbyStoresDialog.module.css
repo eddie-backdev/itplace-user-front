@@ -10,8 +10,8 @@
   overflow: hidden;
   border: 0;
   border-radius: 16px;
-  background: #fff;
-  color: #1d1d1f;
+  background: var(--itplace-color-surface, #fff);
+  color: var(--itplace-color-text, #202124);
   box-shadow: 0 20px 64px rgba(0, 0, 0, 0.2);
 }
 
@@ -24,7 +24,7 @@
   height: 100%;
   min-height: 0;
   flex-direction: column;
-  background: #f5f5f7;
+  background: var(--itplace-color-surface-subtle, #f5f5f7);
 }
 .header {
   display: flex;
@@ -33,8 +33,8 @@
   justify-content: space-between;
   gap: 16px;
   padding: 10px 18px 10px 22px;
-  border-bottom: 1px solid #e5e5e8;
-  background: #fff;
+  border-bottom: 1px solid var(--itplace-color-border, #e8e9ee);
+  background: var(--itplace-color-surface, #fff);
 }
 .partner {
   display: flex;
@@ -45,7 +45,7 @@
 .partner h2 {
   overflow: hidden;
   margin: 0;
-  color: #1d1d1f;
+  color: var(--itplace-color-text, #202124);
   font-size: 18px;
   font-weight: 650;
   letter-spacing: -0.035em;
@@ -57,12 +57,15 @@
   width: 40px;
   height: 40px;
   flex: 0 0 40px;
+  border-radius: 9px;
+  padding: 3px;
+  background: var(--itplace-color-logo-surface, #fff);
   object-fit: contain;
 }
 .logoFallback {
   border-radius: 0 !important;
   background: transparent !important;
-  color: #1d1d1f !important;
+  color: var(--itplace-color-text, #202124) !important;
   font-size: 10px;
 }
 .closeButton,
@@ -74,10 +77,10 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border: 1px solid #e5e5e8;
+  border: 1px solid var(--itplace-color-border, #e8e9ee);
   border-radius: 10px;
-  background: #fff;
-  color: #1d1d1f;
+  background: var(--itplace-color-surface, #fff);
+  color: var(--itplace-color-text, #202124);
   cursor: pointer;
   font: inherit;
   font-size: 13px;
@@ -90,15 +93,15 @@
 .closeButton:hover,
 .mapActions button:hover,
 .retryButton:hover {
-  border-color: #b8c9dc;
-  background: #f7faff;
+  border-color: var(--itplace-color-border, #e8e9ee);
+  background: var(--itplace-color-surface-hover, #f5f5f7);
 }
 .closeButton:focus-visible,
 .mapActions button:focus-visible,
 .retryButton:focus-visible,
 .storeItem:focus-visible,
 .directionsLink:focus-visible {
-  outline: 2px solid #0066cc;
+  outline: 2px solid var(--itplace-color-accent, #6154d9);
   outline-offset: 2px;
 }
 .content {
@@ -112,7 +115,7 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: #e9edf1;
+  background: var(--itplace-color-surface-subtle, #f5f5f7);
 }
 .mapError {
   display: grid;
@@ -122,23 +125,23 @@
   justify-items: center;
   gap: 12px;
   padding: 24px;
-  color: #6e6e73;
+  color: var(--itplace-color-text-secondary, #686b73);
   font-size: 14px;
 }
 .mapError button {
   min-height: 44px;
   padding: 0 14px;
-  border: 1px solid #0066cc;
+  border: 1px solid var(--itplace-color-brand, #6154d9);
   border-radius: 10px;
-  background: #0066cc;
-  color: #fff;
+  background: var(--itplace-color-brand, #6154d9);
+  color: var(--itplace-color-on-brand, #fff);
   cursor: pointer;
   font: inherit;
   font-size: 13px;
   font-weight: 550;
 }
 .mapError button:focus-visible {
-  outline: 2px solid #0066cc;
+  outline: 2px solid var(--itplace-color-accent, #6154d9);
   outline-offset: 3px;
 }
 .mapActions {
@@ -158,19 +161,19 @@
   pointer-events: auto;
 }
 .mapActions button:last-child {
-  border-color: #0066cc;
-  background: #0066cc;
-  color: #fff;
+  border-color: var(--itplace-color-brand, #6154d9);
+  background: var(--itplace-color-brand, #6154d9);
+  color: var(--itplace-color-on-brand, #fff);
 }
 .mapActions button:last-child:hover {
-  border-color: #0054aa;
-  background: #0054aa;
+  border-color: var(--itplace-color-brand-hover, #5145c5);
+  background: var(--itplace-color-brand, #6154d9);
 }
 .mapActions button:disabled,
 .mapActions button:disabled:hover {
-  border-color: #e5e5e8;
-  background: #f5f5f7;
-  color: #8a8a90;
+  border-color: var(--itplace-color-border, #e8e9ee);
+  background: var(--itplace-color-surface-subtle, #f5f5f7);
+  color: var(--itplace-color-text-muted, #686b73);
   box-shadow: none;
   cursor: default;
 }
@@ -179,8 +182,8 @@
   min-width: 0;
   min-height: 0;
   flex-direction: column;
-  border-left: 1px solid #e5e5e8;
-  background: #fff;
+  border-left: 1px solid var(--itplace-color-border, #e8e9ee);
+  background: var(--itplace-color-surface, #fff);
 }
 .listHeading {
   display: flex;
@@ -189,7 +192,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 0 16px;
-  border-bottom: 1px solid #e5e5e8;
+  border-bottom: 1px solid var(--itplace-color-border, #e8e9ee);
 }
 .listHeading h3 {
   margin: 0;
@@ -199,7 +202,7 @@
 }
 .listHeading span {
   overflow: hidden;
-  color: #6e6e73;
+  color: var(--itplace-color-text-secondary, #686b73);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -207,8 +210,8 @@
 .locationMessage {
   margin: 0;
   padding: 10px 16px;
-  border-bottom: 1px solid #e5e5e8;
-  color: #6e6e73;
+  border-bottom: 1px solid var(--itplace-color-border, #e8e9ee);
+  color: var(--itplace-color-text-secondary, #686b73);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -220,7 +223,7 @@
 }
 .statusMessage {
   padding: 24px 16px;
-  color: #6e6e73;
+  color: var(--itplace-color-text-secondary, #686b73);
   font-size: 13px;
   line-height: 1.55;
 }
@@ -228,20 +231,20 @@
   min-height: 44px;
   margin-top: 12px;
   padding: 0 12px;
-  color: #0066cc;
+  color: var(--itplace-color-accent, #6154d9);
 }
 .storeItem {
   min-height: 88px;
   padding: 0 16px 10px;
-  border-bottom: 1px solid #ededf0;
-  background: #fff;
+  border-bottom: 1px solid var(--itplace-color-border, #e8e9ee);
+  background: var(--itplace-color-surface, #fff);
 }
 .storeItem:hover {
-  background: #f8faff;
+  background: var(--itplace-color-surface-hover, #f5f5f7);
 }
 .storeItemSelected {
-  background: #f1f7ff;
-  box-shadow: inset 3px 0 #0066cc;
+  background: var(--itplace-color-brand-subtle, #f0edfc);
+  box-shadow: inset 3px 0 var(--itplace-color-accent, #6154d9);
 }
 .storeSelect {
   display: flex;
@@ -254,12 +257,12 @@
   padding: 12px 0 4px;
   border: 0;
   background: transparent;
-  color: #1d1d1f;
+  color: var(--itplace-color-text, #202124);
   cursor: pointer;
   text-align: left;
 }
 .storeSelect:focus-visible {
-  outline: 2px solid #0066cc;
+  outline: 2px solid var(--itplace-color-accent, #6154d9);
   outline-offset: 2px;
 }
 .storeName {
@@ -275,7 +278,7 @@
 .storeDistance {
   max-width: 100%;
   overflow: hidden;
-  color: #6e6e73;
+  color: var(--itplace-color-text-secondary, #686b73);
   font-size: 12px;
   line-height: 1.4;
   text-overflow: ellipsis;
@@ -287,7 +290,7 @@
   align-items: center;
   gap: 4px;
   margin-top: 5px;
-  color: #0066cc;
+  color: var(--itplace-color-accent, #6154d9);
   font-size: 12px;
   font-weight: 550;
   text-decoration: none;
@@ -295,8 +298,8 @@
 .note {
   flex: 0 0 auto;
   padding: 12px 16px max(12px, env(safe-area-inset-bottom));
-  border-top: 1px solid #e5e5e8;
-  color: #6e6e73;
+  border-top: 1px solid var(--itplace-color-border, #e8e9ee);
+  color: var(--itplace-color-text-secondary, #686b73);
   font-size: 11px;
   line-height: 1.45;
 }
@@ -329,7 +332,7 @@
     font-size: 12px;
   }
   .listPane {
-    border-top: 1px solid #e5e5e8;
+    border-top: 1px solid var(--itplace-color-border, #e8e9ee);
     border-left: 0;
   }
   .listHeading {
@@ -341,6 +344,7 @@
     padding-inline: 14px;
   }
   .note {
+    font-size: 12px;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 }

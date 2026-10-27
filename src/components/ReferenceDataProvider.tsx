@@ -23,7 +23,7 @@ export default function ReferenceDataProvider({ children, initialData = null }: 
     return () => { cancelled = true; };
   }, [attempt]);
 
-  return <ReferenceDataContext.Provider value={{ data, error, retry }}>{error ? <div role="alert" className="px-4 py-2 text-sm text-red-700">참조 코드 정보를 불러오지 못했습니다. <button type="button" onClick={retry} className="underline">다시 시도</button></div> : null}{children}</ReferenceDataContext.Provider>;
+  return <ReferenceDataContext.Provider value={{ data, error, retry }}>{error ? <div role="alert" className="px-4 py-2 text-sm text-danger">참조 코드 정보를 불러오지 못했습니다. <button type="button" onClick={retry} className="inline-flex min-h-11 items-center px-2 font-semibold text-danger underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">다시 시도</button></div> : null}{children}</ReferenceDataContext.Provider>;
 }
 
 export const useReferenceData = () => {

@@ -28,47 +28,49 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, isSelected, onSelect })
   return (
     <article
       className={`group relative h-[156px] [content-visibility:auto] [contain-intrinsic-size:156px] overflow-hidden border-b ${
-        isSelected ? 'border-[#e8e9ee] bg-[#f7f5ff]' : 'border-[#e8e9ee] bg-white'
+        isSelected
+          ? 'border-[var(--itplace-color-border)] bg-[var(--itplace-color-brand-subtle)]'
+          : 'border-[var(--itplace-color-border)] bg-warmSurface'
       }`}
     >
       <button
         type="button"
         aria-label={`${platform.name} 혜택 상세 보기`}
         aria-expanded={isSelected}
-        className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#6154d9]"
+        className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--itplace-color-accent)]"
         onClick={() => onSelect(platform)}
       />
 
       <div
-        className={`pointer-events-none relative z-10 flex h-full min-h-0 items-start gap-3 px-3 py-3 ${isSelected ? 'shadow-[inset_3px_0_#6154d9]' : ''}`}
+        className={`pointer-events-none relative z-10 flex h-full min-h-0 items-start gap-3 px-3 py-3 ${isSelected ? 'shadow-[inset_3px_0_var(--itplace-color-accent)]' : ''}`}
       >
         <SafeImage
           src={platform.imageUrl}
           alt={`${platform.name} 로고`}
           fallbackLabel={platform.name}
           className="mt-0.5 h-9 w-9 shrink-0 rounded-lg object-contain"
-          fallbackClassName="bg-[#f0edfc] text-[#686b73] text-xs font-semibold"
+          fallbackClassName="bg-[var(--itplace-color-brand-subtle)] text-[var(--itplace-color-text-secondary)] text-xs font-semibold"
           loading="lazy"
         />
 
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-baseline gap-2">
-            <h3 className="min-w-0 flex-1 truncate text-[14px] font-semibold leading-5 text-[#202124]">
+            <h3 className="min-w-0 flex-1 truncate text-[14px] font-semibold leading-5 text-[var(--itplace-color-text)]">
               {platform.name}
             </h3>
-            <span className="shrink-0 text-[12px] font-medium text-[#252525]">
+            <span className="shrink-0 text-[12px] font-medium text-[var(--itplace-color-text)]">
               {formatDistance(platform.distance)}
             </span>
           </div>
 
           <div className="mt-1 min-w-0">
-            <p className="line-clamp-2 text-[13px] font-medium leading-[18px] text-[#202124]">
+            <p className="line-clamp-2 text-[13px] font-medium leading-[18px] text-[var(--itplace-color-text)]">
               {benefitText}
             </p>
           </div>
 
           {(platform.roadAddress || platform.address) && (
-            <p className="mt-0.5 truncate text-[12px] leading-4 text-[#686b73]">
+            <p className="mt-0.5 truncate text-[12px] leading-4 text-[var(--itplace-color-text-secondary)]">
               {platform.roadAddress || platform.address}
             </p>
           )}
@@ -78,8 +80,8 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, isSelected, onSelect })
               const carrierSelectable = isCarrierCode(group.key);
               const carrierClass =
                 platform.carrier === group.key
-                  ? 'border-[#6154d9]/30 bg-[#f0edfc] text-[#6154d9]'
-                  : 'border-[#e8e9ee] bg-white text-[#686b73]';
+                  ? 'border-[var(--itplace-color-accent)]/30 bg-[var(--itplace-color-brand-subtle)] text-[var(--itplace-color-accent)]'
+                  : 'border-[var(--itplace-color-border)] bg-warmSurface text-[var(--itplace-color-text-secondary)]';
 
               if (!carrierSelectable) {
                 return (
@@ -97,7 +99,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ platform, isSelected, onSelect })
                   key={group.key}
                   type="button"
                   onClick={() => onSelect({ ...platform, carrier: group.key })}
-                  className="pointer-events-auto inline-flex h-11 min-h-11 min-w-11 items-center justify-center rounded-full border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+                  className="pointer-events-auto inline-flex h-11 min-h-11 min-w-11 items-center justify-center rounded-full border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
                   aria-label={`${group.label} 혜택으로 ${platform.name} 보기`}
                 >
                   <span

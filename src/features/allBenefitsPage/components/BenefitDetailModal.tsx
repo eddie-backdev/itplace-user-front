@@ -170,7 +170,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
       <div className="relative flex h-full flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto p-4 max-md:p-3">
           {isLoading ? (
-            <div className="flex h-[280px] items-center justify-center text-body-3 text-grey04">
+            <div className="flex h-[280px] items-center justify-center text-body-3 text-[var(--itplace-color-text-secondary)]">
               통신사별 혜택을 불러오는 중...
             </div>
           ) : loadError ? (
@@ -187,8 +187,8 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
             </div>
           ) : detail ? (
             <>
-              <section className="flex min-w-0 items-center gap-4 rounded-[14px] bg-grey01/70 p-4 max-md:gap-3 max-md:p-3">
-                <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-grey02 bg-white p-2 max-md:h-16 max-md:w-16">
+              <section className="flex min-w-0 items-center gap-4 rounded-[14px] bg-[var(--itplace-color-surface-subtle)] p-4 max-md:gap-3 max-md:p-3">
+                <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-[var(--itplace-color-border)] bg-[var(--itplace-color-logo-surface)] p-2 max-md:h-16 max-md:w-16">
                   <SafeImage
                     src={detail.image}
                     alt={`${detail.partnerName} 로고`}
@@ -198,10 +198,10 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                   />
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col justify-center">
-                  <h4 className="line-clamp-2 text-title-5 font-bold leading-snug text-grey07 max-md:text-title-7">
+                  <h4 className="line-clamp-2 text-title-5 font-bold leading-snug text-[var(--itplace-color-text)] max-md:text-title-7">
                     {detail.partnerName}
                   </h4>
-                  <p className="mt-1 text-body-4 font-medium text-grey05">
+                  <p className="mt-1 text-body-4 font-medium text-[var(--itplace-color-text-secondary)]">
                     {getCategoryLabel(detail.category, referenceData) || '카테고리 미분류'}
                   </p>
                 </div>
@@ -211,27 +211,27 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                 {detail.carrierGroups.length === 1 ? (
                   <div className="flex items-end justify-between gap-3">
                     <div>
-                      <p className="text-body-4 font-bold text-grey06">지원 통신사</p>
+                      <p className="text-body-4 font-bold text-[var(--itplace-color-text)]">지원 통신사</p>
                       <div
-                        className="mt-2 inline-flex min-h-8 items-center gap-2 rounded-full border border-purple01 bg-purple01/60 px-3"
+                        className="mt-2 inline-flex min-h-8 items-center gap-2 rounded-full border border-[var(--itplace-color-brand-subtle)] bg-[var(--itplace-color-brand-subtle)] px-3"
                         aria-label={`${getCarrierLabel(detail.carrierGroups[0].carrier)} 지원 혜택`}
                       >
-                        <span className="h-1.5 w-1.5 rounded-full bg-purple04" aria-hidden="true" />
-                        <span className="text-body-4 font-bold text-purple05">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--itplace-color-brand)]" aria-hidden="true" />
+                        <span className="text-body-4 font-bold text-[var(--itplace-color-accent)]">
                           {getCarrierLabel(detail.carrierGroups[0].carrier)}
                         </span>
                       </div>
                     </div>
-                    <p className="pb-1 text-body-4 font-medium text-grey04">
+                    <p className="pb-1 text-body-4 font-medium text-[var(--itplace-color-text-secondary)]">
                       혜택 {detail.carrierGroups[0].benefits.length}개
                     </p>
                   </div>
                 ) : (
                   <>
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-body-4 font-bold text-grey06">지원 통신사</p>
+                      <p className="text-body-4 font-bold text-[var(--itplace-color-text)]">지원 통신사</p>
                       {selectedGroup ? (
-                        <p className="text-body-4 font-medium text-grey04">
+                        <p className="text-body-4 font-medium text-[var(--itplace-color-text-secondary)]">
                           혜택 {selectedGroup.benefits.length}개
                         </p>
                       ) : null}
@@ -250,15 +250,15 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                             role="tab"
                             aria-selected={isSelected}
                             onClick={() => setSelectedCarrier(group.carrier)}
-                            className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-body-4 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 ${
+                            className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-3 text-body-4 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)] ${
                               isSelected
-                                ? 'border-purple02 bg-purple01/70 text-purple05'
-                                : 'border-grey02 bg-white text-grey05 hover:border-purple02 hover:text-purple05'
+                                ? 'border-[var(--itplace-color-accent)] bg-[var(--itplace-color-brand-subtle)] text-[var(--itplace-color-accent)]'
+                                : 'border-[var(--itplace-color-border)] bg-[var(--itplace-color-surface)] text-[var(--itplace-color-text-secondary)] hover:border-[var(--itplace-color-accent)] hover:text-[var(--itplace-color-accent)]'
                             }`}
                           >
                             <span
                               className={`h-1.5 w-1.5 rounded-full ${
-                                isSelected ? 'bg-purple04' : 'bg-grey03'
+                                isSelected ? 'bg-[var(--itplace-color-brand)]' : 'bg-[var(--itplace-color-surface-hover)]'
                               }`}
                               aria-hidden="true"
                             />
@@ -296,11 +296,11 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                   return (
                     <article
                       key={benefit.benefitId}
-                      className="overflow-hidden rounded-[14px] border border-grey02 bg-white p-4 shadow-[0_6px_18px_rgba(16,17,20,0.035)] max-md:p-3"
+                      className="overflow-hidden rounded-[14px] border border-[var(--itplace-color-border)] bg-[var(--itplace-color-surface)] p-4 shadow-[0_6px_18px_rgba(16,17,20,0.035)] max-md:p-3"
                     >
                       <header className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          <h5 className="break-keep text-title-7 font-bold leading-snug text-grey07 max-md:text-title-8">
+                          <h5 className="break-keep text-title-7 font-bold leading-snug text-[var(--itplace-color-text)] max-md:text-title-8">
                             {getCarrierBenefitDisplayName(benefit)}
                           </h5>
                           {getMembershipOptionLabel(benefit) && (
@@ -309,7 +309,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                             </span>
                           )}
                           {getSourceOptionLabel(benefit) && (
-                            <p className="mt-1 text-xs leading-5 text-grey05">
+                            <p className="mt-1 text-xs leading-5 text-[var(--itplace-color-text-secondary)]">
                               원본 선택명: {getSourceOptionLabel(benefit)}
                             </p>
                           )}
@@ -321,7 +321,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                           }
                           disabled={pendingFavoriteId === benefit.benefitId}
                           onClick={() => void toggleFavorite(benefit)}
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-accentRose transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02 disabled:opacity-50"
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--itplace-color-danger)] transition-colors hover:bg-[var(--itplace-color-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)] disabled:opacity-50"
                         >
                           {benefit.isFavorite ? (
                             <TbStarFilled className="h-5 w-5" />
@@ -331,7 +331,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                         </button>
                       </header>
 
-                      <div className="mt-3 border-t border-grey01 pt-3">
+                      <div className="mt-3 border-t border-[var(--itplace-color-border)] pt-3">
                         <BenefitConditions
                           conditions={benefit.conditions}
                           legacyLimit={benefit.benefitLimit}
@@ -359,7 +359,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                             onClick={() =>
                               window.open(benefit.url ?? undefined, '_blank', 'noopener,noreferrer')
                             }
-                            className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[12px] border border-grey02 text-body-4 font-bold text-grey06 transition-colors hover:border-purple02 hover:text-purple05 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple02"
+                            className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[12px] border border-[var(--itplace-color-border)] text-body-4 font-bold text-[var(--itplace-color-text)] transition-colors hover:border-[var(--itplace-color-accent)] hover:text-[var(--itplace-color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]"
                           >
                             통신사 혜택 페이지
                             <TbExternalLink className="h-4 w-4" aria-hidden="true" />
@@ -375,7 +375,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
         </div>
 
         {hasKnownStores(detail?.hasStores) ? (
-          <div className="shrink-0 border-t border-grey01 bg-white px-4 py-3 max-md:px-3">
+          <div className="shrink-0 border-t border-[var(--itplace-color-border)] bg-[var(--itplace-color-surface)] px-4 py-3 max-md:px-3">
             <button
               type="button"
               onClick={() => {
@@ -383,7 +383,7 @@ const BenefitDetailModal = ({ isOpen, partner, onClose }: BenefitDetailModalProp
                 showToast(`${partner.partnerName} 매장을 검색합니다`, 'info');
                 onClose();
               }}
-              className="mx-auto flex h-11 w-full max-w-[240px] items-center justify-center gap-1.5 rounded-[12px] bg-purple04 text-body-3 font-bold text-white max-md:text-body-4"
+              className="mx-auto flex h-11 w-full max-w-[240px] items-center justify-center gap-1.5 rounded-[12px] bg-[var(--itplace-color-brand)] text-body-3 font-bold text-[var(--itplace-color-on-brand)] max-md:text-body-4"
             >
               <TbMapPin className="h-4 w-4" aria-hidden="true" />
               지도에서 매장 찾기

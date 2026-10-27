@@ -21,7 +21,7 @@ export default function BenefitInfoCard({
   onLinkClick,
 }: BenefitInfoCardProps) {
   return (
-    <div className="w-full border-b border-b-1 border-grey02 pb-3 bg-white">
+    <div className="w-full border-b border-b-1 border-grey02 pb-3 bg-warmSurface">
       {/* 상단 이미지 + 타이틀 + 링크 버튼 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex min-w-0 items-center gap-2 ml-1">
@@ -31,7 +31,7 @@ export default function BenefitInfoCard({
             fallbackLabel={title}
             className="h-[46px] w-[46px] flex-shrink-0 object-contain"
           />
-          <span className="min-w-0 break-keep text-title-6 text-black line-clamp-2">{title}</span>
+          <span className="min-w-0 break-keep text-title-6 text-ink line-clamp-2">{title}</span>
         </div>
         {onLinkClick && (
           <button type="button" onClick={onLinkClick} className="text-grey05 hover:text-grey06">

@@ -6,9 +6,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid #e8e9ee;
-  background: #fff;
-  color: #202124;
+  border-bottom: 1px solid var(--itplace-color-border, #e8e9ee);
+  background: var(--itplace-color-surface, #fff);
+  color: var(--itplace-color-text, #202124);
 }
 .card:first-child {
   border-radius: 14px 14px 0 0;
@@ -18,7 +18,7 @@
   border-radius: 0 0 14px 14px;
 }
 .card:hover {
-  background: #fbfaff;
+  background: var(--itplace-color-brand-subtle, #f0edfc);
 }
 .detailLink {
   display: grid;
@@ -40,7 +40,7 @@
 .detailLink:focus-visible,
 .favoriteButton:focus-visible,
 .openDetail:focus-visible {
-  outline: 2px solid #6154d9;
+  outline: 2px solid var(--itplace-color-accent, #6154d9);
   outline-offset: 2px;
   border-radius: 8px;
 }
@@ -51,9 +51,10 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid #f0f0f3;
+  border: 1px solid var(--itplace-color-border, #e8e9ee);
   border-radius: 12px;
   padding: 5px;
+  background: var(--itplace-color-logo-surface, #fff);
 }
 .logoImage {
   width: 100%;
@@ -70,7 +71,7 @@
 .partnerName,
 .headline {
   overflow: hidden;
-  color: #202124;
+  color: var(--itplace-color-text, #202124);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -90,7 +91,7 @@
   min-width: 0;
   margin: 0;
   overflow: hidden;
-  color: #686b73;
+  color: var(--itplace-color-text-secondary, #686b73);
   font-size: 12px;
   line-height: 1.4;
   text-overflow: ellipsis;
@@ -112,7 +113,7 @@
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #686b73;
+  color: var(--itplace-color-text-secondary, #686b73);
   cursor: pointer;
 }
 .favoriteButton svg {
@@ -120,7 +121,7 @@
   height: 20px;
 }
 .favoriteButton[aria-pressed='true'] {
-  color: #6154d9;
+  color: var(--itplace-color-accent, #6154d9);
 }
 .favoriteButton:disabled {
   cursor: progress;
@@ -135,15 +136,15 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
-  border: 1px solid #e8e9ee;
+  border: 1px solid var(--itplace-color-border, #e8e9ee);
   border-radius: 10px;
-  color: #6154d9;
+  color: var(--itplace-color-accent, #6154d9);
   font-size: 12px;
   font-weight: 650;
   text-decoration: none;
 }
 .openDetail:hover {
-  background: #f0edfc;
+  background: var(--itplace-color-brand-subtle, #f0edfc);
 }
 @media (max-width: 760px) {
   .card {
@@ -174,7 +175,7 @@
   .detailLink:focus-visible .brandGroup,
   .detailLink:focus-visible .benefitCopy {
     border-radius: 5px;
-    outline: 2px solid #6154d9;
+    outline: 2px solid var(--itplace-color-accent, #6154d9);
     outline-offset: 2px;
   }
   .benefitCopy {

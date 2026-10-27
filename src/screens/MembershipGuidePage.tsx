@@ -22,7 +22,7 @@ const MembershipGuidePage = () => {
             <a
               key={item.id}
               href={`#${item.id}`}
-              className="inline-flex min-h-11 items-center border-b border-warmBorder px-2 text-sm font-semibold text-grey06 transition-colors hover:border-brand hover:text-brandStrong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              className="inline-flex min-h-11 items-center border-b border-warmBorder px-2 text-sm font-semibold text-grey06 transition-colors hover:border-accent hover:text-accentStrong focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               {item.label}
             </a>
@@ -38,8 +38,8 @@ const MembershipGuidePage = () => {
               <p className="mt-4 max-w-[70ch] leading-7 text-grey06">{step.body}</p>
 
               {step.id === 'before-payment' ? (
-                <div className="mt-5 border-l-2 border-brand pl-5">
-                  <h3 className="font-bold text-brandStrong">계산대에 가기 전 체크리스트</h3>
+                <div className="mt-5 border-l-2 border-accent pl-5">
+                  <h3 className="font-bold text-accentStrong">계산대에 가기 전 체크리스트</h3>
                   <ul className="mt-3 list-disc space-y-2 pl-5 leading-7 text-grey06">
                     {guide.beforePaymentChecks.map((check) => (
                       <li key={check}>{check}</li>
@@ -51,7 +51,7 @@ const MembershipGuidePage = () => {
               {step.id === 'online-offline' ? (
                 <dl className="mt-5 grid gap-5 sm:grid-cols-3">
                   {guide.channelExamples.map((example) => (
-                    <div key={example.title} className="border-l-2 border-brand pl-4">
+                    <div key={example.title} className="border-l-2 border-accent pl-4">
                       <dt className="font-bold text-ink">{example.title}</dt>
                       <dd className="mt-2 text-sm leading-6 text-grey06">{example.body}</dd>
                     </div>
@@ -142,7 +142,7 @@ const MembershipGuidePage = () => {
           </h2>
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {guide.decisionExamples.map((example) => (
-              <article key={example.title} className="min-w-0 break-keep rounded-xl border border-warmBorder bg-white p-5">
+              <article key={example.title} className="min-w-0 break-keep rounded-xl border border-warmBorder bg-warmSurface p-5">
                 <h3 className="text-base font-bold leading-6 text-ink">{example.title}</h3>
                 <p className="mt-3 text-sm leading-6 text-grey06">{example.situation}</p>
                 <p className="mt-3 text-sm leading-6 text-grey06">{example.calculation}</p>
@@ -151,7 +151,7 @@ const MembershipGuidePage = () => {
                   href={example.sourceUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-brandStrong underline underline-offset-4 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-accentStrong underline underline-offset-4 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
                   {example.sourceLabel} 원문 보기
                 </a>
@@ -172,7 +172,7 @@ const MembershipGuidePage = () => {
               <Link
                 key={carrier.code}
                 to={`/membership/${carrier.slug}`}
-                className="inline-flex min-h-11 items-center rounded-md text-sm font-bold text-brandStrong underline underline-offset-4 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+                className="inline-flex min-h-11 items-center rounded-md text-sm font-bold text-accentStrong underline underline-offset-4 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
               >
                 {carrier.name} 상세 해설과 공식 출처
               </Link>
@@ -197,7 +197,7 @@ const MembershipGuidePage = () => {
             </Link>
             <Link
               to="/benefits"
-              className="inline-flex min-h-11 items-center rounded-xl border border-warmBorder bg-white px-5 py-2 font-semibold text-ink hover:bg-warmCanvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+              className="inline-flex min-h-11 items-center rounded-xl border border-warmBorder bg-warmSurface px-5 py-2 font-semibold text-ink hover:bg-warmCanvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
             >
               전체 혜택 보기
             </Link>

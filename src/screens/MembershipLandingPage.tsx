@@ -98,10 +98,10 @@ const MembershipLandingPage = ({
                 key={carrier.code}
                 to={`/membership/${carrier.slug}`}
                 aria-current={isSelected ? 'page' : undefined}
-                className={`min-h-12 border-b-2 px-1 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
+                className={`min-h-12 border-b-2 px-1 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
                   isSelected
-                    ? 'border-brand text-brandStrong'
-                    : 'border-transparent text-ink hover:border-brand/40'
+                    ? 'border-accent text-accentStrong'
+                    : 'border-transparent text-ink hover:border-accent/40'
                 }`}
               >
                 <span className="block text-[16px] font-semibold">{carrier.name}</span>
@@ -116,7 +116,7 @@ const MembershipLandingPage = ({
         <section>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="text-[14px] font-semibold text-brandStrong">인기 제휴처</p>
+              <p className="text-[14px] font-semibold text-accentStrong">인기 제휴처</p>
               <h2 className="mt-1 text-xl font-semibold tracking-[-0.02em] text-ink sm:text-[22px]">
                 {selectedCarrier
                   ? `${selectedCarrier.name}에서 많이 찾는 곳`
@@ -125,7 +125,7 @@ const MembershipLandingPage = ({
             </div>
             <Link
               to={`/benefits${benefitQuery}`}
-              className="inline-flex min-h-11 items-center font-semibold text-brandStrong hover:text-brand"
+              className="inline-flex min-h-11 items-center font-semibold text-accentStrong hover:text-accent"
             >
               전체 보기
             </Link>
@@ -139,7 +139,7 @@ const MembershipLandingPage = ({
               {Array.from({ length: 4 }, (_, index) => (
                 <div
                   key={index}
-                  className="h-48 animate-pulse rounded-[20px] border border-warmBorder bg-white motion-reduce:animate-none"
+                  className="h-48 animate-pulse rounded-[20px] border border-warmBorder bg-warmSurface motion-reduce:animate-none"
                 />
               ))}
             </div>
@@ -149,7 +149,7 @@ const MembershipLandingPage = ({
             <button
               type="button"
               onClick={() => void loadPartners()}
-              className="surface-card mt-5 flex min-h-12 w-full items-center justify-center gap-2 px-5 py-4 font-semibold text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              className="surface-card mt-5 flex min-h-12 w-full items-center justify-center gap-2 px-5 py-4 font-semibold text-accentStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
             >
               <TbRefresh className="h-5 w-5" aria-hidden="true" />
               제휴처를 불러오지 못했어요. 다시 시도
@@ -188,12 +188,12 @@ const MembershipLandingPage = ({
                 className={selectedCarrier ? 'contents' : 'border-t border-warmBorder pt-4'}
               >
                 {!selectedCarrier ? (
-                  <h3 className="text-base font-semibold text-brandStrong">{carrier.name}</h3>
+                  <h3 className="text-base font-semibold text-accentStrong">{carrier.name}</h3>
                 ) : null}
                 {carrier.learningPoints.map((point) => (
                   <div
                     key={point.title}
-                    className={selectedCarrier ? 'border-l-2 border-brand pl-5' : 'mt-4'}
+                    className={selectedCarrier ? 'border-l-2 border-accent pl-5' : 'mt-4'}
                   >
                     {selectedCarrier ? (
                       <h3 className="font-semibold leading-6 text-ink">{point.title}</h3>
@@ -206,7 +206,7 @@ const MembershipLandingPage = ({
                 {!selectedCarrier ? (
                   <Link
                     to={`/membership/${carrier.slug}`}
-                    className="mt-4 inline-flex min-h-11 items-center rounded-md font-semibold text-brandStrong underline underline-offset-4 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+                    className="mt-4 inline-flex min-h-11 items-center rounded-md font-semibold text-accentStrong underline underline-offset-4 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
                   >
                     {carrier.name} 조건과 공식 출처 보기
                   </Link>
@@ -230,7 +230,7 @@ const MembershipLandingPage = ({
                     href={source.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex min-h-11 items-center gap-1 rounded-md font-bold text-brandStrong underline underline-offset-4 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-md font-bold text-accentStrong underline underline-offset-4 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
                   >
                     {source.label}
                     <TbExternalLink className="h-4 w-4" aria-hidden="true" />
@@ -243,7 +243,7 @@ const MembershipLandingPage = ({
 
         <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="border-t border-warmBorder py-6">
-            <p className="text-[14px] font-semibold text-brandStrong">
+            <p className="text-[14px] font-semibold text-accentStrong">
               이 페이지에서 확인할 수 있어요
             </p>
             <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-ink sm:text-[22px]">
@@ -269,7 +269,7 @@ const MembershipLandingPage = ({
             <div className="mt-5 grid gap-3">
               <Link
                 to={`/benefits${benefitQuery}`}
-                className="flex min-h-12 items-center justify-between border-y border-warmBorder py-3 font-semibold text-brandStrong transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="flex min-h-12 items-center justify-between border-y border-warmBorder py-3 font-semibold text-accentStrong transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
               >
                 <span className="flex items-center gap-2">
                   <TbSearch className="h-5 w-5" aria-hidden="true" />
@@ -279,7 +279,7 @@ const MembershipLandingPage = ({
               </Link>
               <Link
                 to="/map"
-                className="flex min-h-12 items-center justify-between border-b border-warmBorder py-3 font-semibold text-ink transition-colors hover:border-brand/40 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="flex min-h-12 items-center justify-between border-b border-warmBorder py-3 font-semibold text-ink transition-colors hover:border-accent/40 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
               >
                 <span className="flex items-center gap-2">
                   <TbMapPin className="h-5 w-5" aria-hidden="true" />
@@ -298,7 +298,7 @@ const MembershipLandingPage = ({
           </p>
           <Link
             to="/guide"
-            className="mt-4 inline-flex min-h-11 items-center font-semibold text-brandStrong underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            className="mt-4 inline-flex min-h-11 items-center font-semibold text-accentStrong underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             적용 조건과 이용 실패 사례 확인
           </Link>

@@ -122,6 +122,9 @@ const QuestionRecommendationChatRoom: React.FC<Props> = ({
 
   React.useEffect(() => {
     safeWrite(storageKey, messages);
+    if (messages.length === 0 && previewPartners.length === 0 && !streamStage && !isLoading && !errorText) {
+      return;
+    }
     endRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   }, [messages, previewPartners, streamStage, isLoading, errorText, storageKey]);
 

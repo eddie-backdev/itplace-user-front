@@ -52,7 +52,7 @@ export default function BenefitCardList({
         return (
           <article
             key={item.benefitId}
-            className={`grid min-w-0 grid-cols-[minmax(180px,1.1fr)_minmax(0,1.5fr)_100px_auto_auto] items-center gap-5 py-5 transition-colors max-xl:grid-cols-[minmax(160px,1fr)_minmax(0,1.4fr)_80px_auto_auto] max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-x-3 max-md:gap-y-3 ${isActive ? 'bg-[#faf9ff]' : ''}`}
+            className={`grid min-w-0 grid-cols-[minmax(180px,1.1fr)_minmax(0,1.5fr)_100px_auto_auto] items-center gap-5 py-5 transition-colors max-xl:grid-cols-[minmax(160px,1fr)_minmax(0,1.4fr)_80px_auto_auto] max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-x-3 max-md:gap-y-3 ${isActive ? 'bg-brandSoft' : ''}`}
           >
             <div className="flex min-w-0 items-center gap-3">
               {isEditing ? (
@@ -68,14 +68,14 @@ export default function BenefitCardList({
                         : selectedItems.filter((id) => id !== item.benefitId)
                     )
                   }
-                  className="h-5 w-5 shrink-0 accent-[#6154d9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+                  className="h-5 w-5 shrink-0 accent-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 />
               ) : null}
               <SafeImage
                 src={item.partnerImage}
                 alt={`${item.partnerName || item.benefitName} 로고`}
                 fallbackLabel={item.partnerName || item.benefitName}
-                className="h-11 w-11 shrink-0 rounded-lg border border-warmBorder bg-white p-1 object-contain"
+                className="h-11 w-11 shrink-0 rounded-lg border border-warmBorder bg-[var(--itplace-color-logo-surface)] p-1 object-contain"
               />
               <button
                 type="button"
@@ -83,7 +83,7 @@ export default function BenefitCardList({
                   setSelectedId(item.benefitId);
                   onOpenDetails(item.benefitId);
                 }}
-                className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+                className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <span className="block truncate text-sm font-semibold text-ink">
                   {item.partnerName || item.benefitName}
@@ -120,7 +120,7 @@ export default function BenefitCardList({
                 onClick={() => onRequestDelete(item.benefitId)}
                 aria-label={`${item.partnerName || item.benefitName} 관심 혜택 해제`}
                 title="관심 혜택 해제"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[#6154d9] hover:bg-[#f0edfc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] max-md:col-start-2 max-md:row-start-1"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-accent hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent max-md:col-start-2 max-md:row-start-1"
               >
                 <TbBookmark size={19} aria-hidden="true" />
               </button>
@@ -132,7 +132,7 @@ export default function BenefitCardList({
                 setSelectedId(item.benefitId);
                 onOpenDetails(item.benefitId);
               }}
-              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-3 text-sm font-semibold text-brandStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand max-md:col-span-2 max-md:w-full"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-warmBorder px-3 text-sm font-semibold text-accentStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent max-md:col-span-2 max-md:w-full"
             >
               자세히
             </button>

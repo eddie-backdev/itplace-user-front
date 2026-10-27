@@ -11,7 +11,7 @@ const AuthFooter = ({ leftText, rightText, onRightClick }: Props) => {
       <button
         type="button"
         onClick={onRightClick}
-        className="min-h-11 rounded-sm bg-transparent px-1 text-brand hover:text-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        className="min-h-11 rounded-sm bg-transparent px-1 text-accent hover:text-accentStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         {rightText}
       </button>

@@ -1,8 +1,8 @@
 .signupForm {
-  --signup-field: #f6f7f9;
-  --signup-border: #eceef2;
-  --signup-iris: #6154d9;
-  --signup-ink: #34343b;
+  --signup-field: var(--itplace-color-surface-subtle);
+  --signup-border: var(--itplace-color-border);
+  --signup-iris: var(--itplace-color-brand);
+  --signup-ink: var(--itplace-color-ink);
   --signup-control-radius: 18px;
   --signup-choice-radius: 14px;
   width: 100%;
@@ -10,6 +10,7 @@
 
 .signupForm :global(input:not([type='radio'])) {
   height: 52px;
+  font-size: 16px;
   border-color: var(--signup-border);
   border-radius: var(--signup-control-radius);
   background: var(--signup-field);
@@ -22,19 +23,19 @@
 }
 
 .signupForm :global(input:not([type='radio']):hover:not(:focus):not(:disabled)) {
-  border-color: #d7d4ee;
-  background: #fff;
+  border-color: var(--itplace-color-border);
+  background: var(--itplace-color-surface);
 }
 
 .signupForm :global(input:not([type='radio']):focus) {
   border-color: var(--signup-iris);
-  background: #fff;
+  background: var(--itplace-color-surface);
   box-shadow: 0 0 0 3px rgb(97 84 217 / 12%);
   outline: none;
 }
 
 .signupForm :global(input:not([type='radio']):disabled) {
-  background: #f1f2f5;
+  background: var(--itplace-color-surface-subtle);
 }
 
 .signupForm :global(label),
@@ -47,13 +48,13 @@
   height: 44px;
   min-width: 68px;
   border-radius: var(--signup-choice-radius);
-  background: #efedfc;
-  color: var(--signup-iris);
+  background: var(--itplace-color-brand-subtle);
+  color: var(--itplace-color-accent);
 }
 
 .signupForm :global(.signupEmailAction:disabled) {
-  background: #f1f2f5;
-  color: #8b8d96;
+  background: var(--itplace-color-surface-subtle);
+  color: var(--itplace-color-muted);
 }
 
 .signupForm :global(.signupPasswordToggle) {
@@ -75,8 +76,8 @@
 }
 
 .signupForm :global(.signupCta:disabled) {
-  background: #e9e6fa;
-  color: #77718f;
+  background: var(--itplace-color-brand-subtle);
+  color: var(--itplace-color-accent);
 }
 
 .fieldStack {
@@ -121,18 +122,18 @@
 
 .dateButton:focus-visible {
   border-color: var(--signup-iris);
-  background: #fff;
+  background: var(--itplace-color-surface);
   box-shadow: 0 0 0 3px rgb(97 84 217 / 12%);
   outline: none;
 }
 
 .dateButton:hover:not(:focus-visible) {
-  border-color: #d7d4ee;
-  background: #fff;
+  border-color: var(--itplace-color-border);
+  background: var(--itplace-color-surface);
 }
 
 .dateButtonPlaceholder {
-  color: #686b73;
+  color: var(--itplace-color-text-secondary);
 }
 .dateButtonValue {
   color: var(--signup-ink);
@@ -140,7 +141,7 @@
 .dateIcon {
   width: 18px;
   height: 18px;
-  color: #777985;
+  color: var(--itplace-color-text-secondary);
 }
 
 .segmentGroup {
@@ -148,7 +149,7 @@
   min-height: 52px;
   gap: 4px;
   border-radius: var(--signup-control-radius);
-  background: #f1f2f5;
+  background: var(--itplace-color-surface-subtle);
   padding: 4px;
 }
 
@@ -166,7 +167,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--signup-choice-radius);
-  color: #62636c;
+  color: var(--itplace-color-text-secondary);
   font-size: 15px;
   font-weight: 500;
   transition:
@@ -217,15 +218,15 @@
 }
 
 .segment:not([data-carrier]):has(:checked) {
-  background: #efedfc;
+  background: var(--itplace-color-brand-subtle);
   box-shadow: none;
-  color: var(--signup-iris);
+  color: var(--itplace-color-accent);
   font-weight: 600;
 }
 
 .segment:not([data-carrier], :has(:checked)):hover {
-  background: #f8f8fa;
-  color: #4e505a;
+  background: var(--itplace-color-surface-subtle);
+  color: var(--itplace-color-text-secondary);
 }
 
 .segment:has(input:focus-visible) {

@@ -90,7 +90,7 @@ const PersonalizedRecommendationList: React.FC<PersonalizedRecommendationListPro
 
   const getBadgeClass = (rank: number) => {
     const base =
-      'ml-2 px-6 py-1 rounded-full text-body-4 text-black shimmer-gradient max-md:px-4 max-md:text-body-5 max-sm:px-3 max-sm:text-body-6';
+      'ml-2 px-6 py-1 rounded-full text-body-4 text-[#000000] shimmer-gradient max-md:px-4 max-md:text-body-5 max-sm:px-3 max-sm:text-body-6';
     switch (rank) {
       case 1:
         return `${base} badge-gold`;
@@ -166,19 +166,19 @@ const PersonalizedRecommendationList: React.FC<PersonalizedRecommendationListPro
         .badge-bronze {
           background-image: linear-gradient(
             135deg,
-            #a7623d 0%,
+            #aa6640 0%,
             #c17a47 10%,
             #eab088 20%,
             #f5c6a0 25%,
             #eab088 30%,
             #c17a47 40%,
-            #a7623d 50%,
+            #aa6640 50%,
             #c17a47 60%,
             #eab088 70%,
             #f5c6a0 75%,
             #eab088 80%,
             #c17a47 90%,
-            #a7623d 100%
+            #aa6640 100%
           );
         }
 
@@ -244,7 +244,7 @@ const PersonalizedRecommendationList: React.FC<PersonalizedRecommendationListPro
             {/* 웹에서는 채팅방이 열려있을 때 질문하기 버튼 숨기기 */}
             {!(isChatOpen && !isMobile && !isTablet) && (
               <button
-                className="w-[328px] h-[48px] bg-purple04 text-white rounded-[10px] px-4 flex items-center justify-center cursor-pointer font-bold shadow hover:bg-purple03 transition-colors mb-2 max-md:w-full max-md:h-[64px] max-md:px-3 max-sm:h-[35px] max-sm:px-2"
+                className="w-[328px] h-[48px] bg-purple04 text-[var(--itplace-color-on-brand)] rounded-[10px] px-4 flex items-center justify-center cursor-pointer font-bold shadow hover:bg-purple03 transition-colors mb-2 max-md:w-full max-md:h-[64px] max-md:px-3 max-sm:h-[35px] max-sm:px-2"
                 onClick={handleChatOpen}
               >
                 질문형 AI 추천 열기
@@ -273,7 +273,7 @@ const PersonalizedRecommendationList: React.FC<PersonalizedRecommendationListPro
                   className="flex h-[60px] w-[330px] items-center overflow-x-hidden rounded-[10px] bg-grey01 px-4 text-left transition-colors hover:bg-purple01 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand max-md:h-[64px] max-md:w-auto max-md:px-3 max-sm:h-[64px] max-sm:px-2"
                 >
                   {/* 왼쪽 이미지 */}
-                  <div className="w-[50px] h-[50px] bg-white rounded-[10px] overflow-hidden flex-shrink-0 mr-6 max-md:w-[40px] max-md:h-[40px] max-md:mr-4 max-sm:w-[35px] max-sm:h-[35px] max-sm:mr-3">
+                  <div className="w-[50px] h-[50px] bg-warmSurface rounded-[10px] overflow-hidden flex-shrink-0 mr-6 max-md:w-[40px] max-md:h-[40px] max-md:mr-4 max-sm:w-[35px] max-sm:h-[35px] max-sm:mr-3">
                     <SafeImage
                       src={store.imgUrl || 'images/main/RecommendDefault.webp'}
                       alt={`${store.partnerName} 로고`}

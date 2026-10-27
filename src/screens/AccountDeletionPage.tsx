@@ -48,7 +48,7 @@ const AccountDeletionPage = () => {
             <div className="mt-4 border-t border-warmBorder pt-3">
               <p className="text-sm font-bold text-grey05">계정 삭제 요청 이메일</p>
               <a
-                className="mt-1 inline-flex min-h-11 items-center rounded-md font-medium text-brandStrong underline underline-offset-4 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                className="mt-1 inline-flex min-h-11 items-center rounded-md font-medium text-accentStrong underline underline-offset-4 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 href={CONTACT_MAILTO}
               >
                 {CONTACT_EMAIL}

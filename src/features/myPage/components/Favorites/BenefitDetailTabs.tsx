@@ -134,7 +134,7 @@ export default function BenefitDetailTabs({
         <button
           type="button"
           onClick={() => setRetryCount((count) => count + 1)}
-          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-brand px-4 text-sm font-semibold text-brandStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-accent px-4 text-sm font-semibold text-accentStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           다시 시도
         </button>
@@ -201,7 +201,7 @@ export default function BenefitDetailTabs({
           src={displayImage}
           alt={`${displayName} 로고`}
           fallbackLabel={displayName}
-          className="h-11 w-11 shrink-0 rounded-lg border border-warmBorder bg-white object-contain p-1"
+          className="h-11 w-11 shrink-0 rounded-lg border border-warmBorder bg-[var(--itplace-color-logo-surface)] object-contain p-1"
         />
         <p className="min-w-0 break-words text-base font-semibold text-ink">{displayName}</p>
       </div>
@@ -222,10 +222,10 @@ export default function BenefitDetailTabs({
                 setSelectedCarrier(group.carrier);
                 setSelectedGrade(null);
               }}
-              className={`inline-flex min-h-11 items-center justify-center rounded-lg border px-3 text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+              className={`inline-flex min-h-11 items-center justify-center rounded-lg border px-3 text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 selectedGroup?.carrier === group.carrier
-                  ? 'border-brand bg-brandSoft text-brandStrong'
-                  : 'border-warmBorder bg-white text-grey05 hover:bg-warmCanvas'
+                  ? 'border-accent bg-brandSoft text-accentStrong'
+                  : 'border-warmBorder bg-warmSurface text-grey05 hover:bg-warmCanvas'
               }`}
             >
               {carrierLabel(group.carrier)}
@@ -244,10 +244,10 @@ export default function BenefitDetailTabs({
         </p>
       ) : null}
       {selectedGroup ? (
-        <div className="mt-4 rounded-xl border border-warmBorder bg-white p-4">
+        <div className="mt-4 rounded-xl border border-warmBorder bg-warmSurface p-4">
           {allGradeCondition ? (
             <div>
-              <p className="inline-flex min-h-8 items-center rounded-md bg-brandSoft px-2.5 text-sm font-semibold text-brandStrong">
+              <p className="inline-flex min-h-8 items-center rounded-md bg-brandSoft px-2.5 text-sm font-semibold text-accentStrong">
                 모든 등급
               </p>
               <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-grey06">
@@ -270,10 +270,10 @@ export default function BenefitDetailTabs({
                     type="button"
                     aria-pressed={activeGrade === grade}
                     onClick={() => setSelectedGrade(grade)}
-                    className={`inline-flex min-h-11 items-center justify-center rounded-lg border px-3 text-base font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+                    className={`inline-flex min-h-11 items-center justify-center rounded-lg border px-3 text-base font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                       activeGrade === grade
-                        ? 'border-brand bg-brandSoft text-brandStrong'
-                        : 'border-warmBorder bg-white text-grey05 hover:bg-warmCanvas'
+                        ? 'border-accent bg-brandSoft text-accentStrong'
+                        : 'border-warmBorder bg-warmSurface text-grey05 hover:bg-warmCanvas'
                     }`}
                   >
                     {getMembershipGradeLabel(grade, referenceData)}
@@ -314,7 +314,7 @@ export default function BenefitDetailTabs({
       )}
       <Link
         href={fullDetailHref}
-        className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-brand px-4 text-sm font-semibold text-brandStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-accent px-4 text-sm font-semibold text-accentStrong hover:bg-brandSoft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         전체 혜택 상세 보기
       </Link>

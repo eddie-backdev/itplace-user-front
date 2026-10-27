@@ -38,7 +38,7 @@ export default function SafeImage({
     <span
       role="img"
       aria-label={alt}
-      className={`inline-flex items-center justify-center rounded bg-grey01 text-purple04 font-bold ${className} ${fallbackClassName}`}
+      className={`inline-flex items-center justify-center rounded bg-grey01 text-accent font-bold ${className} ${fallbackClassName}`}
     >
       {getImageFallbackText(fallbackLabel ?? alt)}
     </span>

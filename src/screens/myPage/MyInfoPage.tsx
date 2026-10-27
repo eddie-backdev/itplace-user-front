@@ -100,10 +100,10 @@ export default function MyInfoPage() {
 
   const pageHeader = (
     <header>
-      <h1 className="text-[32px] font-bold leading-tight tracking-[-0.035em] text-[#202124] max-md:text-2xl">
+      <h1 className="text-[32px] font-bold leading-tight tracking-[-0.035em] text-ink max-md:text-2xl">
         {section === 'membership' ? '멤버십' : section === 'settings' ? '설정' : '프로필'}
       </h1>
-      <p className="mt-2 text-sm leading-6 text-[#686b73]">
+      <p className="mt-2 text-sm leading-6 text-grey05">
         {section === 'membership'
           ? '혜택을 볼 통신사와 멤버십 등급을 설정할 수 있어요.'
           : section === 'settings'
@@ -277,12 +277,12 @@ export default function MyInfoPage() {
       {section === 'membership' ? (
         <section
           aria-labelledby="membership-profile-heading"
-          className="rounded-2xl border border-[#e8e9ee] bg-white p-6 max-md:p-5"
+          className="rounded-2xl border border-warmBorder bg-warmSurface p-6 max-md:p-5"
         >
-          <h2 id="membership-profile-heading" className="text-xl font-bold text-[#202124]">
+          <h2 id="membership-profile-heading" className="text-xl font-bold text-ink">
             혜택을 찾을 멤버십 선택
           </h2>
-          <p className="mt-2 text-sm leading-6 text-[#686b73]">
+          <p className="mt-2 text-sm leading-6 text-grey05">
             선택한 통신사와 등급을 혜택 목록에 적용합니다. 이 정보는 통신사 실인증이 아닙니다.
           </p>
           <div className="mt-6">
@@ -293,7 +293,7 @@ export default function MyInfoPage() {
               onCarrierChange={setDraftCarrier}
               onGradeChange={setDraftGrade}
               className="gap-5"
-              selectClassName="!min-h-12 rounded-xl focus:border-[#6154d9] focus:ring-[#6154d9]/20"
+              selectClassName="!min-h-12 rounded-xl focus:border-accent focus:ring-accent/20"
             />
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -301,7 +301,7 @@ export default function MyInfoPage() {
               type="button"
               disabled={!draftCarrier || !draftGrade || profileSaving}
               onClick={() => void handleMembershipProfileSave(draftCarrier, draftGrade)}
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#6154d9] px-5 text-sm font-bold text-white transition-colors hover:bg-[#5144c7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-bold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {profileSaving ? '저장 중…' : '선택 적용'}
             </button>
@@ -311,11 +311,11 @@ export default function MyInfoPage() {
                 setDraftCarrier(user.carrier ?? '');
                 setDraftGrade(user.membershipGradeCode ?? user.membershipGrade ?? '');
               }}
-              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e8e9ee] px-5 text-sm font-semibold text-[#34343b] hover:bg-[#f7f8fa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-warmBorder px-5 text-sm font-semibold text-grey06 hover:bg-warmCanvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               취소
             </button>
-            <p className="ml-auto text-sm text-[#686b73] max-md:w-full">
+            <p className="ml-auto text-sm text-grey05 max-md:w-full">
               현재:{' '}
               {user.carrier === 'MVNO'
                 ? getCarrierLabel(user.carrier)

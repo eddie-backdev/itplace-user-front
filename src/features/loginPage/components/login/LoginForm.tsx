@@ -77,7 +77,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
   return (
     <div className="mx-auto w-full max-w-[400px]">
       <div className="mb-7 text-left">
-        <h1 className="text-[30px] font-bold leading-9 tracking-[-0.04em] text-[#202124] max-sm:text-[28px]">
+        <h1 className="text-[30px] font-bold leading-9 tracking-[-0.04em] text-ink max-sm:text-[28px]">
           로그인
         </h1>
         <p className="mt-2 max-w-[34ch] text-body-3 leading-6 text-grey05">
@@ -108,7 +108,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
               setLoginError('');
             }}
             className="h-[52px] max-w-none"
-            bgColor="bg-white"
+            bgColor="bg-warmSurface"
           />
         </div>
 
@@ -135,7 +135,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
               }}
               disableFocusEffect
               className="h-[52px] max-w-none pr-16"
-              bgColor="bg-white"
+              bgColor="bg-warmSurface"
             />
             <button
               type="button"
@@ -143,7 +143,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
               onClick={() => setShowPassword((visible) => !visible)}
               aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
               aria-pressed={showPassword}
-              className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg px-2 text-body-4 font-medium text-grey05 hover:text-grey07 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg px-2 text-body-4 font-medium text-grey05 hover:text-grey07 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               {showPassword ? '숨기기' : '표시'}
             </button>
@@ -158,26 +158,26 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
 
         <nav
           aria-label="계정 도움말"
-          className="mb-3 flex min-h-11 flex-wrap items-center justify-center gap-x-4 text-[13px] text-[#686b73]"
+          className="mb-3 flex min-h-11 flex-wrap items-center justify-center gap-x-4 text-[13px] text-grey05"
         >
           <button
             type="button"
             onClick={onGoToFindId}
-            className="min-h-11 rounded-sm px-1 hover:text-[#202124] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+            className="min-h-11 rounded-sm px-1 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             아이디 찾기
           </button>
           <button
             type="button"
             onClick={onGoToFindPassword}
-            className="min-h-11 rounded-sm px-1 hover:text-[#202124] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+            className="min-h-11 rounded-sm px-1 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             비밀번호 찾기
           </button>
           <button
             type="button"
             onClick={onGoToSignUp}
-            className="min-h-11 rounded-sm px-1 font-semibold text-[#6154d9] hover:text-[#5144c7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9]"
+            className="min-h-11 rounded-sm px-1 font-semibold text-accent hover:text-accentStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             회원가입
           </button>
@@ -186,7 +186,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
         <button
           type="submit"
           disabled={isSubmitting}
-          className="h-12 w-full rounded-xl bg-[#6154d9] text-body-2-bold text-white transition-colors hover:bg-[#5144c7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6154d9] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+          className="h-12 w-full rounded-xl bg-brand text-body-2-bold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
         >
           {isSubmitting ? '로그인 중…' : '로그인'}
         </button>
