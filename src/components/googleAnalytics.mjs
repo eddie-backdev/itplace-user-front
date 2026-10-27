@@ -37,18 +37,21 @@ export function createGoogleAnalyticsTracker(measurementId, send) {
     if (cleanPathname === lastPathname) return false;
     lastPathname = cleanPathname;
 
+    send('set', pageContext);
     if (!initialized) {
       send('js', new Date());
+      send('config', measurementId, {
+        send_page_view: false,
+        allow_google_signals: false,
+        allow_ad_personalization_signals: false,
+      });
       initialized = true;
     }
-    send('config', measurementId, {
-      ...pageContext,
-      send_page_view: false,
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false,
-    });
     if (!isOAuthCallback(cleanPathname)) {
-      send('event', 'page_view', { page_location: pageContext.page_location });
+      send('event', 'page_view', {
+        page_location: pageContext.page_location,
+        page_referrer: pageContext.page_referrer,
+      });
     }
     return true;
   };
