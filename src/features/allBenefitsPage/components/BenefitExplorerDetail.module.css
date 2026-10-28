@@ -129,6 +129,12 @@
   color: var(--itplace-color-text, #202124);
 }
 
+:global(html[data-theme='dark']) .carrierButtonActive {
+  border-color: rgb(var(--itplace-rgb-brand-border, 101 84 143));
+  background: var(--itplace-color-brand-subtle, #302847);
+  color: var(--itplace-color-accent, #c0b3ff);
+}
+
 .benefit {
   min-width: 0;
   padding: 18px 0 22px;

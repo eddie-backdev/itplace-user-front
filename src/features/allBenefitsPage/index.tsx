@@ -487,15 +487,15 @@ export default function AllBenefitsLayout({
                 </select>
               </label>
               <label className={styles.selectFilter}>
-                <span className={styles.selectLabel}>분야</span>
+                <span className={styles.selectLabel}>카테고리</span>
                 <select
                   value={selectedCategory === '전체' ? '' : selectedCategory}
-                  aria-label="혜택 분야 필터"
+                  aria-label="혜택 카테고리 필터"
                   onChange={(event) =>
                     updateQuery({ category: event.target.value || null, page: null })
                   }
                 >
-                  <option value="">모든 분야</option>
+                  <option value="">모든 카테고리</option>
                   {toCategoryOptions(referenceData).filter((category) => category.id !== '전체').map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}

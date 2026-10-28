@@ -47,7 +47,7 @@ const toastStyles: Record<'success' | 'error' | 'info', ToastOptions> = {
   success: {
     style: {
       ...commonStyle,
-      backgroundColor: 'rgba(20, 158, 97, 0.94)',
+      backgroundColor: 'var(--itplace-color-toast-success)',
       color: '#FFFFFF',
     },
   },

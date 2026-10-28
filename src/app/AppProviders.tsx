@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import type { ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { setupInterceptors } from '@/apis/interceptorSetup';
 import ToastProvider from '@/components/ToastProvider';
@@ -15,6 +15,10 @@ import { clearQuestionRecommendationChatStorage } from '@/features/questionRecom
 import { useClientReady } from '@/hooks/useClientReady';
 import ReferenceDataProvider from '@/components/ReferenceDataProvider';
 import type { ReferenceData } from '@/utils/referenceData';
+import {
+  applyCurrentTheme,
+  subscribeToThemeChanges,
+} from '@/utils/desktopTheme';
 
 // Descendant mount effects can issue API requests immediately. Configure the
 // shared Axios instance before any of those descendants render.
@@ -75,6 +79,12 @@ export default function AppProviders({
   children: ReactNode;
   initialReferenceData: ReferenceData | null;
 }) {
+  useLayoutEffect(() => {
+    // The inline head script prevents first-paint flash; reapply after dev Strict Mode remounts <html>.
+    applyCurrentTheme();
+    return subscribeToThemeChanges();
+  }, []);
+
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';

@@ -552,6 +552,14 @@
     width: 100%;
   }
 }
+@media (max-width: 480px) {
+  .selectFilters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .selectFilter:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
 @media (max-width: 420px) {
   .content {
     padding-inline: 12px;

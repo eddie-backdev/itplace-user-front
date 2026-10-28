@@ -7,6 +7,7 @@ import MobileAppTabBar from '@/components/MobileAppTabBar';
 import PageScrollbarLayout from '@/components/PageScrollbarLayout';
 import ScrollToTop from '@/components/ScrollToTop';
 import SiteFooter from '@/components/SiteFooter';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const hasMobileTabs = (pathname: string) =>
   pathname === '/' ||
@@ -26,6 +27,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
       <PageScrollbarLayout />
       <ScrollToTop />
       <Header />
+      <ThemeToggle />
       <main
         id="site-content"
         tabIndex={-1}

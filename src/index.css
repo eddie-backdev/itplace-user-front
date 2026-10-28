@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --itplace-rgb-surface: 255 255 255;
   --itplace-rgb-canvas: 247 248 250;
   --itplace-rgb-hover: 240 241 244;
@@ -43,6 +43,7 @@
   --itplace-color-canvas: var(--itplace-color-surface-subtle);
   --itplace-color-danger: rgb(var(--itplace-rgb-danger));
   --itplace-color-success: rgb(var(--itplace-rgb-success));
+  --itplace-color-toast-success: #167a4c;
   --itplace-color-warning: rgb(var(--itplace-rgb-warning));
   --itplace-color-on-brand: #fff;
   --itplace-color-logo-surface: #fff;
@@ -63,28 +64,28 @@
   --itplace-layer-toast: 50000;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --itplace-rgb-surface: 27 28 36;
-    --itplace-rgb-canvas: 18 19 24;
-    --itplace-rgb-hover: 38 40 51;
-    --itplace-rgb-text: 240 241 246;
-    --itplace-rgb-muted: 180 183 197;
-    --itplace-rgb-secondary: 207 209 220;
-    --itplace-rgb-border: 56 59 73;
-    --itplace-rgb-control-border: 114 120 138;
-    --itplace-rgb-accent: 184 175 255;
-    --itplace-rgb-accent-hover: 209 203 255;
-    --itplace-rgb-brand-subtle: 45 40 69;
-    --itplace-rgb-brand-border: 73 67 99;
-    --itplace-rgb-danger: 255 140 155;
-    --itplace-rgb-success: 120 217 164;
-    --itplace-rgb-warning: 239 195 116;
-    --itplace-color-brand-light: #b8afff;
-    --itplace-color-surface-raised: #23252f;
-    --itplace-shadow-card: 0 2px 10px rgb(0 0 0 / 18%);
-  }
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --itplace-rgb-surface: 32 35 41;
+  --itplace-rgb-canvas: 23 25 29;
+  --itplace-rgb-hover: 41 45 53;
+  --itplace-rgb-text: 224 227 232;
+  --itplace-rgb-muted: 165 172 184;
+  --itplace-rgb-secondary: 189 194 203;
+  --itplace-rgb-border: 59 65 76;
+  --itplace-rgb-control-border: 115 123 137;
+  --itplace-rgb-accent: 192 179 255;
+  --itplace-rgb-accent-hover: 209 198 255;
+  --itplace-rgb-brand-subtle: 48 40 71;
+  --itplace-rgb-brand-border: 101 84 143;
+  --itplace-rgb-danger: 255 140 155;
+  --itplace-rgb-success: 120 217 164;
+  --itplace-rgb-warning: 239 195 116;
+  --itplace-color-brand-light: #c0b3ff;
+  --itplace-color-on-brand: #f4f2ff;
+  --itplace-color-logo-surface: #d4d7db;
+  --itplace-color-surface-raised: #292d35;
+  --itplace-shadow-card: 0 2px 10px rgb(0 0 0 / 18%);
 }
 
 @media (prefers-reduced-motion: reduce) {

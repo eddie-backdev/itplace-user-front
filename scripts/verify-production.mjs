@@ -477,10 +477,15 @@ const assertAllHomePreviews = (content, selectedCarrier = 'SKT') => {
     content.indexOf(categoryNavigation) < content.indexOf(featureSection),
     '카테고리 탐색은 추천 혜택보다 앞에 있어야 합니다'
   );
-  for (const id of ['생활/편의', '푸드', '쇼핑', '뷰티/건강', '엑티비티', '문화/여가', '여행/교통', '교육']) {
+  for (const [index, id] of ['생활/편의', '푸드', '쇼핑', '뷰티/건강', '엑티비티', '문화/여가', '여행/교통', '교육'].entries()) {
     assert.ok(
       categoryNavigation.includes(`category=${encodeURIComponent(id)}`),
       `${id} 카테고리 탐색 링크가 있어야 합니다`
+    );
+    assert.equal(
+      categoryLinks[index].match(/href="([^"]+)/)?.[1],
+      `/benefits?category=${encodeURIComponent(id)}`,
+      `${id} 카테고리 링크에는 category만 있어야 합니다`
     );
   }
   for (const carrier of ['SKT', 'KT', 'LGU'].filter((code) => code !== selectedCarrier)) {
@@ -631,11 +636,7 @@ const runChecks = async (origin, mockApi) => {
   assertAllHomePreviews(filteredHomeContent, 'KT');
   assertHomeListCalls(mockApi.requests.slice(filteredHomeRequestsBefore), 'KT', 'KT_VIP', '푸드');
   assert.match(filteredHomeContent, /name="category" value="푸드"/);
-  assert.ok(
-    filteredHomeContent.includes(
-      `href="/benefits?carrier=KT&amp;grade=KT_VIP&amp;category=${encodeURIComponent('푸드')}"`
-    )
-  );
+  assert.ok(filteredHomeContent.includes(`href="/benefits?category=${encodeURIComponent('푸드')}"`));
   const repeatedCarrierRequestsBefore = mockApi.requests.length;
   const repeatedCarrierResponse = await fetch(`${origin}/?carrier=KT&carrier=LGU`);
   assert.equal(repeatedCarrierResponse.status, 200);
@@ -654,7 +655,7 @@ const runChecks = async (origin, mockApi) => {
   assert.ok(categoryFilters, '혜택 필터 영역이 있어야 합니다');
   assert.match(
     categoryFilters,
-    /<select(?=[^>]*aria-label="혜택 분야 필터")[^>]*>[\s\S]*?<option value="푸드" selected="">음식·카페<\/option>/
+    /<select(?=[^>]*aria-label="혜택 카테고리 필터")[^>]*>[\s\S]*?<option value="푸드" selected="">음식·카페<\/option>/
   );
   assert.match(
     categoryFilters,

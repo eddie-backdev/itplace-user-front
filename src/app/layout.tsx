@@ -5,6 +5,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import AppProviders from './AppProviders';
 import { SITE_ORIGIN } from '@/lib/metadata';
 import { getPublicReferenceData } from '@/server/userApi';
+import { themeBootstrapScript } from '@/utils/desktopTheme';
 import '@/index.css';
 
 const description =
@@ -55,11 +56,6 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f7f8fa' },
-    { media: '(prefers-color-scheme: dark)', color: '#121318' },
-  ],
 };
 
 const websiteStructuredData = {
@@ -115,7 +111,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const referenceData = await getPublicReferenceData();
 
   return (
-    <html lang="ko">
+    <html lang="ko" data-theme="light" suppressHydrationWarning>
+      <head>
+        <meta name="color-scheme" content="light" />
+        <meta name="theme-color" content="#f7f8fa" />
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
+      </head>
       <body>
         <AppProviders initialReferenceData={referenceData}>{children}</AppProviders>
         <GoogleAnalytics />

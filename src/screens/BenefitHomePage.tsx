@@ -270,7 +270,7 @@ export default function BenefitHomePage({
               return (
                 <Link
                   key={id}
-                  href={`/benefits?${selectionQuery}&category=${encodeURIComponent(id)}`}
+                  href={`/benefits?category=${encodeURIComponent(id)}`}
                   className={`${styles.categoryLink} ${focus}`}
                 >
                   <span className={styles.categoryIcon}>

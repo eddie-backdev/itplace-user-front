@@ -171,7 +171,7 @@ const MapSection: React.FC<MapSectionProps> = ({
         <div
           aria-hidden={hideMobileCategory}
           inert={hideMobileCategory}
-          className={`pointer-events-none absolute left-4 top-4 z-10 w-fit max-w-[calc(100%-2rem)] overflow-hidden rounded-xl border border-[var(--itplace-color-border)] bg-warmSurface p-1 shadow-[0_2px_8px_rgba(31,38,52,0.06)] md:max-lg:left-3 md:max-lg:top-3 md:max-lg:max-w-[calc(100%-1.5rem)] max-md:left-3 max-md:top-[64px] max-md:max-w-[calc(100%-1.5rem)] ${hideMobileCategory ? 'max-md:hidden' : ''}`}
+          className={`pointer-events-none absolute left-4 top-4 z-10 w-fit max-w-[calc(100%-2rem)] overflow-hidden rounded-xl border border-[var(--itplace-color-border)] bg-[var(--itplace-color-surface)] p-1 shadow-[var(--itplace-shadow-card)] md:max-lg:left-3 md:max-lg:top-3 md:max-lg:max-w-[calc(100%-1.5rem)] max-md:left-3 max-md:top-[64px] max-md:max-w-[calc(100%-1.5rem)] ${hideMobileCategory ? 'max-md:hidden' : ''}`}
         >
           <div className="pointer-events-auto min-w-0">
             <CategoryTabsSection

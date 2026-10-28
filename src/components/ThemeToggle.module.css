@@ -1,0 +1,50 @@
+.toggle {
+  position: fixed;
+  z-index: calc(var(--itplace-layer-app-tab-bar, 20000) - 2);
+  right: 24px;
+  bottom: 88px;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--itplace-color-border);
+  border-radius: 50%;
+  background: var(--itplace-color-surface);
+  color: var(--itplace-color-muted);
+  box-shadow: 0 4px 14px rgba(32, 33, 36, 0.12);
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.toggle:hover {
+  border-color: rgb(var(--itplace-rgb-brand-border));
+  background: var(--itplace-color-brand-subtle);
+  color: var(--itplace-color-accent);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--itplace-color-accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .toggle {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle {
+    transition: none;
+  }
+}

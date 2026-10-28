@@ -114,10 +114,10 @@ const CategoryTabsSection: React.FC<CategoryTabsSectionProps> = ({
                 className={`${styles.button} ${
                   selectedCategory === category.id
                     ? mode === 'map'
-                      ? 'border-[var(--itplace-color-border)] bg-[var(--itplace-color-brand-subtle)] text-[var(--itplace-color-accent)]'
-                      : 'border-brand bg-brand text-[var(--itplace-color-on-brand)]'
+                      ? 'border-[var(--itplace-color-border)] bg-[var(--itplace-color-brand-subtle)] text-[var(--itplace-color-accent)] dark:border-[rgb(var(--itplace-rgb-brand-border))]'
+                      : 'border-brand bg-brand text-[var(--itplace-color-on-brand)] dark:border-[rgb(var(--itplace-rgb-brand-border))] dark:bg-[var(--itplace-color-brand-subtle)] dark:text-[var(--itplace-color-accent)]'
                     : mode === 'map'
-                      ? 'border-transparent bg-warmSurface text-[var(--itplace-color-text-secondary)] hover:bg-[var(--itplace-color-canvas)] hover:text-[var(--itplace-color-text)]'
+                      ? 'border-transparent bg-[var(--itplace-color-surface)] text-[var(--itplace-color-text-secondary)] hover:bg-[var(--itplace-color-surface-raised)] hover:text-[var(--itplace-color-text)]'
                       : 'border-warmBorder bg-warmSurface text-grey06 hover:border-brand/30 hover:bg-brandSoft'
                 } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--itplace-color-accent)]`}
               >

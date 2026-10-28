@@ -15,7 +15,7 @@ const RoadviewButton: React.FC<RoadviewButtonProps> = ({ isRoadviewMode, onToggl
         ${
           isRoadviewMode
             ? 'border border-[var(--itplace-color-accent)] bg-[var(--itplace-color-brand)] text-[var(--itplace-color-on-brand)] hover:bg-[var(--itplace-color-brand-hover)]'
-            : 'border border-[var(--itplace-color-border)] bg-warmSurface text-[var(--itplace-color-text-secondary)] shadow-[0_2px_8px_rgba(31,38,52,0.08)] hover:bg-[var(--itplace-color-canvas)] hover:text-[var(--itplace-color-text)]'
+            : 'border border-[var(--itplace-color-border)] bg-[var(--itplace-color-surface)] text-[var(--itplace-color-text-secondary)] shadow-[var(--itplace-shadow-card)] hover:bg-[var(--itplace-color-surface-hover)] hover:text-[var(--itplace-color-text)]'
         }
       `}
       aria-label={isRoadviewMode ? '로드뷰 끄기' : '로드뷰 켜기'}

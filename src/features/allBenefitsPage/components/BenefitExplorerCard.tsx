@@ -68,7 +68,7 @@ export default function BenefitExplorerCard({
             <span className={styles.partnerName}>{partner.partnerName}</span>
             <span className={styles.metadata}>
               {getCarrierLabel(preview?.carrier ?? carrier ?? partner.carriers[0])} ·{' '}
-              {getCategoryLabel(partner.category, referenceData) || '분야 미분류'}
+              {getCategoryLabel(partner.category, referenceData) || '카테고리 미분류'}
               {otherCarrierCount > 0 ? ` · 다른 통신사 혜택 ${otherCarrierCount}개` : ''}
             </span>
           </span>

@@ -634,7 +634,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
             {activeTab === 'nearby' ? (
               <div className="mb-3 min-w-0 px-4">
                 <p className="mb-1 text-xs font-medium text-[var(--itplace-color-text-secondary)]">
-                  분야
+                  카테고리
                 </p>
                 <CategoryTabsSection
                   categories={categories}

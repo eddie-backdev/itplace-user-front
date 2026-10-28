@@ -106,14 +106,14 @@ const QuestionRecommendationChatWidget = () => {
           <QuestionRecommendationChatRoom key={accountKey} accountKey={accountKey} onClose={closeChat} presentation="floating" />
         </section>
       </div>}
-      {(!isLoggedIn || !isOpen) && <button type="button" onClick={() => isLoggedIn ? setIsOpen(true) : openGuestPrompt()} ref={launcherRef} className={`${styles.launcher} ${isMobile ? styles.mobileLauncher : ''}`} aria-label="혜택 질문 챗봇 열기">
-        <TbMessageCircle size={20} aria-hidden="true" /><span>혜택 질문</span>
+      {(!isLoggedIn || !isOpen) && <button type="button" onClick={() => isLoggedIn ? setIsOpen(true) : openGuestPrompt()} ref={launcherRef} className={`${styles.launcher} ${isMobile ? styles.mobileLauncher : ''}`} aria-label="AI 혜택 도우미 열기">
+        <TbMessageCircle size={20} aria-hidden="true" /><span>AI 혜택 도우미</span>
       </button>}
       <Modal
         isOpen={!isLoggedIn && isLoginPromptOpen}
         widthClass={styles.loginPrompt}
         title="로그인 후 이용해 주세요"
-        message="혜택 질문은 로그인 후 이용할 수 있어요."
+        message="AI 혜택 도우미는 로그인 후 이용할 수 있어요."
         onClose={closeLoginPrompt}
         buttons={[
           { label: '닫기', type: 'secondary', onClick: closeLoginPrompt },

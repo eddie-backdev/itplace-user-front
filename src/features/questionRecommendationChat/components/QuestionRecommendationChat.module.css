@@ -110,3 +110,23 @@
   .panel { top: auto; right: 0; bottom: calc(100dvh - var(--chat-vv-offset, 0px) - var(--chat-vv-height, 100dvh)); left: 0; width: 100%; height: min(88dvh, max(0px, calc(var(--chat-vv-height, 100dvh) - 8px))); min-height: 0; border-radius: 20px 20px 0 0; }
   .launcher { right: var(--itplace-mobile-chat-launcher-right, 16px); bottom: var(--itplace-mobile-chat-launcher-bottom, calc(var(--itplace-mobile-tab-bar-offset, 64px) + 14px)); }
 }
+
+:global(html[data-theme='dark']) .backdrop { background: rgba(0, 0, 0, 0.58); }
+:global(html[data-theme='dark']) .panel { box-shadow: 0 18px 56px rgba(0, 0, 0, 0.42); }
+:global(html[data-theme='dark']) .welcome p { font-size: 15px; }
+:global(html[data-theme='dark']) .examples button { background: var(--itplace-color-surface-raised, #292D35); font-size: 15px; }
+:global(html[data-theme='dark']) .examples button:hover:not(:disabled) { border-color: rgb(var(--itplace-rgb-brand-border, 101 84 143)); background: var(--itplace-color-brand-subtle); color: var(--itplace-color-accent); }
+:global(html[data-theme='dark']) .examples button:focus-visible { border-color: rgb(var(--itplace-rgb-brand-border, 101 84 143)); background: var(--itplace-color-brand-subtle); }
+:global(html[data-theme='dark']) .botBubble,
+:global(html[data-theme='dark']) .loadingBubble { font-size: 15px; }
+:global(html[data-theme='dark']) .suggestions button { background: var(--itplace-color-surface-raised, #292D35); color: var(--itplace-color-text-secondary); font-size: 15px; }
+:global(html[data-theme='dark']) .suggestions button > svg { color: var(--itplace-color-text-secondary); }
+:global(html[data-theme='dark']) .suggestions button:hover:not(:disabled) { border-color: rgb(var(--itplace-rgb-brand-border, 101 84 143)); background: var(--itplace-color-brand-subtle); color: var(--itplace-color-accent); }
+:global(html[data-theme='dark']) .suggestions button:hover:not(:disabled) > svg { color: var(--itplace-color-accent); }
+:global(html[data-theme='dark']) .suggestions button:focus-visible { border-color: rgb(var(--itplace-rgb-brand-border, 101 84 143)); background: var(--itplace-color-brand-subtle); }
+:global(html[data-theme='dark']) .benefitCard { background: var(--itplace-color-surface); }
+:global(html[data-theme='dark']) .benefitCopy h4,
+:global(html[data-theme='dark']) .benefitName { font-size: 15px; }
+:global(html[data-theme='dark']) .detailLabel { display: flex; width: fit-content; min-height: 44px; align-items: center; gap: 1px; margin: 8px 0 0; border: 1px solid transparent; border-radius: 9px; background: var(--itplace-color-brand); padding: 0 12px; color: var(--itplace-color-on-brand, #F4F2FF); font-size: 13px; }
+:global(html[data-theme='dark']) .benefitCard:hover .detailLabel { background: var(--itplace-color-brand-hover); color: var(--itplace-color-on-brand, #F4F2FF); }
+:global(html[data-theme='dark']) .userMessage span { background: #34313E; color: var(--itplace-color-text); font-size: 15px; }

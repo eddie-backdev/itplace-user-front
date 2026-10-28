@@ -47,8 +47,9 @@ const MapControls: React.FC<MapControlsProps> = ({
       )}
 
       {/* 로드뷰 버튼과 현재 위치 버튼 */}
+      {/* Keep the desktop lower-right area clear for the floating theme and chat buttons. */}
       <div
-        className={`absolute bottom-6 right-6 z-[9997] pointer-events-none max-md:bottom-[var(--mobile-map-controls-bottom)] max-md:right-4 ${hideMobileControls ? 'max-md:hidden' : ''}`}
+        className={`absolute bottom-36 right-6 z-[9997] pointer-events-none max-md:bottom-[var(--mobile-map-controls-bottom)] max-md:right-4 ${hideMobileControls ? 'max-md:hidden' : ''}`}
         style={mobileControlStyle}
       >
         <div className="pointer-events-auto flex flex-col gap-3 max-md:flex-row max-md:gap-2">

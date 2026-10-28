@@ -1,5 +1,6 @@
 // tailwind.config.js
 const tailwindConfig = {
+  darkMode: ['selector', '[data-theme="dark"]'],
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {

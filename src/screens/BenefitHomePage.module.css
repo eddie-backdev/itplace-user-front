@@ -624,3 +624,87 @@
     transition: none;
   }
 }
+
+:global(html[data-theme='dark']) .page {
+  background: var(--itplace-color-surface-subtle);
+}
+:global(html[data-theme='dark']) .searchForm {
+  background: var(--itplace-color-surface);
+}
+:global(html[data-theme='dark']) .categoryLink {
+  color: var(--itplace-color-text-secondary);
+}
+:global(html[data-theme='dark']) .categoryLink:hover .categoryIcon,
+:global(html[data-theme='dark']) .categoryLink:focus-visible .categoryIcon {
+  background: var(--itplace-color-brand-subtle);
+  color: var(--itplace-color-accent);
+}
+:global(html[data-theme='dark']) .categoryIcon {
+  background: var(--itplace-color-surface-raised);
+  color: var(--itplace-color-text-secondary);
+}
+:global(html[data-theme='dark']) .featureBlock {
+  background: var(--itplace-color-surface);
+}
+:global(html[data-theme='dark']) .primaryOffer {
+  background: #23212d;
+  color: var(--itplace-color-text);
+}
+:global(html[data-theme='dark']) .primaryBrand span,
+:global(html[data-theme='dark']) .primaryCondition {
+  color: var(--itplace-color-text-secondary);
+}
+:global(html[data-theme='dark']) .primaryOffer h3 {
+  color: var(--itplace-color-accent);
+}
+:global(html[data-theme='dark']) .primaryLink {
+  min-height: 44px;
+  background: var(--itplace-color-brand);
+  color: var(--itplace-color-on-brand);
+}
+:global(html[data-theme='dark']) .primaryLink:hover {
+  background: var(--itplace-color-brand-hover);
+}
+:global(html[data-theme='dark']) .primaryOffer .saveButton {
+  color: var(--itplace-color-text-secondary);
+}
+:global(html[data-theme='dark']) .primaryOffer .saveButton:hover,
+:global(html[data-theme='dark']) .primaryOffer .saveButton[aria-pressed='true'] {
+  background: var(--itplace-color-surface-raised);
+  color: var(--itplace-color-accent);
+}
+
+@media (max-width: 767px) {
+  :global(html[data-theme='dark']) .featureBlock {
+    border: 0;
+    background: transparent;
+  }
+  :global(html[data-theme='dark']) .content {
+    padding-top: 22px;
+  }
+  :global(html[data-theme='dark']) .intro h1 {
+    font-size: 24px;
+    line-height: 1.34;
+  }
+  :global(html[data-theme='dark']) .primaryOffer {
+    min-height: 0;
+    border: 1px solid rgb(var(--itplace-rgb-brand-border));
+    border-radius: 18px;
+    padding: 20px;
+  }
+  :global(html[data-theme='dark']) .primaryOffer h3 {
+    margin-top: 16px;
+    font-size: 24px;
+    line-height: 1.4;
+  }
+  :global(html[data-theme='dark']) .primaryCondition {
+    margin-bottom: 14px;
+  }
+  :global(html[data-theme='dark']) .secondaryOffers {
+    padding: 0;
+  }
+  :global(html[data-theme='dark']) .secondaryOffer {
+    min-height: 0;
+    padding: 16px 2px;
+  }
+}
