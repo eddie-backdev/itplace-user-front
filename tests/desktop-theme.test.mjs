@@ -176,8 +176,16 @@ test('desktop theme bootstrap and runtime preserve responsive preferences', asyn
       const browser = createBrowser(scenario);
       runBootstrap(browser);
       assert.equal(browser.root.dataset.theme, scenario.expected);
+      assert.equal(
+        browser.metas['meta[name="theme-color"]'].content,
+        scenario.expected === 'light' ? '#f7f8fa' : scenario.width < 768 ? '#262523' : '#17191d',
+      );
       loadThemeRuntime(browser).applyCurrentTheme();
       assert.equal(browser.root.dataset.theme, scenario.expected);
+      assert.equal(
+        browser.metas['meta[name="theme-color"]'].content,
+        scenario.expected === 'light' ? '#f7f8fa' : scenario.width < 768 ? '#262523' : '#17191d',
+      );
     }
   });
 
@@ -186,7 +194,7 @@ test('desktop theme bootstrap and runtime preserve responsive preferences', asyn
     runBootstrap(browser);
     assert.equal(browser.root.dataset.theme, 'dark');
     assert.equal(browser.metas['meta[name="color-scheme"]'].content, 'dark');
-    assert.equal(browser.metas['meta[name="theme-color"]'].content, '#17191d');
+    assert.equal(browser.metas['meta[name="theme-color"]'].content, '#262523');
     loadThemeRuntime(browser).applyCurrentTheme();
     assert.deepEqual(browser.probeCounts, { added: 2, removed: 2 });
   });
@@ -233,6 +241,21 @@ test('desktop theme bootstrap and runtime preserve responsive preferences', asyn
     assert.equal(browser.root.dataset.theme, 'dark');
     assert.equal(browser.metas['meta[name="color-scheme"]'].content, 'dark');
     assert.equal(browser.metas['meta[name="theme-color"]'].content, '#17191d');
+    unsubscribe();
+  });
+
+  await t.test('crossing from mobile dark to desktop dark restores desktop browser chrome color', () => {
+    const browser = createBrowser({ width: 390, prefersDark: true, saved: 'dark' });
+    const theme = loadThemeRuntime(browser);
+    theme.applyCurrentTheme();
+    assert.equal(browser.metas['meta[name="theme-color"]'].content, '#262523');
+    const unsubscribe = theme.subscribeToThemeChanges();
+
+    browser.setWidth(768);
+    assert.equal(browser.root.dataset.theme, 'dark');
+    assert.equal(browser.metas['meta[name="theme-color"]'].content, '#17191d');
+    browser.setWidth(767);
+    assert.equal(browser.metas['meta[name="theme-color"]'].content, '#262523');
     unsubscribe();
   });
 });

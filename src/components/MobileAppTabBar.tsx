@@ -41,13 +41,15 @@ const MobileAppTabBar = () => {
   return (
     <nav
       aria-label="모바일 주요 탭"
-      className="itplace-mobile-app-tab-bar fixed bottom-0 left-0 right-0 z-[var(--itplace-layer-app-tab-bar)] border-t border-warmBorder bg-warmNav px-3 pt-1 md:hidden"
+      className="itplace-mobile-app-tab-bar fixed bottom-0 left-0 right-0 z-[var(--itplace-layer-app-tab-bar)] border-t border-warmBorder bg-warmNav md:hidden"
       style={{
         height: 'var(--itplace-mobile-tab-bar-offset, 64px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingBottom: 'var(--itplace-mobile-tab-bar-safe-bottom, 8px)',
+        paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+        paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
       }}
     >
-      <div className="mx-auto flex h-full max-w-[520px] items-center justify-between gap-1">
+      <div className="mx-auto flex h-full max-w-[520px] items-center justify-between gap-2">
         {tabs.map((tab) => {
           const selected = tab.match(location.pathname);
           const Icon = tab.icon;
@@ -63,7 +65,7 @@ const MobileAppTabBar = () => {
               prefetch={tab.to === '/mypage/favorites' && !isAuthenticated ? true : undefined}
               aria-label={`${tab.label} 탭으로 이동`}
               aria-current={selected ? 'page' : undefined}
-              className={`relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+              className={`relative flex min-h-12 min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
                 selected ? 'bg-softMint text-accentStrong' : 'text-warmMuted'
               }`}
             >

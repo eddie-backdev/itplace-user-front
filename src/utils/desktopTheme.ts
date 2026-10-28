@@ -35,7 +35,7 @@ export const themeBootstrapScript = `(() => {
   var scheme = document.querySelector('meta[name="color-scheme"]');
   var themeColor = document.querySelector('meta[name="theme-color"]');
   if (scheme && scheme.content !== theme) scheme.content = theme;
-  var color = theme === 'dark' ? '#17191d' : '#f7f8fa';
+  var color = theme === 'dark' ? desktop ? '#17191d' : '#262523' : '#f7f8fa';
   if (themeColor && themeColor.content !== color) themeColor.content = color;
 })()`;
 
@@ -69,7 +69,8 @@ export function getDocumentTheme(): Theme {
 }
 
 export function applyCurrentTheme() {
-  const theme = window.matchMedia('(min-width: 768px)').matches
+  const desktop = window.matchMedia('(min-width: 768px)').matches;
+  const theme = desktop
     ? sessionDesktopTheme ?? readSavedDesktopTheme() ?? 'light'
     : window.matchMedia('(prefers-color-scheme: dark)').matches || hasBrowserAutoDark()
       ? 'dark'
@@ -79,7 +80,7 @@ export function applyCurrentTheme() {
   if (changed) root.dataset.theme = theme;
 
   const scheme = document.querySelector<HTMLMetaElement>('meta[name="color-scheme"]');
-  const color = theme === 'dark' ? '#17191d' : '#f7f8fa';
+  const color = theme === 'dark' ? (desktop ? '#17191d' : '#262523') : '#f7f8fa';
   const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   if (scheme?.content !== theme) scheme?.setAttribute('content', theme);
   if (themeColor?.content !== color) themeColor?.setAttribute('content', color);

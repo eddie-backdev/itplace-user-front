@@ -38,6 +38,18 @@
   background: var(--itplace-color-surface-subtle);
 }
 
+@media (max-width: 767px) {
+  :global(html[data-theme='dark']) .signupForm :global(input:not([type='radio'])::placeholder) {
+    color: var(--itplace-color-text-secondary);
+    opacity: 1;
+  }
+
+  :global(html[data-theme='dark']) .carrierSegment[data-carrier] {
+    --carrier-ink: var(--itplace-color-text-secondary);
+    --carrier-wash: color-mix(in srgb, var(--carrier-accent) 18%, var(--itplace-color-surface));
+  }
+}
+
 .signupForm :global(label),
 .signupForm :global(legend) {
   color: var(--signup-ink);

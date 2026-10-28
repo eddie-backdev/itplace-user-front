@@ -481,6 +481,20 @@
 }
 
 @media (max-width: 767px) {
+  :global(html[data-theme='dark']) .favoriteStatusMessage {
+    color: var(--itplace-color-text-secondary);
+  }
+  :global(html[data-theme='dark']) .selectFilter select:disabled {
+    color: var(--itplace-color-text-secondary);
+  }
+  :global(html[data-theme='dark']) .searchForm:focus-within,
+  :global(html[data-theme='dark']) .selectFilter:focus-within {
+    border-color: var(--itplace-color-control-border);
+    box-shadow: 0 0 0 3px rgb(var(--itplace-rgb-accent) / 16%);
+  }
+}
+
+@media (max-width: 767px) {
   .content {
     padding: 18px 16px 32px;
   }

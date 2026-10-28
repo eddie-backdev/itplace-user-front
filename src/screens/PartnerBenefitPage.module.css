@@ -508,6 +508,11 @@
   }
 }
 @media (max-width: 767px) {
+  :global(html[data-theme='dark']) .heroBenefit p,
+  :global(html[data-theme='dark']) .summaryBenefit {
+    overflow-wrap: anywhere;
+    word-break: keep-all;
+  }
   .workspace {
     padding: 18px 16px 40px;
   }

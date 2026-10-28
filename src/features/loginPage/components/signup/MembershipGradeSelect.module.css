@@ -64,6 +64,12 @@
   font-weight: 600;
 }
 
+@media (max-width: 767px) {
+  :global(html[data-theme='dark']) .option:has(.radio:checked) {
+    color: var(--itplace-color-on-brand, #fff);
+  }
+}
+
 .option:has(.radio:checked) .check {
   opacity: 1;
 }

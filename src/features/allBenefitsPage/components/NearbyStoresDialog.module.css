@@ -304,6 +304,27 @@
   line-height: 1.45;
 }
 
+@media (max-width: 767px) {
+  :global(html[data-theme='dark']) .dialog::backdrop {
+    background: rgb(0 0 0 / 56%);
+  }
+  :global(html[data-theme='dark']) .mapActions button:last-child:not(:disabled) {
+    border-color: rgb(var(--itplace-rgb-brand-border));
+    background: var(--itplace-color-brand);
+    color: var(--itplace-color-on-brand);
+  }
+  :global(html[data-theme='dark']) .mapActions button:last-child:not(:disabled):hover {
+    border-color: rgb(var(--itplace-rgb-brand-border));
+    background: var(--itplace-color-brand-hover);
+  }
+  :global(html[data-theme='dark']) .mapActions button:last-child:disabled,
+  :global(html[data-theme='dark']) .mapActions button:last-child:disabled:hover {
+    border-color: var(--itplace-color-border);
+    background: var(--itplace-color-surface-subtle);
+    color: var(--itplace-color-text-secondary);
+  }
+}
+
 @media (max-width: 700px) {
   .dialog {
     width: 100vw;

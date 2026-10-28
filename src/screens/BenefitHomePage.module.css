@@ -697,14 +697,17 @@
   }
   :global(html[data-theme='dark']) .primaryOffer {
     min-height: 0;
-    border: 1px solid rgb(var(--itplace-rgb-brand-border));
+    border: 1px solid var(--itplace-color-border);
     border-radius: 18px;
     padding: 20px;
+    background: var(--itplace-color-surface);
+    color: var(--itplace-color-text);
   }
   :global(html[data-theme='dark']) .primaryOffer h3 {
     margin-top: 16px;
-    font-size: 24px;
-    line-height: 1.4;
+    color: var(--itplace-color-text);
+    font-size: 22px;
+    line-height: 1.5;
   }
   :global(html[data-theme='dark']) .primaryCondition {
     margin-bottom: 14px;
@@ -715,5 +718,16 @@
   :global(html[data-theme='dark']) .secondaryOffer {
     min-height: 0;
     padding: 16px 2px;
+  }
+  :global(html[data-theme='dark']) .searchForm {
+    background: var(--itplace-color-canvas);
+  }
+  :global(html[data-theme='dark']) .primaryLink {
+    border: 1px solid rgb(var(--itplace-rgb-brand-border));
+    background: var(--itplace-color-brand);
+    color: var(--itplace-color-on-brand);
+  }
+  :global(html[data-theme='dark']) .primaryLink:hover {
+    background: var(--itplace-color-brand-hover);
   }
 }

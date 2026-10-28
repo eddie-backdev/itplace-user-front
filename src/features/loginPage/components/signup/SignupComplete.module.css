@@ -74,6 +74,12 @@
   transition: background-color 140ms ease;
 }
 
+@media (max-width: 767px) {
+  :global(html[data-theme='dark']) .continueButton {
+    color: var(--itplace-color-on-brand, #fff);
+  }
+}
+
 @media (max-width: 639px) {
   .continueButton {
     margin-top: 64px;
