@@ -684,10 +684,6 @@
 }
 
 @media (max-width: 767px) {
-  :global(html:not([data-theme='dark'])) .categoryIcon {
-    background: var(--itplace-color-surface-subtle);
-    color: var(--itplace-color-text-secondary);
-  }
   :global(html[data-theme='dark']) .featureBlock {
     border: 0;
     background: transparent;
