@@ -9,8 +9,18 @@ const { outputText } = ts.transpileModule(themeSource, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 });
 
-function createBrowser({ width = 1024, prefersDark = false, saved = null, blockedWrite = false } = {}) {
+function createBrowser({
+  width = 1024,
+  prefersDark = false,
+  saved = null,
+  blockedWrite = false,
+  autoDark = false,
+  probeFails = false,
+  cssSupported = true,
+  backgroundColor,
+} = {}) {
   const windowListeners = new Map();
+  const documentListeners = new Map();
   const media = new Map();
   const values = new Map(saved === null ? [] : [['itplace.desktop-theme', saved]]);
   const root = { dataset: {} };
@@ -60,19 +70,49 @@ function createBrowser({ width = 1024, prefersDark = false, saved = null, blocke
       values.set(key, value);
     },
   };
+  let probesAdded = 0;
+  let probesRemoved = 0;
   const document = {
     documentElement: root,
+    createElement() {
+      return {
+        style: { cssText: '' },
+        remove() {
+          probesRemoved += 1;
+        },
+      };
+    },
+    addEventListener(type, listener) {
+      if (!documentListeners.has(type)) documentListeners.set(type, new Set());
+      documentListeners.get(type).add(listener);
+    },
+    removeEventListener(type, listener) {
+      documentListeners.get(type)?.delete(listener);
+    },
     querySelector(selector) {
       return metas[selector] ?? null;
     },
+  };
+  root.appendChild = () => {
+    probesAdded += 1;
   };
 
   return {
     window,
     localStorage,
     document,
+    getComputedStyle() {
+      if (probeFails) throw new Error('probe unavailable');
+      return {
+        backgroundColor: backgroundColor ?? (autoDark ? 'rgb(18, 18, 18)' : 'rgb(255, 255, 255)'),
+      };
+    },
+    CSS: { supports: () => cssSupported },
     root,
     metas,
+    get probeCounts() {
+      return { added: probesAdded, removed: probesRemoved };
+    },
     setWidth(nextWidth) {
       const wasDesktop = width >= 768;
       width = nextWidth;
@@ -103,6 +143,8 @@ function loadThemeRuntime(browser) {
     window: browser.window,
     localStorage: browser.localStorage,
     document: browser.document,
+    getComputedStyle: browser.getComputedStyle,
+    CSS: browser.CSS,
     Event: class Event {
       constructor(type) {
         this.type = type;
@@ -118,6 +160,8 @@ function runBootstrap(browser) {
     window: browser.window,
     localStorage: browser.localStorage,
     document: browser.document,
+    getComputedStyle: browser.getComputedStyle,
+    CSS: browser.CSS,
   });
 }
 
@@ -127,12 +171,44 @@ test('desktop theme bootstrap and runtime preserve responsive preferences', asyn
       { width: 1024, prefersDark: true, saved: null, expected: 'light' },
       { width: 1024, prefersDark: false, saved: 'dark', expected: 'dark' },
       { width: 390, prefersDark: true, saved: 'light', expected: 'dark' },
+      { width: 390, prefersDark: false, autoDark: true, expected: 'dark' },
     ]) {
       const browser = createBrowser(scenario);
       runBootstrap(browser);
       assert.equal(browser.root.dataset.theme, scenario.expected);
       loadThemeRuntime(browser).applyCurrentTheme();
       assert.equal(browser.root.dataset.theme, scenario.expected);
+    }
+  });
+
+  await t.test('auto-dark canvas detection is shared by bootstrap and runtime and cleans up', () => {
+    const browser = createBrowser({ width: 390, autoDark: true });
+    runBootstrap(browser);
+    assert.equal(browser.root.dataset.theme, 'dark');
+    assert.equal(browser.metas['meta[name="color-scheme"]'].content, 'dark');
+    assert.equal(browser.metas['meta[name="theme-color"]'].content, '#17191d');
+    loadThemeRuntime(browser).applyCurrentTheme();
+    assert.deepEqual(browser.probeCounts, { added: 2, removed: 2 });
+  });
+
+  await t.test('probe failures keep the normal media preference and clean up', () => {
+    const browser = createBrowser({ width: 390, prefersDark: false, probeFails: true });
+    runBootstrap(browser);
+    assert.equal(browser.root.dataset.theme, 'light');
+    loadThemeRuntime(browser).applyCurrentTheme();
+    assert.equal(browser.root.dataset.theme, 'light');
+    assert.deepEqual(browser.probeCounts, { added: 2, removed: 2 });
+  });
+
+  await t.test('unsupported or transparent canvas results cannot trigger dark mode', () => {
+    for (const browser of [
+      createBrowser({ width: 390, autoDark: true, cssSupported: false }),
+      createBrowser({ width: 390, backgroundColor: 'rgba(0, 0, 0, 0)' }),
+    ]) {
+      runBootstrap(browser);
+      assert.equal(browser.root.dataset.theme, 'light');
+      loadThemeRuntime(browser).applyCurrentTheme();
+      assert.equal(browser.root.dataset.theme, 'light');
     }
   });
 
