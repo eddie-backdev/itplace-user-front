@@ -117,6 +117,9 @@
 .panelToggleIconOpen {
   transform: rotate(180deg);
 }
+.mobileSheetAnimating {
+  transition: height 300ms ease-out;
+}
 @media (min-width: 768px) {
   .desktopPage {
     display: block;
@@ -135,6 +138,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .mobileSheetAnimating {
+    transition-duration: 0ms;
+  }
   .searchPanel,
   .panelToggle,
   .panelToggleIcon {

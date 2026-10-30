@@ -27,6 +27,7 @@ import {
 } from '@/constants/kakaoMapSdk';
 
 const BOTTOM_SHEET_MID_HEIGHT = 430;
+const MOBILE_MAP_COLLAPSED_SHEET_HEIGHT = 56;
 const MOBILE_APP_TAB_BAR_HEIGHT = 64;
 const MOBILE_MAP_MIN_EXPOSED_HEIGHT = 64;
 const MOBILE_MAP_MAX_EXPOSED_HEIGHT = 200;
@@ -42,7 +43,7 @@ const subscribeWideDetail = (onChange: () => void) => {
 const getWideDetailSnapshot = () =>
   typeof window !== 'undefined' && Boolean(window.matchMedia?.(WIDE_DETAIL_MEDIA_QUERY).matches);
 const getWideDetailServerSnapshot = () => false;
-const getBottomSheetMinHeight = (viewportHeight: number) =>
+const getBottomSheetPreviewHeight = (viewportHeight: number) =>
   Math.min(300, Math.max(128, viewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - 280));
 const getBottomSheetMaxHeight = (viewportHeight: number) => {
   const exposedMapHeight = Math.min(
@@ -50,10 +51,17 @@ const getBottomSheetMaxHeight = (viewportHeight: number) => {
     MOBILE_MAP_MIN_EXPOSED_HEIGHT + (Math.max(0, viewportHeight - 448) * 136) / 120
   );
   return Math.max(
-    getBottomSheetMinHeight(viewportHeight),
+    getBottomSheetPreviewHeight(viewportHeight),
     viewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - exposedMapHeight
   );
 };
+const getBottomSheetSnapPoints = (previewHeight: number, maxHeight: number) =>
+  [...new Set([
+    MOBILE_MAP_COLLAPSED_SHEET_HEIGHT,
+    previewHeight,
+    Math.min(BOTTOM_SHEET_MID_HEIGHT, maxHeight),
+    maxHeight,
+  ])].sort((a, b) => a - b);
 
 /**
  * 메인페이지 레이아웃 컴포넌트
@@ -89,12 +97,12 @@ const MainPageLayout: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false); // 사이드바 접힘 상태
 
   // 바텀시트 상태 관리
-  const [bottomSheetMinHeight, setBottomSheetMinHeight] = useState(() =>
-    typeof window === 'undefined' ? 300 : getBottomSheetMinHeight(window.innerHeight)
+  const [bottomSheetPreviewHeight, setBottomSheetPreviewHeight] = useState(() =>
+    typeof window === 'undefined' ? 300 : getBottomSheetPreviewHeight(window.innerHeight)
   );
-  const bottomSheetMinHeightRef = useRef(bottomSheetMinHeight);
-  bottomSheetMinHeightRef.current = bottomSheetMinHeight;
-  const [bottomSheetHeight, setBottomSheetHeight] = useState<number>(bottomSheetMinHeight); // 바텀시트 높이
+  const bottomSheetPreviewHeightRef = useRef(bottomSheetPreviewHeight);
+  bottomSheetPreviewHeightRef.current = bottomSheetPreviewHeight;
+  const [bottomSheetHeight, setBottomSheetHeight] = useState<number>(bottomSheetPreviewHeight); // 바텀시트 높이
   const [maxBottomSheetHeight, setMaxBottomSheetHeight] = useState<number>(() =>
     typeof window === 'undefined'
       ? BOTTOM_SHEET_MID_HEIGHT
@@ -155,8 +163,9 @@ const MainPageLayout: React.FC = () => {
   const getMaxHeight = useCallback(() => maxBottomSheetHeight, [maxBottomSheetHeight]);
 
   const clampBottomSheetHeight = useCallback(
-    (height: number) => Math.max(bottomSheetMinHeight, Math.min(maxBottomSheetHeight, height)),
-    [bottomSheetMinHeight, maxBottomSheetHeight]
+    (height: number) =>
+      Math.max(MOBILE_MAP_COLLAPSED_SHEET_HEIGHT, Math.min(maxBottomSheetHeight, height)),
+    [maxBottomSheetHeight]
   );
 
   // 스냅 포인트로 이동할 때 부드럽게 애니메이션
@@ -174,8 +183,8 @@ const MainPageLayout: React.FC = () => {
 
   // 바텀시트를 초기 상태로 리셋하는 함수
   const resetBottomSheet = useCallback(() => {
-    animateTo(bottomSheetMinHeight);
-  }, [animateTo, bottomSheetMinHeight]);
+    animateTo(bottomSheetPreviewHeight);
+  }, [animateTo, bottomSheetPreviewHeight]);
 
   // 혜택 상세 카드 상태
   const [benefitDetailCard, setBenefitDetailCard] = useState<{
@@ -537,7 +546,7 @@ const MainPageLayout: React.FC = () => {
     // 4. DOM 업데이트 후 재실행 및 바텀시트 초기화
     const timeoutId = requestAnimationFrame(() => {
       resetScroll();
-      setBottomSheetHeight(bottomSheetMinHeightRef.current);
+      setBottomSheetHeight(bottomSheetPreviewHeightRef.current);
     });
 
     return () => {
@@ -556,11 +565,13 @@ const MainPageLayout: React.FC = () => {
 
       const viewportHeight = window.innerHeight;
       setMobileViewportHeight(viewportHeight);
-      const nextMinHeight = getBottomSheetMinHeight(viewportHeight);
+      const nextPreviewHeight = getBottomSheetPreviewHeight(viewportHeight);
       const nextMaxHeight = getBottomSheetMaxHeight(viewportHeight);
-      setBottomSheetMinHeight(nextMinHeight);
+      setBottomSheetPreviewHeight(nextPreviewHeight);
       setMaxBottomSheetHeight(nextMaxHeight);
-      setBottomSheetHeight((height) => Math.max(nextMinHeight, Math.min(nextMaxHeight, height)));
+      setBottomSheetHeight((height) =>
+        Math.max(MOBILE_MAP_COLLAPSED_SHEET_HEIGHT, Math.min(nextMaxHeight, height))
+      );
     };
 
     updateSheetBounds();
@@ -597,11 +608,7 @@ const MainPageLayout: React.FC = () => {
 
   const handleTouchEnd = () => {
     setIsDragging(false);
-    const snapPoints = [
-      bottomSheetMinHeight,
-      Math.min(BOTTOM_SHEET_MID_HEIGHT, getMaxHeight()),
-      getMaxHeight(),
-    ];
+    const snapPoints = getBottomSheetSnapPoints(bottomSheetPreviewHeight, getMaxHeight());
     const closest = snapPoints.reduce((a, b) =>
       Math.abs(b - bottomSheetHeight) < Math.abs(a - bottomSheetHeight) ? b : a
     );
@@ -631,20 +638,17 @@ const MainPageLayout: React.FC = () => {
   );
 
   const handleMouseUp = useCallback(() => {
+    if (!isDragging) return;
     setIsDragging(false);
 
-    const snapPoints = [
-      bottomSheetMinHeight,
-      Math.min(BOTTOM_SHEET_MID_HEIGHT, getMaxHeight()),
-      getMaxHeight(),
-    ];
+    const snapPoints = getBottomSheetSnapPoints(bottomSheetPreviewHeight, getMaxHeight());
 
     const closestSnapPoint = snapPoints.reduce((prev, curr) =>
       Math.abs(curr - bottomSheetHeight) < Math.abs(prev - bottomSheetHeight) ? curr : prev
     );
 
     animateTo(closestSnapPoint);
-  }, [bottomSheetHeight, animateTo, getMaxHeight, bottomSheetMinHeight]);
+  }, [bottomSheetHeight, animateTo, getMaxHeight, bottomSheetPreviewHeight, isDragging]);
 
   const handleSheetHandleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (event.detail > 0 && didDragSheetHandleRef.current) {
@@ -653,13 +657,7 @@ const MainPageLayout: React.FC = () => {
     }
 
     didDragSheetHandleRef.current = false;
-    const snapPoints = [
-      ...new Set([
-        bottomSheetMinHeight,
-        Math.min(BOTTOM_SHEET_MID_HEIGHT, getMaxHeight()),
-        getMaxHeight(),
-      ]),
-    ];
+    const snapPoints = getBottomSheetSnapPoints(bottomSheetPreviewHeight, getMaxHeight());
     const currentIndex = snapPoints.reduce(
       (nearestIndex, point, index) =>
         Math.abs(point - bottomSheetHeight) < Math.abs(snapPoints[nearestIndex] - bottomSheetHeight)
@@ -670,12 +668,12 @@ const MainPageLayout: React.FC = () => {
     animateTo(snapPoints[(currentIndex + 1) % snapPoints.length]);
   };
 
-  const canExpandBottomSheet = getMaxHeight() > bottomSheetMinHeight;
+  const canExpandBottomSheet = getMaxHeight() > MOBILE_MAP_COLLAPSED_SHEET_HEIGHT;
   const sheetHandleLabel = !canExpandBottomSheet
     ? '목록 표시 중'
     : bottomSheetHeight >= getMaxHeight()
       ? '매장 목록 접기'
-      : bottomSheetHeight > bottomSheetMinHeight
+      : bottomSheetHeight > MOBILE_MAP_COLLAPSED_SHEET_HEIGHT
         ? '매장 목록 더 펼치기'
         : '매장 목록 펼치기';
 
@@ -914,25 +912,25 @@ const MainPageLayout: React.FC = () => {
                 aria-hidden={isRoadviewOpen}
                 inert={isRoadviewOpen}
                 className={`${isRoadviewOpen ? 'hidden' : 'fixed left-0 right-0 z-[9998] flex flex-col rounded-t-[24px] border-t border-warmBorder bg-warmSurface shadow-[0_-10px_30px_rgba(36,35,33,0.10)]'} ${
-                  isAnimating ? 'transition-all duration-300 ease-out' : ''
+                  isAnimating ? styles.mobileSheetAnimating : ''
                 }`}
                 style={{
                   height: `${bottomSheetHeight}px`,
                   bottom: `var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px)`,
-                  minHeight: `${bottomSheetMinHeight}px`,
+                  minHeight: `${MOBILE_MAP_COLLAPSED_SHEET_HEIGHT}px`,
                   maxHeight: `${getMaxHeight()}px`,
                   overflow: 'hidden',
-                  transition: isAnimating ? 'all 0.3s ease-out' : 'none',
                 }}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
+                onTouchCancel={handleTouchEnd}
               >
                 {/* 드래그 핸들 */}
                 <button
                   type="button"
                   aria-label={sheetHandleLabel}
-                  aria-expanded={bottomSheetHeight > bottomSheetMinHeight}
+                  aria-expanded={bottomSheetHeight > MOBILE_MAP_COLLAPSED_SHEET_HEIGHT}
                   aria-controls="map-store-sheet-content"
                   disabled={!canExpandBottomSheet}
                   onClick={handleSheetHandleClick}
@@ -940,6 +938,7 @@ const MainPageLayout: React.FC = () => {
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchEnd}
                   onMouseDown={handleMouseDown}
                 >
                   <div className="h-1 w-9 rounded-full bg-grey03" aria-hidden="true" />
@@ -951,9 +950,14 @@ const MainPageLayout: React.FC = () => {
                 {/* 사이드바 콘텐츠 */}
                 <div
                   id="map-store-sheet-content"
+                  aria-hidden={bottomSheetHeight <= MOBILE_MAP_COLLAPSED_SHEET_HEIGHT}
+                  inert={bottomSheetHeight <= MOBILE_MAP_COLLAPSED_SHEET_HEIGHT}
                   className="flex-1 min-h-0 max-h-full"
                   style={{
-                    overflowY: bottomSheetHeight > bottomSheetMinHeight ? 'auto' : 'hidden',
+                    visibility:
+                      bottomSheetHeight <= MOBILE_MAP_COLLAPSED_SHEET_HEIGHT ? 'hidden' : 'visible',
+                    overflowY:
+                      bottomSheetHeight > MOBILE_MAP_COLLAPSED_SHEET_HEIGHT ? 'auto' : 'hidden',
                   }}
                 >
                   <SidebarSection
