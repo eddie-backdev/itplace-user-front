@@ -5,6 +5,7 @@ const footerLinks = [
   { label: '통신사 멤버십', to: '/membership' },
   { label: '지역별 매장', to: '/places' },
   { label: '서비스 소개', to: '/about' },
+  { label: '앱 다운로드', to: '/download' },
   { label: '혜택 이용 가이드', to: '/guide' },
   { label: 'FAQ', to: '/faq' },
   { label: '문의', to: '/contact' },

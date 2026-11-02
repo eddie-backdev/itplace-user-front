@@ -1,0 +1,263 @@
+.page {
+  color: var(--itplace-color-text);
+  background: var(--itplace-color-surface);
+}
+
+.main {
+  width: min(960px, calc(100% - 56px));
+  min-height: calc(100vh - var(--itplace-header-height));
+  margin: 0 auto;
+  padding: 58px 0 calc(72px + env(safe-area-inset-bottom));
+}
+
+.header {
+  max-width: 650px;
+  margin-bottom: 32px;
+}
+
+.kicker {
+  margin: 0 0 9px;
+  color: var(--itplace-color-accent);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.header > p:last-child {
+  margin: 12px 0 0;
+  color: var(--itplace-color-text-secondary);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.download {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px 32px;
+  border: 1px solid var(--itplace-color-border);
+  border-radius: 18px;
+  padding: 28px;
+  background: var(--itplace-color-surface);
+}
+
+.appInfo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon {
+  flex: none;
+  border-radius: 16px;
+}
+
+.appInfo h2 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -0.03em;
+}
+
+.appInfo p,
+.desktopQr p,
+.mobileCta p {
+  margin: 5px 0 0;
+  color: var(--itplace-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.mobileCta {
+  grid-column: 1;
+}
+
+.downloadButton {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  padding: 0 20px;
+  background: var(--itplace-color-brand);
+  color: var(--itplace-color-on-brand);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.downloadButton:hover {
+  background: var(--itplace-color-brand-hover);
+}
+
+.downloadButton:focus-visible,
+.install a:focus-visible {
+  outline: 2px solid var(--itplace-color-accent);
+  outline-offset: 3px;
+}
+
+.desktopQr {
+  display: grid;
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  justify-items: center;
+  gap: 10px;
+  color: var(--itplace-color-text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.desktopQr img {
+  border: 1px solid var(--itplace-color-border);
+  border-radius: 10px;
+}
+
+.desktopQr p {
+  margin: 0;
+}
+
+.release {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  grid-column: 1;
+  margin: 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--itplace-color-border);
+}
+
+.release div {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.release dt {
+  color: var(--itplace-color-text-secondary);
+}
+
+.release dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.testNote {
+  grid-column: 1 / -1;
+  margin: -8px 0 0;
+  color: var(--itplace-color-text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.install {
+  max-width: 720px;
+  margin-top: 36px;
+}
+
+.install h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  letter-spacing: -0.025em;
+}
+
+.install ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 22px;
+  color: var(--itplace-color-text-secondary);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.install li {
+  padding-left: 3px;
+}
+
+.install > p {
+  margin: 18px 0 0;
+  color: var(--itplace-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.install a {
+  color: var(--itplace-color-accent);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .main {
+    width: auto;
+    min-height: calc(100vh - 54px);
+    padding: 36px 20px calc(48px + env(safe-area-inset-bottom));
+  }
+
+  .header {
+    margin-bottom: 24px;
+  }
+
+  .header > p:last-child {
+    font-size: 14px;
+  }
+
+  .download {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .appInfo {
+    gap: 13px;
+  }
+
+  .icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 13px;
+  }
+
+  .mobileCta,
+  .release,
+  .testNote {
+    grid-column: 1;
+  }
+
+  .mobileCta {
+    display: grid;
+    gap: 6px;
+  }
+
+  .downloadButton {
+    width: 100%;
+  }
+
+  .desktopQr {
+    display: none;
+  }
+
+  .release {
+    padding-top: 14px;
+  }
+
+  .testNote {
+    margin-top: -10px;
+  }
+
+  .install {
+    margin-top: 30px;
+  }
+
+  .install ol {
+    font-size: 13px;
+  }
+}

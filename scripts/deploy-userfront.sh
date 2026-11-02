@@ -14,13 +14,14 @@ ENV_FILE="${ENV_FILE:-/home/ubuntu/app/env/userfront.env}"
 UPSTREAM_FILE="${UPSTREAM_FILE:-/home/ubuntu/app/nginx/conf.d/userfront-upstream.conf}"
 NGINX_CONTAINER="${NGINX_CONTAINER:-nginx-proxy}"
 STATIC_DIR="${STATIC_DIR:-/home/ubuntu/app/userfront-static}"
+DOWNLOADS_DIR="${DOWNLOADS_DIR:-/home/ubuntu/app/userfront-downloads}"
 LOCK_FILE="${LOCK_FILE:-/home/ubuntu/app/userfront-deploy.lock}"
 HEALTH_CHECK_IMAGE="${HEALTH_CHECK_IMAGE:-curlimages/curl:8.7.1}"
 HEALTH_CHECK_MAX_ATTEMPTS="${HEALTH_CHECK_MAX_ATTEMPTS:-30}"
 HEALTH_CHECK_INTERVAL_SECONDS="${HEALTH_CHECK_INTERVAL_SECONDS:-2}"
 
 [[ -f "$ENV_FILE" ]] || { echo "[userfront] env file not found: $ENV_FILE" >&2; exit 1; }
-mkdir -p "$STATIC_DIR" "$(dirname "$LOCK_FILE")"
+mkdir -p "$STATIC_DIR" "$DOWNLOADS_DIR" "$(dirname "$LOCK_FILE")"
 exec 9>"$LOCK_FILE"
 flock -n 9 || { echo "[userfront] another deployment is running" >&2; exit 1; }
 
@@ -87,6 +88,7 @@ docker run -d \
   --network "$APP_NETWORK" --memory 1g --memory-reservation 512m --cpus 1.5 \
   --env-file "$ENV_FILE" -e PORT=3000 -e HOSTNAME=0.0.0.0 \
   -v "$STATIC_DIR:/app/.next/static:ro" \
+  -v "$DOWNLOADS_DIR:/app/public/downloads:ro" \
   --label itplace.service=user-front "$LOCAL_IMAGE" >/dev/null
 
 echo "[userfront] waiting for ${NEW_CONTAINER}/login"

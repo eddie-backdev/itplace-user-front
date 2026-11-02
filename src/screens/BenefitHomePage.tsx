@@ -15,6 +15,7 @@ import {
   PiTicketDuotone,
 } from 'react-icons/pi';
 import MembershipSelectionDialog from '@/components/membership/MembershipSelectionDialog';
+import AppDownloadPromotion from '@/components/AppDownloadPromotion';
 import SafeImage from '@/components/SafeImage';
 import { addFavorite, removeFavorite } from '@/features/mainPage/api/favoriteApi';
 import { getFavoritesList } from '@/features/mainPage/api/favoritesListApi';
@@ -431,6 +432,7 @@ export default function BenefitHomePage({
         <p className={styles.serviceNote}>
           혜택은 변경될 수 있어요. 이용 전에 상세 조건을 확인해 주세요.
         </p>
+        <AppDownloadPromotion />
       </div>
 
       <MembershipSelectionDialog

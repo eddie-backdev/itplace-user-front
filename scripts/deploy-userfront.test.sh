@@ -48,7 +48,7 @@ chmod +x "$TMP/bin/flock"
 run_deploy() {
   PATH="$TMP/bin:$PATH" TRACE="$TMP/trace" \
     ENV_FILE="$TMP/env" UPSTREAM_FILE="$TMP/nginx/conf.d/userfront-upstream.conf" \
-    STATIC_DIR="$TMP/static" LOCK_FILE="$TMP/deploy.lock" \
+    STATIC_DIR="$TMP/static" DOWNLOADS_DIR="$TMP/downloads" LOCK_FILE="$TMP/deploy.lock" \
     HEALTH_CHECK_MAX_ATTEMPTS=1 HEALTH_CHECK_INTERVAL_SECONDS=0 \
     "$ROOT/scripts/deploy-userfront.sh" test-tag
 }
@@ -88,6 +88,7 @@ grep -Eq 'server userfront-green:3000' "$TMP/nginx/conf.d/userfront-upstream.con
 grep -Fq 'pull ghcr.io/eddie-backdev/itplace-user-front:test-tag' "$TMP/trace"
 grep -Fq 'tag ghcr.io/eddie-backdev/itplace-user-front:test-tag itplace-user-front:test-tag' "$TMP/trace"
 grep -Fq 'create --name userfront-assets-green itplace-user-front:test-tag' "$TMP/trace"
+grep -Fq -- '-v '"$TMP/downloads"':/app/public/downloads:ro' "$TMP/trace"
 grep -Fq -- '--label itplace.service=user-front itplace-user-front:test-tag' "$TMP/trace"
 reload_line="$(grep -n 'nginx-proxy nginx -s reload' "$TMP/trace" | tail -n 1 | cut -d: -f1)"
 old_remove_line="$(grep -n 'rm -f userfront-blue' "$TMP/trace" | tail -n 1 | cut -d: -f1)"

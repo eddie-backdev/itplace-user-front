@@ -58,3 +58,9 @@ GA4 스크립트는 production root layout에서 한 번만 연결한다. 페이
 컨테이너는 성공 배포 뒤 삭제되므로 upstream을 이전 슬롯으로 직접 바꾸지 않는다. 복구할 버전의 7자리 SHA를 지정해 동일한 GHCR 인증 절차로 `scripts/deploy-userfront.sh <short-sha> <ghcr-username>`을 다시 실행한다. 일반 CI 배포와 같이 GHCR 토큰은 SSH stdin으로 전달한다. 이전 이미지가 새 슬롯에 기동되고 health check를 통과하면 upstream이 전환된다. 기존 Worker의 정적 청크도 첫 전환 전에 공유 디렉터리에 복사하면, 전환 중 열려 있던 Workers 페이지의 청크 요청도 유지할 수 있다.
 
 배포 로직 검사는 `bash scripts/deploy-userfront.test.sh`로 실행한다. mock Docker 명령으로 health check, 이미지 pull, asset copy, nginx validation/reload 실패, 롤백 및 슬롯 보존을 확인하며 OCI/GHCR에는 연결하지 않는다.
+
+## APK 다운로드 파일
+
+공개 배포 파일은 서버의 `/home/ubuntu/app/userfront-downloads`에 둔다. 배포 스크립트가 이 디렉터리를 각 Next 컨테이너의 `/app/public/downloads`에 읽기 전용으로 연결하므로 파일은 저장소나 이미지에 넣지 않는다. 이 디렉터리에는 APK 같은 공개 배포물만 두고 자격 증명이나 비공개 파일은 두지 않는다. 업로드는 `downloads` 바깥의 임시 `.part` 파일로 완료한 다음 같은 파일 시스템에서 버전 파일로 atomic move한다. 이미 공개한 버전 파일은 덮어쓰지 않는다. Next가 public 파일 목록을 시작 시 확인하므로 새 파일을 올린 뒤 프런트엔드를 재시작 또는 배포해야 한다.
+
+배포 후 원격에서 APK의 SHA-256 및 서명을 확인하고, `https://itplace.click/downloads/itplace-0.1.1-7.apk`가 HTTP 200과 `Content-Disposition: attachment`, APK `Content-Type`, `X-Content-Type-Options: nosniff` 헤더를 반환하는지 확인한다. Range 요청도 확인해 중단된 대용량 다운로드가 재개되는지 검증한다. APK 요청은 별도 immutable 캐시를 설정하지 않아 요청 시점의 파일 응답을 확인할 수 있다.

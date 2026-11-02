@@ -1,0 +1,114 @@
+.promotion {
+  display: flex;
+  min-height: 126px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 52px;
+  border-top: 1px solid var(--itplace-color-border);
+  padding: 22px 0 0;
+}
+
+.copy h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.copy p {
+  margin: 5px 0 0;
+  color: var(--itplace-color-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.copy .kicker {
+  margin: 0 0 5px;
+  color: var(--itplace-color-accent);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.desktopQr {
+  display: flex;
+  min-height: 120px;
+  align-items: center;
+  gap: 12px;
+  color: var(--itplace-color-text-secondary);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.desktopQr:hover {
+  color: var(--itplace-color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.desktopQr:focus-visible {
+  outline: 2px solid var(--itplace-color-accent);
+  outline-offset: 3px;
+}
+
+.desktopQr img {
+  border: 1px solid var(--itplace-color-border);
+  border-radius: 8px;
+}
+
+.mobileAction {
+  display: none;
+}
+
+.mobileAction img {
+  border-radius: 12px;
+}
+
+.mobileAction div {
+  display: grid;
+  gap: 2px;
+  color: var(--itplace-color-text-secondary);
+  font-size: 12px;
+}
+
+.mobileAction strong {
+  color: var(--itplace-color-text);
+  font-size: 13px;
+}
+
+.mobileAction a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--itplace-color-accent);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mobileAction a:focus-visible {
+  outline: 2px solid var(--itplace-color-accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .promotion {
+    display: grid;
+    min-height: auto;
+    align-items: flex-start;
+    margin-top: 40px;
+    padding-top: 20px;
+  }
+
+  .desktopQr {
+    display: none;
+  }
+
+  .mobileAction {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: none;
+  }
+}
