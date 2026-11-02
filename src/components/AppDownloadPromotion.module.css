@@ -7,6 +7,8 @@
   margin-top: 52px;
   border-top: 1px solid var(--itplace-color-border);
   padding: 22px 0 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .copy h2 {

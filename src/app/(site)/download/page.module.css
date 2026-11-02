@@ -1,6 +1,8 @@
 .page {
   color: var(--itplace-color-text);
   background: var(--itplace-color-surface);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .main {
@@ -170,6 +172,7 @@
 .install ol {
   display: grid;
   gap: 8px;
+  list-style: decimal;
   margin: 0;
   padding-left: 22px;
   color: var(--itplace-color-text-secondary);
