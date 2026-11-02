@@ -1,120 +1,85 @@
-# ITPLACE Design
+# ITPLACE 사용자 프런트 디자인 기준
 
-## Active design contract
+## 기준과 우선순위
 
-- Status: Active — warm Korean consumer utility direction
-- Last refreshed: 2026-08-08
-- Thesis: 주변 혜택은 카드 더미가 아니라 지도 위에 도착하는 생활 정보처럼 읽힌다.
-- This document is the implementation source of truth for active visual and interaction work. Confirm token values in `tailwind.config.js` and `src/index.css`, and confirm layout behavior in `src/components/Header.tsx`, `src/components/MobileAppTabBar.tsx`, and `src/features/mainPage/components`.
+- 마지막 확인: 2026-10-31
+- 현재 디자인 기준은 사용자가 승인한 Figma 파일 `QqivWPbFJvHActUdOKBCxM`의 데스크톱 섹션 `160:513424`(2026-10-14)과 저장된 구현 기록 [`../.design/figma-implementation-20261014/implementation-plan.md`](../.design/figma-implementation-20261014/implementation-plan.md)이다.
+- 이 기준은 이 문서의 이전 녹색 브랜드·좌측 레일 지침을 대체한다. 기존 구현을 다듬을 때 승인된 화면과 현재 디자인 토큰을 먼저 따른다.
+- 적용 순서: 사용자의 이번 요청과 승인된 레퍼런스 → 프로젝트 규칙과 현재 토큰 → 이 문서의 Polish 지침 → 일반적인 디자인 권고.
+- 토큰의 실제 정의는 [`src/index.css`](src/index.css)와 [`tailwind.config.js`](tailwind.config.js)에서 확인한다. 이 문서의 설명이 코드와 다르면 관련 작업 전 최신 승인 디자인 및 구현을 확인해 함께 정리한다.
 
-## Product and information architecture
+## 제품의 시각적 방향
 
-- Primary jobs: 내 주변 혜택 찾기, 통신사·카테고리별 필터링, 브랜드·제휴처 검색, 상세 조건 확인, 관심 혜택 저장, 질문형 AI 추천 받기.
-- Primary navigation:
-  - Mobile: 홈, 지도, 혜택, 즐겨찾기, 마이.
-  - Desktop: 지도, 전체 혜택, 즐겨찾기, 마이와 AI 추천·서비스 안내·인증 보조 액션.
-- Core routes:
-  - `/`: landing or mobile home
-  - `/map`: map-based nearby benefit discovery
-  - `/benefits`, `/benefits/partners/:partnerId/:partnerSlug`: all benefits and partner detail
-  - `/login`: login, signup, and phone verification
-  - `/mypage/info`, `/mypage/favorites`: profile and saved benefits
-  - `/membership`, `/membership/:carrierSlug`: carrier membership guidance
-  - `/about`, `/guide`, `/faq`, `/contact`: service support
-  - `/terms`, `/privacy`, `/account-deletion`: policy and account guidance
-- Information priority: location/search/filter context → nearby partner and highlighted benefit → carrier and distance → full conditions in detail.
-- Location denial, empty results, slow networks, and API failures must always expose a clear recovery or alternate exploration action.
+- ITPLACE는 통신사 멤버십 혜택을 지도와 제휴처 정보로 찾고, 조건을 확인하고, 관심 혜택으로 저장하는 한국어 생활 서비스다.
+- 성격은 명료하고 차분하며 생활에 가깝다. 지도, 위치, 제휴처, 혜택 조건처럼 실제 제품 정보가 시각적 초점이다.
+- 현재 헤더 브랜드 표식 [`public/images/brand/mark.svg`](public/images/brand/mark.svg)와 워드마크를 보존한다. 승인 없이 로고를 바꾸거나 새 마스코트·장식·브랜드 색을 추가하지 않는다.
+- 화면의 강조는 한두 가지 핵심 정보에 집중한다. 공통 셸과 배경은 조용하게 두고, 지도·선택 상태·혜택 요약은 의미 있는 색과 구분으로 읽히게 한다.
 
-## Brand direction
+## 색상, 글꼴, 간격
 
-- ITPLACE feels warm, practical, trustworthy, and lightly friendly: a Korean everyday utility, not a luxury, finance, crypto, or promotion-heavy service.
-- Four vector brand-mark candidates live in `public/brand/itplace-mark-{a,b,c,d}.svg`. Option B is active: a segmented route surrounds a central place while two leaf-green benefit nodes create movement and locality. The desktop rail, browser favicon, install icon, and touch icon use this active mark.
-- The desktop rail uses the background-free responsive cut `itplace-mark-b-rail.svg` so the mark shares the navigation surface instead of appearing as a detached icon tile. Browser and install icons retain the warm-ivory tile for legibility outside the product UI.
-- Use refined matte surfaces, thin warm borders, compact information hierarchy, and restrained soft shadows.
-- The map and benefit information lead. Illustration, decoration, and motion support empty states or guidance without competing with discovery.
-- Empty and blocked states use one consistent flat 2D squirrel mascot: warm biscuit-beige fur, a deep-green map pouch, and restrained butter-yellow benefit accents. Keep the silhouette readable at 112–144px, vary only the pose or prop by state, and never embed UI copy in the artwork.
-- Copy is friendly but factual. Benefit conditions take precedence over advertising language; buttons name the action directly.
+- 기본 브랜드 아이리스는 `#6154D9`다. 밝은 테마의 기본 역할은 표면 `#FFFFFF`, 캔버스 `#F7F8FA`, 본문 `#202124`, 보조 텍스트 `#686B73`, 경계 `#E8E9EE`, 부드러운 브랜드 표면 `#F0EDFC`다.
+- 다크 테마는 `src/index.css`의 토큰과 화면별 재정의를 따른다. 데스크톱과 모바일의 다크 팔레트가 다를 수 있으므로 색을 하드코딩해 한쪽 팔레트를 강제하지 않는다.
+- 새 화면과 수정은 색상 역할 토큰(`brand`, `accent`, `ink`, `warmMuted`, `warmCanvas`, `warmSurface`, `warmBorder` 등)을 우선한다. `purple01`~`purple06`은 레거시 클래스 호환용 별칭이며 새로운 방향이나 팔레트 근거가 아니다. 이전 팔레트 이름인 `softMint`, `softPeach`, `accentGold`도 실제 CSS 값과 의미를 확인하고 사용한다.
+- 한국어 글꼴은 `Apple SD Gothic Neo`, `Malgun Gothic`, `system-ui`, `sans-serif` 순서다. 타이틀 계층과 400~700의 기존 가중치를 허용하며, 핵심 제목과 혜택 금액의 굵은 강조를 일괄 제거하지 않는다.
+- 본문은 한국어 가독성을 위해 기본 줄 간격 150%를 사용하고, 타이틀은 현재 토큰의 크기·130% 줄 간격을 따른다. 역할에 맞는 크기(`title-1`~`title-8`, `body-0`~`body-5`, `caption`)를 우선해 임의의 크기 변형을 줄인다.
+- 일정한 리듬이 도움이 되는 간격은 4px 단위를 우선한다. 검색·필터·리스트처럼 밀도가 중요한 화면에서는 공간을 획일적으로 키우지 말고, 같은 역할의 컨트롤과 카드 간격을 일관되게 맞춘다.
+- 카드와 컨트롤은 내용의 그룹과 조작 영역이 읽히도록 한다. 임의로 모든 모서리나 그림자를 둥글고 크게 만들지 않는다. 지도 위 표식의 외곽선과 꼬리처럼 위치 정확도에 필요한 모양은 기존 규칙을 보존한다.
 
-## Color and tokens
+## 공통 셸과 경로
 
-| Role         | Token/value                              | Use                                                       |
-| ------------ | ---------------------------------------- | --------------------------------------------------------- |
-| Canvas       | `warmCanvas` / `#F9F8F5`                 | page background and quiet regions                         |
-| Surface      | `warmSurface`, `white` / `#FFFEFB`       | panels, sheets, cards, controls                           |
-| Brand        | `brand`, `success` / `#167A4C`           | primary action, selection, location and positive emphasis |
-| Brand strong | `brandStrong`, `successDark` / `#115C3A` | hover/pressed states and high-contrast green text         |
-| Brand soft   | `brandSoft` / `#EDF8F2`                  | selected background and subtle green emphasis             |
-| Benefit      | `benefit`, `accentGold` / `#FFD75A`      | rare promotional badges; not nearby-card copy             |
-| Ink          | `ink`, `black` / `#242321`               | primary text and icons                                    |
-| Muted text   | `warmMuted` / `#6F6A60`                  | supporting copy                                           |
-| Border       | `warmBorder` / `#E4E1D8`                 | dividers, card and control outlines                       |
-| Navigation   | `warmNav` / `#F3F0E8`                    | desktop navigation rail                                   |
-| Danger       | `danger` / `#D7263D`                     | errors and destructive actions only                       |
+- 데스크톱 헤더 높이는 72px다. 일반 페이지 콘텐츠는 공유 최대 너비 1280px, 좌우 거터 28px를 기준으로 정렬한다. 지도 작업 영역은 이 일반 페이지 래퍼와 별도로 동작한다.
+- 현재 주요 경로는 홈(`/`), 주변 지도(`/map`), 전체 혜택(`/benefits`), 제휴처 상세(`/benefits/partners/:partnerId/:partnerSlug`), 지역 장소(`/places`, `/places/:regionSlug`), 매장 상세(`/stores/:storeId/:slug`), 로그인(`/login`), 마이페이지(`/mypage/...`), 멤버십 안내(`/membership/...`), 서비스 안내(`/about`, `/guide`, `/faq`, `/contact`), 정책(`/terms`, `/privacy`, `/account-deletion`)다. 기존 경로, 인증 및 링크 동작을 시각 정리 중 바꾸지 않는다.
+- 모바일 주요 탭은 홈, 지도, 혜택, 관심 혜택, 마이다. 현재 관심 혜택 라벨은 `관심 혜택`이며 줄임말로 바꾸지 않는다. 하단 내비게이션 바 높이는 64px에 안전 영역 여백을 더하며, 관련 값과 탭 동작은 [`src/components/MobileAppTabBar.tsx`](src/components/MobileAppTabBar.tsx)를 따른다.
+- 모바일 상단 왼쪽에 ITPLACE 워드마크나 멤버십 라벨을 중복 배치하지 않는다. 브랜드 식별을 위해 승인된 현재 모바일 헤더 구조를 유지한다.
 
-- `tailwind.config.js` is the Tailwind color source of truth; CSS-only surfaces use synchronized `--itplace-*` variables from `src/index.css`.
-- `purple01` through `purple06` are compatibility aliases mapped to green values. They do not define a purple visual direction and must not justify new purple UI.
-- Prefer semantic tokens for new work. Do not add component-level hex/rgb values when an active token exists.
-- Pink and orange legacy names are not the brand direction; use role-based tokens such as `benefit` or `accentGold` when the meaning is valid.
+## 지도 레이아웃과 동작
 
-## Typography, surfaces, and motion
+- 지도는 주변 혜택 탐색의 중심이며 검색, 카테고리, 결과 목록과 선택 제휴처 상세는 이를 보조한다. 데이터와 조작 가능한 지도의 공간을 유지한다.
+- 일반 데스크톱 지도 레이아웃은 검색/결과 또는 선택 상세 패널과 지도 영역으로 구성한다. 기본 패널 너비는 360px이며, 768~1023px 구간은 현재 CSS에서 340px로 조정된다. 패널 여백과 지도 작업 영역은 일반 페이지의 1280px 래퍼와 별개이며, 실제 값은 [`src/features/mainPage/components/Layout/Layout.module.css`](src/features/mainPage/components/Layout/Layout.module.css)를 따른다.
+- 768~1919px에서는 앞서 기술한 현재 폭의 공유 패널 하나와 지도를 사용하고, 1920px 이상에서는 결과 목록, 지도, 선택 상세의 3열 구성을 사용한다. 승인 디자인은 단일 패널 360px 기준이며, 현재 구현은 768~1023px 태블릿 구간에서 340px로 조정한다. 이는 구현의 반응형 보정이며 승인 기준 너비를 변경하지 않는다. 1920px 미만 레이아웃에는 별도 지도 제목을 추가하지 않는다. 브레이크포인트 및 상태 전환은 [`src/features/mainPage/components/Layout/index.tsx`](src/features/mainPage/components/Layout/index.tsx)를 확인한다.
+- 모바일 지도는 검색·가로 스크롤 카테고리·지도·드래그 가능한 결과 시트·하단 탭을 함께 제공한다. 접힘 높이는 현재 56px이며 미리보기와 중간 지점, 최종 확장 높이는 화면 높이와 지도에 남겨야 할 영역에 따라 계산한다. 300px/430px를 고정 상태 계약으로 간주하지 않는다.
+- 지도 컨트롤은 현재 시트와 하단 탭을 가리지 않게 배치한다. 시트 조작은 터치와 키보드로 이해할 수 있어야 하고, hover만으로 핵심 기능을 제공하지 않는다. 선택 제휴처, 지도 중심, 결과 목록 간 기존 동기화를 보존한다.
+- AI 혜택 도우미 플로팅 위젯은 지도 작업 공간과 컨트롤을 위해 데스크톱·모바일 `/map`에서 숨기며, 다른 페이지에서는 기존 진입점을 유지한다.
+- 지도 클러스터와 개별 매장 마커는 밝은 Kakao 베이스맵에 맞춘 고정 밝은 팔레트를 사용하며 앱 테마와 독립적으로 유지한다.
+- 위치 권한 거부, 검색 결과 없음, 지도 SDK/네트워크 오류에는 이유와 재시도 또는 다른 탐색 경로를 제공한다. 빈 상태나 오류가 지도 표식 색만으로 전달되지 않게 한다.
 
-- Font stack: `NanumBarunGothic`, `Apple SD Gothic Neo`, `Malgun Gothic`, `Helvetica Neue`, `Arial`, sans-serif.
-- Titles are short and firm. Body and benefit conditions use the existing 150% line-height scale for Korean readability.
-- Cards and controls use compact 12–16px radii; sheets and larger containers may use 20–24px radii.
-- Default surfaces are matte, with 1px `warmBorder` outlines. Shadows stay soft and low-opacity, typically based on warm charcoal or deep green rather than colored glow.
-- Motion communicates state or spatial change only. Hover lift and press feedback remain subtle; dragging and panel transitions preserve direct manipulation. Respect `prefers-reduced-motion` for non-essential movement.
+## 데이터, 콘텐츠, 기능 계약
 
-## Shell and map experience
+- 시각 변경은 현재 기능, 섹션 순서, API 계약, 인증 흐름, 지도 동작, 즐겨찾기 저장 동작을 보존한다. 정적 목업 계정, 인증번호, 제휴처 데이터가 실제 서비스 동작으로 들어가서는 안 된다.
+- 제휴처 이름, 혜택 내용, 적용 통신사·등급, 할인 방식과 단위, 이용 제한, 사용 방법은 원본 데이터와 조건을 보존한다. 디자인을 위해 조건을 축약하거나 할인 단위·자격을 추정해 바꾸지 않는다.
+- 결과 카드에서는 제휴처와 대표 혜택이 빠르게 스캔되어야 한다. 통신사, 거리, 카테고리 등 현재 제공되는 보조 정보는 위계를 낮출 수 있지만 의미 있는 배지나 자격 표시는 제거하지 않는다.
+- 상세에서는 핵심 혜택과 적용 대상을 먼저 이해할 수 있게 하고, 제한·이용 방법·외부 링크 같은 전체 조건에 도달할 수 있게 한다. 중복 문구를 시각적으로 정리하더라도 적용되는 등급과 조건의 범위를 보존한다.
+- 문구는 짧고 구체적으로 쓴다. 사실이 확인되지 않은 수치, 추천 근거, 제휴 주장, 현재 제공되지 않는 기능은 새로 만들지 않는다.
+- 페이지 제목, 의미 있는 제목 계층(H1/H2), 메타 정보, 내부 링크와 기존 SEO 구조를 유지한다. 장식 목적의 제목 변경으로 문서 구조를 훼손하지 않는다.
 
-### Desktop (`md` and above)
+## Unslop Polish 지침
 
-- The application shell is an 88px fixed navigation rail, followed by a 356px nearby-benefit panel, then the flexible map.
-- The rail uses `warmNav`, a thin right border, and icon-plus-label controls. A thin divider separates the brand mark from the primary navigation, mirroring the divider above utility actions. Primary navigation uses 24px icons and 12px labels for comfortable recognition. Map, ticket, bookmark, and user icons match their destinations. The active item's icon alone turns deep green, grows slightly, and uses a heavier stroke without a filled surface or side marker; `aria-current` provides the semantic cue.
-- The nearby panel owns search, nearby/favorites/AI modes, contextual guidance, compact results, and selected-store detail. It may collapse to give the map more space.
-- Categories sit above the map as horizontal controls. Map controls and transient cards remain visually secondary to location and result context.
-- The map fills the remaining viewport; avoid detached promotional card grids over it.
-- Partner and numeric cluster markers use a mathematically circular badge with a short tapered tail layered behind it. Do not stretch one outline into both the badge and pointer; the resulting lower curve appears uneven at map scale.
+아래 내용은 [Damir Sokolovsky(@heydamir)의 Unslop](https://github.com/heydamir/unslop)에서 제품 정체성, 내비게이션·버튼·공통 UI의 절제, 일관된 간격, 근거 있는 콘텐츠와 절제된 효과 원칙을 참고해 이 프로젝트에 맞게 정리한 것이다. 원 저작물은 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)으로 제공된다.
 
-### Mobile (below `md`)
+- 먼저 제품에 맞는 한 문장을 확인한다: “지도와 제휴처 정보를 통해 내 주변 통신사 혜택을 찾는다.” 모든 시각 변경은 이 탐색을 더 쉽게 하는지로 판단한다.
+- 과한 그라디언트, 빛 번짐, 장식용 이모지, 의미 없는 영문 대문자 배지, 불필요한 색 그림자, 반복되는 강조색은 줄인다. 실제 상태나 카테고리에 의미가 있는 배지, 지도 표식과 브랜드 아이리스는 의미와 접근성을 확인한 뒤 유지한다.
+- 아이콘은 기존 프로젝트의 아이콘 세트와 크기를 먼저 확인한다. 일관성은 맞추되 모든 아이콘을 특정 16px 크기로 강제하거나, 식별에 도움이 되는 아이콘을 장식 취급해 없애지 않는다.
+- 인터페이스 문구는 실제 데이터로 확인 가능한 사실만 담는다. 짧은 라벨을 선호하되, 혜택 조건의 정확성이나 한국어 가독성을 위해 필요한 설명은 남긴다.
+- 시각적 미세 조정은 간격과 정렬, 글자 위계, 색상 역할, 아이콘, 상태 표현 순으로 검토한다. 모든 화면을 한 번에 재구성하거나 새로운 히어로 이미지·카드 격자·효과를 추가하는 방식으로 정체성을 만들지 않는다.
 
-- Keep search fixed at the top as the first discovery action.
-- Render categories as a horizontally scrollable row over the map. Do not wrap them into multiple lines.
-- The map is the base layer and must remain legible between the search controls and sheet.
-- The benefit sheet is draggable with a 300px default height, a 430px intermediate snap point when available, and a viewport-bounded expanded state. Its top corners are 24px with a visible drag handle, thin border, and restrained upward shadow.
-- The 64px bottom navigation is fixed, safe-area aware, and contains 홈, 지도, 혜택, 즐겨찾기, 마이. Transient dialogs and overlays may temporarily hide it to prevent conflicting controls.
-- Position map controls above the current sheet and bottom-navigation offset; mobile interaction must not depend on hover.
+## 접근성 및 반응형 품질 기준
 
-## Nearby benefit cards and detail
+- 본문 텍스트 대비는 WCAG AA를 목표로 한다(일반 텍스트 4.5:1 이상). 강조색, 보조 텍스트와 비활성 상태는 밝은 테마와 다크 테마 모두에서 실제 배경 대비를 확인한다.
+- 링크, 버튼, 입력, 탭, 시트 핸들은 적절한 네이티브 의미와 이름을 갖고 키보드로 조작할 수 있어야 한다. 포커스 표시는 밝은 테마와 다크 테마에서 보이고, 선택 상태는 색만으로 구별하지 않는다.
+- 작은 화면에서 고정 요소가 콘텐츠를 덮지 않게 하고 안전 영역과 터치 조작을 확인한다. 넓은 화면에서는 지도와 목록/상세 패널이 각자 기능을 수행할 공간을 확보한다.
+- UI를 변경한 경우 주요 터치 대상은 가능하면 44px 이상인지 확인한다. 이는 검토 권장 기준이며 현재 모든 컨트롤이 충족한다고 단정하지 않는다.
+- 축소 모션 설정을 존중한다. 지도 이동·시트 동작처럼 사용자 조작에 필요한 패널 너비 및 시트 높이 전환은 기능적 공간 조정으로 취급하고, 현재 reduced-motion 동작도 유지한다. 반복되는 장식 애니메이션이나 튀는 움직임은 추가하지 않는다.
 
-- Nearby results are compact map companions, not standalone promotional cards.
-- A nearby card contains, in order: logo, partner/store name, one representative benefit, carrier, and distance. Category or walking time may appear as quiet secondary metadata.
-- Render the representative benefit as concise green text without a highlighter background. Reserve yellow for exceptional promotional badges outside the standard nearby-card rhythm.
-- Selected cards use border, surface, and elevation changes in addition to color.
-- Keep tier rules, usage limits, usage method, external links, and other full conditions in the detail view.
-- In detail, group benefits by carrier. Show only carriers that have benefits; use a label for one carrier and equal compact tabs/pills for multiple carriers.
-- If several grades share the same benefit copy, show the copy once and group the applicable grade badges. Keep the reading order: benefit name/type → applicable grade and key benefit → limits and usage method.
-- Default to one column on mobile and two columns where desktop detail width permits. Long explanations may use a semantic disclosure while key benefit and applicable grade remain visible.
+## 검토 시 확인할 항목
 
-## Component and state rules
+시각 정리 후 관련 화면에서 다음을 확인한다. 이 목록은 현재 구현이 모두 충족되었다는 선언이 아니라 변경 검토 기준이다.
 
-- Reuse `SearchBar`, `ActionButton`, `Modal`, `NoResult`, `MobileAppTabBar`, `MobileHeader`, and existing feature components before introducing a parallel primitive.
-- Every interactive element covers default, hover where relevant, pressed, selected/active, `focus-visible`, disabled, loading, empty, error, and success states as applicable.
-- Loading uses concise status text with a spinner or skeleton. Empty states pair a gentle explanation with a next action. Errors lead with recovery. Saved, removed, and authenticated actions return explicit feedback.
-- Do not encode active or selected state by color alone. Pair color with a marker, border/surface change, icon weight, label, `aria-current`, or `aria-pressed` as appropriate.
-- Policy and account-deletion routes retain stable, readable document layouts suitable for external review.
-
-## Accessibility
-
-- Target WCAG 2.1 AA. Body text must meet at least 4.5:1 contrast against its surface; do not use muted tokens where they fail this threshold.
-- Buttons, links, tabs, search, disclosure controls, and modal close controls are semantic native controls and expose a visible `focus-visible` state.
-- Use `aria-current` for the active route and `aria-pressed` or the appropriate tab semantics for toggled states. Form errors are programmatically connected to inputs.
-- Location permission, map selection, loading, empty, and error states cannot be communicated by color or map graphics alone.
-- Preserve keyboard access for authentication, navigation, filters, details, and overlays. Keep touch targets comfortably operable and account for the mobile safe area.
-
-## Responsive and implementation constraints
-
-- Standard breakpoints: `sm: 640px`, `md: 768px`, `lg: 1024px`, `xl: 1280px`, `2xl: 1536px`; repository max-width aliases remain available for compatibility.
-- Below 768px, use the mobile search/map/sheet/tab-bar composition. At 768px and above, use the rail/panel/map composition.
-- React 19, TypeScript, Next.js App Router, and Tailwind CSS are the implementation baseline.
-- Kakao Maps SDK, large imagery, landing media, and large chunks can affect first load. Prioritize the code and data required for map and nearby-benefit discovery.
-- After visual/token changes, run `npx eslint . --config eslint.config.js` and `npm run build`, then inspect both mobile and desktop map screens at representative viewport sizes.
+- UI 변경 시 저장소 [`AGENTS.md`](AGENTS.md)의 필수 확인을 실행한다: `npx eslint . --config eslint.config.js`, `npm run typecheck`, `npm test`, `npm run build`.
+- UI 변경 시 대표 화면을 브라우저에서 확인한다. 지도 레이아웃 경계는 767/768px, 1023/1024px, 1919/1920px를 포함하고, 모바일과 데스크톱의 밝은 테마·다크 테마를 살핀다.
+- 공유 헤더와 1280px 콘텐츠 정렬, 1920px 전후 지도 레이아웃 전환
+- 모바일 상단 브랜드 중복 여부, 시트의 접힘·드래그·확장 및 64px 하단 탭과 안전 영역
+- 밝은 테마와 다크 테마의 표면·본문·보조 텍스트·브랜드 강조·포커스 대비
+- 검색, 필터, 결과 선택, 상세 조건, 로그인 필요 상태, 즐겨찾기 저장/해제
+- 로딩·빈 결과·위치 거부·지도 오류의 안내와 복구 동작
+- 제휴처 데이터, 할인 단위와 자격 조건, 경로·인증·SEO 제목 구조의 보존
+- 작은 폭과 데스크톱 폭에서 겹침, 잘림, 읽을 수 없는 조건, 조작하기 어려운 컨트롤 여부

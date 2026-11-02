@@ -140,26 +140,6 @@ const MainPageLayout: React.FC = () => {
     setSearchQuery(query);
   }, []);
 
-  useEffect(() => {
-    if (!isMobile) return;
-
-    const root = document.documentElement;
-    root.style.setProperty(
-      '--itplace-mobile-chat-launcher-bottom',
-      `calc(var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px) + ${bottomSheetHeight}px + 12px)`
-    );
-    root.style.setProperty('--itplace-mobile-chat-launcher-right', '72px');
-    root.style.setProperty(
-      '--itplace-mobile-chat-launcher-display',
-      mobileViewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - bottomSheetHeight < 120 ? 'none' : 'inline-flex'
-    );
-    return () => {
-      root.style.removeProperty('--itplace-mobile-chat-launcher-bottom');
-      root.style.removeProperty('--itplace-mobile-chat-launcher-right');
-      root.style.removeProperty('--itplace-mobile-chat-launcher-display');
-    };
-  }, [bottomSheetHeight, isMobile, mobileViewportHeight]);
-
   const getMaxHeight = useCallback(() => maxBottomSheetHeight, [maxBottomSheetHeight]);
 
   const clampBottomSheetHeight = useCallback(

@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import type { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { setupInterceptors } from '@/apis/interceptorSetup';
 import ToastProvider from '@/components/ToastProvider';
@@ -30,6 +31,7 @@ const QuestionRecommendationChatWidget = dynamic(
 );
 
 function QuestionRecommendationLoader() {
+  const pathname = usePathname();
   const { isLoggedIn, user } = useSelector((state: RootState) => state.auth);
   const isRehydrated = useSelector((state: RootState) => state._persist.rehydrated);
   const isClientReady = useClientReady();
@@ -45,7 +47,7 @@ function QuestionRecommendationLoader() {
     previousAuth.current = { isRehydrated, isLoggedIn, user };
   }, [isLoggedIn, isRehydrated, user]);
 
-  if (!isClientReady || !isRehydrated) return null;
+  if (!isClientReady || !isRehydrated || pathname.replace(/\/+$/, '') === '/map') return null;
 
   return <QuestionRecommendationChatWidget />;
 }

@@ -89,61 +89,77 @@ const CLUSTER_TAIL_HEIGHT = 9;
 const MOBILE_MAP_TOP_OCCLUSION = 120;
 const MOBILE_MAP_CONTROLS_RIGHT_INSET = 120;
 const MOBILE_MAP_EDGE_CLEARANCE = 8;
-const SERVER_CLUSTER_STYLE_VERSION = 'neutral-cluster-v17';
-const CLUSTER_DENSITY_COLORS = {
-  low: '#7b8491',
-  medium: 'var(--itplace-color-text-secondary)',
-  high: '#3c4452',
-  extreme: 'var(--itplace-color-text)',
+const SERVER_CLUSTER_STYLE_VERSION = 'light-map-cluster-v19';
+// The Kakao basemap stays light in both app themes, so marker colors stay fixed too.
+const LIGHT_MAP_CLUSTER_PALETTE = {
+  surface: '#F0EDFC',
+  accent: '#6154D9',
+  text: '#202124',
+  outline: '#686B73',
+  count: '#FFFFFF',
 } as const;
-const administrativeClusterBackgroundCache = new Map<string, string>();
+const CLUSTER_DENSITY_COLORS = {
+  low: '#626c7a',
+  medium: '#566170',
+  high: '#485362',
+  extreme: '#3a4554',
+} as const;
 
-const createClusterPinBackground = (size: number, color: string, filled = true) => {
+const createClusterPinArtwork = (size: number, color: string, filled = true) => {
   const height = size + CLUSTER_TAIL_HEIGHT;
   const center = size / 2;
   const radius = center - 2;
   const tailStartY = size - Math.max(8, Math.round(size * 0.2));
   const tailHalfWidth = Math.max(5, Math.round(size * 0.14));
-  const fillColor = filled ? color : '#FFFFFF';
-  const strokeColor = filled ? '#FFFFFF' : color;
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${height}" viewBox="0 0 ${size} ${height}">
-      <path d="M${center - tailHalfWidth} ${tailStartY} Q${
-        center - tailHalfWidth * 0.55
-      } ${size + 1} ${center} ${height - 1} Q${center + tailHalfWidth * 0.55} ${
-        size + 1
-      } ${center + tailHalfWidth} ${tailStartY} Z" fill="${fillColor}" stroke="${strokeColor}" stroke-width="3" stroke-linejoin="round"/>
-      <circle cx="${center}" cy="${center}" r="${radius}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="3"/>
-    </svg>
-  `;
-  const dataUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-  return `url("${dataUri}") center top / ${size}px ${height}px no-repeat`;
+  const fillColor = filled ? color : LIGHT_MAP_CLUSTER_PALETTE.count;
+  const strokeColor = filled ? LIGHT_MAP_CLUSTER_PALETTE.count : LIGHT_MAP_CLUSTER_PALETTE.outline;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', String(size));
+  svg.setAttribute('height', String(height));
+  svg.setAttribute('viewBox', `0 0 ${size} ${height}`);
+  svg.setAttribute('aria-hidden', 'true');
+  svg.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:visible';
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute(
+    'd',
+    `M${center - tailHalfWidth} ${tailStartY} Q${center - tailHalfWidth * 0.55} ${size + 1} ${center} ${height - 1} Q${center + tailHalfWidth * 0.55} ${size + 1} ${center + tailHalfWidth} ${tailStartY} Z`
+  );
+  path.setAttribute('fill', fillColor);
+  path.setAttribute('stroke', strokeColor);
+  path.setAttribute('stroke-width', '3');
+  path.setAttribute('stroke-linejoin', 'round');
+  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  circle.setAttribute('cx', String(center));
+  circle.setAttribute('cy', String(center));
+  circle.setAttribute('r', String(radius));
+  circle.setAttribute('fill', fillColor);
+  circle.setAttribute('stroke', strokeColor);
+  circle.setAttribute('stroke-width', '3');
+  svg.append(path, circle);
+  return svg;
 };
 
-const createAdministrativeClusterBackground = (width: number, color: string) => {
-  const cacheKey = `${width}:${color}`;
-  const cachedBackground = administrativeClusterBackgroundCache.get(cacheKey);
-  if (cachedBackground) return cachedBackground;
-
+const createAdministrativeClusterArtwork = (width: number) => {
   const bodyHeight = 40;
   const height = 49;
   const center = width / 2;
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <path d="M14 1 H${width - 14} Q${width - 1} 1 ${width - 1} 14 V${
-        bodyHeight - 13
-      } Q${width - 1} ${bodyHeight - 1} ${width - 14} ${bodyHeight - 1} H${
-        center + 8
-      } L${center} ${height - 1} L${center - 8} ${bodyHeight - 1} H14 Q1 ${
-        bodyHeight - 1
-      } 1 ${bodyHeight - 13} V14 Q1 1 14 1 Z" fill="#FFFFFF" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M14 5 H${width - 14}" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
-    </svg>
-  `;
-  const dataUri = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-  const background = `url("${dataUri}") center top / ${width}px ${height}px no-repeat`;
-  administrativeClusterBackgroundCache.set(cacheKey, background);
-  return background;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', String(width));
+  svg.setAttribute('height', String(height));
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('aria-hidden', 'true');
+  svg.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:visible';
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute(
+    'd',
+    `M14 1 H${width - 14} Q${width - 1} 1 ${width - 1} 14 V${bodyHeight - 13} Q${width - 1} ${bodyHeight - 1} ${width - 14} ${bodyHeight - 1} H${center + 8} L${center} ${height - 1} L${center - 8} ${bodyHeight - 1} H14 Q1 ${bodyHeight - 1} 1 ${bodyHeight - 13} V14 Q1 1 14 1 Z`
+  );
+  path.setAttribute('fill', LIGHT_MAP_CLUSTER_PALETTE.surface);
+  path.setAttribute('stroke', LIGHT_MAP_CLUSTER_PALETTE.accent);
+  path.setAttribute('stroke-width', '2');
+  path.setAttribute('stroke-linejoin', 'round');
+  svg.append(path);
+  return svg;
 };
 
 const coordinateKey = (platform: Platform): string =>
@@ -153,7 +169,7 @@ const markerRegistryKey = (platform: Platform): string =>
   `${platform.id}:${platform.partnerId}:${platform.carrier ?? 'ALL'}`;
 
 const getCategoryPinColor = () => {
-  return 'var(--itplace-color-text-secondary)';
+  return LIGHT_MAP_CLUSTER_PALETTE.outline;
 };
 
 const getClusterDensityColor = (count: number) => {
@@ -176,19 +192,12 @@ const getClusterDensityShadows = (count: number) => {
   return { resting: 'rgba(32,33,32,0.27)', active: 'rgba(32,33,32,0.37)' };
 };
 
-const getAdministrativeClusterColor = (unitType?: MapCluster['administrativeUnitType']) => {
-  if (unitType === 'CITY') return '#3c4452';
-  if (unitType === 'TOWN') return 'var(--itplace-color-text-secondary)';
-  if (unitType === 'LEGAL_DONG') return '#7b8491';
-  return 'var(--itplace-color-text-secondary)';
-};
-
 const updateAdministrativeClusterElement = (
   element: HTMLButtonElement,
   cluster: MapCluster,
   administrativeUnitName: string
 ) => {
-  const accentColor = getAdministrativeClusterColor(cluster.administrativeUnitType);
+  const accentColor = LIGHT_MAP_CLUSTER_PALETTE.accent;
   const countLabel = String(cluster.count);
   const labelLength = Array.from(administrativeUnitName).length;
   const visualWidth = Math.min(156, Math.max(86, labelLength * 13 + countLabel.length * 7 + 42));
@@ -210,7 +219,7 @@ const updateAdministrativeClusterElement = (
     'height:49px',
     'padding:0',
     'border:0',
-    `background:${createAdministrativeClusterBackground(visualWidth, accentColor)}`,
+    'background:transparent',
     'display:block',
     'cursor:pointer',
     'overflow:visible',
@@ -223,6 +232,11 @@ const updateAdministrativeClusterElement = (
   const existingContent = element.querySelector<HTMLSpanElement>(
     '[data-administrative-cluster-content="true"]'
   );
+  let artwork = element.querySelector<SVGSVGElement>('[data-administrative-cluster-artwork="true"]');
+  if (!artwork || artwork.getAttribute('width') !== String(visualWidth)) {
+    artwork = createAdministrativeClusterArtwork(visualWidth);
+    artwork.dataset.administrativeClusterArtwork = 'true';
+  }
   if (existingContent) {
     const existingName = existingContent.querySelector<HTMLSpanElement>(
       '[data-administrative-cluster-name="true"]'
@@ -234,6 +248,7 @@ const updateAdministrativeClusterElement = (
       existingName.textContent = administrativeUnitName;
       existingCount.textContent = countLabel;
       existingCount.style.background = accentColor;
+      element.replaceChildren(artwork, existingContent);
       return;
     }
   }
@@ -260,7 +275,7 @@ const updateAdministrativeClusterElement = (
     'overflow:hidden',
     'text-overflow:ellipsis',
     'white-space:nowrap',
-    'color:var(--itplace-color-text)',
+    `color:${LIGHT_MAP_CLUSTER_PALETTE.text}`,
     'font-size:13px',
     'font-weight:800',
     'line-height:1',
@@ -281,14 +296,14 @@ const updateAdministrativeClusterElement = (
     'align-items:center',
     'justify-content:center',
     'box-sizing:border-box',
-    'color:#FFFFFF',
+    `color:${LIGHT_MAP_CLUSTER_PALETTE.count}`,
     'font-size:11px',
     'font-weight:900',
     'line-height:1',
   ].join(';');
 
   content.replaceChildren(name, count);
-  element.replaceChildren(content);
+  element.replaceChildren(artwork, content);
 };
 
 const updateServerClusterElement = (
@@ -333,7 +348,7 @@ const updateServerClusterElement = (
     `height:${height}px`,
     'padding:0',
     'border:0',
-    `background:${createClusterPinBackground(visualSize, accentColor, !isSingleLocation)}`,
+    'background:transparent',
     'display:block',
     'cursor:pointer',
     'line-height:1',
@@ -344,6 +359,8 @@ const updateServerClusterElement = (
     `filter:drop-shadow(0 5px 8px ${shadows.resting})`,
   ].join(';');
 
+  const artwork = createClusterPinArtwork(visualSize, accentColor, !isSingleLocation);
+  artwork.dataset.clusterPinArtwork = 'true';
   const badge = document.createElement('span');
   badge.style.cssText = [
     'position:relative',
@@ -371,7 +388,7 @@ const updateServerClusterElement = (
     badge.textContent = String(cluster.count);
   }
 
-  element.replaceChildren(badge);
+  element.replaceChildren(artwork, badge);
 };
 
 const createServerClusterElement = (
