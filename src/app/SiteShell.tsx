@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/Header';
+import AppDownloadLauncher from '@/components/AppDownloadLauncher';
 import MobileAppTabBar from '@/components/MobileAppTabBar';
 import PageScrollbarLayout from '@/components/PageScrollbarLayout';
 import ScrollToTop from '@/components/ScrollToTop';
@@ -28,6 +29,7 @@ export default function SiteShell({ children }: { children: ReactNode }) {
       <ScrollToTop />
       <Header />
       <ThemeToggle />
+      {(pathname === '/' || pathname === '/benefits') && <AppDownloadLauncher />}
       <main
         id="site-content"
         tabIndex={-1}
