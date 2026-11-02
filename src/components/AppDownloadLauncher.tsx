@@ -58,6 +58,7 @@ export default function AppDownloadLauncher() {
         <Image className={styles.qr} src={APP_DOWNLOAD.qrImage} alt="잇플레이스 앱 다운로드 페이지 QR 코드" width={112} height={112} />
         <div className={styles.popoverCopy}>
           <strong>Android 앱 다운로드</strong>
+          <span>정식 출시는 11월 14일 예정입니다.</span>
           <span>휴대폰으로 QR 코드를 스캔하세요.</span>
           <Link href="/download">다운로드 안내 보기</Link>
         </div>

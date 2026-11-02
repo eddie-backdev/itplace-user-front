@@ -18,7 +18,7 @@ export default function DownloadPage() {
         <header className={styles.header}>
           <p className={styles.kicker}>ITPLACE Android 앱</p>
           <h1>잇플레이스를 앱으로 만나보세요</h1>
-          <p>주변 제휴처와 멤버십 혜택을 더 편하게 찾아볼 수 있어요.</p>
+          <p>정식 출시는 11월 14일 예정입니다. 지금은 테스트 버전을 먼저 이용할 수 있어요.</p>
         </header>
 
         <section className={styles.download} aria-labelledby="download-title">
