@@ -7,7 +7,7 @@ import styles from './page.module.css';
 
 export const metadata = createPageMetadata({
   title: 'Android 앱 다운로드 | 잇플레이스',
-  description: '잇플레이스 Android 테스트 앱 다운로드와 설치 방법을 확인하세요.',
+  description: '잇플레이스 Android 앱 다운로드와 설치 방법을 확인하세요.',
   path: '/download',
 });
 
@@ -18,7 +18,7 @@ export default function DownloadPage() {
         <header className={styles.header}>
           <p className={styles.kicker}>ITPLACE Android 앱</p>
           <h1>잇플레이스를 앱으로 만나보세요</h1>
-          <p>정식 출시는 11월 14일 예정입니다. 지금은 테스트 버전을 먼저 이용할 수 있어요.</p>
+          <p>정식 출시는 11월 14일 예정입니다. 지금은 웹에서 다운로드 후 이용할 수 있어요.</p>
         </header>
 
         <section className={styles.download} aria-labelledby="download-title">
@@ -26,7 +26,7 @@ export default function DownloadPage() {
             <Image className={styles.icon} src={APP_DOWNLOAD.iconImage} alt="잇플레이스 앱 아이콘" width={72} height={72} />
             <div>
               <h2 id="download-title">잇플레이스</h2>
-            <p>{APP_DOWNLOAD.minimumAndroid} · 테스트 APK</p>
+            <p>{APP_DOWNLOAD.minimumAndroid}</p>
             </div>
           </div>
 
@@ -39,7 +39,7 @@ export default function DownloadPage() {
 
           <div className={styles.desktopQr}>
             <Image src={APP_DOWNLOAD.qrImage} alt="잇플레이스 앱 다운로드 페이지 QR 코드" width={144} height={144} />
-            <p>휴대폰 카메라로 스캔해<br />다운로드 페이지를 여세요.</p>
+            <p>휴대폰 카메라로 스캔해<br />안드로이드 앱을 다운로드하세요.</p>
           </div>
 
           <dl className={styles.release}>
@@ -47,7 +47,7 @@ export default function DownloadPage() {
             <div><dt>배포일</dt><dd>{APP_DOWNLOAD.releaseDate}</dd></div>
             <div><dt>파일 크기</dt><dd>{APP_DOWNLOAD.fileSize}</dd></div>
           </dl>
-          <p className={styles.testNote}>이 파일은 테스트용 앱입니다. 공식 비공개 테스트에 참여 중이라면 안내받은 Google Play 링크를 이용해 주세요.</p>
+          <p className={styles.testNote}>Google Play를 통해 설치했다면, 안내받은 Google Play 링크를 이용해 주세요.</p>
         </section>
 
         <section className={styles.install} aria-labelledby="install-title">

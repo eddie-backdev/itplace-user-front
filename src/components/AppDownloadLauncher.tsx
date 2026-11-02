@@ -59,7 +59,7 @@ export default function AppDownloadLauncher() {
         <div className={styles.popoverCopy}>
           <strong>Android 앱 다운로드</strong>
           <span>정식 출시는 11월 14일 예정입니다.</span>
-          <span>휴대폰으로 QR 코드를 스캔하세요.</span>
+          <span>휴대폰 카메라로 스캔해 안드로이드 앱을 다운로드하세요.</span>
           <Link href="/download">다운로드 안내 보기</Link>
         </div>
       </div>
