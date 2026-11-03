@@ -8,6 +8,7 @@
 - 통신사 멤버십 통합: `/membership`
 - 통신사별 랜딩: `/membership/skt`, `/membership/kt`, `/membership/lguplus`
 - 전체 제휴처: `/benefits`
+- Android 앱 다운로드: `/download`
 - 제휴처 상세: `/benefits/partners/{partnerId}/{partnerSlug}`
 - 지역 매장 검색: `/places`, `/places/{regionSlug}`
 - 매장 상세: `/stores/{storeId}/{storeSlug}`
@@ -24,7 +25,7 @@ Next.js 서버는 공개 사용자 API에서 제휴처 목록과 실제 혜택 �
 ## 로컬 검증
 
 ```zsh
-npm run verify:workers
+npm run verify
 ```
 
 빌드와 자동 테스트에는 아래 검증이 포함됩니다.
@@ -36,7 +37,7 @@ npm run verify:workers
 - App Router 엔트리와 Vite/React Router 제거 상태
 - robots.txt의 sitemap 선언
 
-새 제휴처나 혜택 변경은 다음 조회의 서버 렌더링 HTML과 sitemap에 반영됩니다. sitemap은 API 장애나 불완전 응답일 때만 저장소의 비상 카탈로그를 사용하며, 갱신 명령은 README를 참고합니다. 데이터 변경만으로 재배포나 캐시 무효화를 수행할 필요는 없습니다.
+공개 API를 `no-store`로 조회하므로 새 제휴처나 혜택 변경은 다음 요청의 서버 렌더링 HTML과 sitemap에 반영됩니다. 5분 재검증을 기다리거나 데이터 변경만으로 재배포·캐시 무효화를 수행할 필요는 없습니다. sitemap은 API 장애나 불완전 응답일 때만 저장소의 비상 카탈로그를 사용하며, 갱신 명령은 README를 참고합니다.
 
 ## 대표 도메인 통일
 
@@ -51,7 +52,7 @@ curl -sSI 'https://www.itplace.click/membership?from=seo' | rg -i '^(HTTP/|locat
 curl -sSI 'https://itplace.click/membership?from=seo' | rg -i '^(HTTP/|location:)'
 ```
 
-앞의 세 요청은 `301`과 `location: https://itplace.click/membership?from=seo`를 반환해야 합니다. 마지막 apex HTTPS 요청은 리디렉션 없이 서비스 응답을 반환해야 합니다.
+HTTP apex 요청은 apex HTTPS로 리디렉션됩니다. HTTP www 요청은 HTTPS www로 리디렉션된 뒤, HTTPS www 요청에서 apex HTTPS로 한 번 더 리디렉션됩니다. 각 `Location`과 최종 apex HTTPS 응답에서 경로와 query string이 보존되고 서비스가 응답하는지 확인합니다.
 
 ## 배포 후 확인 URL
 
@@ -61,6 +62,7 @@ curl -sSI 'https://itplace.click/membership?from=seo' | rg -i '^(HTTP/|location:
 - `https://itplace.click/membership/kt`
 - `https://itplace.click/membership/lguplus`
 - `https://itplace.click/benefits`
+- `https://itplace.click/download`
 - `https://itplace.click/places`
 - 지역 검색 결과와 매장 상세 URL
 - 대표 제휴처 상세 URL
@@ -81,11 +83,14 @@ curl -sSI 'https://itplace.click/membership?from=seo' | rg -i '^(HTTP/|location:
 
 ## 네이버 서치어드바이저
 
-1. `https://searchadvisor.naver.com`에서 `https://itplace.click` 사이트를 등록합니다.
-2. HTML 파일 업로드 또는 메타 태그 방식으로 소유권을 확인합니다.
-3. **요청 → 사이트맵 제출**에서 `https://itplace.click/sitemap.xml`을 제출합니다.
-4. **검증 → robots.txt**에서 공개 경로 수집이 허용되는지 확인합니다.
-5. **리포트 → 콘텐츠 노출/사이트 진단**에서 수집 실패, 중복 title, 잘못된 canonical 여부를 주기적으로 확인합니다.
+1. `https://searchadvisor.naver.com`에서 호스트 `https://itplace.click`을 사이트로 등록합니다. 경로가 포함된 URL이나 `www` 호스트 대신 canonical인 apex HTTPS 호스트를 사용합니다.
+2. 서치어드바이저가 발급한 실제 소유 확인 메타 태그 또는 HTML 파일로 소유권을 확인합니다. 아직 값을 발급받지 않았다면 임의의 확인값을 코드나 배포 설정에 넣지 말고, 콘솔에서 값을 받은 뒤 확인합니다.
+3. **요청 → 사이트맵 제출**에서 `https://itplace.click/sitemap.xml`을 제출합니다. 사이트맵의 URL 호스트가 확인한 사이트 호스트와 일치하는지 확인합니다.
+4. **검증 → robots.txt**에서 robots 규칙이 수집을 막지 않는지 확인하고, **사이트 간단 체크** 또는 URL 검사로 홈과 대표 페이지의 title, description, canonical, index/follow 및 실제 본문을 확인합니다. `robots.txt`는 수집 대상이 아닌 경로만 제한하도록 유지합니다.
+5. 필요하면 홈, `/download`, `/membership`, 대표 제휴처 상세 URL처럼 소수의 주요 페이지만 **요청 → 웹페이지 수집**으로 요청합니다. sitemap에 든 전체 URL을 개별 제출하지 않습니다.
+6. **리포트 → 수집 현황**, URL 검사 및 사이트 진단에서 수집·색인 데이터가 반영되는지 확인합니다. 수집 요청은 우선순위에 따라 최소 1일부터 수주가 걸릴 수 있으므로 같은 URL을 매일 반복 요청하지 않습니다.
+
+네이버는 자동 수집을 기반으로 검색 결과를 만들며, 사이트 등록·소유 확인·수집 성공은 검색 노출이나 순위를 보장하지 않습니다. 현재 공개 콘텐츠는 게시물 RSS 피드가 없으므로 RSS를 새로 만들거나 제출할 필요가 없고, IndexNow 연동도 추가하지 않습니다. 먼저 사이트맵 제출과 대표 URL 수집을 진행한 뒤 리포트에 수집 데이터가 쌓일 때까지 기다립니다. 절차는 [네이버 검색엔진 최적화 가이드](https://searchadvisor.naver.com/guide/seo-basic-intro), [RSS 및 사이트맵 제출 가이드](https://searchadvisor.naver.com/guide/request-feed), [수집요청 가이드](https://searchadvisor.naver.com/guide/request-crawl)를 따릅니다.
 
 ## 목표 검색어와 담당 페이지
 
@@ -105,4 +110,4 @@ curl -sSI 'https://itplace.click/membership?from=seo' | rg -i '^(HTTP/|location:
 2. 브랜드 검색어의 노출수, 클릭수, CTR, 평균 순위를 지난달과 비교합니다.
 3. 노출은 많지만 CTR이 낮은 페이지의 title과 description을 실제 검색 의도에 맞게 개선합니다.
 4. 동일 제휴처가 여러 이름으로 분리되지 않았는지 관리자 데이터 품질 화면에서 확인합니다.
-5. 신규 제휴처 또는 제휴처명 변경이 5분 재검증 이후 HTML과 sitemap에 반영됐는지 확인합니다.
+5. 신규 제휴처 또는 제휴처명 변경이 다음 요청의 HTML과 sitemap에 반영됐는지 확인합니다. 공개 API 데이터는 `no-store`로 조회하므로 5분 재검증 대기 없이 다음 요청에서 반영됩니다.

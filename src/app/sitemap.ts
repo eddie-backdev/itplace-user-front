@@ -20,6 +20,7 @@ const staticPaths = [
   '/guide',
   '/faq',
   '/contact',
+  '/download',
   '/terms',
   '/privacy',
   '/account-deletion',
