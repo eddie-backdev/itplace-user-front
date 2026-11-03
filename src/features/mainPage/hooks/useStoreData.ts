@@ -76,6 +76,9 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
   // 위치 관련 상태
   const [currentLocation, setCurrentLocation] = useState<string>('위치 정보 로딩 중...');
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [initialLocationStatus, setInitialLocationStatus] = useState<
+    'locating' | 'located' | 'unavailable'
+  >('locating');
 
   // userCoords의 최신 값을 참조하기 위한 ref
   const userCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -319,6 +322,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
       if (!active) throw new DOMException('요청이 취소되었습니다.', 'AbortError');
       setUserCoords(coords);
       userCoordsRef.current = coords;
+      setInitialLocationStatus(usedFallbackLocation ? 'unavailable' : 'located');
 
       if (!isLatestViewportRequest(requestSeq, controller.signal)) return platformsRef.current;
       if (usedFallbackLocation) setCurrentLocation('기본 위치: 서울 중구 태평로1가');
@@ -653,6 +657,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
         const coords = { lat, lng };
         setUserCoords(coords);
         userCoordsRef.current = coords;
+        setInitialLocationStatus('located');
 
         // 넓은 줌에서는 개별 지점 대신 지도 SDK가 이동 후 전달할 viewport 클러스터를 사용한다.
         if (shouldUseServerClusters(mapLevel)) return platformsRef.current;
@@ -776,6 +781,7 @@ export const useStoreData = (mapCenter?: { lat: number; lng: number } | null) =>
     mapClusters,
     isMapClusterSnapshotReady,
     currentLocation,
+    initialLocationStatus,
     userCoords,
     isLoading,
     error,

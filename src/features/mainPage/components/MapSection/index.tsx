@@ -202,6 +202,7 @@ const MapSection: React.FC<MapSectionProps> = ({
           onMapCenterChange={handleMapCenterChange}
           centerLocation={centerLocation}
           initialCenterLocation={initialCenterLocation}
+          autoLocate={false}
           initialMapLevel={initialMapLevel}
           onZoomStart={onZoomStart}
           onMapLevelChange={onMapLevelChange}

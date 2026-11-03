@@ -232,7 +232,9 @@ const updateAdministrativeClusterElement = (
   const existingContent = element.querySelector<HTMLSpanElement>(
     '[data-administrative-cluster-content="true"]'
   );
-  let artwork = element.querySelector<SVGSVGElement>('[data-administrative-cluster-artwork="true"]');
+  let artwork = element.querySelector<SVGSVGElement>(
+    '[data-administrative-cluster-artwork="true"]'
+  );
   if (!artwork || artwork.getAttribute('width') !== String(visualWidth)) {
     artwork = createAdministrativeClusterArtwork(visualWidth);
     artwork.dataset.administrativeClusterArtwork = 'true';
@@ -540,6 +542,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const areMarkersHiddenRef = useRef<boolean>(false);
   const markerRevealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const zoomSettledTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const centerMoveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suppressDragEndUntilRef = useRef<number>(0);
   const platformsRef = useRef(platforms);
   const selectedPlatformRef = useRef(selectedPlatform);
@@ -1692,6 +1695,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
 
     if (isAlreadyCentered) {
       updateVisiblePlatforms();
+      notifyViewportChange();
       return;
     }
 
@@ -1706,14 +1710,24 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       latitude: centerLocation.latitude,
       longitude: centerLocation.longitude,
     };
+    if (centerMoveTimerRef.current) clearTimeout(centerMoveTimerRef.current);
     mapRef.current.setCenter(moveLatLon);
 
     // 이동 완료 후 애니메이션 상태 해제 및 viewport 업데이트
-    setTimeout(() => {
+    centerMoveTimerRef.current = setTimeout(() => {
+      centerMoveTimerRef.current = null;
       isAnimatingRef.current = false;
       updateVisiblePlatforms();
+      notifyViewportChange();
     }, 200);
-  }, [centerLocation, mapInitializationVersion, updateVisiblePlatforms]);
+    return () => {
+      if (centerMoveTimerRef.current) {
+        clearTimeout(centerMoveTimerRef.current);
+        centerMoveTimerRef.current = null;
+        if (!isZoomingRef.current) isAnimatingRef.current = false;
+      }
+    };
+  }, [centerLocation, mapInitializationVersion, notifyViewportChange, updateVisiblePlatforms]);
 
   return (
     <div className="relative h-full w-full">

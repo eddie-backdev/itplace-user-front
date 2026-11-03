@@ -387,7 +387,9 @@ export const getAddressFromCoordinates = async (
 /**
  * 브라우저에서 현재 위치 가져오기
  */
-export const getCurrentLocation = (): Promise<{ lat: number; lng: number }> => {
+export const getCurrentLocation = (
+  options: PositionOptions = {}
+): Promise<{ lat: number; lng: number }> => {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation이 지원되지 않는 브라우저입니다.'));
@@ -402,12 +404,13 @@ export const getCurrentLocation = (): Promise<{ lat: number; lng: number }> => {
         });
       },
       (error) => {
-        reject(new Error(`위치 정보 가져오기 실패: ${error.message}`));
+        reject(error);
       },
       {
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 300000, // 5분
+        ...options,
       }
     );
   });

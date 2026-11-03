@@ -56,12 +56,14 @@ const getBottomSheetMaxHeight = (viewportHeight: number) => {
   );
 };
 const getBottomSheetSnapPoints = (previewHeight: number, maxHeight: number) =>
-  [...new Set([
-    MOBILE_MAP_COLLAPSED_SHEET_HEIGHT,
-    previewHeight,
-    Math.min(BOTTOM_SHEET_MID_HEIGHT, maxHeight),
-    maxHeight,
-  ])].sort((a, b) => a - b);
+  [
+    ...new Set([
+      MOBILE_MAP_COLLAPSED_SHEET_HEIGHT,
+      previewHeight,
+      Math.min(BOTTOM_SHEET_MID_HEIGHT, maxHeight),
+      maxHeight,
+    ]),
+  ].sort((a, b) => a - b);
 
 /**
  * 메인페이지 레이아웃 컴포넌트
@@ -186,11 +188,6 @@ const MainPageLayout: React.FC = () => {
     () => (mapMoveTarget ? { latitude: mapMoveTarget.lat, longitude: mapMoveTarget.lng } : null),
     [mapMoveTarget]
   );
-  const currentMapCenterLocation = useMemo(
-    () =>
-      currentMapCenter ? { latitude: currentMapCenter.lat, longitude: currentMapCenter.lng } : null,
-    [currentMapCenter]
-  );
 
   // 가맹점 데이터 및 API 상태 관리
   const {
@@ -198,6 +195,7 @@ const MainPageLayout: React.FC = () => {
     mapClusters, // 서버에서 집계한 지도 클러스터
     isMapClusterSnapshotReady, // 최신 서버 클러스터 스냅샷 준비 여부
     currentLocation, // 현재 위치 주소 텍스트
+    initialLocationStatus,
     isLoading, // 로딩 상태
     error, // 에러 상태
     selectedCategory, // 선택된 카테고리 (useStoreData에서 관리)
@@ -211,6 +209,10 @@ const MainPageLayout: React.FC = () => {
     cancelMapViewportRequest, // 줌 전환 전에 이전 viewport 요청 무효화
     clearPlatforms, // 플랫폼 데이터 즉시 초기화
   } = useStoreData(currentMapCenter);
+  const initialMapCenterLocation = useMemo(() => {
+    const center = currentMapCenter ?? userCoords;
+    return center ? { latitude: center.lat, longitude: center.lng } : null;
+  }, [currentMapCenter, userCoords]);
 
   // 추천 매장 조회 결과 상태 (SidebarSection에서 올려받음)
   const [recommendationStoreResults, setRecommendationStoreResults] = useState<Platform[]>([]);
@@ -274,15 +276,6 @@ const MainPageLayout: React.FC = () => {
     [animateTo, isSidebarCollapsed]
   );
 
-  // 사용자 위치 변경 핸들러 (초기 위치)
-  const handleLocationChange = useCallback((location: MapLocation) => {
-    // 초기 지도 중심 설정
-    setCurrentMapCenter(
-      (current) => current ?? { lat: location.latitude, lng: location.longitude }
-    );
-    setFilteredPlatforms([]);
-  }, []);
-
   // 지도 중심 변경 핸들러 (지도 드래그 시)
   const handleMapCenterChange = useCallback(
     (location: MapLocation) => {
@@ -299,6 +292,20 @@ const MainPageLayout: React.FC = () => {
   // 현재 위치로 이동 핸들러 (현재 위치 버튼 클릭 시)
   const handleLocationMove = useCallback(
     (latitude: number, longitude: number) => {
+      if (mapViewportSearchTimerRef.current) {
+        clearTimeout(mapViewportSearchTimerRef.current);
+        mapViewportSearchTimerRef.current = null;
+      }
+      lastViewportSearchKeyRef.current = '';
+      setSelectedPlatform(null);
+      setBenefitDetailCard({ isVisible: false, benefitIds: [] });
+      setFilteredPlatforms([]);
+      setSearchQuery('');
+      hasEditedSearchQueryRef.current = true;
+      lastSearchedKeywordRef.current = '';
+      setActiveTab('nearby');
+      setRecommendationStoreResults([]);
+      setIsShowingRecommendationStoreResults(false);
       // 사용자 위치 업데이트 및 데이터 재로드
       updateToCurrentLocation(latitude, longitude, currentMapLevel);
       // 지도 중심도 해당 위치로 이동
@@ -727,32 +734,48 @@ const MainPageLayout: React.FC = () => {
             <div className={styles.desktopFrame}>
               {/* 지도는 남는 폭을 사용해 오른쪽 패널을 열고 닫아도 중심이 유지된다. */}
               <div className={styles.mapViewport}>
-                <MapSection
-                  platforms={stablePlatforms}
-                  clusters={isServerClusterContext ? mapClusters : EMPTY_MAP_CLUSTERS}
-                  useServerClusters={shouldUseServerClusterMode}
-                  selectedPlatform={selectedPlatform}
-                  onPlatformSelect={handlePlatformSelect}
-                  onLocationChange={handleLocationChange}
-                  onMapCenterChange={handleMapCenterChange}
-                  onLocationMove={handleLocationMove}
-                  categories={categories}
-                  selectedCategory={selectedCategory || '전체'}
-                  onCategorySelect={handleCategorySelect}
-                  hideCategoryTabs
-                  onSearchInMap={handleSearchInMap}
-                  centerLocation={mapMoveCenterLocation}
-                  initialCenterLocation={currentMapCenterLocation}
-                  initialMapLevel={
-                    hasInitializedMapViewportRef.current ? currentMapLevel : undefined
-                  }
-                  onZoomStart={handleMapZoomStart}
-                  onMapLevelChange={handleMapLevelChange}
-                  onViewportChange={handleMapViewportChange}
-                  activeTab={activeTab}
-                  searchQuery={recoverySearchQuery}
-                  onRoadviewVisibilityChange={setIsRoadviewOpen}
-                />
+                {initialLocationStatus === 'locating' ? (
+                  <div className="flex h-full items-center justify-center" role="status">
+                    <span className="text-[var(--itplace-color-text-secondary)]">
+                      현재 위치를 확인하고 있어요…
+                    </span>
+                  </div>
+                ) : (
+                  <MapSection
+                    platforms={stablePlatforms}
+                    clusters={isServerClusterContext ? mapClusters : EMPTY_MAP_CLUSTERS}
+                    useServerClusters={shouldUseServerClusterMode}
+                    selectedPlatform={selectedPlatform}
+                    onPlatformSelect={handlePlatformSelect}
+                    onMapCenterChange={handleMapCenterChange}
+                    onLocationMove={handleLocationMove}
+                    categories={categories}
+                    selectedCategory={selectedCategory || '전체'}
+                    onCategorySelect={handleCategorySelect}
+                    hideCategoryTabs
+                    onSearchInMap={handleSearchInMap}
+                    centerLocation={mapMoveCenterLocation}
+                    initialCenterLocation={initialMapCenterLocation}
+                    initialMapLevel={
+                      hasInitializedMapViewportRef.current ? currentMapLevel : undefined
+                    }
+                    onZoomStart={handleMapZoomStart}
+                    onMapLevelChange={handleMapLevelChange}
+                    onViewportChange={handleMapViewportChange}
+                    activeTab={activeTab}
+                    searchQuery={recoverySearchQuery}
+                    onRoadviewVisibilityChange={setIsRoadviewOpen}
+                  />
+                )}
+                {initialLocationStatus === 'unavailable' && (
+                  <p
+                    role="status"
+                    className="absolute left-1/2 top-4 z-20 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-lg border border-[var(--itplace-color-border)] bg-[var(--itplace-color-surface)] px-3 py-2 text-sm text-[var(--itplace-color-text)] shadow"
+                  >
+                    현재 위치를 확인하지 못했어요. 브라우저와 기기의 위치 설정을 확인한 뒤 현재 위치
+                    버튼을 눌러 주세요.
+                  </p>
+                )}
               </div>
 
               {/* 검색 결과는 왼쪽에 유지하고, 넓은 화면의 상세는 지도 오른쪽에 둔다. */}
@@ -849,43 +872,61 @@ const MainPageLayout: React.FC = () => {
 
             {/* 지도 - 전체 화면 */}
             <div className="absolute inset-0">
-              <MapSection
-                platforms={stablePlatforms}
-                clusters={isServerClusterContext ? mapClusters : EMPTY_MAP_CLUSTERS}
-                useServerClusters={shouldUseServerClusterMode}
-                selectedPlatform={selectedPlatform}
-                onPlatformSelect={handlePlatformSelect}
-                onLocationChange={handleLocationChange}
-                onMapCenterChange={handleMapCenterChange}
-                onLocationMove={handleLocationMove}
-                categories={categories}
-                selectedCategory={selectedCategory || '전체'}
-                onCategorySelect={handleCategorySelect}
-                hideCategoryTabs
-                onSearchInMap={handleSearchInMap}
-                centerLocation={mapMoveCenterLocation}
-                initialCenterLocation={currentMapCenterLocation}
-                initialMapLevel={hasInitializedMapViewportRef.current ? currentMapLevel : undefined}
-                onZoomStart={handleMapZoomStart}
-                onMapLevelChange={handleMapLevelChange}
-                onViewportChange={handleMapViewportChange}
-                activeTab={activeTab}
-                searchQuery={recoverySearchQuery}
-                mobileControlsBottomOffset={`calc(var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px) + ${
-                  bottomSheetHeight + MOBILE_MAP_CONTROLS_GAP
-                }px)`}
-                mobileControlsTransitionEnabled={isAnimating}
-                mobileSheetBottomInset={MOBILE_APP_TAB_BAR_HEIGHT + bottomSheetHeight}
-                hideMobileCategory={
-                  isMobile &&
-                  mobileViewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - bottomSheetHeight < 122
-                }
-                hideMobileControls={
-                  isMobile &&
-                  mobileViewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - bottomSheetHeight < 176
-                }
-                onRoadviewVisibilityChange={setIsRoadviewOpen}
-              />
+              {initialLocationStatus === 'locating' ? (
+                <div className="flex h-full items-center justify-center" role="status">
+                  <span className="text-[var(--itplace-color-text-secondary)]">
+                    현재 위치를 확인하고 있어요…
+                  </span>
+                </div>
+              ) : (
+                <MapSection
+                  platforms={stablePlatforms}
+                  clusters={isServerClusterContext ? mapClusters : EMPTY_MAP_CLUSTERS}
+                  useServerClusters={shouldUseServerClusterMode}
+                  selectedPlatform={selectedPlatform}
+                  onPlatformSelect={handlePlatformSelect}
+                  onMapCenterChange={handleMapCenterChange}
+                  onLocationMove={handleLocationMove}
+                  categories={categories}
+                  selectedCategory={selectedCategory || '전체'}
+                  onCategorySelect={handleCategorySelect}
+                  hideCategoryTabs
+                  onSearchInMap={handleSearchInMap}
+                  centerLocation={mapMoveCenterLocation}
+                  initialCenterLocation={initialMapCenterLocation}
+                  initialMapLevel={
+                    hasInitializedMapViewportRef.current ? currentMapLevel : undefined
+                  }
+                  onZoomStart={handleMapZoomStart}
+                  onMapLevelChange={handleMapLevelChange}
+                  onViewportChange={handleMapViewportChange}
+                  activeTab={activeTab}
+                  searchQuery={recoverySearchQuery}
+                  mobileControlsBottomOffset={`calc(var(--itplace-mobile-tab-bar-offset, ${MOBILE_APP_TAB_BAR_HEIGHT}px) + ${
+                    bottomSheetHeight + MOBILE_MAP_CONTROLS_GAP
+                  }px)`}
+                  mobileControlsTransitionEnabled={isAnimating}
+                  mobileSheetBottomInset={MOBILE_APP_TAB_BAR_HEIGHT + bottomSheetHeight}
+                  hideMobileCategory={
+                    isMobile &&
+                    mobileViewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - bottomSheetHeight < 122
+                  }
+                  hideMobileControls={
+                    isMobile &&
+                    mobileViewportHeight - MOBILE_APP_TAB_BAR_HEIGHT - bottomSheetHeight < 176
+                  }
+                  onRoadviewVisibilityChange={setIsRoadviewOpen}
+                />
+              )}
+              {initialLocationStatus === 'unavailable' && (
+                <p
+                  role="status"
+                  className="absolute left-1/2 top-[116px] z-[9996] w-max max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-lg border border-[var(--itplace-color-border)] bg-[var(--itplace-color-surface)] px-3 py-2 text-sm text-[var(--itplace-color-text)] shadow"
+                >
+                  현재 위치를 확인하지 못했어요. 브라우저와 기기의 위치 설정을 확인한 뒤 현재 위치
+                  버튼을 눌러 주세요.
+                </p>
+              )}
 
               {/* 바텀시트 */}
               <div
