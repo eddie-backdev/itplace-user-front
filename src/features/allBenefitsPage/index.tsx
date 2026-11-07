@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { Link, useNavigate } from '@/lib/navigation';
 import type { RootState } from '@/store';
 import { useClientReady } from '@/hooks/useClientReady';
+import SafeImage from '@/components/SafeImage';
 import MobileHeader from '@/components/MobileHeader';
 import MembershipSelectionDialog from '@/components/membership/MembershipSelectionDialog';
 import BenefitExplorerCard from './components/BenefitExplorerCard';
@@ -109,8 +110,19 @@ export default function AllBenefitsLayout({
   const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(null);
   const [isMembershipDialogOpen, setIsMembershipDialogOpen] = useState(false);
   const [previewPartner, setPreviewPartner] = useState<PartnerBenefitItem | null>(null);
+  const [searchDraft, setSearchDraft] = useState(keyword);
+  const [brandSuggestions, setBrandSuggestions] = useState<PartnerBenefitItem[]>([]);
+  const [brandSuggestionStatus, setBrandSuggestionStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [isBrandSuggestionsOpen, setIsBrandSuggestionsOpen] = useState(false);
+  const [activeBrandSuggestion, setActiveBrandSuggestion] = useState(-1);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const brandSuggestionPanelRef = useRef<HTMLDivElement>(null);
+  const isSearchComposingRef = useRef(false);
+  const restoreSearchFocusOnPreviewCloseRef = useRef(false);
   const previewDialogRef = useRef<HTMLDialogElement>(null);
   const openedQueryPartnerRef = useRef<number | null>(null);
+  const previousRequestedPartnerIdRef = useRef(requestedPartnerId);
 
   useEffect(() => {
     const dialog = previewDialogRef.current;
@@ -120,9 +132,13 @@ export default function AllBenefitsLayout({
   }, [previewPartner]);
 
   useEffect(() => {
+    const previousRequestedPartnerId = previousRequestedPartnerIdRef.current;
+    previousRequestedPartnerIdRef.current = requestedPartnerId;
     if (!requestedPartnerId) {
-      openedQueryPartnerRef.current = null;
-      if (previewPartner) setPreviewPartner(null);
+      if (previousRequestedPartnerId !== null) {
+        openedQueryPartnerRef.current = null;
+        if (previewPartner) setPreviewPartner(null);
+      }
       return;
     }
     if (openedQueryPartnerRef.current === requestedPartnerId) return;
@@ -156,6 +172,85 @@ export default function AllBenefitsLayout({
       cancelled = true;
     };
   }, [isAuthReady, isLoggedIn]);
+
+  useEffect(() => {
+    const query = searchDraft.trim().slice(0, 100);
+    if (!isBrandSuggestionsOpen || waitingForMembership || !query) {
+      setBrandSuggestions([]);
+      setBrandSuggestionStatus('idle');
+      setActiveBrandSuggestion(-1);
+      return;
+    }
+
+    const controller = new AbortController();
+    let isStale = false;
+    setBrandSuggestions([]);
+    setBrandSuggestionStatus('loading');
+    setActiveBrandSuggestion(-1);
+    const timeout = window.setTimeout(() => {
+      void getPartnerBenefits({
+        mainCategory: effectiveGrade ? undefined : 'BASIC_BENEFIT',
+        page: 0,
+        size: 8,
+        keyword: query,
+        searchScope: 'BRAND',
+        category: selectedCategory !== '전체' ? selectedCategory : undefined,
+        carriers: effectiveCarrier ? [effectiveCarrier] : undefined,
+        grade: effectiveGrade,
+        signal: controller.signal,
+      }).then(
+        (response) => {
+          if (isStale) return;
+          setBrandSuggestions(response.content.slice(0, 8));
+          setBrandSuggestionStatus('ready');
+        },
+        () => {
+          if (!isStale) {
+            setBrandSuggestions([]);
+            setBrandSuggestionStatus('error');
+          }
+        }
+      );
+    }, 280);
+
+    return () => {
+      isStale = true;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [
+    searchDraft,
+    isBrandSuggestionsOpen,
+    waitingForMembership,
+    effectiveGrade,
+    effectiveCarrier,
+    selectedCategory,
+  ]);
+
+  useEffect(() => {
+    if (activeBrandSuggestion < 0) return;
+    brandSuggestionPanelRef.current
+      ?.querySelector<HTMLElement>(`#benefit-brand-option-${activeBrandSuggestion}`)
+      ?.scrollIntoView({ block: 'nearest' });
+  }, [activeBrandSuggestion]);
+
+  useEffect(() => {
+    if (!isBrandSuggestionsOpen) return;
+    const closeWhenOutside = (event: PointerEvent) => {
+      if (!searchContainerRef.current?.contains(event.target as Node)) {
+        setIsBrandSuggestionsOpen(false);
+        setActiveBrandSuggestion(-1);
+      }
+    };
+    document.addEventListener('pointerdown', closeWhenOutside);
+    return () => document.removeEventListener('pointerdown', closeWhenOutside);
+  }, [isBrandSuggestionsOpen]);
+
+  useEffect(() => {
+    setSearchDraft(keyword);
+    setIsBrandSuggestionsOpen(false);
+    setActiveBrandSuggestion(-1);
+  }, [keyword]);
 
   const setFavoriteState = (benefitId: number, isFavorite: boolean) => {
     setFavoriteIds((current) => {
@@ -253,6 +348,14 @@ export default function AllBenefitsLayout({
     setPreviewPartner(partner);
   };
 
+  const selectBrandSuggestion = (partner: PartnerBenefitItem) => {
+    setIsBrandSuggestionsOpen(false);
+    setActiveBrandSuggestion(-1);
+    restoreSearchFocusOnPreviewCloseRef.current = true;
+    searchInputRef.current?.focus({ preventScroll: true });
+    openPreview(partner);
+  };
+
   const closePreview = () => {
     setPreviewPartner(null);
     const next = new URLSearchParams(window.location.search);
@@ -264,6 +367,10 @@ export default function AllBenefitsLayout({
         '',
         query ? `${window.location.pathname}?${query}` : window.location.pathname
       );
+    }
+    if (restoreSearchFocusOnPreviewCloseRef.current) {
+      restoreSearchFocusOnPreviewCloseRef.current = false;
+      window.requestAnimationFrame(() => searchInputRef.current?.focus({ preventScroll: true }));
     }
   };
 
@@ -285,7 +392,13 @@ export default function AllBenefitsLayout({
   };
 
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
+    if (isSearchComposingRef.current) {
+      event.preventDefault();
+      return;
+    }
     event.preventDefault();
+    setIsBrandSuggestionsOpen(false);
+    setActiveBrandSuggestion(-1);
     const submitted = new FormData(event.currentTarget).get('q');
     updateQuery({
       q: typeof submitted === 'string' ? submitted.trim().slice(0, 100) : null,
@@ -504,13 +617,14 @@ export default function AllBenefitsLayout({
                 </select>
               </label>
             </div>
-            <form
-              action="/benefits"
-              method="get"
-              role="search"
-              onSubmit={submitSearch}
-              className={styles.searchForm}
-            >
+            <div className={styles.searchContainer} ref={searchContainerRef}>
+              <form
+                action="/benefits"
+                method="get"
+                role="search"
+                onSubmit={submitSearch}
+                className={styles.searchForm}
+              >
               <label htmlFor="benefits-search" className="sr-only">
                 혜택 검색
               </label>
@@ -527,19 +641,129 @@ export default function AllBenefitsLayout({
               <TbSearch size={18} aria-hidden="true" className={styles.searchIcon} />
               <input
                 key={keyword}
+                ref={searchInputRef}
                 id="benefits-search"
                 type="search"
                 name="q"
-                defaultValue={keyword}
+                value={searchDraft}
                 maxLength={100}
                 autoComplete="off"
                 placeholder="혜택 검색"
                 className={styles.searchInput}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={isBrandSuggestionsOpen && brandSuggestions.length > 0}
+                aria-controls={
+                  isBrandSuggestionsOpen && brandSuggestions.length > 0
+                    ? 'benefits-brand-suggestions'
+                    : undefined
+                }
+                aria-activedescendant={
+                  isBrandSuggestionsOpen && activeBrandSuggestion >= 0
+                    ? `benefit-brand-option-${activeBrandSuggestion}`
+                    : undefined
+                }
+                onFocus={() => {
+                  if (searchDraft.trim()) setIsBrandSuggestionsOpen(true);
+                }}
+                onChange={(event) => {
+                  setSearchDraft(event.target.value);
+                  setIsBrandSuggestionsOpen(Boolean(event.target.value.trim()));
+                  setActiveBrandSuggestion(-1);
+                }}
+                onCompositionStart={() => {
+                  isSearchComposingRef.current = true;
+                }}
+                onCompositionEnd={(event) => {
+                  const value = event.currentTarget.value;
+                  isSearchComposingRef.current = false;
+                  setSearchDraft(value);
+                  setIsBrandSuggestionsOpen(Boolean(value.trim()));
+                  setActiveBrandSuggestion(-1);
+                }}
+                onKeyDown={(event) => {
+                  if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || isSearchComposingRef.current) {
+                    if (event.key === 'Enter') event.preventDefault();
+                    return;
+                  }
+                  if (event.key === 'Tab') {
+                    setIsBrandSuggestionsOpen(false);
+                    setActiveBrandSuggestion(-1);
+                    return;
+                  }
+                  if (event.key === 'Escape' && isBrandSuggestionsOpen) {
+                    event.preventDefault();
+                    setIsBrandSuggestionsOpen(false);
+                    setActiveBrandSuggestion(-1);
+                    return;
+                  }
+                  if (!isBrandSuggestionsOpen || brandSuggestions.length === 0) return;
+                  if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    setActiveBrandSuggestion((current) => (current + 1) % brandSuggestions.length);
+                  } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    setActiveBrandSuggestion((current) =>
+                      current <= 0 ? brandSuggestions.length - 1 : current - 1
+                    );
+                  } else if (event.key === 'Enter' && activeBrandSuggestion >= 0) {
+                    event.preventDefault();
+                    selectBrandSuggestion(brandSuggestions[activeBrandSuggestion]);
+                  }
+                }}
               />
               <button type="submit" className={styles.searchButton}>
                 검색
               </button>
-            </form>
+              </form>
+              {isBrandSuggestionsOpen && brandSuggestionStatus !== 'idle' ? (
+                <div className={styles.brandSuggestionPanel} ref={brandSuggestionPanelRef}>
+                  {brandSuggestionStatus === 'loading' ? (
+                    <p className={styles.brandSuggestionStatus} role="status">브랜드를 찾고 있어요…</p>
+                  ) : brandSuggestionStatus === 'error' ? (
+                    <p className={styles.brandSuggestionStatus} role="status">
+                      추천을 불러오지 못했어요. 검색 버튼으로 다시 찾아보세요.
+                    </p>
+                  ) : brandSuggestions.length === 0 ? (
+                    <p className={styles.brandSuggestionStatus} role="status">일치하는 브랜드가 없어요.</p>
+                  ) : null}
+                  {brandSuggestions.length > 0 ? <ul
+                    id="benefits-brand-suggestions"
+                    role="listbox"
+                    aria-label="브랜드 추천"
+                    className={styles.brandSuggestionList}
+                  >
+                    {brandSuggestions.map((partner, index) => (
+                      <li key={partner.partnerId} role="presentation" className={styles.brandSuggestionItem}>
+                        <button
+                          id={`benefit-brand-option-${index}`}
+                          type="button"
+                          role="option"
+                          aria-selected={activeBrandSuggestion === index}
+                          tabIndex={-1}
+                          className={styles.brandSuggestionOption}
+                          onClick={() => selectBrandSuggestion(partner)}
+                        >
+                          <span className={styles.brandSuggestionLogo} aria-hidden="true">
+                            <SafeImage
+                              src={partner.image}
+                              alt=""
+                              width={34}
+                              height={34}
+                              fallbackLabel={partner.partnerName}
+                              loading="lazy"
+                              className={styles.brandSuggestionImage}
+                              fallbackClassName={styles.brandSuggestionImageFallback}
+                            />
+                          </span>
+                          <span className={styles.brandSuggestionName}>{partner.partnerName}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul> : null}
+                </div>
+              ) : null}
+            </div>
           </div>
         </section>
 

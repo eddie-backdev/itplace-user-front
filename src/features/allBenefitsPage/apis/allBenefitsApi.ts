@@ -99,6 +99,8 @@ export interface PartnerBenefitResponse {
 export type PartnerBenefitApiParams = Omit<BenefitApiParams, 'mainCategory'> & {
   mainCategory?: BenefitApiParams['mainCategory'];
   grade?: string;
+  searchScope?: 'BRAND';
+  signal?: AbortSignal;
 };
 
 // 즐겨찾기 요청 타입
@@ -159,10 +161,14 @@ export const getPartnerBenefits = async (
     ...(params.filter && { filter: params.filter }),
     ...(params.keyword && { keyword: params.keyword }),
     ...(params.grade && { grade: params.grade }),
+    ...(params.searchScope && { searchScope: params.searchScope }),
     ...(params.carriers && params.carriers.length > 0 && { carriers: params.carriers.join(',') }),
   };
 
-  const response = await axiosInstance.get('/api/v1/benefits/partners', { params: queryParams });
+  const response = await axiosInstance.get('/api/v1/benefits/partners', {
+    params: queryParams,
+    signal: params.signal,
+  });
   return response.data.data;
 };
 
