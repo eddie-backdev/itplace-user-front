@@ -17,6 +17,9 @@ export default function AppDownloadLauncher() {
     const handlePointerDown = (event: PointerEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) setIsOpen(false);
     };
+    const handleFocusIn = (event: FocusEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       setIsOpen(false);
@@ -24,9 +27,11 @@ export default function AppDownloadLauncher() {
     };
 
     document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('focusin', handleFocusIn);
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('focusin', handleFocusIn);
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
@@ -45,22 +50,25 @@ export default function AppDownloadLauncher() {
       >
         <Image src={APP_DOWNLOAD.iconImage} alt="" width={48} height={48} />
       </button>
-      <Link className={styles.mobileLink} href="/download" aria-label="Android 앱 다운로드 안내" title="앱 다운로드">
+      <Link className={styles.mobileLink} href="/download" aria-label="Android 앱 다운로드 안내" title="Android 앱 다운로드 안내">
         <Image src={APP_DOWNLOAD.iconImage} alt="" width={48} height={48} />
       </Link>
       <div
         className={styles.popover}
         id="app-download-popover"
-        role="dialog"
+        role="region"
         aria-label="앱 다운로드 안내"
         hidden={!isOpen}
       >
         <Image className={styles.qr} src={APP_DOWNLOAD.qrImage} alt="잇플레이스 앱 다운로드 페이지 QR 코드" width={112} height={112} />
         <div className={styles.popoverCopy}>
           <strong>Android 앱 다운로드</strong>
-          <span>정식 출시는 11월 14일 예정입니다.</span>
-          <span>휴대폰 카메라로 스캔해 안드로이드 앱을 다운로드하세요.</span>
-          <Link href="/download">다운로드 안내 보기</Link>
+          <span>Google Play에서 바로 설치할 수 있어요.</span>
+          <span>QR 코드를 스캔해 설치 방법과 iPhone 이용 안내를 확인하세요.</span>
+          <a className={styles.storeAction} href={APP_DOWNLOAD.playStoreHref}>
+            Google Play에서 설치하기
+          </a>
+          <Link className={styles.guideAction} href="/download">다운로드 안내 보기</Link>
         </div>
       </div>
     </div>

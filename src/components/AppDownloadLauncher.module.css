@@ -48,7 +48,7 @@
   bottom: calc(100% + 12px);
   display: flex;
   max-height: calc(100dvh - 216px);
-  width: min(312px, calc(100vw - 32px));
+  width: min(380px, calc(100vw - 32px));
   align-items: center;
   gap: 14px;
   border: 1px solid var(--itplace-color-border);
@@ -91,10 +91,31 @@
   display: inline-flex;
   min-height: 44px;
   align-items: center;
-  color: var(--itplace-color-accent);
   font-weight: 650;
+  text-decoration: none;
+}
+
+.storeAction {
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0 10px;
+  background: var(--itplace-color-brand);
+  color: var(--itplace-color-on-brand);
+  text-align: center;
+}
+
+.storeAction:hover {
+  background: var(--itplace-color-brand-hover);
+}
+
+.popoverCopy a.guideAction {
+  color: var(--itplace-color-accent);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.popoverCopy a.guideAction:hover {
+  color: var(--itplace-color-accent-hover);
 }
 
 @media (max-width: 767px) {

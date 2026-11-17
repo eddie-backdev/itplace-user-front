@@ -108,7 +108,7 @@
 .desktopQr {
   display: grid;
   grid-column: 2;
-  grid-row: 1 / span 3;
+  grid-row: 1 / span 2;
   justify-items: center;
   gap: 10px;
   color: var(--itplace-color-text-secondary);
@@ -123,39 +123,6 @@
 
 .desktopQr p {
   margin: 0;
-}
-
-.release {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 24px;
-  grid-column: 1;
-  margin: 0;
-  padding-top: 18px;
-  border-top: 1px solid var(--itplace-color-border);
-}
-
-.release div {
-  display: flex;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.release dt {
-  color: var(--itplace-color-text-secondary);
-}
-
-.release dd {
-  margin: 0;
-  font-weight: 600;
-}
-
-.testNote {
-  grid-column: 1 / -1;
-  margin: -8px 0 0;
-  color: var(--itplace-color-text-secondary);
-  font-size: 12px;
-  line-height: 1.7;
 }
 
 .install {
@@ -197,6 +164,10 @@
   text-underline-offset: 3px;
 }
 
+.install a:hover {
+  color: var(--itplace-color-brand-hover);
+}
+
 @media (max-width: 767px) {
   .main {
     width: auto;
@@ -229,9 +200,7 @@
     border-radius: 13px;
   }
 
-  .mobileCta,
-  .release,
-  .testNote {
+  .mobileCta {
     grid-column: 1;
   }
 
@@ -246,14 +215,6 @@
 
   .desktopQr {
     display: none;
-  }
-
-  .release {
-    padding-top: 14px;
-  }
-
-  .testNote {
-    margin-top: -10px;
   }
 
   .install {
