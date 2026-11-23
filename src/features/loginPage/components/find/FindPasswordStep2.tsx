@@ -77,7 +77,7 @@ const FindPasswordStep2 = ({ onGoToLogin, email, resetPasswordToken }: Props) =>
   return (
     <div ref={wrapperRef} className="flex w-full flex-col items-start">
       <div className="w-full max-w-[400px] text-left">
-        <h1 className="text-[28px] font-semibold leading-[1.3] tracking-[-0.035em] text-ink">
+        <h1 id="find-password-reset-heading" tabIndex={-1} className="text-[28px] font-semibold leading-[1.3] tracking-[-0.035em] text-ink focus:outline-none">
           새 비밀번호를 설정하세요
         </h1>
         <p className="mt-2 text-[14px] leading-6 text-warmMuted sm:text-[15px]">

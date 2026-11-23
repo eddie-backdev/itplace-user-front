@@ -6,7 +6,7 @@ import RouteLoadingFallback from '@/components/RouteLoadingFallback';
 import MyPageLayout from '@/layouts/MyPageLayout';
 import AuthPersistenceGate from './AuthPersistenceGate';
 
-const loading = () => <RouteLoadingFallback />;
+const loading = () => <RouteLoadingFallback>내 정보를 불러오는 중…</RouteLoadingFallback>;
 
 export const MyInfoPageClient = dynamic(() => import('@/screens/myPage/MyInfoPage'), {
   ssr: false,

@@ -5,8 +5,7 @@
   bottom: 144px;
 }
 
-.desktopButton,
-.mobileLink {
+.desktopButton {
   display: inline-flex;
   width: 48px;
   height: 48px;
@@ -20,13 +19,11 @@
   cursor: pointer;
 }
 
-.desktopButton img,
-.mobileLink img {
+.desktopButton img {
   border-radius: 50%;
 }
 
-.desktopButton:hover,
-.mobileLink:hover {
+.desktopButton:hover {
   border-color: var(--itplace-color-accent);
   box-shadow: 0 5px 18px rgba(32, 33, 36, 0.22);
 }
@@ -38,6 +35,7 @@
   outline-offset: 3px;
 }
 
+.mobileChatSlot,
 .mobileLink {
   display: none;
 }
@@ -120,8 +118,13 @@
 
 @media (max-width: 767px) {
   .launcher {
-    right: max(16px, env(safe-area-inset-right, 0px));
-    bottom: calc(var(--itplace-mobile-chat-launcher-bottom, calc(var(--itplace-mobile-tab-bar-offset, 64px) + 14px)) + 64px);
+    position: static;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+    background: var(--itplace-color-surface-subtle);
   }
 
   .desktopButton,
@@ -129,14 +132,22 @@
     display: none;
   }
 
+  .mobileChatSlot,
   .mobileLink {
     display: inline-flex;
+    align-items: center;
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .desktopButton,
   .mobileLink {
-    transition: none;
+    gap: 5px;
+    min-height: 44px;
+    border-radius: 6px;
+    color: var(--itplace-color-text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .mobileLink:active {
+    color: var(--itplace-color-accent);
   }
 }

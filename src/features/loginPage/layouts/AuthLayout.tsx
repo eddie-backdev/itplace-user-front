@@ -100,6 +100,8 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
   const [isOAuthLinking, setIsOAuthLinking] = useState(false);
   const [isOAuthProcessing, setIsOAuthProcessing] = useState(false);
   const hasInitialized = useRef(false);
+  const previousFormStep = useRef(formStep);
+  const recoveryReturnTarget = useRef<'login-find-id' | 'login-find-password' | null>(null);
   const [returnTo, setReturnTo] = useState(() =>
     getSafeReturnTo(searchParams.get('returnTo') ?? readOAuthReturnTo(readLoginReturnTo()))
   );
@@ -326,6 +328,22 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
   };
 
   useEffect(() => {
+    if (previousFormStep.current !== formStep) {
+      const targetId =
+        formStep === 'login'
+          ? (recoveryReturnTarget.current ?? 'login-heading')
+          : formStep === 'findId'
+            ? 'find-id-title'
+            : formStep === 'findPassword'
+              ? 'find-password-heading'
+              : null;
+      if (targetId) document.getElementById(targetId)?.focus({ preventScroll: true });
+      if (formStep === 'login') recoveryReturnTarget.current = null;
+    }
+    previousFormStep.current = formStep;
+  }, [formStep]);
+
+  useEffect(() => {
     if (isSignupFlow || isOAuthProcessing) {
       window.scrollTo(0, 0);
     }
@@ -377,12 +395,18 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
       {formStep === 'login' && (
         <LoginForm
           returnTo={returnTo}
-          onGoToFindId={goToFindId}
+          onGoToFindId={() => {
+            recoveryReturnTarget.current = 'login-find-id';
+            goToFindId();
+          }}
           onGoToSignUp={() => {
             setSignUpData(emptyLocalSignupData);
             goToSignUp();
           }}
-          onGoToFindPassword={goToFindPassword}
+          onGoToFindPassword={() => {
+            recoveryReturnTarget.current = 'login-find-password';
+            goToFindPassword();
+          }}
         />
       )}
 
@@ -470,7 +494,8 @@ const AuthLayout = ({ previewPartners }: { previewPartners: AuthPreviewPartner[]
         <section className="text-left" aria-labelledby="find-id-title">
           <h1
             id="find-id-title"
-            className="text-[30px] font-bold leading-9 tracking-[-0.04em] text-ink"
+            tabIndex={-1}
+            className="text-[30px] font-bold leading-9 tracking-[-0.04em] text-ink focus:outline-none"
           >
             아이디 찾기
           </h1>

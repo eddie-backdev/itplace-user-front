@@ -34,6 +34,7 @@ import { toCategoryOptions } from '@/utils/referenceData';
 import { useReferenceData } from '@/components/ReferenceDataProvider';
 import { getPartnerBenefitPath } from '@/utils/partnerSeo';
 import { isPreviewSummaryEligible } from '@/utils/benefitPreview';
+import { getBenefitRefreshState } from './apis/benefitRefreshState.mjs';
 import styles from './BenefitsExplorer.module.css';
 
 const ITEMS_PER_PAGE = 15;
@@ -98,16 +99,23 @@ export default function AllBenefitsLayout({
 
   const [result, setResult] = useState<{
     data: PartnerBenefitResponse | null;
+    dataCarrier?: typeof effectiveCarrier;
+    dataGrade?: string;
+    dataKey: string | null;
     status: 'loading' | 'ready' | 'error';
   }>({
     data: hasMatchingInitialData ? initialData : null,
+    dataCarrier: hasMatchingInitialData ? effectiveCarrier : undefined,
+    dataGrade: hasMatchingInitialData ? effectiveGrade : undefined,
+    dataKey: hasMatchingInitialData ? requestKey : null,
     status: hasMatchingInitialData ? 'ready' : 'loading',
   });
   const [retry, setRetry] = useState(0);
   const lastLoadedKeyRef = useRef(hasMatchingInitialData ? requestKey : null);
   const [favoriteIds, setFavoriteIds] = useState<Set<number>>(() => new Set());
   const [favoriteStatus, setFavoriteStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [pendingFavoriteId, setPendingFavoriteId] = useState<number | null>(null);
+  const [pendingFavoriteIds, setPendingFavoriteIds] = useState<Set<number>>(() => new Set());
+  const pendingFavoriteIdsRef = useRef(new Set<number>());
   const [isMembershipDialogOpen, setIsMembershipDialogOpen] = useState(false);
   const [previewPartner, setPreviewPartner] = useState<PartnerBenefitItem | null>(null);
   const [searchDraft, setSearchDraft] = useState(keyword);
@@ -142,12 +150,13 @@ export default function AllBenefitsLayout({
       return;
     }
     if (openedQueryPartnerRef.current === requestedPartnerId) return;
+    if (result.status !== 'ready' || result.dataKey !== requestKey) return;
     const partner = result.data?.content.find(({ partnerId }) => partnerId === requestedPartnerId);
     if (partner) {
       openedQueryPartnerRef.current = requestedPartnerId;
       setPreviewPartner(partner);
     }
-  }, [previewPartner, requestedPartnerId, result.data]);
+  }, [previewPartner, requestedPartnerId, requestKey, result.data, result.dataKey, result.status]);
 
   useEffect(() => {
     if (!isAuthReady) return;
@@ -262,7 +271,7 @@ export default function AllBenefitsLayout({
   };
 
   const toggleFavorite = async (benefitId: number) => {
-    if (pendingFavoriteId !== null) return;
+    if (pendingFavoriteIdsRef.current.has(benefitId)) return;
     if (!isAuthReady || !isLoggedIn) {
       navigate(getLoginHref(`${window.location.pathname}${window.location.search}`));
       return;
@@ -272,25 +281,27 @@ export default function AllBenefitsLayout({
       return;
     }
     const wasFavorite = favoriteIds.has(benefitId);
-    setPendingFavoriteId(benefitId);
+    pendingFavoriteIdsRef.current.add(benefitId);
+    setPendingFavoriteIds(new Set(pendingFavoriteIdsRef.current));
     try {
       if (wasFavorite) await removeFavorite(benefitId);
       else await addFavorite(benefitId);
       setFavoriteState(benefitId, !wasFavorite);
+      showToast(wasFavorite ? '관심 혜택에서 해제했어요.' : '관심 혜택으로 저장했어요.', 'success');
     } catch {
       showToast('관심 혜택을 변경하지 못했어요. 잠시 후 다시 시도해 주세요.', 'error');
     } finally {
-      setPendingFavoriteId(null);
+      pendingFavoriteIdsRef.current.delete(benefitId);
+      setPendingFavoriteIds(new Set(pendingFavoriteIdsRef.current));
     }
   };
 
   useEffect(() => {
     if (waitingForMembership) return;
     if (lastLoadedKeyRef.current === requestKey && retry === 0) return;
-    document.getElementById('benefit-card-scroll')?.scrollTo({ top: 0 });
     let cancelled = false;
     lastLoadedKeyRef.current = null;
-    setResult({ data: null, status: 'loading' });
+    setResult((current) => ({ ...current, status: 'loading' }));
 
     void getPartnerBenefits({
       mainCategory: effectiveGrade ? undefined : 'BASIC_BENEFIT',
@@ -304,10 +315,10 @@ export default function AllBenefitsLayout({
       (data) => {
         if (cancelled) return;
         lastLoadedKeyRef.current = requestKey;
-        setResult({ data, status: 'ready' });
+        setResult({ data, dataCarrier: effectiveCarrier, dataGrade: effectiveGrade, dataKey: requestKey, status: 'ready' });
       },
       () => {
-        if (!cancelled) setResult({ data: null, status: 'error' });
+        if (!cancelled) setResult((current) => ({ ...current, status: 'error' }));
       }
     );
     return () => {
@@ -324,6 +335,13 @@ export default function AllBenefitsLayout({
     waitingForMembership,
     retry,
   ]);
+
+  const previousRequestKeyRef = useRef(requestKey);
+  useEffect(() => {
+    if (previousRequestKeyRef.current === requestKey) return;
+    previousRequestKeyRef.current = requestKey;
+    if (previewPartner) setPreviewPartner(null);
+  }, [requestKey, previewPartner]);
 
   const hrefFor = (changes: QueryChanges) => {
     const next = new URLSearchParams(searchParams.toString());
@@ -415,9 +433,20 @@ export default function AllBenefitsLayout({
     page: null,
   };
   const partners = result.data?.content ?? [];
+  const dataIsForCurrentQuery = result.dataKey === requestKey;
+  const displayCarrier = dataIsForCurrentQuery ? effectiveCarrier : result.dataCarrier;
+  const displayGrade = dataIsForCurrentQuery ? effectiveGrade : result.dataGrade;
+  const retryLoad = () => {
+    setResult((current) => ({ ...current, status: 'loading' }));
+    setRetry((value) => value + 1);
+  };
   const totalElements = result.data?.totalElements ?? 0;
   const totalPages = result.data?.totalPages ?? Math.ceil(totalElements / ITEMS_PER_PAGE);
-  const isLoading = waitingForMembership || result.status === 'loading';
+  const { hasStaleResults, isRefreshing, resultsLocked: staleResultsLocked } =
+    getBenefitRefreshState(result.data !== null, result.status, dataIsForCurrentQuery);
+  const isLoading = waitingForMembership || result.status === 'loading' || isRefreshing;
+  const resultsLocked = isLoading || staleResultsLocked;
+  const isFirstLoad = isLoading && result.data === null;
   const pageGroupStart =
     Math.floor((Math.min(currentPage, Math.max(totalPages, 1)) - 1) / 5) * 5 + 1;
   const visiblePages = Array.from(
@@ -432,6 +461,15 @@ export default function AllBenefitsLayout({
       membershipRequested
   );
   const numberFormatter = new Intl.NumberFormat('ko-KR');
+  const refreshCondition = [
+    keyword ? `“${keyword}”` : null,
+    effectiveCarrier ? getCarrierLabel(effectiveCarrier) : null,
+    effectiveGrade ? getMembershipGradeLabel(effectiveGrade, referenceData) : null,
+    selectedCategory !== '전체'
+      ? toCategoryOptions(referenceData).find(({ id }) => id === selectedCategory)?.name
+      : null,
+  ].filter(Boolean).join(' · ');
+  const refreshMessage = `${refreshCondition ? `${refreshCondition} ` : '전체 '}혜택 갱신 중 · 이전 결과 ${numberFormatter.format(result.data?.totalElements ?? 0)}개`;
   const profileDescription = !isAuthReady
     ? '멤버십 확인 중…'
     : hasMembershipProfile
@@ -659,8 +697,13 @@ export default function AllBenefitsLayout({
                     : undefined
                 }
                 aria-activedescendant={
-                  isBrandSuggestionsOpen && activeBrandSuggestion >= 0
+                  isBrandSuggestionsOpen && brandSuggestions.length > 0 && activeBrandSuggestion >= 0
                     ? `benefit-brand-option-${activeBrandSuggestion}`
+                    : undefined
+                }
+                aria-describedby={
+                  isBrandSuggestionsOpen && brandSuggestionStatus !== 'idle' && brandSuggestions.length === 0
+                    ? 'benefits-brand-suggestions-status'
                     : undefined
                 }
                 onFocus={() => {
@@ -719,13 +762,13 @@ export default function AllBenefitsLayout({
               {isBrandSuggestionsOpen && brandSuggestionStatus !== 'idle' ? (
                 <div className={styles.brandSuggestionPanel} ref={brandSuggestionPanelRef}>
                   {brandSuggestionStatus === 'loading' ? (
-                    <p className={styles.brandSuggestionStatus} role="status">브랜드를 찾고 있어요…</p>
+                    <p id="benefits-brand-suggestions-status" className={styles.brandSuggestionStatus} role="status">브랜드를 찾고 있어요…</p>
                   ) : brandSuggestionStatus === 'error' ? (
-                    <p className={styles.brandSuggestionStatus} role="status">
+                    <p id="benefits-brand-suggestions-status" className={styles.brandSuggestionStatus} role="status">
                       추천을 불러오지 못했어요. 검색 버튼으로 다시 찾아보세요.
                     </p>
                   ) : brandSuggestions.length === 0 ? (
-                    <p className={styles.brandSuggestionStatus} role="status">일치하는 브랜드가 없어요.</p>
+                    <p id="benefits-brand-suggestions-status" className={styles.brandSuggestionStatus} role="status">일치하는 브랜드가 없어요.</p>
                   ) : null}
                   {brandSuggestions.length > 0 ? <ul
                     id="benefits-brand-suggestions"
@@ -779,15 +822,22 @@ export default function AllBenefitsLayout({
                     : '혜택 제휴처'}
             </h2>
             <div className={styles.resultSummary}>
-              <p role="status" aria-live="polite">
+              <p role={result.status === 'error' && result.data ? 'alert' : 'status'} aria-live={result.status === 'error' && result.data ? 'assertive' : 'polite'}>
                 {waitingForMembership
                   ? '내 멤버십 확인 중…'
                   : isLoading
-                    ? '혜택 불러오는 중…'
-                    : result.status === 'error'
-                      ? '목록을 불러오지 못했어요.'
+                    ? isRefreshing
+                      ? refreshMessage
+                      : '혜택을 처음 불러오는 중이에요.'
+                    : result.status === 'error' && result.data
+                      ? `새 조건의 혜택을 불러오지 못했어요. 이전 조건 결과 ${numberFormatter.format(result.data.totalElements)}개를 보여드려요.`
+                      : result.status === 'error'
+                        ? '목록을 불러오지 못했어요.'
                       : `${numberFormatter.format(totalElements)}개 브랜드 · 현재 ${partners.length}개 제휴처`}
               </p>
+              {result.status === 'error' && result.data ? (
+                <button className={styles.refreshRetry} type="button" onClick={retryLoad}>다시 시도</button>
+              ) : null}
               <div className={styles.activeFilters} role="group" aria-label="적용 중인 필터">
                 {effectiveCarrier ? <span>{getCarrierLabel(effectiveCarrier)}</span> : null}
                 {effectiveGrade ? <span>{getMembershipGradeLabel(effectiveGrade, referenceData)}</span> : null}
@@ -806,7 +856,7 @@ export default function AllBenefitsLayout({
           ) : null}
           <div className={styles.explorer}>
             <div className={styles.listColumn}>
-              {isLoading ? (
+              {isFirstLoad ? (
                 <div
                   aria-busy="true"
                   aria-label="혜택 목록 불러오는 중"
@@ -817,29 +867,35 @@ export default function AllBenefitsLayout({
                     <div key={index} aria-hidden="true" className={styles.skeletonCard} />
                   ))}
                 </div>
-              ) : result.status === 'error' ? (
+              ) : result.status === 'error' && !result.data ? (
                 <div className={styles.emptyState}>
                   <h3>혜택을 불러오지 못했어요</h3>
                   <p>연결 상태를 확인하고 다시 시도해 주세요.</p>
-                  <button type="button" onClick={() => setRetry((value) => value + 1)}>
+                  <button type="button" onClick={retryLoad}>
                     다시 시도
                   </button>
                 </div>
               ) : partners.length > 0 ? (
-                <div id="benefit-card-scroll" className={styles.cardGrid}>
+                <div
+                  id="benefit-card-scroll"
+                  className={`${styles.cardGrid} ${hasStaleResults ? styles.staleResults : ''}`}
+                  aria-busy={isRefreshing}
+                  aria-label={hasStaleResults ? '이전 조건 결과' : undefined}
+                  inert={resultsLocked}
+                >
                   {partners.map((partner) => {
                     const href = detailHrefFor(partner.partnerId, partner.partnerName);
                     const previews = partner.previews ?? [];
-                    const candidates = effectiveCarrier
-                      ? previews.filter((preview) => preview.carrier === effectiveCarrier)
+                    const candidates = displayCarrier
+                      ? previews.filter((preview) => preview.carrier === displayCarrier)
                       : previews;
-                    const gradeCandidates = effectiveGrade
+                    const gradeCandidates = displayGrade
                       ? candidates.filter((preview) =>
                           preview.summary !== undefined
-                            ? preview.summary === null || isPreviewSummaryEligible(preview, effectiveGrade, referenceData)
+                            ? preview.summary === null || isPreviewSummaryEligible(preview, displayGrade, referenceData)
                             : preview.offers !== undefined || preview.offerResolution !== undefined
                             ? (preview.offers?.length ?? 0) > 0
-                            : preview.tierBenefits.some((tier) => tier.isAll || tier.grade === effectiveGrade)
+                            : preview.tierBenefits.some((tier) => tier.isAll || tier.grade === displayGrade)
                         )
                       : candidates;
                     const favoriteBenefitId =
@@ -851,13 +907,13 @@ export default function AllBenefitsLayout({
                         key={partner.partnerId}
                         partner={partner}
                         href={href}
-                        carrier={effectiveCarrier}
-                        grade={effectiveGrade}
+                        carrier={displayCarrier}
+                        grade={displayGrade}
                         isFavorite={favoriteBenefitId ? favoriteIds.has(favoriteBenefitId) : false}
+                        favoritePending={favoriteBenefitId !== undefined && pendingFavoriteIds.has(favoriteBenefitId)}
                         favoriteBusy={
                           favoriteStatus !== 'ready' ||
-                          (favoriteBenefitId !== undefined &&
-                            pendingFavoriteId === favoriteBenefitId)
+                          (favoriteBenefitId !== undefined && pendingFavoriteIds.has(favoriteBenefitId))
                         }
                         onToggleFavorite={
                           favoriteBenefitId
@@ -883,6 +939,11 @@ export default function AllBenefitsLayout({
                       />
                     );
                   })}
+                </div>
+              ) : result.data && (isRefreshing || result.status === 'error') ? (
+                <div className={styles.emptyState}>
+                  <h3>{isRefreshing ? '이전 조건에는 표시할 혜택이 없어요' : '새 조건 결과를 불러오지 못했어요'}</h3>
+                  <p>이전 조건의 상태를 유지하고 있어요.</p>
                 </div>
               ) : (
                 <div className={styles.emptyState}>

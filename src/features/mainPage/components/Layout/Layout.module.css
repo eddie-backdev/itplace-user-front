@@ -118,7 +118,7 @@
   transform: rotate(180deg);
 }
 .mobileSheetAnimating {
-  transition: height 300ms ease-out;
+  transition: height var(--itplace-sidebar-motion-duration, 300ms) ease-out;
 }
 @media (min-width: 768px) {
   .desktopPage {

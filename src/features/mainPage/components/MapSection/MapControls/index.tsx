@@ -30,7 +30,9 @@ const MapControls: React.FC<MapControlsProps> = ({
     typeof mobileBottomOffset === 'number' ? `${mobileBottomOffset}px` : mobileBottomOffset;
   const mobileControlStyle = {
     '--mobile-map-controls-bottom': normalizedMobileBottomOffset,
-    transition: mobileBottomTransitionEnabled ? 'bottom 300ms ease-out' : 'none',
+    transition: mobileBottomTransitionEnabled
+      ? 'bottom var(--itplace-sidebar-motion-duration, 300ms) ease-out'
+      : 'none',
   } as React.CSSProperties;
 
   return (

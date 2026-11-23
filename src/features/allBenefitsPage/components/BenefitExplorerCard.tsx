@@ -17,6 +17,7 @@ type BenefitExplorerCardProps = {
   onPreview?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
   isFavorite?: boolean;
   favoriteBusy?: boolean;
+  favoritePending?: boolean;
   onToggleFavorite?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 };
 
@@ -28,6 +29,7 @@ export default function BenefitExplorerCard({
   onPreview,
   isFavorite = false,
   favoriteBusy = false,
+  favoritePending = false,
   onToggleFavorite,
 }: BenefitExplorerCardProps) {
   const { data: referenceData } = useReferenceData();
@@ -89,10 +91,17 @@ export default function BenefitExplorerCard({
         className={styles.favoriteButton}
         onClick={onToggleFavorite}
         disabled={favoriteBusy || !onToggleFavorite}
-        aria-label={`${partner.partnerName} 관심 혜택 ${isFavorite ? '해제' : '추가'}`}
+        aria-label={`${partner.partnerName} 관심 혜택 ${favoritePending ? '저장 처리 중' : isFavorite ? '해제' : '추가'}`}
         aria-pressed={isFavorite}
+        aria-busy={favoritePending}
       >
-        {isFavorite ? <TbBookmarkFilled aria-hidden="true" /> : <TbBookmark aria-hidden="true" />}
+        {favoritePending ? (
+          <span className={styles.favoriteSpinner} aria-hidden="true">…</span>
+        ) : isFavorite ? (
+          <TbBookmarkFilled aria-hidden="true" />
+        ) : (
+          <TbBookmark aria-hidden="true" />
+        )}
       </button>
       <Link href={href} prefetch={false} onClick={onPreview} className={styles.openDetail}>
         자세히 <TbChevronRight size={16} aria-hidden="true" />

@@ -99,6 +99,7 @@ function OfferSaveButton({
   returnTo: string;
 }) {
   const [busy, setBusy] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState('');
   const navigate = useNavigate();
 
   const toggle = async () => {
@@ -115,11 +116,14 @@ function OfferSaveButton({
       return;
     }
     setBusy(true);
+    setSaveFeedback(isSaved ? '관심 혜택 해제를 처리하고 있어요.' : '관심 혜택 저장을 처리하고 있어요.');
     try {
       if (isSaved) await removeFavorite([benefitId]);
       else await addFavorite(benefitId);
       onChange(benefitId, !isSaved);
+      setSaveFeedback(isSaved ? '관심 혜택에서 해제했어요.' : '관심 혜택으로 저장했어요.');
     } catch {
+      setSaveFeedback('관심 혜택을 변경하지 못했어요. 다시 시도해 주세요.');
       showToast('관심 혜택을 변경하지 못했어요. 다시 시도해 주세요.', 'error');
     } finally {
       setBusy(false);
@@ -127,16 +131,29 @@ function OfferSaveButton({
   };
 
   return (
-    <button
-      type="button"
-      className={`${styles.saveButton} ${focus}`}
-      aria-label={isSaved ? `${partnerName} 관심 혜택에서 해제` : `${partnerName} 관심 혜택에 추가`}
-      aria-pressed={isSaved}
-      disabled={busy}
-      onClick={() => void toggle()}
-    >
-      <TbBookmark aria-hidden="true" size={20} fill={isSaved ? 'currentColor' : 'none'} />
-    </button>
+    <>
+      <button
+        type="button"
+        className={`${styles.saveButton} ${focus}`}
+        aria-label={isSaved ? `${partnerName} 관심 혜택에서 해제` : `${partnerName} 관심 혜택에 추가`}
+        aria-pressed={isSaved}
+        aria-busy={busy}
+        disabled={busy}
+        title={busy ? '관심 혜택 저장 처리 중' : undefined}
+        onClick={() => void toggle()}
+      >
+        {busy ? (
+          <span className={styles.saveSpinner} aria-hidden="true">
+            …
+          </span>
+        ) : (
+          <TbBookmark aria-hidden="true" size={20} fill={isSaved ? 'currentColor' : 'none'} />
+        )}
+      </button>
+      <span className="sr-only" role="status" aria-live="polite">
+        {saveFeedback}
+      </span>
+    </>
   );
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import FindPasswordStep1 from './FindPasswordStep1';
 import FindPasswordStep2 from './FindPasswordStep2';
 
@@ -10,6 +10,12 @@ const FindPasswordForm = ({ onGoToLogin }: Props) => {
   const [step, setStep] = useState<'verify' | 'reset'>('verify');
   const [email, setEmail] = useState('');
   const [resetToken, setResetToken] = useState('');
+
+  useEffect(() => {
+    if (step === 'reset') {
+      document.getElementById('find-password-reset-heading')?.focus({ preventScroll: true });
+    }
+  }, [step]);
 
   return step === 'verify' ? (
     <FindPasswordStep1

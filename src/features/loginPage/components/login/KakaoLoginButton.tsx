@@ -11,7 +11,7 @@ const KakaoLoginButton = ({ onClick, disabled = false }: Props) => {
         onClick={onClick}
         disabled={disabled}
         aria-label="카카오 계정으로 로그인"
-        className="flex h-full w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#FEE500] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+        className="flex h-full w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#FEE500] motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
       >
         <svg
           aria-hidden="true"

@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
 import { createPortal } from 'react-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { TbMessageCircle } from 'react-icons/tb';
 import Modal from '../../../components/Modal';
@@ -32,6 +32,11 @@ const QuestionRecommendationChatWidget = () => {
   const { isMobile } = useResponsive();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [inlineLauncherHost, setInlineLauncherHost] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    setInlineLauncherHost(isMobile ? document.getElementById('mobile-benefit-chat-launcher') : null);
+  }, [isMobile, location.pathname]);
 
   const closeChat = () => setIsOpen(false);
   const closeLoginPrompt = () => {
@@ -98,6 +103,19 @@ const QuestionRecommendationChatWidget = () => {
     }
   }, [isOpen, isLoggedIn]);
 
+  const launcher = (
+    <button
+      type="button"
+      onClick={() => isLoggedIn ? setIsOpen(true) : openGuestPrompt()}
+      ref={launcherRef}
+      className={inlineLauncherHost ? styles.inlineLauncher : `${styles.launcher} ${isMobile ? styles.mobileLauncher : ''}`}
+      aria-label="AI 혜택 도우미 열기"
+    >
+      <TbMessageCircle size={inlineLauncherHost ? 17 : 20} aria-hidden="true" />
+      <span>AI 혜택 도우미</span>
+    </button>
+  );
+
   return createPortal(
     <>
       {isLoggedIn && isOpen && <div className={styles.layer}>
@@ -106,9 +124,7 @@ const QuestionRecommendationChatWidget = () => {
           <QuestionRecommendationChatRoom key={accountKey} accountKey={accountKey} onClose={closeChat} presentation="floating" />
         </section>
       </div>}
-      {(!isLoggedIn || !isOpen) && <button type="button" onClick={() => isLoggedIn ? setIsOpen(true) : openGuestPrompt()} ref={launcherRef} className={`${styles.launcher} ${isMobile ? styles.mobileLauncher : ''}`} aria-label="AI 혜택 도우미 열기">
-        <TbMessageCircle size={20} aria-hidden="true" /><span>AI 혜택 도우미</span>
-      </button>}
+      {(!isLoggedIn || !isOpen) && (inlineLauncherHost ? createPortal(launcher, inlineLauncherHost) : launcher)}
       <Modal
         isOpen={!isLoggedIn && isLoginPromptOpen}
         widthClass={styles.loginPrompt}

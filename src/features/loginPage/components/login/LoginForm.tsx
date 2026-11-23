@@ -77,7 +77,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
   return (
     <div className="mx-auto w-full max-w-[400px]">
       <div className="mb-7 text-left">
-        <h1 className="text-[30px] font-bold leading-9 tracking-[-0.04em] text-ink max-sm:text-[28px]">
+        <h1 id="login-heading" tabIndex={-1} className="text-[30px] font-bold leading-9 tracking-[-0.04em] text-ink focus:outline-none max-sm:text-[28px]">
           로그인
         </h1>
         <p className="mt-2 max-w-[34ch] text-body-3 leading-6 text-grey05">
@@ -162,6 +162,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
         >
           <button
             type="button"
+            id="login-find-id"
             onClick={onGoToFindId}
             className="min-h-11 rounded-sm px-1 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
@@ -169,6 +170,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
           </button>
           <button
             type="button"
+            id="login-find-password"
             onClick={onGoToFindPassword}
             className="min-h-11 rounded-sm px-1 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
@@ -186,7 +188,7 @@ const LoginForm = ({ onGoToSignUp, onGoToFindPassword, onGoToFindId, returnTo }:
         <button
           type="submit"
           disabled={isSubmitting}
-          className="h-12 w-full rounded-xl bg-brand text-body-2-bold text-white transition-colors hover:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+          className="h-[52px] w-full rounded-xl bg-brand text-body-2-bold text-white transition-colors motion-safe:transition-transform motion-safe:duration-150 hover:bg-brandStrong motion-safe:active:scale-[0.99] active:bg-brandStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
         >
           {isSubmitting ? '로그인 중…' : '로그인'}
         </button>

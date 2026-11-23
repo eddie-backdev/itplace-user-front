@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { TbDeviceMobile } from 'react-icons/tb';
 import { APP_DOWNLOAD } from '@/lib/appDownload';
 import styles from './AppDownloadLauncher.module.css';
 
@@ -50,8 +51,10 @@ export default function AppDownloadLauncher() {
       >
         <Image src={APP_DOWNLOAD.iconImage} alt="" width={48} height={48} />
       </button>
+      <div id="mobile-benefit-chat-launcher" className={styles.mobileChatSlot} />
       <Link className={styles.mobileLink} href="/download" aria-label="Android 앱 다운로드 안내" title="Android 앱 다운로드 안내">
-        <Image src={APP_DOWNLOAD.iconImage} alt="" width={48} height={48} />
+        <TbDeviceMobile size={17} aria-hidden="true" />
+        앱 다운로드
       </Link>
       <div
         className={styles.popover}

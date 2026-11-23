@@ -231,7 +231,24 @@
 }
 .saveButton:disabled {
   cursor: wait;
-  opacity: 0.5;
+}
+.saveButton { transition: transform 120ms ease; }
+.saveButton:active:not(:disabled) { transform: scale(0.92); }
+.saveSpinner {
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  font-size: 0;
+  animation: save-spin 700ms linear infinite;
+}
+@keyframes save-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .saveButton, .saveSpinner { animation: none; transition: none; }
+  .saveSpinner { width: auto; height: auto; border: 0; font-size: 18px; }
 }
 .primaryOffer h3 {
   max-width: 22ch;

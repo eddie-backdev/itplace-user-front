@@ -117,6 +117,7 @@ const MainPageLayout: React.FC = () => {
   const [startY, setStartY] = useState<number>(0); // 드래그 시작 Y 좌표
   const [startHeight, setStartHeight] = useState<number>(0); // 드래그 시작 시 높이
   const [isAnimating, setIsAnimating] = useState(false);
+  const sheetAnimationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didDragSheetHandleRef = useRef(false);
   const isMapZoomingRef = useRef(false);
   const hasInitializedMapViewportRef = useRef(false);
@@ -154,13 +155,22 @@ const MainPageLayout: React.FC = () => {
   const animateTo = useCallback(
     (target: number) => {
       const clampedTarget = clampBottomSheetHeight(target);
+      if (sheetAnimationTimerRef.current) clearTimeout(sheetAnimationTimerRef.current);
       setIsAnimating(true);
       setBottomSheetHeight(clampedTarget);
-      setTimeout(() => {
+      sheetAnimationTimerRef.current = setTimeout(() => {
         setIsAnimating(false);
+        sheetAnimationTimerRef.current = null;
       }, 300);
     },
     [clampBottomSheetHeight]
+  );
+
+  useEffect(
+    () => () => {
+      if (sheetAnimationTimerRef.current) clearTimeout(sheetAnimationTimerRef.current);
+    },
+    []
   );
 
   // 바텀시트를 초기 상태로 리셋하는 함수
@@ -580,6 +590,9 @@ const MainPageLayout: React.FC = () => {
   }, [isMobile]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (sheetAnimationTimerRef.current) clearTimeout(sheetAnimationTimerRef.current);
+    sheetAnimationTimerRef.current = null;
+    setIsAnimating(false);
     didDragSheetHandleRef.current = false;
     setIsDragging(true);
     setStartY(e.touches[0].clientY);
@@ -604,6 +617,9 @@ const MainPageLayout: React.FC = () => {
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      if (sheetAnimationTimerRef.current) clearTimeout(sheetAnimationTimerRef.current);
+      sheetAnimationTimerRef.current = null;
+      setIsAnimating(false);
       didDragSheetHandleRef.current = false;
       setIsDragging(true);
       setStartY(e.clientY);

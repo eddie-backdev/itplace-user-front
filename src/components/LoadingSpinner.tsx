@@ -28,19 +28,19 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 }) => {
   return (
     <div
-      className={`rounded-full ${className}`}
-      style={{
-        animation: 'spin 1s linear infinite',
-      }}
+      className={`itplace-loading-spinner rounded-full ${className}`}
       role="status"
       aria-live="polite"
     >
-      <span className="sr-only">Loading...</span>
+      <span className="sr-only">불러오는 중</span>
       <style>
         {`
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+          }
+          @media (prefers-reduced-motion: no-preference) {
+            .itplace-loading-spinner { animation: spin 1s linear infinite; }
           }
         `}
       </style>

@@ -233,7 +233,7 @@ const PartnerBenefitPage = ({
     if (status !== 'ready' || !detail || !window.location.hash.startsWith('#benefit-')) return;
     const frame = window.requestAnimationFrame(() => {
       document.getElementById(window.location.hash.slice(1))?.scrollIntoView({
-        behavior: 'smooth',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
         block: 'start',
       });
     });

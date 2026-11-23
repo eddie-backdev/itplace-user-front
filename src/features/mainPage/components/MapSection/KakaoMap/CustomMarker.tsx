@@ -37,6 +37,7 @@ const CustomMarker: React.FC<CustomMarkerProps> = ({
     <button
       type="button"
       aria-label={`${displayName} 혜택 위치${isSelected ? ', 선택됨' : ''}`}
+      aria-pressed={isSelected}
       title={displayName}
       data-itplace-map-marker="true"
       data-marker-mode={mode}
