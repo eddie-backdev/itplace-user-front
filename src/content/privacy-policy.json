@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-10-28",
-  "introduction": "IT:PLACE는 이용자의 개인정보를 중요하게 생각하며 다음과 같이 개인정보처리방침을 공개합니다. 본 방침은 IT:PLACE 웹 및 모바일 앱 서비스에 적용되며, Google 광고 관련 안내는 웹사이트 광고에 적용됩니다.",
+  "updatedAt": "2026-11-29",
+  "introduction": "IT:PLACE는 이용자의 개인정보를 중요하게 생각하며 다음과 같이 개인정보처리방침을 공개합니다. 본 방침은 IT:PLACE 웹 및 모바일 앱 서비스에 적용됩니다. 제5항의 Google 광고 및 쿠키 안내 중 웹사이트 관련 내용은 웹사이트 광고에, Android 앱 관련 내용은 앱 광고에 적용됩니다.",
   "sections": [
     {
       "title": "1. 수집하는 개인정보",
@@ -57,7 +57,10 @@
         "IT:PLACE는 주 웹사이트의 활성 사용자, 페이지 조회, 유입 경로 등 이용 통계를 확인하기 위해 Google Analytics 4(GA4)를 사용합니다. GA4는 가명 처리된 브라우저 식별자를 위한 퍼스트 파티 쿠키와 브라우저·기기 정보 및 사이트 내 활동을 처리할 수 있습니다. Google은 수집 과정에서 IP 주소를 처리하지만 이를 로깅하거나 저장하지 않는다고 안내합니다.",
         "GA4로 전송되는 페이지 주소는 웹사이트 출처와 경로까지만 포함하며, 쿼리 문자열과 해시는 제외합니다. 이메일, 휴대폰 번호, 로그인 인증 코드 및 회원 User-ID는 GA4로 전송하지 않습니다. Google Signals와 광고 개인 최적화는 사용하지 않습니다.",
         "GA4의 사용자 수준 및 이벤트 수준 데이터 보관 기간은 각각 2개월로 설정되어 있습니다. 사용자 수준 데이터는 새 활동이 있으면 보관 기간이 갱신될 수 있으며, 이 설정은 보고서의 집계 데이터 보관 기간을 뜻하지 않습니다.",
-        "Google Analytics 측정은 브라우저 쿠키 설정에서 쿠키를 차단하거나 삭제해 제한할 수 있으며, Google Analytics 차단 브라우저 부가기능을 설치해 선택 해제할 수도 있습니다."
+        "Google Analytics 측정은 브라우저 쿠키 설정에서 쿠키를 차단하거나 삭제해 제한할 수 있으며, Google Analytics 차단 브라우저 부가기능을 설치해 선택 해제할 수도 있습니다.",
+        "IT:PLACE Android 앱은 Google Mobile Ads SDK를 사용하여 주변 혜택 목록에 네이티브 광고를 표시할 수 있습니다.",
+        "이 SDK는 광고 제공·측정, 분석 및 사기 방지를 위해 IP 주소(기기의 대략적인 위치 추정에 사용될 수 있음), 앱 실행·탭·동영상 조회 등 앱 상호작용 정보, 앱 및 SDK 진단 정보, Android 광고 ID·앱 세트 ID 등 기기 및 계정 식별자를 자동으로 수집하고 공유할 수 있습니다. SDK가 수집하는 정보는 전송 중 암호화됩니다.",
+        "광고 동의 및 개인정보 선택은 Google 사용자 메시지 플랫폼(UMP)을 통해 처리합니다. UMP가 개인정보 선택 진입점을 요구하는 경우 앱 마이페이지에 해당 옵션이 표시되며, 이를 열어 선택을 변경할 수 있습니다. Android 설정에서도 광고 ID를 재설정하거나 삭제할 수 있습니다."
       ],
       "links": [
         {
@@ -87,6 +90,14 @@
         {
           "label": "DAA 소비자 선택 — 제3자 맞춤 광고 관리",
           "href": "https://optout.aboutads.info/"
+        },
+        {
+          "label": "Google Mobile Ads SDK의 Google Play 데이터 공개 안내",
+          "href": "https://developers.google.com/admob/android/privacy/play-data-disclosure?hl=ko"
+        },
+        {
+          "label": "Google UMP 동의 및 개인정보 선택 안내",
+          "href": "https://developers.google.com/admob/android/privacy?hl=ko"
         }
       ]
     },
